@@ -1,0 +1,45 @@
+{
+  "_instrucciones": "Copiar a <proyecto>/.claude/seudonimizacion.json y poner activo=true. Las equivalencias reales se guardan solo en ~/.claude/privacidad/ (nunca en el repo). Tipos integrados: correo, telefono, rfc, curp, tarjeta, jwt, secreto, ipv4, puerto, host, url (oculta servidor y credenciales de cualquier URL http/ws/ftp/postgres/mysql/mongodb/redis…, conserva esquema y ruta; no toca dominios públicos de documentación ni localhost). En un worktree sin configuración propia se usa la de la carpeta principal del repositorio y el mismo mapa. Modos: 'etiqueta' (oculta: __PSD_TIPO_n__) o 'formato' (valor falso válido: ipv4 -> 198.18.x.y conservando el último octeto; puerto -> desplazado una cantidad secreta, conserva orden y diferencias; correo -> usuarioN@ejemplo.invalid). 'rutas' y 'excluir' usan patrones glob relativos a la raíz. 'ramas' (regex opcional) limita la regla a ciertas tareas, p. ej. '^fnc/FNC-01'. 'columnas_csv' seudonimiza columnas completas de archivos .csv/.tsv por nombre de encabezado.",
+  "activo": false,
+
+  "reglas": [
+    {
+      "_comentario": "Base para todo el proyecto: datos personales y secretos ocultos por completo.",
+      "rutas": ["*"],
+      "tipos": ["correo", "telefono", "rfc", "curp", "tarjeta", "jwt", "secreto", "url", "host", "cliente"],
+      "modo": "etiqueta"
+    },
+    {
+      "_comentario": "Ejemplo de proyecto de generación de puertos: IPs y puertos en modo formato para que el agente pueda validar rangos y conflictos sin ver los valores reales.",
+      "rutas": ["config/*", "src/*", "data/*", "*.yml", "*.yaml", "*.conf", "*.ini"],
+      "tipos": ["ipv4", "puerto"],
+      "modo": "formato"
+    },
+    {
+      "_comentario": "Inventarios en CSV: columnas completas por nombre de encabezado.",
+      "rutas": ["data/*.csv", "inventario/*.csv"],
+      "columnas_csv": {"cliente": "cliente", "ip": "ipv4", "puerto": "puerto", "hostname": "host", "contacto": "correo"},
+      "modos": {"cliente": "etiqueta", "ipv4": "formato", "puerto": "formato", "host": "etiqueta", "correo": "etiqueta"}
+    },
+    {
+      "_comentario": "Ejemplo por tarea: en la tarea FNC-012 también se ocultan los números de serie de los equipos.",
+      "rutas": ["*"],
+      "ramas": "FNC-012",
+      "tipos": ["serie_equipo"],
+      "modo": "etiqueta"
+    }
+  ],
+
+  "literales": {
+    "cliente": ["Cliente Ejemplo SA de CV", "Otro Cliente"]
+  },
+  "personalizados": {
+    "serie_equipo": {"patron": "\\b(FG[0-9A-Z]{2}[0-9A-Z]{10})\\b", "grupo": 1}
+  },
+  "dominios_internos": ["empresa.local", "empresa.interno"],
+  "permitidos": {
+    "correo": ["noreply@empresa.com"]
+  },
+  "excluir": ["node_modules/*", "*.min.js", "*.lock"],
+  "no_restaurar_en": ["docs/*"]
+}
