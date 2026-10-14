@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | directorio |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local en la rama, sin push |
 | **Rama** | `fnc/FNC-040-cliente-ldap` (worktree `pokemon-wt-040`) |
@@ -113,3 +113,4 @@
   - Búsqueda ambigua: el log ya no incluye el identificador, solo atributo y base (`test_busqueda_ambigua_no_registra_el_identificador`)
   - `LDAP_URL` con IPv4 abreviada o decimal (solo números y puntos) se rechaza (`test_url_con_ipv4_abreviada_se_rechaza`)
 - Estatus: En revisión hasta el merge.
+- Cierre (2026-10-14): revisor y auditor-seguridad atendidos; merge local a `develop` aprobado por el dueño.
