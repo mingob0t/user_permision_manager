@@ -103,6 +103,8 @@ function PortalTab() {
       >
         <div className="flex flex-wrap items-center gap-3">
           {value.portal_identity_type === 'image' && value.portal_icon ? (
+            // El logo es un data URI guardado en la BD: next/image no lo optimiza.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={value.portal_icon}
               alt="Logo actual"
