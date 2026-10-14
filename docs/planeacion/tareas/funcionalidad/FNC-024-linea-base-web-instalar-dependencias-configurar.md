@@ -90,3 +90,5 @@ Notas:
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-13 | Aprobada por el dueño; implementada por desarrollador. Línea base registrada; build roto por 1 error de lint, decisión pendiente |
+
+- auditor-seguridad (modo cambio, 2026-10-13): Con observaciones; sin hallazgos críticos ni altos introducidos.
