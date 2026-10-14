@@ -23,6 +23,8 @@
 | `redis_registry` | Cliente | `app/utils/redis_client.py` | Registro Redis | `app/__init__.py:93` |
 | `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py:191` | Envío de correo por plantilla | auth, SSO, admin |
 | `_validate_logo`, `MAX_LOGO_BYTES` | Función/constante | `app/modules/api/admin.py:46,51` | Validar logo (data URI) | settings |
+| Fixtures de pruebas (`app`, `client`, `cliente_como`, `cliente_de_rol`, `cliente_admin`, `cliente_admin_area`, `cliente_usuario`) | Fixtures pytest | `tests/conftest.py` | App con BD temporal y clientes con sesión por rol, sin servicios externos | `tests/` |
+| `crear_area`, `crear_plataforma`, `crear_usuario`, `crear_usuario_de_rol` | Fábricas de pruebas | `tests/fabricas.py` | Datos de prueba por rol | `tests/` |
 | `scripts/lineamientos/comun.py`, `reglas.py` | Utilidades de control | `scripts/lineamientos/` | Controles pre-commit del método | `.githooks/pre-commit` |
 
 ## Duplicados conocidos (deben converger)
