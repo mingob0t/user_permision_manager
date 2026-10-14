@@ -23,7 +23,7 @@ def test_login_local_correcto_abre_sesion(client, crear_usuario):
     assert respuesta.get_json() == {'status': 'success',
                                     'role': ROLE_AREA_ADMIN}
     assert usuario_en_sesion(client) == usuario.email
-    assert hay_auditoria(f'ACCESO LOCAL: {usuario.email}', 'success')
+    assert hay_auditoria('ACCESO LOCAL', 'success', target=usuario.email)
 
 
 def test_contrasena_erronea_da_401_sin_sesion(client, crear_usuario):
@@ -35,7 +35,7 @@ def test_contrasena_erronea_da_401_sin_sesion(client, crear_usuario):
     assert respuesta.get_json() == {'status': 'error',
                                     'message': MENSAJE_CREDENCIALES}
     assert usuario_en_sesion(client) is None
-    assert hay_auditoria(f'ACCESO FALLIDO: {usuario.email}', 'error')
+    assert hay_auditoria('ACCESO FALLIDO', 'error', target=usuario.email)
 
 
 def test_mensaje_uniforme_exista_o_no_la_cuenta(app, crear_usuario):

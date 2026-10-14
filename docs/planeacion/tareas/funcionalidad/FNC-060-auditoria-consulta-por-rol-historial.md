@@ -33,6 +33,14 @@
   - Retención (FNC-018)
   - Pantalla (DIS-020)
 
+## Requisitos de FNC-047 (revisión 2026-10-14)
+- Requisito previo de FNC-054 y FNC-056: no se registran eventos con antes/después de accesos sin esta consulta por alcance
+- Admin: `area_id IN managed_area_ids()`; eventos sin área solo para el superadmin (SEG-16)
+- `before`/`after` solo para el superadmin o dentro del alcance del admin
+- `ip` = null para el usuario normal
+- `time` en UTC (SEC-AUD-02): pendiente de decisión del dueño (hoy hora local)
+- `page` (lista paginada) según el contrato `auditoria.md`
+
 ## Hallazgos de seguridad que absorbe
 - **FNC-015** (resto): SEG-16. Con FNC-047 cierra FNC-015.
 
@@ -75,3 +83,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-14 | Requisitos agregados por la revisión de FNC-047 |
