@@ -69,7 +69,7 @@
 | `venv/bin/pytest tests/directory -q` | 64 passed |
 | Mismo, con `validate=ssl.CERT_NONE` en el cliente (mutación, revertida) | 3 failed (`test_certificado_no_confiable…`, `test_nombre_del_certificado_distinto…`, `test_servidor_exige_certificado…`) |
 | `venv/bin/pytest -q` | 495 passed, 35 xfailed, código 0 (antes 431 + 64 nuevas) |
-| `python3 ~/.claude/agentes/herramientas/impacto.py` | "ninguno detectado (comparado contra `develop`; 19 archivos cambiados)" |
+| `python3 ~/.claude/agentes/herramientas/impacto.py` | "ninguno detectado (comparado contra `develop`; 20 archivos cambiados, tras el commit)" |
 - TLS probado con un servidor TLS real en `localhost` y certificado autofirmado generado en la prueba (no confiable → falla; nombre distinto → falla; CA y nombre correctos → saludo completo)
 - No verificado: OpenLDAP real (no hay servidor ni valores; el dueño los define, ADR-004); StartTLS real (el doble `MOCK_SYNC` no lo implementa: se prueba el orden StartTLS → bind con un espía)
 - No ejecutados: `revisor`, `auditor-seguridad` (requerido por la ficha), por indicación del orquestador
@@ -88,7 +88,8 @@
 - Pendiente fuera de esta ficha: SEC-LDAP-01 (un solo módulo usa `ldap3`) se cumple al cerrar FNC-042 y FNC-043
 
 ## Commits / PR
-- Commit local `[FNC-040]` en `fnc/FNC-040-cliente-ldap` (hash en el informe de cierre); sin push ni PR
+- `e51fb64` [FNC-040] Cliente OpenLDAP centralizado de solo lectura con TLS validado (local, sin push ni PR)
+- Commit de cierre de la ficha (este registro); sin push ni PR
 
 ## Impacto cruzado
 - Genera → FNC-041, FNC-042, FNC-043
