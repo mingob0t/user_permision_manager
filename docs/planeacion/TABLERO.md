@@ -2,7 +2,7 @@
 
 | ID | Tarea | Plataforma | Fase | Módulo | Prioridad | Estatus | Creada | Inicio | Finalizada | Git | Vínculos |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| FNC-001 | Incorporar el proyecto al método | infra | 0 | global | Alta | En curso | 2026-10-13 | 2026-10-13 | | `fnc/FNC-001-incorporacion-metodo` | |
+| FNC-001 | Incorporar el proyecto al método | infra | 0 | global | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (634e9f1) | |
 | FNC-002 | Login de directorio seguro: sin purga de cuentas, filtro LDAP escapado y mensajes genéricos | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — |  |
 | FNC-003 | Eliminar credenciales por defecto y crear el primer superadmin con un comando explícito | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — |  |
 | FNC-004 | nginx: limpiar cabeceras Remote-* en todas las location, bloquear /api y /auth sin distinguir mayúsculas, TLS y cabeceras de seguridad | infra | 5 | deploy | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-005 y FNC-006 cierra SEG-04 |
@@ -25,8 +25,8 @@
 | FNC-021 | Pruebas de alcance por área y de escalada de privilegios | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-022 | Pruebas de autenticación SSO, LDAP y local con dobles | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-023 | Pruebas de notificaciones, auditoría, respaldo y arranque | backend | 2 | pruebas | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
-| FNC-024 | Línea base web: instalar dependencias, configurar ESLint y ejecutar typecheck y lint | web | 2 | pruebas | Alta | En revisión | 2026-10-13 | 2026-10-13 | | `fnc/FNC-024-linea-base-web` (local) | Build roto por 1 error de lint: decisión pendiente |
-| FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | En revisión | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-025-runner-pruebas-frontend` (local) | Depende de FNC-024; fallas de contraste a DIS-001 a DIS-006 |
+| FNC-024 | Línea base web: instalar dependencias, configurar ESLint y ejecutar typecheck y lint | web | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (fd2a22d) | Build roto por 1 error de lint: decisión pendiente |
+| FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (85e220c) | Depende de FNC-024; fallas de contraste a DIS-001 a DIS-006 |
 | FNC-026 | CI que ejecute pytest, typecheck, lint y los controles del pre-commit | infra | 2 | ci | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 y FNC-024; requiere repositorio remoto |
 | FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | Propuesta | 2026-10-13 | | | — | Antes de FNC-020 |
 | FNC-028 | Limpiar scratch/ y utils/ (PSX5K) y adoptar Alembic con las migraciones 001-004 | backend | 4 | bd | Media | Propuesta | 2026-10-13 | | | — |  |
@@ -49,6 +49,6 @@
 | DIS-010 | Componentes comunes: DataTable, botón de peligro, filtros, tonos de estado y toast | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — |  |
 | DIS-011 | Dividir settings-panel.tsx, users-list.tsx y platform-admin.tsx | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — | Después de DIS-010 |
 | DIS-012 | Eliminar estilos inline y colores literales en TSX | web | 4 | estilos | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-033 |
-| FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | Propuesta | 2026-10-13 | | | — | Base de todas las fases siguientes |
-| FNC-072 | Corregir los hallazgos de lint de la línea base web | web | 2 | frontend | Alta | En revisión | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-072-corregir-lint-linea-base` (local) | Depende de FNC-024 |
+| FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop | Base de todas las fases siguientes |
+| FNC-072 | Corregir los hallazgos de lint de la línea base web | web | 2 | frontend | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (851846f) | Depende de FNC-024 |
 | FNC-073 | Alinear la versión mínima de Node en el despliegue | infra | 6 | deploy | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-025 |
