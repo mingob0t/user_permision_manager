@@ -48,27 +48,91 @@ datos; Next.js no accede a la base de datos, solo consume la API. Ver
 └── run.py                # Punto de entrada del backend
 ```
 
-## ⚙️ Desarrollo
+## ⚙️ Iniciar los servicios
 
-1.  **Configurar entorno**:
-    ```bash
-    cp .env.example .env    # editar con las credenciales
-    ```
-2.  **Backend** (Python 3.11 o superior):
-    ```bash
-    python3.11 -m venv venv   # o la versión que tengas
-    venv/bin/pip install -r requirements.txt
-    venv/bin/python run.py            # API en :5001
-    ```
-3.  **Frontend** (Node 18.18+, se recomienda 22 LTS):
-    ```bash
-    cd frontend
-    npm ci
-    npm run dev                       # interfaz en :3000
-    ```
+Son dos procesos independientes: el **backend** (Flask, puerto 5001) y el
+**frontend** (Next.js, puerto 3000). El navegador entra siempre por el
+frontend, que reenvía `/api` y `/auth` al backend.
 
-El `next.config.ts` reenvía `/api` y `/auth` al backend en desarrollo, así que
-el navegador ve un solo origen y la cookie de sesión viaja sin CORS.
+### Requisitos
+
+*   Python 3.11 o superior, Node 18.18 o superior (se recomienda 22 LTS).
+*   MySQL accesible por nombre de host (si `DB_ENGINE` no es `mysql`, la app usa SQLite local `nexus.db`).
+*   Redis es opcional: si no responde, la app arranca igual.
+
+### 1. Configuración (una sola vez)
+
+```bash
+cp .env.example .env    # completar los valores; .env nunca se versiona
+```
+
+Las variables y su significado están en [docs/configuracion/VARIABLES.md](docs/configuracion/VARIABLES.md).
+
+### 2. Backend (terminal 1)
+
+```bash
+# instalación (una sola vez)
+python3.11 -m venv venv
+venv/bin/pip install -r requirements.txt
+
+# iniciar en desarrollo
+venv/bin/python run.py                     # API en http://localhost:5001
+
+# o iniciar como en producción (sin modo debug)
+venv/bin/gunicorn --workers 4 --bind 127.0.0.1:5001 "run:app"
+```
+
+Comprobar que responde:
+
+```bash
+curl -s localhost:5001/api/v1/auth/context
+```
+
+> ⚠️ `run.py` arranca con `debug=True` y escucha en todas las interfaces. Úsalo
+> solo en tu equipo; en cualquier servidor usa gunicorn (corrección pendiente
+> en la tarea FNC-009).
+
+### 3. Frontend (terminal 2)
+
+```bash
+cd frontend
+
+# instalación (una sola vez)
+npm ci
+
+# iniciar en desarrollo (recarga en caliente)
+npm run dev                                # interfaz en http://localhost:3000
+
+# o compilar e iniciar como en producción
+npm run build
+npm run start
+```
+
+Comprobar que responde:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' localhost:3000/login   # espera 200
+```
+
+Abre `http://localhost:3000` en el navegador. El backend debe estar arriba
+antes de iniciar sesión.
+
+### 4. En el servidor (systemd)
+
+Tras `deploy/install.sh` (ver abajo), los dos servicios quedan como unidades
+systemd llamadas `NOMBRE-backend` y `NOMBRE-frontend` (`NOMBRE` es el valor de
+`--name`, por defecto `nexus`):
+
+```bash
+sudo systemctl start   nexus-backend nexus-frontend    # iniciar
+sudo systemctl stop    nexus-backend nexus-frontend    # detener
+sudo systemctl restart nexus-backend nexus-frontend    # reiniciar
+systemctl status       nexus-backend nexus-frontend    # estado
+journalctl -u nexus-backend -f                          # logs del backend
+journalctl -u nexus-frontend -f                         # logs del frontend
+```
+
+El frontend depende del backend: systemd arranca primero `nexus-backend`.
 
 ## 🚀 Instalación en servidor (Rocky Linux 8)
 
