@@ -81,6 +81,7 @@ Qué variables cambian por entorno. El valor de cada una está en `docs/configur
 | `BACKEND_URL` (frontend) | backend local | no se usa (enruta nginx) |
 | `AUTHELIA_ENABLED` | normalmente `false` | `true` al conectar Authelia |
 | `DB_*`, `SECRET_KEY`, `SMTP_*` | `.env` local | `.env` del servidor con secretos de Vaultwarden |
+| `LDAP_*` (FNC-040) | `.env` local; vacío = directorio inactivo | `.env` del servidor; `LDAP_BIND_PASSWORD` de Vaultwarden. Con CA interna: copiar su PEM al servidor y apuntar `LDAP_CA_CERT_FILE` (si no, la app no conecta: el certificado se valida) |
 
 ## Discrepancias detectadas en `deploy/README.md`
 
