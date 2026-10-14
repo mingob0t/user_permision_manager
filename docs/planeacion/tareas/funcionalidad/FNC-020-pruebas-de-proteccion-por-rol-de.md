@@ -15,7 +15,7 @@
 | **Finalizada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-020-pruebas-proteccion-por-rol` |
-| **Commits / PR** | (ver bitácora) |
+| **Commits / PR** | `f4c8873` (más el ajuste con el hash) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No (solo pruebas; la app no cambia) |
 
