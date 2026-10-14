@@ -15,7 +15,7 @@
 | **Finalizada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-022-pruebas-autenticacion` |
-| **Commits / PR** | |
+| **Commits / PR** | `1abfd6e` y corrección de la revisión (locales, sin push) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No (solo pruebas; la app no cambia) |
 
@@ -77,7 +77,7 @@ Probar login local, por directorio, SSO, logout y sesión sin servicios reales, 
 - No verificado: contra OpenLDAP y Authelia reales, ni con MySQL (la suite usa SQLite y dobles).
 
 ## Impacto en elementos compartidos
-- `impacto.py`: **ninguno detectado** (comparado contra `develop`; 12 archivos cambiados). Solo archivos nuevos en `tests/` y documentación.
+- `impacto.py` (contra `develop`): reporta 8 nombres (`__enter__`, `__exit__`, `__init__`, `agregar`, `buscar`, `directorio`, `search`, `unbind`). Son funciones nuevas en archivos nuevos de `tests/` que se llaman igual que código existente: homónimos, sin impacto real.
 
 ## Observaciones
 - SEG-14 (parte "desactivar no saca al usuario"): **no se reproduce**. En Flask-Login 0.6.3 `is_authenticated` devuelve `is_active`, y la sesión da 401. Queda como prueba normal. El resto de SEG-14 (remember de 365 días) sigue en FNC-008.
@@ -93,3 +93,4 @@ Probar login local, por directorio, SSO, logout y sesión sin servicios reales, 
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-13 | Aprobada por el dueño; implementada y probada (253 passed, 15 xfailed) |
+- revisor (2026-10-13): Requiere cambios de documentación e integración; corregidos (impacto, commit, CHANGELOG, actualización con develop). Unificar los dos LDAP simulados queda como FNC-074 (Propuesta).

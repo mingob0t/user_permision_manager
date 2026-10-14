@@ -52,3 +52,4 @@
 | FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop | Base de todas las fases siguientes |
 | FNC-072 | Corregir los hallazgos de lint de la línea base web | web | 2 | frontend | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (851846f) | Depende de FNC-024 |
 | FNC-073 | Alinear la versión mínima de Node en el despliegue | infra | 6 | deploy | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-025 |
+| FNC-074 | Unificar el LDAP simulado de las pruebas | backend | 4 | pruebas | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-022 |

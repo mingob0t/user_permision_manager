@@ -12,10 +12,3 @@
 
 ### Corregido
 - El build web ya no falla por lint: enlace de error con `Link` y avisos resueltos (FNC-072, 2026-10-13).
-
-## FNC-022 — Pruebas de autenticación
-- Aprobada por el dueño; implementada en `fnc/FNC-022-pruebas-autenticacion`.
-- 48 pruebas: login local, directorio con `ldap3` simulado, SSO por `Remote-*`, `/context`, logout y sesión.
-- 13 `xfail` con su tarea: SEG-01, 02, 04, 10, 11 y 12 (FNC-002, 003, 006, 013 y 014).
-- SEG-14 "desactivar no saca al usuario" no se reproduce: Flask-Login ya da 401.
-- Solo pruebas; la app no cambia. `venv/bin/pytest`: 253 passed, 15 xfailed, código 0.
