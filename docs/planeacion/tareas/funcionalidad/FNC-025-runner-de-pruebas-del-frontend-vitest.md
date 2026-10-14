@@ -103,3 +103,9 @@ Temas: claro, so-oscuro, html.dark, emerald, obsidian, rose, violet. 88 celdas e
 | 2026-10-13 | Aprobada por el dueño. Implementada en `fnc/FNC-025-runner-pruebas-frontend`; pruebas, lint, typecheck y build en verde; commit local sin push |
 - auditor-seguridad (modo cambio, 2026-10-13): Aprobado; npm audit baja de 13 a 12, nada nuevo en producción.
 - revisor (2026-10-13): Requiere cambios menores de la ficha; corregidos (seguridad, impacto, reordenamiento, commit).
+
+## Observaciones de la segunda revisión (2026-10-13)
+- Despliegue: `deploy/install.sh` hace `npm ci`, que ahora también instala vitest, jsdom y vite en el servidor (son necesarias para compilar otras devDependencies; sin efecto en el portal publicado).
+- Node mínimo: las pruebas piden 20.19+ o 22.13+; `deploy/preflight.sh` acepta 18. Registrado como FNC-073 (Propuesta, infra).
+- Límite: la prueba de contraste mide los tokens, no el CSS final (p. ej. `.nexus-btn-primary` fuerza blanco con `!important`; lo cubre DIS-004).
+- Límite: la prueba de colores literales no detecta colores con nombre (`fill="white"`), `oklch()`/`lab()` ni valores arbitrarios de Tailwind; hoy hay 0 casos.

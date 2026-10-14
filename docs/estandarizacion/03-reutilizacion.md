@@ -48,3 +48,4 @@
 | D-13 | Capa de modal duplicada en CSS | `components.css:1551-1621` y `global.css:204-335` (`nexus-modal`, `modal-*`) | Ninguna: ambas son código muerto (el `Modal` usa Tailwind) |
 | D-14 | Scripts de BD con la misma cadena de conexión | `scratch/list_dbs.py:5`, `cross_db_search_v2.py:8`, `multi_fix_db.py:8` | Borrar `scratch/` |
 | D-15 | Páginas `page.tsx` con la misma estructura | `frontend/src/app/*/page.tsx` (10 archivos, 5 líneas útiles) | Aceptable: patrón de Next.js |
+| D-16 | Definición de "color literal" | `frontend/tests/accesibilidad/colores-literales.test.ts:16-25` (hex, rgb/hsl y paleta Tailwind); `scripts/lineamientos/reglas.py:21-23` (hex y rgb/hsl) | Fines distintos (tope en repo vs. bloqueo en pre-commit); mantener alineadas al cambiar una |

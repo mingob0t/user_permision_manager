@@ -125,3 +125,5 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 | 8 | Navegación lateral oculta en móvil (`hidden md:block`) sin menú alternativo. | `app-shell.tsx` |
 | 9 | Valor por defecto del backend escrito como dirección de loopback numérica en el código (incumple "sin IPs"; debería ser `localhost` o configuración). | `next.config.ts`, `lib/api.ts` |
 | 10 | Título "Nexus" fijo en `layout.tsx` y en la barra lateral, aunque el nombre del portal es configurable en `system_config`. | `app/layout.tsx`, `app-shell.tsx` |
+
+> Límites de las pruebas automáticas: la de contraste mide los tokens de `tokens.css`, no el CSS final (reglas con `!important` pueden ignorarlos); la de colores literales no detecta colores con nombre, `oklch()`/`lab()` ni valores arbitrarios de Tailwind.
