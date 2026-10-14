@@ -50,3 +50,4 @@
 | DIS-011 | Dividir settings-panel.tsx, users-list.tsx y platform-admin.tsx | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — | Después de DIS-010 |
 | DIS-012 | Eliminar estilos inline y colores literales en TSX | web | 4 | estilos | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-033 |
 | FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | Propuesta | 2026-10-13 | | | — | Base de todas las fases siguientes |
+| FNC-072 | Corregir los hallazgos de lint de la línea base web | web | 2 | frontend | Alta | En revisión | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-072-corregir-lint-linea-base` (local) | Depende de FNC-024 |
