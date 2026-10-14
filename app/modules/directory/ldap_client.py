@@ -1,0 +1,216 @@
+"""Cliente único de OpenLDAP (solo lectura) con TLS validado (FNC-040).
+
+- Conexión de servicio por LDAPS o StartTLS, con `CERT_REQUIRED`, verificación
+  del nombre del host y la CA de `LDAP_CA_CERT_FILE` (o la del sistema).
+- Tiempos de espera de conexión y de respuesta (`LDAP_TIMEOUT_SECONDS`).
+- Todo valor que entra en un filtro se escapa (`escape_filter_chars`); los
+  valores para armar un DN se escapan con `escapar_valor_dn`.
+- Los errores salen como `ErrorDirectorio` con un mensaje genérico; el detalle
+  va al log, nunca con la contraseña de bind.
+
+La escritura (membresía de grupos y alta de cuentas) es de FNC-041.
+"""
+import logging
+import ssl
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+
+from ldap3 import BASE, SUBTREE, SYNC, Connection, Server, Tls
+from ldap3.core.exceptions import (LDAPException, LDAPInvalidDnError,
+                                   LDAPNoSuchObjectResult,
+                                   LDAPSizeLimitExceededResult)
+from ldap3.utils.conv import escape_filter_chars
+from ldap3.utils.dn import escape_rdn, parse_dn
+
+from app.modules.directory.configuracion import cargar_configuracion
+
+logger = logging.getLogger(__name__)
+
+# Estrategia de `ldap3`. Las pruebas la cambian por `MOCK_SYNC` (sin red).
+ESTRATEGIA = SYNC
+
+# Atributos de perfil de una persona (inetOrgPerson) que se leen al buscarla.
+ATRIBUTOS_PERFIL = ('mail', 'cn', 'displayName')
+
+# Atributos de membresía cuyo valor es el identificador del usuario y no su DN
+# (posixGroup). El resto (`member`, `uniqueMember`) guarda el DN.
+ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR = frozenset({'memberuid'})
+
+# Una búsqueda por identificador debe dar a lo sumo una persona; se piden dos
+# para detectar duplicados.
+LIMITE_BUSQUEDA_USUARIO = 2
+
+MENSAJE_ERROR = 'No se pudo consultar el directorio.'
+MENSAJE_AMBIGUO = 'El identificador corresponde a más de una persona.'
+
+
+class ErrorDirectorio(Exception):
+    """Fallo controlado del directorio; el mensaje es apto para el cliente."""
+
+
+@dataclass(frozen=True)
+class UsuarioDirectorio:
+    """Persona encontrada: su DN, su identificador y sus atributos de perfil."""
+
+    dn: str
+    identificador: str
+    atributos: dict = field(default_factory=dict)
+
+
+def escapar_filtro(valor):
+    """Escapa un valor para un filtro LDAP (RFC 4515): `*`, `(`, `)`, `\\`, NUL."""
+    return escape_filter_chars(str(valor))
+
+
+def escapar_valor_dn(valor):
+    """Escapa un valor para un RDN (RFC 4514): `,`, `+`, `"`, `\\`, `<`, `>`, `;`, `=`."""
+    return escape_rdn(str(valor))
+
+
+def _texto(entrada, atributo):
+    if atributo not in entrada:
+        return ''
+    valor = entrada[atributo].value
+    if isinstance(valor, list):
+        valor = valor[0] if valor else ''
+    return '' if valor is None else str(valor)
+
+
+class ClienteDirectorio:
+    """Operaciones de lectura sobre el directorio con la cuenta de servicio."""
+
+    def __init__(self, configuracion=None):
+        self.configuracion = configuracion or cargar_configuracion()
+
+    # ------------------------------------------------------------------ #
+    # Conexión
+    # ------------------------------------------------------------------ #
+
+    def _tls(self):
+        cfg = self.configuracion
+        # `version=None`: contexto por defecto de Python (TLS 1.2 o superior).
+        return Tls(validate=ssl.CERT_REQUIRED, version=None,
+                   ca_certs_file=cfg.ca_cert_file, sni=cfg.host)
+
+    def _servidor(self):
+        cfg = self.configuracion
+        return Server(cfg.host, port=cfg.puerto, use_ssl=cfg.usa_ldaps,
+                      tls=self._tls(), connect_timeout=cfg.tiempo_espera)
+
+    def _error(self, operacion, exc):
+        """Registra el detalle sin la contraseña y devuelve el error genérico."""
+        detalle = str(exc)
+        contrasena = self.configuracion.bind_password
+        if contrasena:
+            detalle = detalle.replace(contrasena, '***')
+        logger.error('Directorio: fallo en %s (%s): %s', operacion,
+                     type(exc).__name__, detalle)
+        return ErrorDirectorio(MENSAJE_ERROR)
+
+    @contextmanager
+    def conexion_servicio(self):
+        """Conexión de solo lectura autenticada con la cuenta de servicio.
+
+        `ldap://` negocia StartTLS antes de enviar la credencial.
+        """
+        cfg = self.configuracion
+        conexion = None
+        try:
+            conexion = Connection(
+                self._servidor(), user=cfg.bind_dn, password=cfg.bind_password,
+                client_strategy=ESTRATEGIA, receive_timeout=cfg.tiempo_espera,
+                auto_referrals=False, raise_exceptions=True, read_only=True)
+            conexion.open()
+            if not cfg.usa_ldaps:
+                conexion.start_tls()
+            conexion.bind()
+        except LDAPException as exc:
+            self._cerrar(conexion)
+            raise self._error('conexión', exc) from None
+        try:
+            yield conexion
+        finally:
+            self._cerrar(conexion)
+
+    @staticmethod
+    def _cerrar(conexion):
+        if conexion is None:
+            return
+        try:
+            conexion.unbind()
+        except LDAPException:
+            pass
+
+    # ------------------------------------------------------------------ #
+    # Lecturas
+    # ------------------------------------------------------------------ #
+
+    def buscar_usuario(self, identificador):
+        """Busca una persona por `LDAP_USER_ATTR`; `None` si no existe.
+
+        El identificador se escapa: `*` o `)(` se buscan literalmente.
+        """
+        cfg = self.configuracion
+        filtro = f'({cfg.atributo_usuario}={escapar_filtro(identificador)})'
+        atributos = [cfg.atributo_usuario, *ATRIBUTOS_PERFIL]
+        with self.conexion_servicio() as conexion:
+            try:
+                conexion.search(cfg.usuarios_base_dn, filtro, SUBTREE,
+                                attributes=atributos,
+                                size_limit=LIMITE_BUSQUEDA_USUARIO)
+            except LDAPSizeLimitExceededResult:
+                entradas, ambiguo = [], True
+            except LDAPException as exc:
+                raise self._error('búsqueda de usuario', exc) from None
+            else:
+                entradas = list(conexion.entries)
+                ambiguo = len(entradas) > 1
+        if ambiguo:
+            logger.error('Directorio: el filtro %s corresponde a más de una '
+                         'entrada', filtro)
+            raise ErrorDirectorio(MENSAJE_AMBIGUO)
+        if not entradas:
+            return None
+        entrada = entradas[0]
+        return UsuarioDirectorio(
+            dn=entrada.entry_dn,
+            identificador=_texto(entrada, cfg.atributo_usuario) or str(identificador),
+            atributos={nombre: _texto(entrada, nombre)
+                       for nombre in ATRIBUTOS_PERFIL})
+
+    def grupos_de_usuario(self, usuario):
+        """DN de los grupos (`LDAP_GROUP_OBJECT_CLASS`) de los que es miembro.
+
+        Busca bajo `LDAP_GROUPS_BASE_DN`; no depende del overlay `memberOf`.
+        """
+        cfg = self.configuracion
+        if cfg.atributo_miembro.lower() in ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR:
+            valor = usuario.identificador
+        else:
+            valor = usuario.dn
+        filtro = (f'(&(objectClass={cfg.clase_grupo})'
+                  f'({cfg.atributo_miembro}={escapar_filtro(valor)}))')
+        with self.conexion_servicio() as conexion:
+            try:
+                conexion.search(cfg.grupos_base_dn, filtro, SUBTREE,
+                                attributes=[])
+            except LDAPException as exc:
+                raise self._error('lectura de grupos', exc) from None
+            return sorted(entrada.entry_dn for entrada in conexion.entries)
+
+    def existe_dn(self, dn):
+        """`True` si la entrada `dn` existe; un DN mal formado da `False`."""
+        if not dn:
+            return False
+        try:
+            parse_dn(dn)
+        except LDAPInvalidDnError:
+            return False
+        with self.conexion_servicio() as conexion:
+            try:
+                conexion.search(dn, '(objectClass=*)', BASE, attributes=[])
+            except LDAPNoSuchObjectResult:
+                return False
+            except LDAPException as exc:
+                raise self._error('comprobación de DN', exc) from None
+            return bool(conexion.entries)
