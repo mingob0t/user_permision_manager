@@ -26,7 +26,9 @@ export function useAsync<T>(
   const [nonce, setNonce] = useState(0);
 
   // `load` se recrea en cada render; las dependencias declaradas por quien
-  // llama son las que deciden la recarga.
+  // llama son las que deciden la recarga. La regla no puede analizar `deps`
+  // porque llega como parámetro; es intencional.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const runner = useCallback(load, deps);
 
   useEffect(() => {

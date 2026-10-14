@@ -93,7 +93,23 @@ npm run build          # build standalone
 
 Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 
-**Estado al documentar:** en esta copia no hay `node_modules`, así que `typecheck`, `lint` y `build` **no se ejecutaron** en FNC-001. Además, `eslint` y `eslint-config-next` no están en `devDependencies` ni hay configuración de ESLint, por lo que `npm run lint` pedirá configurarlo la primera vez.
+**Pruebas (FNC-025):**
+- `npm test`: corre todas las pruebas una vez (Vitest + Testing Library + jsdom). `npm run test:watch`: modo vigilancia.
+- Requiere Node 20.19+ o 22.13+ (por Vitest y jsdom).
+- Las pruebas viven en `frontend/tests/`; configuración en `vitest.config.ts`.
+- `tests/lib/api.test.ts`: cliente de la API con `fetch` simulado (éxito, error HTTP, 401).
+- `tests/components/audit-log.test.tsx`: `AuditLog` con la API simulada (datos, filtro, vacío, error).
+- `tests/accesibilidad/contraste.test.ts`: contraste WCAG de los tokens en los 7 temas (4.5:1 texto, 3:1 bordes).
+- Los pares que hoy fallan están en `fallas-contraste-conocidas.ts` con su tarea DIS y se marcan `it.fails`. Si una tarea los corrige, la prueba avisa: quita el par de la lista.
+- `tests/accesibilidad/colores-literales.test.ts`: falla si aparece un color literal nuevo (`#hex`, `rgb()`, clases como `text-red-600`) en `src/components` o `src/app`.
+- Los literales que ya existían tienen tope por archivo en `colores-literales.excepciones.ts`. Si corriges uno, baja el tope.
+- `next lint` no revisa `tests/`; para lint de pruebas: `npx eslint tests vitest.config.ts`.
+
+**Línea base (FNC-024, 2026-10-13):**
+- ESLint configurado en `eslint.config.mjs` (`next/core-web-vitals` + `next/typescript`); `npm run lint` ya no pregunta nada.
+- `typecheck`: sin errores. `lint`: 1 error y 3 avisos (detalle en la ficha de FNC-024).
+- `build`: falla en el paso de lint por el error de `app/error.tsx`; sin lint (`next build --no-lint`) compila. Decisión pendiente en FNC-024.
+- `next lint` está obsoleto en Next.js 15.5; migrar a la CLI de ESLint al pasar a Next.js 16.
 
 ## 8. Deuda conocida
 
@@ -104,8 +120,10 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 | 3 | Colores literales en `tailwind.config.ts` (`warning`, `error`, `info`) en lugar de tokens. | `tailwind.config.ts` |
 | 4 | `text-white` fijo en el botón de `error.tsx`. | `app/error.tsx` |
 | 5 | Sin selector de tema; temas adicionales definidos pero inalcanzables. | `styles/tokens.css` |
-| 6 | ESLint no instalado ni configurado; sin pruebas de frontend. | `package.json` |
+| 6 | Pocas pruebas de frontend: runner y pruebas base listas (FNC-025); faltan pruebas de más pantallas. | `frontend/tests/` |
 | 7 | Componentes grandes con varias responsabilidades (`settings-panel.tsx`, `users-list.tsx`). | `components/` |
 | 8 | Navegación lateral oculta en móvil (`hidden md:block`) sin menú alternativo. | `app-shell.tsx` |
 | 9 | Valor por defecto del backend escrito como dirección de loopback numérica en el código (incumple "sin IPs"; debería ser `localhost` o configuración). | `next.config.ts`, `lib/api.ts` |
 | 10 | Título "Nexus" fijo en `layout.tsx` y en la barra lateral, aunque el nombre del portal es configurable en `system_config`. | `app/layout.tsx`, `app-shell.tsx` |
+
+> Límites de las pruebas automáticas: la de contraste mide los tokens de `tokens.css`, no el CSS final (reglas con `!important` pueden ignorarlos); la de colores literales no detecta colores con nombre, `oklch()`/`lab()` ni valores arbitrarios de Tailwind.

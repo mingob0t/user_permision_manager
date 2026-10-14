@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "next": "15.5.7",
@@ -16,12 +18,22 @@
     "recharts": "2.15.4"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "3.3.5",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.3",
     "@types/node": "22.10.5",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
-    "typescript": "5.7.3",
-    "tailwindcss": "3.4.17",
+    "autoprefixer": "10.4.20",
+    "eslint": "9.39.4",
+    "eslint-config-next": "15.5.7",
+    "jsdom": "29.1.1",
     "postcss": "8.5.1",
-    "autoprefixer": "10.4.20"
+    "tailwindcss": "3.4.17",
+    "typescript": "5.7.3",
+    "vitest": "4.1.11"
+  },
+  "overrides": {
+    "vite": "6.4.3"
   }
 }
