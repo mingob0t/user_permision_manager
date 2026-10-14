@@ -122,3 +122,8 @@ Respuesta: `{"status": "success", "request": AccessRequest}`. Auditoría `solici
   "decided_by": { "id": 2, "name": "Luis Paz" }, "rejection_reason": "Usa el reporte compartido del área.", "access": null } ],
   "page": 1, "per_page": 25, "total": 1 }
 ```
+
+## Historial
+| Versión | Fecha | Cambio |
+|---|---|---|
+| 1 | 2026-10-14 | Versión inicial (FNC-038) |

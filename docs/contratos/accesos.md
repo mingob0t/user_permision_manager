@@ -37,7 +37,8 @@ Convenciones comunes: [README.md](README.md). Tabla `platform_access_grants`.
 | `POST /access/<id>/revoke` | 403 | 200 | 404 | 200 |
 | `GET /access/inventory` | 403 | 200 (sus áreas) | — (no aparecen) | 200 (todo) |
 
-Revocar un acceso propio → 403 `operacion_propia` (SEC-AUTHZ-08).
+- Revocar un acceso propio → 403 `operacion_propia` (SEC-AUTHZ-08).
+- Un admin no revoca accesos de otros admins del área ni accesos de origen `admin_de_area` → 404 (SEC-AUTHZ-06); el superadmin sí.
 
 ## `GET /me/access` · `GET /users/<id>/access`
 | Parámetro | Tipo | Regla |
@@ -60,12 +61,12 @@ Orden: `granted_at` descendente. Respuesta paginada de `Access`.
 |---|---|
 | `granted_by` | `{id, name}` \| null (null = `sistema`, origen `admin_de_area`) |
 | `revoked_by` | `{id, name}` \| null |
-| `last_job_id` | int \| null (ver conectores-y-ejecuciones.md; solo admin y superadmin) |
+| `last_job_id` | int \| null (ver conectores-y-ejecuciones.md); se omite en `/me/access` para el rol usuario |
 
 ## `POST /access/<id>/revoke`
 | Campo | Tipo | Obligatorio | Regla |
 |---|---|---|---|
-| `reason` | string | Sí — *Por confirmar (P7)* | 10–500 caracteres |
+| `reason` | string \| null | No (P7, 2026-10-14) | ≤ 500 si llega; sin mínimo |
 
 - Solo desde `activo` → `revocando` + trabajo encolado, en una transacción.
 - Respuesta: `{"status": "success", "access": Access}`. Auditoría `acceso_revocado` (solicitado) y luego `revocacion_fallida` o el resultado final del trabajo.
@@ -89,7 +90,7 @@ Orden: área, plataforma, usuario. Respuesta paginada de `Access` (mismos campos
 |---|---|---|
 | 403 | `operacion_propia` | No puedes revocar tu propio acceso. |
 | 409 | `estado_invalido` | Solo se revoca un acceso activo. |
-| 422 | `validacion` | `fields.reason`: "Escribe entre 10 y 500 caracteres." |
+| 422 | `validacion` | `fields.reason`: "Máximo 500 caracteres." |
 
 ## Refresco
 | Pantalla | Polling |
@@ -107,3 +108,8 @@ Orden: área, plataforma, usuario. Respuesta paginada de `Access` (mismos campos
   "granted_at": "2026-10-14T15:00:00Z", "revoked_by": null, "revoked_at": null,
   "revoke_reason": null, "last_job_id": 300 } ], "page": 1, "per_page": 25, "total": 1 }
 ```
+
+## Historial
+| Versión | Fecha | Cambio |
+|---|---|---|
+| 1 | 2026-10-14 | Versión inicial (FNC-038) |

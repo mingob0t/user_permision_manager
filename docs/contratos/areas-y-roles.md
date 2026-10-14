@@ -15,10 +15,10 @@ Convenciones comunes: [README.md](README.md). Sin cambios: `GET /areas`, `GET /a
 |---|---|---|---|---|
 | `POST /areas` | 403 | 201 (queda como admin del área) | — | 201 |
 | `PUT /areas/<id>` | 403 | 200 | 404 | 200 |
-| `DELETE /areas/<id>` | 403 | 403 | 404 | 200 |
+| `DELETE /areas/<id>` | 403 | 200 | 404 | 200 |
 | `PUT /users/<id>/managed-areas` | 403 | 403 | 403 | 200 |
-| `POST /users` (rol) | 403 | 201 solo `usuario` | — | 201 `usuario` o `admin_area` |
-| `PUT /users/<id>` (rol) | 403 | 200 sin `role`; con `role` → 403 | 404 | 200 |
+| `POST /users` (rol) | 403 | 201 con `usuario`; otro → 403 `rol_reservado` | — | 201 `usuario` o `admin_area` |
+| `PUT /users/<id>` (rol) | 403 | 200 sin `role` o con `usuario`; otro → 403 `rol_reservado` | 404 | 200 |
 
 ### `POST /areas` · `PUT /areas/<id>`
 Entrada (lista blanca):
@@ -34,7 +34,8 @@ Entrada (lista blanca):
 - Admin de área en POST: se agrega a `area_admins` en la misma transacción; auditoría `area_creada`.
 - Respuesta: `{"status": "success", "area": Area}` (tipo `Area` existente).
 
-### `DELETE /areas/<id>` — *Por confirmar (P11)*: solo superadmin
+### `DELETE /areas/<id>` (P11, 2026-10-14)
+- Admin (sus áreas) o superadmin; `409` si tiene plataformas o accesos vigentes.
 - Respuesta: `{"status": "success"}`; auditoría `area_eliminada`.
 
 ### `PUT /users/<id>/managed-areas`
@@ -57,6 +58,9 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 |---|---|---|
 | `role` | `"usuario"` \| `"admin_area"` | Solo superadmin; `administrador` nunca es asignable (SEC-AUTH-07) |
 
+- `managed_area_ids` en `POST /users` o `PUT /users/<id>` → `400 campo_no_permitido`. La única vía para asignar áreas administradas es `PUT /users/<id>/managed-areas` (superadmin).
+- `POST /users` con `admin_area` ya **no** copia `area_ids` a las áreas administradas (cambio respecto a hoy); nace sin áreas administradas.
+- `auth_source` → `400 campo_no_permitido`; lo fija el servidor.
 - Degradar `admin_area` → `usuario` borra sus áreas administradas en la misma transacción; auditoría `rol_cambiado` con antes y después.
 - Un admin de área solo gestiona cuentas `usuario` de sus áreas (SEC-AUTHZ-06); sobre otro admin o el superadmin → 404.
 - Nadie cambia su propio rol (SEC-AUTHZ-08) → 403 `operacion_propia`.
@@ -69,6 +73,7 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | 409 | `area_con_accesos` | El área tiene accesos vigentes. |
 | 409 | `rol_no_admin` | El usuario no es administrador de área. |
 | 403 | `rol_reservado` | Ese rol no se puede asignar. |
+| 400 | `campo_no_permitido` | Hay campos que no se pueden enviar. |
 | 403 | `operacion_propia` | No puedes cambiar tu propio rol. |
 | 422 | `validacion` | Revisa los campos marcados. |
 
@@ -79,3 +84,8 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 ```json
 { "status": "success", "area": { "id": 3, "name": "Finanzas", "description": "Sistemas contables", "icon": "wallet", "color": "#2563eb", "status": "Activo", "platforms_count": 0, "users_count": 0 } }
 ```
+
+## Historial
+| Versión | Fecha | Cambio |
+|---|---|---|
+| 1 | 2026-10-14 | Versión inicial (FNC-038) |

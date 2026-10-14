@@ -94,3 +94,9 @@
 - P4: los accesos actuales de NEXUS (`user_platforms`) se descartan; no se migran.
 - P14/ADR-003: cola de conectores con Redis + RQ.
 - P6/P12: el superadmin tiene acceso por defecto. Cuando un admin da de alta una plataforma, el sistema le otorga acceso automáticamente y la auditoría registra dos eventos: "admin X dio de alta la plataforma Y" y "sistema dio permisos de acceso a admin X".
+
+## Respuestas del dueño (2026-10-14)
+- P7: revocar no requiere motivo.
+- P8: el portal no maneja contraseñas de cuentas LDAP; la contraseña la maneja Authelia.
+- P10: avisar a los admins del área y al superadmin; reintento manual solo el superadmin.
+- P11: el admin de un área también puede darla de baja (además del superadmin); 409 si tiene plataformas o accesos vigentes.

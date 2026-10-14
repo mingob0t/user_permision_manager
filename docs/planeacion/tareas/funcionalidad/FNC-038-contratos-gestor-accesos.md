@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | contratos |
 | **Prioridad** | Alta |
-| **Estatus** | Hecha |
+| **Estatus** | En revisión |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Rama `fnc/FNC-038-contratos-v1` desde `develop` (worktree `pokemon-wt-038`) |
 | **Rama** | `fnc/FNC-038-contratos-v1` |
@@ -51,9 +51,13 @@
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
 | Forma de error de `/api/v1`: campos nuevos opcionales `code` y `correlation_id` (aditivos; `status` y `message` igual) | Convención de API (solo documentada) | Todo el frontend (`lib/api.ts` lee `message`); backend `_error` de `crud.py` y `admin.py` al implementar | Pendiente (dueño) |
-| Lista paginada `{items, page, per_page, total}` para endpoints nuevos | Convención de API (solo documentada) | Endpoints nuevos de la fase 3; `GET /audit` conserva `limit` | Pendiente (dueño) |
+| Lista paginada `{items, page, per_page, total}` para endpoints nuevos | Convención de API (solo documentada) | Endpoints nuevos de la fase 3 | Pendiente (dueño) |
+| `GET /audit`: sin `page` devuelve el arreglo actual; con `page`, paginado | Endpoint existente | `lib/api.ts:74` (`api.audit`), `components/audit-log.tsx:19` (pantalla Auditoría): sin cambio mientras no envíen `page` | Pendiente (dueño) |
+| `managed_area_ids` en `POST/PUT /users` → 400; `POST /users` con `admin_area` ya no copia áreas | Endpoint existente | `components/users-list.tsx:115,124` (pantalla Usuarios) | Pendiente (dueño); lo adapta FNC-069/DIS-019 |
+| Retirados `PUT /platforms/<id>/users` y `PUT /users/<id>/platforms` (FNC-065) | Endpoints existentes | `lib/api.ts:123` (`setPlatformUsers`, sin uso en componentes), `lib/api.ts:136` (`setUserPlatforms`) y `components/users-list.tsx` | Pendiente (dueño) |
+| Anexo A de `docs/seguridad/LINEAMIENTOS.md`: baja de áreas para admin (sus áreas); §12 sin la pregunta 17 | Lineamiento compartido | Revisor, auditor-seguridad y pruebas de matriz (`tests/matriz_proteccion.py` al implementar FNC-045) | Pendiente (dueño) |
 
-`impacto.py` (2026-10-14, contra `develop`): **Impacto en elementos compartidos:** ninguno detectado (comparado contra `develop`; 11 archivos cambiados). Solo documentación; no cambia código.
+`impacto.py` (2026-10-14, tras las correcciones, contra `develop`): **Impacto en elementos compartidos:** ninguno detectado (comparado contra `develop`; 14 archivos cambiados). Detecta solo código; las filas de arriba son de contrato y se listan a mano.
 
 ## Criterios de aceptación
 - [x] Un contrato por sección, con versión 1 y fecha (8 contratos + índice)
@@ -71,11 +75,14 @@
 
 - No verificado: no hay código que probar; sin pytest ni Vitest (la tarea es solo documentación). Sin revisor (indicación del orquestador).
 
+## Respuestas del dueño (2026-10-14)
+- P7: revocar no requiere motivo (`reason` opcional, ≤ 500)
+- P8: el portal no maneja contraseñas de cuentas LDAP; la contraseña la maneja Authelia
+- P10: aviso a admins del área y superadmin; reintento manual solo superadmin (confirmado)
+- P11: baja de áreas también por el admin de esas áreas; 409 con plataformas o accesos vigentes. Anexo A y §12 de `docs/seguridad/LINEAMIENTOS.md` actualizados
+
 ## Por confirmar (valor más seguro aplicado)
-- P7: motivo obligatorio al revocar (10–500)
-- P8: cuenta LDAP sin contraseña; restablecimiento por Authelia
-- P10: aviso a admins del área y superadmin sin depender de la preferencia; reintento solo superadmin
-- P11: baja de áreas solo superadmin; 409 con plataformas o accesos vigentes
+- P10 (resto): el aviso no depende de `pref_email_notifications`
 - P13: no cambia la forma; el contrato exige CSRF (cabecera y token según FNC-008)
 - P6 (resto): nivel `admin` del acceso automático del creador; otros admins y retiro del área en FNC-055
 - Seguridad §12.11: lista blanca de hosts fijada por el despliegue
@@ -94,4 +101,5 @@
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-14 | Aprobada por el dueño (vía orquestador); En curso en `fnc/FNC-038-contratos-v1` |
-| 2026-10-14 | Hecha: 8 contratos v1 + `docs/contratos/README.md`; commit local sin push |
+| 2026-10-14 | 8 contratos v1 + `docs/contratos/README.md`; commit local `e092ee9` sin push |
+| 2026-10-14 | Respuestas P7, P8, P10, P11 y 9 hallazgos del revisor corregidos; En revisión hasta el merge |

@@ -30,7 +30,15 @@ Convenciones comunes: [README.md](README.md). Inmutable: sin rutas de edición n
 | `q` | texto ≤ 100 | Busca en actor y destino |
 | `page`, `per_page` | int | Paginada |
 
-Orden: `time` descendente. `GET /audit?limit=` sigue aceptándose en v1 (cliente actual); `page`/`per_page` tienen prioridad.
+Orden: `time` descendente.
+
+### Compatibilidad de `GET /audit`
+| Petición | Respuesta |
+|---|---|
+| Sin `page` (con o sin `limit`, máx. 500) | Arreglo simple de `AuditEntry`, como hoy (`audit-log.tsx`) |
+| Con `page` | Lista paginada `{items, page, per_page, total}`; `limit` se ignora |
+
+Los endpoints `/audit/users/<id>` y `/audit/platforms/<id>` son siempre paginados.
 
 ## `AuditEntry` (campos existentes + nuevos)
 ```json
@@ -54,7 +62,7 @@ Orden: `time` descendente. `GET /audit?limit=` sigue aceptándose en v1 (cliente
 ## Catálogo de `action` (gestor de accesos)
 | `action` | Actor | Ejemplo |
 |---|---|---|
-| `area_creada` / `area_editada` / `area_eliminada` | admin o superadmin | — |
+| `area_creada` / `area_editada` / `area_eliminada` | admin (sus áreas) o superadmin | `area_eliminada`: P11 |
 | `admin_asignado` / `admin_retirado` | superadmin | Área administrada |
 | `rol_cambiado` | superadmin | `before.role` → `after.role` |
 | `plataforma_creada` | admin X | "admin X dio de alta la plataforma Y" |
@@ -80,3 +88,8 @@ El catálogo vive en FNC-047; agregar valores es aditivo (misma versión).
   "platform": { "id": 12, "name": "Contabilidad" }, "target_user": null, "before": null,
   "after": { "name": "Contabilidad", "integration_type": "ldap" } } ], "page": 1, "per_page": 25, "total": 1 }
 ```
+
+## Historial
+| Versión | Fecha | Cambio |
+|---|---|---|
+| 1 | 2026-10-14 | Versión inicial (FNC-038) |

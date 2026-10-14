@@ -89,3 +89,8 @@ En la misma transacción:
     "integration_type": "conector", "ldap_group_user_dn": null, "ldap_group_admin_dn": null,
     "groups_status": "sin_verificar", "has_connector": true, "active_grants": 4, "status": "Activo" } ]
 ```
+
+## Historial
+| Versión | Fecha | Cambio |
+|---|---|---|
+| 1 | 2026-10-14 | Versión inicial (FNC-038) |

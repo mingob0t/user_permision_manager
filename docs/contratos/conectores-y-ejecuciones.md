@@ -19,7 +19,7 @@ Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: lo
 | `POST /platforms/<id>/connector/test` | 403 | 403 | 403 | 200 |
 | `GET /provisioning/jobs` | 403 | 200 (sus áreas, lectura) | — (no aparecen) | 200 |
 | `GET /provisioning/jobs/<id>` | 403 | 200 | 404 | 200 |
-| `POST /provisioning/jobs/<id>/retry` | 403 | 403 — *Por confirmar (P10)* | 404 | 200 |
+| `POST /provisioning/jobs/<id>/retry` | 403 | 403 (P10) | 403 | 200 |
 
 Conectores: solo superadmin (SEC-CON-11).
 
@@ -85,8 +85,8 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 - Sin cuerpo. Solo desde `fallido` → `pendiente`; el acceso vuelve a `en_proceso` o `revocando`.
 - Respuesta: `{"status": "success", "job": Job}`. Auditoría `ejecucion_reintentada`.
 
-## Aviso de fallo — *Por confirmar (P10)*
-- Al agotar reintentos: correo `aprovisionamiento_fallido` a los admins del área y al superadmin, sin depender de `pref_email_notifications`; auditoría `acceso_fallido` o `revocacion_fallida`.
+## Aviso de fallo (P10, 2026-10-14)
+- Al agotar reintentos: correo `aprovisionamiento_fallido` a los admins del área y al superadmin (no depender de `pref_email_notifications`: *Por confirmar*); auditoría `acceso_fallido` o `revocacion_fallida`.
 
 ## Errores
 | HTTP | `code` | Mensaje |
@@ -109,3 +109,8 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
   "attempts_count": 2, "max_attempts": 5, "next_attempt_at": "2026-10-14T16:02:00Z",
   "created_at": "2026-10-14T16:00:00Z", "finished_at": null } ], "page": 1, "per_page": 25, "total": 1 }
 ```
+
+## Historial
+| Versión | Fecha | Cambio |
+|---|---|---|
+| 1 | 2026-10-14 | Versión inicial (FNC-038) |

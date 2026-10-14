@@ -40,3 +40,8 @@ Campos que no aplican al rol se omiten.
   "pending_approvals": 4, "failed_access": 1, "oldest_pending_at": "2026-10-13T09:00:00Z",
   "totals": { "areas": 2, "platforms": 7, "active_access": 35 } }
 ```
+
+## Historial
+| Versión | Fecha | Cambio |
+|---|---|---|
+| 1 | 2026-10-14 | Versión inicial (FNC-038) |

@@ -26,7 +26,7 @@ Convenciones comunes: [README.md](README.md). P2: superadmin y admins (para sus 
 
 - Rol siempre `usuario`; `auth_source = "ldap"`; `password_hash` NULL (SEC-AUTH-04). Elevar: solo superadmin, aparte.
 - Entrada en la OU de personas de la convención `LDAP_*` (ADR-004); DN escapado (SEC-LDAP-06).
-- Contraseña — *Por confirmar (P8)*: la cuenta se crea **sin contraseña**; el usuario la define con el restablecimiento de Authelia. Nunca fija, guardada ni enviada por correo (SEC-LDAP-09).
+- Contraseña (P8, 2026-10-14): el portal no maneja contraseñas de cuentas LDAP; la contraseña la maneja Authelia. `password` → `400 campo_no_permitido`.
 - Escritura síncrona al directorio; si falla, no se crea nada en la BD.
 - Respuesta `201`: `{"status": "success", "user": ManagedUser}`. Auditoría `cuenta_directorio_creada` (sin datos sensibles).
 
@@ -51,3 +51,8 @@ Convenciones comunes: [README.md](README.md). P2: superadmin y admins (para sus 
   "is_active": true, "auth_source": "ldap", "areas": [ { "id": 3, "name": "Finanzas" } ], "managed_areas": [],
   "last_login_at": null } }
 ```
+
+## Historial
+| Versión | Fecha | Cambio |
+|---|---|---|
+| 1 | 2026-10-14 | Versión inicial (FNC-038) |
