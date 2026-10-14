@@ -12,6 +12,7 @@
 - [ ] Todas las tareas incluidas están en `Hecha`, con pruebas y revisión.
 - [ ] `auditor-seguridad` en modo proyecto, sin hallazgos Críticos ni Altos abiertos.
 - [ ] Migraciones de BD probadas en pruebas, con un plan de reversión.
+- [ ] Despliegue: respaldo, `venv/bin/alembic upgrade head` y después reiniciar el servicio; reversión con `alembic downgrade <revisión anterior>` (`docs/backend/README.md` §7).
 - [ ] Variables nuevas o cambiadas registradas en `docs/configuracion/` y en `.env.example`.
 - [ ] Respaldo previo hecho.
 - [ ] `CHANGELOG.md` y la etiqueta actualizados.

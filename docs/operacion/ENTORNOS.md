@@ -55,7 +55,7 @@ Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defe
 6. Unidades systemd a partir de las plantillas.
 7. nginx en `/etc/nginx/conf.d/<nombre>.conf`, SELinux y firewalld.
 
-**No aplica migraciones**: se ejecutan a mano desde `utils/migrations/` (ver `docs/backend/README.md` §7).
+**No aplica migraciones**: se ejecuta `venv/bin/alembic upgrade head` a mano antes de reiniciar (ver `docs/backend/README.md` §7). `utils/migrations/` queda como histórico.
 
 ## Servicios systemd
 

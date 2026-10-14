@@ -21,6 +21,7 @@
 | `add_audit_log` | Servicio | `app/modules/audit/services.py:6` | Única forma de registrar auditoría | 40 llamadas en `app/` |
 | `sanitize_display_name` | Función | `app/utils/naming.py` | Normalizar nombres | `crud.py` |
 | `redis_registry` | Cliente | `app/utils/redis_client.py` | Registro Redis | `app/__init__.py:93` |
+| `construir_uri_bd` | Función | `app/utils/uri_bd.py` | URI de la BD desde `DB_*` | `app/__init__.py`, `migrations/env.py` |
 | `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py:191` | Envío de correo por plantilla | auth, SSO, admin |
 | `_validate_logo`, `MAX_LOGO_BYTES` | Función/constante | `app/modules/api/admin.py:46,51` | Validar logo (data URI) | settings |
 | Fixtures de pruebas (`app`, `client`, `cliente_como`, `cliente_de_rol`, `cliente_admin`, `cliente_admin_area`, `cliente_usuario`) | Fixtures pytest | `tests/conftest.py` | App con BD temporal y clientes con sesión por rol, sin servicios externos | `tests/` |
