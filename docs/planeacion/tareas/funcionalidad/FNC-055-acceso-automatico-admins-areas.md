@@ -64,3 +64,9 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+
+## Decisiones del dueño (2026-10-14)
+- Nivel del acceso automático: `usuario`.
+- Lo reciben todos los admins del área, también en plataformas nuevas.
+- Al quitarle el área a un admin se revocan sus accesos `admin_de_area` de esa área.
+- El superadmin no entra a los grupos LDAP.

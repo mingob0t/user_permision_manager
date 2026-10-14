@@ -26,7 +26,7 @@ Convenciones comunes: [README.md](README.md). Tabla `platform_access_grants`.
 
 - Vigente = `en_proceso`, `activo`, `revocando`, `fallido` o `fallo_revocacion`.
 - Subir a `admin`: el acceso `usuario` pasa a `revocando` (motivo `reemplazado_por_nivel_superior`) y el nuevo `admin` a `en_proceso`, en una transacción.
-- Superadmin: acceso por defecto, sin registros aquí. Si debe estar en los grupos LDAP: *Por confirmar* (FNC-055).
+- Superadmin: acceso por defecto, sin registros aquí. No se agrega a los grupos LDAP: su acceso es solo en el portal (decisión del dueño, 2026-10-14).
 
 ## Endpoints
 

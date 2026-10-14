@@ -56,7 +56,7 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 ### Rol en `POST /users` y `PUT /users/<id>`
 | Campo | Tipo | Regla |
 |---|---|---|
-| `role` | `"usuario"` \| `"admin_area"` | Solo superadmin; `administrador` nunca es asignable (SEC-AUTH-07) |
+| `role` | `"usuario"` \| `"admin_area"` | Superadmin: `usuario` o `admin_area`; admin: solo `usuario`; `administrador` nunca (SEC-AUTH-07) |
 
 - `managed_area_ids` en `POST /users` o `PUT /users/<id>` → `400 campo_no_permitido`. La única vía para asignar áreas administradas es `PUT /users/<id>/managed-areas` (superadmin).
 - `POST /users` con `admin_area` ya **no** copia `area_ids` a las áreas administradas (cambio respecto a hoy); nace sin áreas administradas.

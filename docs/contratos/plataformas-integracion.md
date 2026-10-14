@@ -51,11 +51,11 @@ Convenciones comunes: [README.md](README.md). Cambia `POST /platforms`, `PUT /pl
 ### Alta por un admin (decisión del dueño, P6)
 En la misma transacción:
 1. Crea la plataforma → auditoría `plataforma_creada` (actor: admin X; "admin X dio de alta la plataforma Y").
-2. Otorga acceso al admin creador (origen `admin_de_area`, nivel `admin` — *Por confirmar*) → auditoría `acceso_otorgado` con actor `sistema` ("sistema dio permisos de acceso a admin X").
+2. Otorga acceso a todos los admins del área (incluido el creador) (origen `admin_de_area`, nivel `usuario`) → auditoría `acceso_otorgado` con actor `sistema` ("sistema dio permisos de acceso a admin X").
 3. Encola el aprovisionamiento (accesos.md, estado `en_proceso`).
 
 - El superadmin tiene acceso por defecto: su alta no genera acceso automático.
-- Otros admins del área y qué pasa al quitarle el área: FNC-055 — *Por confirmar (P6)*.
+- Todos los admins del área reciben el acceso automático (nivel `usuario`); al quitarle el área a un admin se revocan sus accesos `admin_de_area` de esa área (FNC-055).
 
 ## Salida
 ```json

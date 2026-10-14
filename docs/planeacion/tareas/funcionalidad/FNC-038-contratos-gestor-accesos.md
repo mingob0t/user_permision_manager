@@ -73,7 +73,7 @@
 | `grep -rnE` de IPv4 en `docs/contratos/` | Sin coincidencias |
 | `python3 ~/.claude/agentes/herramientas/impacto.py` | Ninguno detectado; código 0 |
 
-- No verificado: no hay código que probar; sin pytest ni Vitest (la tarea es solo documentación). Sin revisor (indicación del orquestador).
+- No verificado: no hay código que probar; sin pytest ni Vitest (la tarea es solo documentación). Revisor: 1.ª revisión Requiere cambios (9 puntos), corregidos en `a5869b4`; 2.ª revisión Aprobado con 3 detalles de redacción, corregidos.
 
 ## Respuestas del dueño (2026-10-14)
 - P7: revocar no requiere motivo (`reason` opcional, ≤ 500)
@@ -103,3 +103,9 @@
 | 2026-10-14 | Aprobada por el dueño (vía orquestador); En curso en `fnc/FNC-038-contratos-v1` |
 | 2026-10-14 | 8 contratos v1 + `docs/contratos/README.md`; commit local `e092ee9` sin push |
 | 2026-10-14 | Respuestas P7, P8, P10, P11 y 9 hallazgos del revisor corregidos; En revisión hasta el merge |
+
+## Respuestas del dueño a P6 (2026-10-14)
+- Acceso automático al dar de alta una plataforma: nivel `usuario`.
+- Lo reciben todos los admins del área.
+- Al quitarle el área a un admin se revocan sus accesos automáticos de esa área.
+- El superadmin no se agrega a los grupos LDAP; su acceso es solo en el portal.

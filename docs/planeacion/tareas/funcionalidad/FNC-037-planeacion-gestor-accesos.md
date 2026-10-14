@@ -100,3 +100,4 @@
 - P8: el portal no maneja contraseñas de cuentas LDAP; la contraseña la maneja Authelia.
 - P10: avisar a los admins del área y al superadmin; reintento manual solo el superadmin.
 - P11: el admin de un área también puede darla de baja (además del superadmin); 409 si tiene plataformas o accesos vigentes.
+- P6 (2026-10-14): acceso automático nivel `usuario`, para todos los admins del área; se revoca al quitarle el área; el superadmin no entra a los grupos LDAP.
