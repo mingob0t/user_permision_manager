@@ -22,11 +22,11 @@
 | FNC-018 | Retención de datos personales y seudonimización | infra | 5 | operacion | Baja | Propuesta | 2026-10-13 | | | — |  |
 | FNC-019 | Suite base de pruebas del backend (pytest, fixtures, cliente por rol, excluir utils/test_*) | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-019-suite-base-pruebas-backend` (commit local, sin push) |  |
 | FNC-020 | Pruebas de protección por rol de todos los endpoints /api/v1 con guardia de rutas sin clasificar | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-020-pruebas-proteccion-por-rol` (commit local, sin push) | Depende de FNC-019; 2 xfail hasta FNC-007 |
-| FNC-021 | Pruebas de alcance por área y de escalada de privilegios | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
+| FNC-021 | Pruebas de alcance por área y de escalada de privilegios | backend | 2 | pruebas | Alta | En curso | 2026-10-13 | 2026-10-13 | | `fnc/FNC-021-pruebas-alcance-por-area` | Depende de FNC-019 |
 | FNC-022 | Pruebas de autenticación SSO, LDAP y local con dobles | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-023 | Pruebas de notificaciones, auditoría, respaldo y arranque | backend | 2 | pruebas | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-024 | Línea base web: instalar dependencias, configurar ESLint y ejecutar typecheck y lint | web | 2 | pruebas | Alta | En revisión | 2026-10-13 | 2026-10-13 | | `fnc/FNC-024-linea-base-web` (local) | Build roto por 1 error de lint: decisión pendiente |
-| FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | En revisión | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-025-runner-pruebas-frontend` (local) | Depende de FNC-024; fallas de contraste a DIS-001 a DIS-006 |
+| FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (85e220c) | Depende de FNC-024; fallas de contraste a DIS-001 a DIS-006 |
 | FNC-026 | CI que ejecute pytest, typecheck, lint y los controles del pre-commit | infra | 2 | ci | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 y FNC-024; requiere repositorio remoto |
 | FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | Propuesta | 2026-10-13 | | | — | Antes de FNC-020 |
 | FNC-028 | Limpiar scratch/ y utils/ (PSX5K) y adoptar Alembic con las migraciones 001-004 | backend | 4 | bd | Media | Propuesta | 2026-10-13 | | | — |  |
