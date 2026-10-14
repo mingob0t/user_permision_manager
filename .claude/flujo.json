@@ -1,0 +1,4 @@
+{
+  "protegidas": ["main", "master", "staging", "develop"],
+  "base_de_tareas": "develop"
+}

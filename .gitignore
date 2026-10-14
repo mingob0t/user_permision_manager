@@ -14,3 +14,73 @@ instance/
 secret.key
 *.zip
 # === FIN GITIGNORE ===
+
+# === Reglas de la plantilla base del método (incorporación 2026-10-13) ===
+# Secretos y configuración local (se versiona solo el archivo de ejemplo)
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.jks
+*.keystore
+key.properties
+secrets.*
+credentials.*
+*.credentials.json
+service-account*.json
+id_rsa*
+id_ed25519*
+# Claude Code: configuración personal (la de equipo .claude/settings.json sí se versiona)
+.claude/settings.local.json
+.claude/*.local.json
+# Datos y respaldos (pueden contener datos personales)
+*.sqlite
+*.sqlite3
+*.dump
+*.bak
+backups/
+storage/
+uploads/
+# Logs de ejecución
+/logs/
+# Sistema operativo y editores
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+# === Python ===
+*.py[cod]
+.venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+# === Node / Next.js ===
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+# === Docker ===
+docker-compose.override.yml
+.docker/
+*.tar
+!logs/.gitkeep
+!.env.example

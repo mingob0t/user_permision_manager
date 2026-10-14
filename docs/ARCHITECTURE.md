@@ -1,3 +1,11 @@
+> **OBSOLETO PARCIALMENTE (FNC-001, 2026-10-13).** Se conserva como referencia histórica; la fuente vigente es `docs/backend/README.md`, `docs/frontend/README.md` y `docs/decisiones/ADR-001-stack.md`. Ya no aplica:
+> - **AccessRequests**: la tabla `access_requests` se eliminó (migración `004_drop_access_requests.sql`); no hay flujo de solicitudes de acceso.
+> - **RBAC con dos roles** (`administrador` y `usuario`): el código tiene tres (`administrador`, `admin_area`, `usuario`) con alcance por área en `app/authz.py`.
+> - **"Variables Jinja2 en los correos"** y slugs `inicio`/`terminado`/`error`: las plantillas sustituyen `{clave}` por texto plano y el único slug usado por el código es `usuario_creado`.
+> - **"Notificaciones in-app en tiempo real"**: son una lista consultada por petición (`GET /api/v1/notifications`), sin push.
+> - El modelo de datos omite `users`, `user_areas`, `area_admins`, `user_platforms`, `user_favorites`, `auth_config`, `smtp_config`, `notification_templates`, `in_app_notifications` y `system_config`.
+> Siguen vigentes: separación Flask API / Next.js, mismo dominio tras nginx y la tabla de alcance multitenant.
+
 # 🏗️ ARQUITECTURA TÉCNICA - NEXUS
 
 ## 🧩 Patrón de Diseño

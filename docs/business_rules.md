@@ -1,3 +1,11 @@
+> **OBSOLETO PARCIALMENTE (FNC-001, 2026-10-13).** Se conserva como referencia histórica; las reglas vigentes están en `docs/REQUERIMIENTOS.md` y el comportamiento real en `docs/backend/README.md`. Contradicciones con el código:
+> - **"Desacoplamiento de componentes legados"** prohíbe crear rutas `/api/v1`: **ya no aplica**; toda la API actual vive en `/api/v1` (ADR-001).
+> - **"Estandarización de contenedores"** (Docker obligatorio, MariaDB/Redis orquestados, `docker-compose.yml`): **no aplica**; no hay Docker en el repositorio y el despliegue es Rocky Linux 8 con systemd + nginx (`deploy/`), con MySQL como BD objetivo.
+> - **"Gestión de contraseñas locales"**: el backend no exige contraseña en el alta; si no llega, asigna una por defecto (`POST /api/v1/users`).
+> - **"Paginación maestra"** estilo DataTables: el frontend Next.js no implementa paginación en Usuarios, Áreas ni Plataformas (solo quedan las clases `.dt-*` en los estilos).
+> - **"Integridad referencial"**: vigente, pero el mensaje real es "El área tiene N plataforma(s). Reasígnalas o elimínalas primero." (`409`), sin borrado múltiple.
+> - **"Segregación de gestión de accesos"**: vigente (`PUT /api/v1/areas/<id>/users` separado de la edición del área).
+
 # 📚 MOTOR DE REGLAS DE NEGOCIO — NEXUS PLATFORM
 
 ## Áreas y Plataformas

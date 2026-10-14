@@ -1,0 +1,10 @@
+# Exclusiones de los controles de lineamientos para este proyecto.
+# Copiar a <proyecto>/.claude/lineamientos-ignorar. Un patrón por línea (glob, relativo a la raíz).
+# Una carpeta termina en "/". Cada exclusión debe tener un comentario con su motivo.
+#
+# Ya excluidos por defecto: *.g.dart, *.freezed.dart, *.min.js, node_modules/, vendor/, dist/, build/,
+# Library/, Packages/, .dart_tool/, archivos .lock, entre otros.
+#
+# Ejemplos:
+# third_party/            # librería externa copiada, no se modifica
+# static/legacy/*.css     # CSS heredado, su migración es la tarea DIS-0XX
