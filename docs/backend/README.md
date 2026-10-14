@@ -184,7 +184,17 @@ venv/bin/python run.py        # API en el puerto 5001
 - Redis es opcional: si no responde, la app arranca igual.
 - El frontend se arranca aparte (ver `docs/frontend/README.md`); su `rewrite` reenvía `/api/*` y `/auth/*` a este backend.
 - Utilidades de mantenimiento en `utils/` (usan `create_app()`): `check_db.py`, `db_check.py`, `db_inspector.py`, `db_migrate.py`, `reset_admin.py`, `emergency_reset.py`, `seed_users.py`, `test_ldap.py`, `test_smtp.py`, `nexus_health.py`, `toggle_authelia.py` (edita el `.env` y la config de nginx).
-- **No hay pruebas automatizadas** en el repositorio (ni `tests/` ni pytest en `requirements.txt`).
+- **Pruebas** (FNC-019): suite pytest en `tests/`, sin `.env` ni servicios externos.
+  ```bash
+  venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+  venv/bin/pytest                    # solo recoge tests/ (pytest.ini)
+  venv/bin/pytest --cov=app          # con cobertura
+  ```
+  - `tests/conftest.py`: no carga `.env`, usa valores ficticios, BD SQLite temporal por prueba, Redis sin conectar, SMTP y LDAP bloqueados.
+  - Fixtures: `app`, `client`, `crear_area`, `crear_plataforma`, `crear_usuario`, `cliente_como(usuario)`, `cliente_de_rol(rol)`, `cliente_admin`, `cliente_admin_area`, `cliente_usuario`.
+  - `tests/fabricas.py`: fábricas de áreas, plataformas y usuarios por rol.
+  - `utils/test_*.py` y `scratch/test_*.py` son scripts manuales con conexiones reales: pytest no los recoge.
+  - `create_app(config_overrides=None)`: el parámetro opcional solo lo usan las pruebas; sin él no cambia nada.
 
 ## 7. Migraciones
 
@@ -217,7 +227,7 @@ No hay registro de qué migraciones se aplicaron (no hay Alembic ni tabla de ver
 | 12 | Redis conectado pero sin uso. | `app/utils/redis_client.py` |
 | 13 | `user_platforms` se edita pero no restringe la visibilidad. | `authz.scoped_platforms` |
 | 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `api/admin.py` |
-| 15 | Sin pruebas automatizadas ni control de migraciones aplicadas. | — |
+| 15 | Sin control de migraciones aplicadas. Pruebas: hay suite base (FNC-019); la cobertura de permisos y servicios sigue en FNC-020 a FNC-023. | — |
 | 16 | `purge_inactive_users` de `auth/services.py` devuelve un mensaje de error de LDAP no relacionado; la API usa su propia implementación en `crud.py` (duplicado). | `auth/services.py`, `api/crud.py` |
 | 17 | `utils/seed_users.py` usa roles `admin`/`user` que el código ya no reconoce. | `utils/seed_users.py` |
 | 18 | Mensajes de error que devuelven el texto de la excepción al cliente (LDAP, SMTP, respaldo). | `api/admin.py` |

@@ -20,7 +20,7 @@
 | FNC-016 | Dependencias: npm audit y pip-audit, fijar versiones y quitar las que no se usan | infra | 5 | dependencias | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-017 | Higiene de seguridad: errores genéricos, escape en correos, validación de URLs, IP y hosts fuera del código, límites de carga | backend | 5 | global | Baja | Propuesta | 2026-10-13 | | | — |  |
 | FNC-018 | Retención de datos personales y seudonimización | infra | 5 | operacion | Baja | Propuesta | 2026-10-13 | | | — |  |
-| FNC-019 | Suite base de pruebas del backend (pytest, fixtures, cliente por rol, excluir utils/test_*) | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — |  |
+| FNC-019 | Suite base de pruebas del backend (pytest, fixtures, cliente por rol, excluir utils/test_*) | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-019-suite-base-pruebas-backend` (commit local, sin push) |  |
 | FNC-020 | Pruebas de protección por rol de todos los endpoints /api/v1 con guardia de rutas sin clasificar | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-021 | Pruebas de alcance por área y de escalada de privilegios | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-022 | Pruebas de autenticación SSO, LDAP y local con dobles | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
