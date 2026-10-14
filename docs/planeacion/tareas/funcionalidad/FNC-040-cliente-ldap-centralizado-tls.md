@@ -26,7 +26,7 @@
 ## Alcance
 - **Incluye:**
   - `ldap_client.py`: abrir conexión de servicio, búsqueda de usuario por atributo, lectura de grupos de un usuario, comprobación de existencia de un DN
-  - `config.py`: lectura y validación al arrancar de la configuración del directorio (ADR-004)
+  - `configuracion.py`: lectura y validación al arrancar de la configuración del directorio (ADR-004)
   - Escape de filtros con `ldap3.utils.conv.escape_filter_chars` y de DN
   - Pruebas con un doble de `ldap3` (`MOCK_SYNC`) sin directorio real
 - **No incluye:**
@@ -69,14 +69,14 @@
 | `venv/bin/pytest tests/directory -q` | 64 passed |
 | Mismo, con `validate=ssl.CERT_NONE` en el cliente (mutación, revertida) | 3 failed (`test_certificado_no_confiable…`, `test_nombre_del_certificado_distinto…`, `test_servidor_exige_certificado…`) |
 | `venv/bin/pytest -q` | 495 passed, 35 xfailed, código 0 (antes 431 + 64 nuevas) |
-| `python3 ~/.claude/agentes/herramientas/impacto.py` | "ninguno detectado (comparado contra `develop`; 20 archivos cambiados, tras el commit)" |
+| `python3 ~/.claude/agentes/herramientas/impacto.py` | 9 nombres: `__init__`, `_cliente`, `_crear`, `_error`, `agregar`, `bind`, `cerrar`, `directorio`, `grupo` (ver abajo) |
 - TLS probado con un servidor TLS real en `localhost` y certificado autofirmado generado en la prueba (no confiable → falla; nombre distinto → falla; CA y nombre correctos → saludo completo)
 - No verificado: OpenLDAP real (no hay servidor ni valores; el dueño los define, ADR-004); StartTLS real (el doble `MOCK_SYNC` no lo implementa: se prueba el orden StartTLS → bind con un espía)
 - No ejecutados: `revisor`, `auditor-seguridad` (requerido por la ficha), por indicación del orquestador
 
 ## Impacto en elementos compartidos
-- `impacto.py`: ninguno detectado (sin homónimos que explicar)
-- Revisión manual: `create_app()` (`app/__init__.py`) ahora valida `LDAP_*`; sin `LDAP_URL` no cambia nada. La usan `run.py`, `migrations/env.py`, utilidades de `utils/` y todas las pruebas
+- `impacto.py` (2026-10-14): 9 nombres. Son funciones y métodos nuevos de `app/modules/directory/` y `tests/directory/` que se llaman igual que código existente (p. ej. `_error` de `ldap_client.py` frente a `_error` de `api/admin.py` y `api/crud.py`; `directorio`/`agregar` frente a `tests/directorio_falso.py`): homónimos, sin impacto real.
+- Revisión manual: `create_app()` (`app/__init__.py`) ahora valida `LDAP_*`; sin `LDAP_URL` no cambia nada. La usan `run.py`, utilidades de `utils/` y todas las pruebas (`migrations/env.py` no la llama)
 - Revisión manual: fixture autouse `sin_servicios_externos` (`tests/conftest.py`) bloquea también `ldap_client.Connection`; afecta a todas las pruebas (ninguna usaba el módulo nuevo)
 
 ## Criterios de aceptación
@@ -105,3 +105,4 @@
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-14 | Aprobada por el dueño; implementada en `fnc/FNC-040-cliente-ldap`; 495 passed, 35 xfailed; En revisión (falta revisor y auditor-seguridad) |
+- revisor (2026-10-14): Requiere cambios de cierre; corregidos (impacto real, lista de usos de `create_app`, nombre `configuracion.py`). Falta el veredicto de auditor-seguridad.
