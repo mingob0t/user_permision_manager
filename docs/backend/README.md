@@ -195,6 +195,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/fabricas.py`: fábricas de áreas, plataformas y usuarios por rol.
   - `tests/matriz_proteccion.py` (FNC-020): código esperado por rol de cada ruta `/api/v1`. **Todo endpoint nuevo agrega aquí su caso**; si no, falla `tests/test_guardia_rutas.py`.
   - `tests/test_proteccion_por_rol.py`: matriz ruta × rol (401/403/2xx), entradas inválidas (400) y RF-04 (casos `xfail` hasta FNC-007).
+  - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (casos `xfail` hasta FNC-007 y FNC-015).
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 13 `xfail` con su tarea (lista en la ficha).
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, **config)` simula `ldap3` (personas, grupos, binds, filtros recibidos).
   - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria`.
@@ -233,7 +234,7 @@ No hay registro de qué migraciones se aplicaron (no hay Alembic ni tabla de ver
 | 12 | Redis conectado pero sin uso. | `app/utils/redis_client.py` |
 | 13 | `user_platforms` se edita pero no restringe la visibilidad. | `authz.scoped_platforms` |
 | 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `api/admin.py` |
-| 15 | Sin control de migraciones aplicadas. Pruebas: suite base (FNC-019), protección por rol de `/api/v1` (FNC-020) y autenticación (FNC-022); alcance y servicios siguen en FNC-021 y FNC-023. | — |
+| 15 | Sin control de migraciones aplicadas. Pruebas: suite base (FNC-019), protección por rol de `/api/v1` (FNC-020), alcance por área (FNC-021) y autenticación (FNC-022); servicios siguen en FNC-023. | — |
 | 16 | `purge_inactive_users` de `auth/services.py` devuelve un mensaje de error de LDAP no relacionado; la API usa su propia implementación en `crud.py` (duplicado). | `auth/services.py`, `api/crud.py` |
 | 17 | `utils/seed_users.py` usa roles `admin`/`user` que el código ya no reconoce. | `utils/seed_users.py` |
 | 18 | Mensajes de error que devuelven el texto de la excepción al cliente (LDAP, SMTP, respaldo). | `api/admin.py` |
