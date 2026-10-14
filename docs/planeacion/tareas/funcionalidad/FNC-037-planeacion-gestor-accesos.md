@@ -90,3 +90,7 @@
 - P5: un solo nivel por plataforma (usuario **o** admin); subir a admin reemplaza al de usuario.
 - P2: el superadmin y los admins pueden crear cuentas en OpenLDAP (el admin, para sus áreas).
 - P9: aún no hay plataformas con conector definidas; se hace la base (FNC-049, FNC-050) y los tipos FNC-051 a FNC-053 esperan.
+- P3: la convención de OpenLDAP (servidor, base DN, OU y formato de nombres de grupos) va en variables del `.env`; el dueño agrega después los valores y todo dato sensible (servidores, contraseñas). Las tareas solo crean las variables y las registran en `docs/configuracion/VARIABLES.md`.
+- P4: los accesos actuales de NEXUS (`user_platforms`) se descartan; no se migran.
+- P14/ADR-003: cola de conectores con Redis + RQ.
+- P6/P12: el superadmin tiene acceso por defecto. Cuando un admin da de alta una plataforma, el sistema le otorga acceso automáticamente y la auditoría registra dos eventos: "admin X dio de alta la plataforma Y" y "sistema dio permisos de acceso a admin X".
