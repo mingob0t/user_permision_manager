@@ -48,3 +48,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-14 | SEG-25 (largo de `action`, IP real) corregido por FNC-047; SEG-16 queda para FNC-060 |

@@ -73,7 +73,7 @@ Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue a
 | `area_admins` | tabla de relación | `user_id`, `area_id`: áreas que administra un `admin_area` |
 | `user_platforms` | tabla de relación | `user_id`, `platform_id`: acceso explícito a plataforma (se edita, pero `scoped_platforms` **no** lo usa para filtrar) |
 | `user_favorites` | tabla de relación | `user_id`, `platform_id` |
-| `audit_logs` | `audit.models.AuditLog` | `timestamp`, `user` (correo, texto), `action`, `module`, `target`, `detail`, `ip_address`, `status` (`success`/`error`/`warning`/`info`) |
+| `audit_logs` | `audit.models.AuditLog` | `timestamp`, `user` (correo o `sistema`, 255), `action` (150), `module`, `target` (255), `detail`, `ip_address`, `status` (`success`/`error`/`warning`/`info`); FNC-047: `actor_id`, `target_user_id`, `area_id`, `platform_id` (FK `SET NULL`), `before_state`/`after_state` (JSON), `request_id`, `grant_id`; índices por fecha, actor, usuario afectado, área y plataforma. Inmutable desde el ORM |
 | `auth_config` | `auth.models.AuthConfig` | `ldap_host`, `ldap_port`, `ldap_ssl`, `ldap_base_dn`, `ldap_user` (bind DN), `ldap_pass` (en claro), `ldap_user_attr` (por defecto `sAMAccountName`), `ldap_group_admin`, `ldap_group_user`, `ldap_role_mappings` (JSON `[{group, role}]`) |
 | `smtp_config` | `notifications.models.SMTPConfig` | `server`, `port`, `encryption` (`starttls`/`ssl`/`none`), `auth_enabled`, `username`, `password` (en claro), `sender_name` |
 | `notification_templates` | `NotificationTemplate` | `slug` (único), `name`, `subject`, `body`, `is_html` |
@@ -107,7 +107,7 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `GET /users` | `any_admin_required` (`scoped_users`) | Usuarios administrables. |
 | `PUT /users/<id>/areas` | `any_admin_required` + `can_manage_user` | Reasigna áreas dentro del alcance; conserva las que el solicitante no administra. |
 | `GET /stats` | Sesión (alcance) | Contadores, top 5 de visitas, plataformas por área; `users` solo para administradores. |
-| `GET /audit?limit=` | Sesión (alcance) | Superadmin: todo; admin de área: eventos de sus usuarios; usuario: los propios. Máximo 500. |
+| `GET /audit?limit=` | Sesión (alcance) | Superadmin: todo; admin de área: eventos de sus usuarios; usuario: los propios. Máximo 500. Arreglo de `AuditEntry` con `actor`, `area`, `platform`, `target_user`, `before`, `after` (FNC-047); `page` y alcance por área llegan con FNC-060. |
 
 ### 4.3 Escritura — `app/modules/api/crud.py` (`/api/v1`)
 
@@ -175,7 +175,14 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - `add_in_app_notification()` existe en servicios.
 
 ### Auditoría
-- `add_audit_log(action, status, detail, user_override, module, target)` escribe en `audit_logs` con el correo del usuario (o `SYSTEM`) y la IP de `request.remote_addr` (`INTERNAL` fuera de petición). Si falla, solo imprime y hace rollback.
+- `add_audit_log(action, status, detail, user_override, module, target, *, target_user_id, area_id, platform_id, before, after, request_id, grant_id, as_system)`: lo posterior a `target` es opcional y por nombre (FNC-047). Si falla, solo imprime y hace rollback.
+- Actor: correo e id de la sesión; `sistema` (sin id) con `as_system=True`, sin sesión o fuera de una petición.
+- `action`: un `Evento` de `audit/events.py` (catálogo del contrato `auditoria.md`) o el texto heredado.
+- Textos recortados al largo de su columna (SEG-25); los eventos de sesión llevan el correo en `target`.
+- IP (`audit/ip_cliente.py`): último salto de `X-Forwarded-For` solo si el origen está en `TRUSTED_PROXIES`; si no, `remote_addr`; `INTERNAL` fuera de petición. Sin `ProxyFix` global: cambiaría el `remote_addr` que valida el SSO.
+- `before`/`after` sin contraseñas, hashes, tokens, cookies, cabeceras ni secretos (`audit/sanitizar.py`, SEC-AUD-05).
+- Inmutable (`audit/inmutabilidad.py`): el ORM rechaza `UPDATE`/`DELETE` (por objeto y masivos) con `RegistroInmutable`; sin rutas de edición ni borrado; borrar usuario, área o plataforma deja la referencia en NULL.
+- Migración `0002_auditoria_ampliada`.
 - Se audita: accesos (local, directorio, SSO, fallidos, SSO rechazado), cierre de sesión, CRUD de áreas/plataformas/usuarios, configuración, SMTP, LDAP, respaldos, purgas y altas/bajas automáticas por LDAP.
 
 ## 6. Cómo arrancar en dev
@@ -206,7 +213,8 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (casos `xfail` hasta FNC-007 y FNC-015).
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 13 `xfail` con su tarea (lista en la ficha).
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, **config)` simula `ldap3` (personas, grupos, binds, filtros recibidos).
-  - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria`.
+  - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` (con `target=` para el correo).
+  - Auditoría (FNC-047): `tests/audit/` (registro ampliado, inmutabilidad y regresión de SEG-25).
   - Servicios (FNC-023): `test_notificaciones.py`, `test_auditoria_crud.py`, `test_respaldo.py`, `test_secretos_en_respuestas.py`, `test_rutas_heredadas.py`, `test_csrf.py`, `test_arranque.py`; 13 `xfail` con su tarea (lista en la ficha).
   - `tests/smtp_falso.py`: `instalar_smtp(monkeypatch)` simula `smtplib` (mensajes enviados, conexiones, logins, fallo con `.error`).
   - `test_arranque.py` llama `create_app()` sin overrides; `instance/` va a un directorio temporal.

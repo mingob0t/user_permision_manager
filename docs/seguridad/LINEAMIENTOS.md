@@ -165,7 +165,7 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 | `app/modules/api/admin.py` | 06 / 08, 17, 22 / 13 / 21, 29 | 008 / 010 / 012 / 017 |
 | `auth/models.py`, `notifications/models.py` | 08 | 010 |
 | `notifications/services.py` | 23 | 017 |
-| `api/routes.py` (`/audit`), `audit/` | 16, 25 | 015 |
+| `api/routes.py` (`/audit`), `audit/` | 16 (25 cerrado por FNC-047) | 060 (015 parcial) |
 | `run.py` | 18 | 009 |
 | `deploy/nginx.conf.tmpl` | 04, 15 / 29 | 004 / 017 |
 | `frontend/next.config.ts` | 04 | 005 |

@@ -105,7 +105,7 @@ def sso_login():
     db.session.commit()
 
     login_user(user, remember=True)
-    add_audit_log(f'ACCESO SSO: {email}', status='success',
+    add_audit_log('ACCESO SSO', status='success', target=email,
                   detail='Sesión iniciada vía Authelia')
 
     if created and os.getenv('NOTIFY_USER_CREATED', 'true').lower() == 'true':
@@ -141,10 +141,10 @@ def login():
         if result.get('status') == 'success':
             user = result['user']
             login_user(user, remember=True)
-            add_audit_log(f'ACCESO DIRECTORIO: {email}', status='success',
+            add_audit_log('ACCESO DIRECTORIO', status='success', target=email,
                           detail='Autenticación corporativa')
             return jsonify({'status': 'success', 'role': user.role})
-        add_audit_log(f'ACCESO FALLIDO: {email}', status='error',
+        add_audit_log('ACCESO FALLIDO', status='error', target=email,
                       detail=str(result.get('message'))[:200])
         return jsonify({'status': 'error',
                         'message': result.get('message') or 'Credenciales incorrectas.'}), 401
@@ -155,11 +155,11 @@ def login():
             return jsonify({'status': 'error',
                             'message': 'La cuenta está desactivada.'}), 403
         login_user(user, remember=True)
-        add_audit_log(f'ACCESO LOCAL: {email}', status='success',
+        add_audit_log('ACCESO LOCAL', status='success', target=email,
                       detail='Autenticación manual')
         return jsonify({'status': 'success', 'role': user.role})
 
-    add_audit_log(f'ACCESO FALLIDO: {email}', status='error',
+    add_audit_log('ACCESO FALLIDO', status='error', target=email,
                   detail='Credenciales locales incorrectas')
     # Mismo mensaje exista o no la cuenta, para no revelar qué correos hay.
     return jsonify({'status': 'error',
@@ -172,7 +172,7 @@ def logout():
     """Cierra la sesión y, con SSO, devuelve la URL de cierre de Authelia."""
     email = current_user.email
     logout_user()
-    add_audit_log(f'CIERRE DE SESIÓN: {email}', status='success',
+    add_audit_log('CIERRE DE SESIÓN', status='success', target=email,
                   detail='Sesión finalizada por el usuario')
 
     redirect_to = None

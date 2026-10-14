@@ -12,6 +12,7 @@
 - Pruebas de notificaciones, auditoría del CRUD, respaldo, secretos en respuestas, rutas heredadas, CSRF y arranque (FNC-023, 2026-10-14).
 - Contratos v1 backend↔web del gestor de accesos en `docs/contratos/` (FNC-038, 2026-10-14).
 - Migraciones versionadas con Alembic: línea base `0001` del esquema actual y prueba de desfase modelos↔migraciones (FNC-039, 2026-10-14).
+- Auditoría ampliada e inmutable: actor, usuario afectado, área, plataforma, antes/después, catálogo de eventos e IP real del cliente (corrige SEG-25); migración `0002` (FNC-047, 2026-10-14).
 - Pruebas del frontend con Vitest (`npm test`): cliente de la API, `AuditLog`, contraste WCAG de los tokens y tope de colores literales (FNC-025, 2026-10-13).
 
 ### Corregido

@@ -24,9 +24,14 @@ def usuario_en_sesion(cliente):
     return respuesta.get_json()['email']
 
 
-def hay_auditoria(prefijo_accion, status=None):
-    """True si existe un registro de auditoría cuya acción empieza así."""
+def hay_auditoria(prefijo_accion, status=None, target=None):
+    """True si existe un registro de auditoría cuya acción empieza así.
+
+    Desde FNC-047 el correo de los eventos de sesión va en `target`.
+    """
     consulta = AuditLog.query.filter(AuditLog.action.like(f'{prefijo_accion}%'))
     if status:
         consulta = consulta.filter_by(status=status)
+    if target:
+        consulta = consulta.filter_by(target=target)
     return consulta.first() is not None

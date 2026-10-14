@@ -63,7 +63,7 @@
 | FNC-044 | Roles: solo el superadmin crea o eleva admins y asigna las áreas administradas | backend | 3 | usuarios-roles | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-038, FNC-047 |
 | FNC-045 | Áreas: el admin da de alta sus áreas y queda como su administrador | backend | 3 | areas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-044, FNC-038, FNC-047 |
 | FNC-046 | Plataformas: tipo de integración y grupos LDAP por nivel | backend | 3 | plataformas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-039, FNC-040, FNC-038, FNC-047 |
-| FNC-047 | Auditoría ampliada: registro inmutable con detalle del cambio, actor, área y plataforma | backend | 3 | auditoria | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-039 |
+| FNC-047 | Auditoría ampliada: registro inmutable con detalle del cambio, actor, área y plataforma | backend | 3 | auditoria | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-047-auditoria-ampliada` (commit local, sin push) | Depende de FNC-039; migración `0002`; cierra SEG-25 (FNC-015 parcial); falta auditor-seguridad |
 | FNC-048 | Notificaciones del gestor de accesos: plantillas y envío por evento | backend | 3 | notificaciones | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-039, ADR-003 |
 | FNC-049 | Ejecutor de aprovisionamiento: cola, worker, reintentos y bitácora (según ADR-003) | backend | 3 | aprovisionamiento | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-039, FNC-041, FNC-047, FNC-048, ADR-003 |
 | FNC-050 | Conectores: interfaz, registro, configuración por plataforma y credenciales desde Vaultwarden (según ADR-005) | backend | 3 | conectores | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-049, FNC-046, ADR-005 |

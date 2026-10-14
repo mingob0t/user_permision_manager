@@ -60,7 +60,7 @@ def test_desde_proxy_de_confianza_crea_usuario_y_abre_sesion(client,
     assert usuario.password_hash is None
     assert usuario.nombre == 'Persona SSO'
     assert usuario_en_sesion(client) == CORREO_SSO_FICTICIO
-    assert hay_auditoria(f'ACCESO SSO: {CORREO_SSO_FICTICIO}', 'success')
+    assert hay_auditoria('ACCESO SSO', 'success', target=CORREO_SSO_FICTICIO)
 
 
 def test_proxy_declarado_en_trusted_proxies_se_acepta(client, sso_activo,

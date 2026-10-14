@@ -18,7 +18,9 @@
 | Tokens de color y temas | CSS | `frontend/src/styles/tokens.css` (claro `:51`, oscuro `:271` y `:207`) | Única fuente de colores | `tailwind.config.ts` |
 | Decoradores de permisos (`admin_required`, `any_admin_required`, `area_admin_required`, `platform_manage_required`, `platform_access_required`) | Decoradores Flask | `app/authz.py` | Reglas de acceso por rol y área | `app/modules/api/*` |
 | `scoped_areas`, `scoped_users`, `can_manage_area`, `can_manage_user`, `is_admin` | Funciones | `app/authz.py` | Alcance multitenant por área | `crud.py`, `routes.py` |
-| `add_audit_log` | Servicio | `app/modules/audit/services.py:6` | Única forma de registrar auditoría | 40 llamadas en `app/` |
+| `add_audit_log` | Servicio | `app/modules/audit/services.py` | Única forma de registrar auditoría; desde FNC-047 acepta usuario afectado, área, plataforma, antes/después y `as_system` | 40 llamadas en `app/` |
+| `Evento`, `ACTOR_SISTEMA` | Catálogo | `app/modules/audit/events.py` | Valores de `action` del gestor de accesos (contrato `auditoria.md`) | Tareas de la fase 3 |
+| `limpiar_detalle` | Utilidad | `app/modules/audit/sanitizar.py` | Quita datos sensibles de antes/después (SEC-AUD-05) | `add_audit_log` |
 | `sanitize_display_name` | Función | `app/utils/naming.py` | Normalizar nombres | `crud.py` |
 | `redis_registry` | Cliente | `app/utils/redis_client.py` | Registro Redis | `app/__init__.py:93` |
 | `construir_uri_bd` | Función | `app/utils/uri_bd.py` | URI de la BD desde `DB_*` | `app/__init__.py`, `migrations/env.py` |
@@ -28,7 +30,7 @@
 | `crear_area`, `crear_plataforma`, `crear_usuario`, `crear_usuario_de_rol` | Fábricas de pruebas | `tests/fabricas.py` | Datos de prueba por rol | `tests/` |
 | `CASOS`, `crear_escenario`, `crear_actor`, `publica`/`con_sesion`/`administradores`/`solo_superadmin` | Matriz de protección | `tests/matriz_proteccion.py` | Código esperado por rol de cada ruta /api/v1; todo endpoint nuevo agrega aquí su caso | `tests/test_proteccion_por_rol.py`, `tests/test_guardia_rutas.py` |
 | `instalar_directorio`, `DirectorioFalso` | Doble de pruebas | `tests/directorio_falso.py` | Simular `ldap3` en el login por directorio, sin red | `tests/test_login_directorio.py` |
-| `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` | Utilidades de pruebas | `tests/peticiones_auth.py` | Login real por API y comprobaciones de sesión y auditoría | `tests/test_login_*.py`, `tests/test_sso.py`, `tests/test_sesion_y_logout.py` |
+| `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` | Utilidades de pruebas | `tests/peticiones_auth.py` | Login real por API y comprobaciones de sesión y auditoría (`hay_auditoria(..., target=)` desde FNC-047) | `tests/test_login_*.py`, `tests/test_sso.py`, `tests/test_sesion_y_logout.py` |
 | `instalar_smtp`, `SmtpFalso` | Doble de pruebas | `tests/smtp_falso.py` | Simular `smtplib` en notificaciones, sin red | `tests/test_notificaciones.py` |
 | `parseColor`, `componer`, `razonContraste`, `MIN_TEXTO`, `MIN_NO_TEXTO` | Utilidades de pruebas | `frontend/tests/utils/wcag.ts` | Medir contraste WCAG | `frontend/tests/accesibilidad/` |
 | `cargarContextos`, `resolver` | Utilidades de pruebas | `frontend/tests/utils/tokens-css.ts` | Leer los tokens de cada tema de `tokens.css` | `frontend/tests/accesibilidad/` |

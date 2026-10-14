@@ -52,7 +52,7 @@ def test_login_de_directorio_crea_usuario_sombra(client, directorio):
     assert usuario.nombre == 'Juan Pérez'
     assert usuario.last_login_at is not None
     assert usuario_en_sesion(client) == CORREO
-    assert hay_auditoria(f'ACCESO DIRECTORIO: {UID}', 'success')
+    assert hay_auditoria('ACCESO DIRECTORIO', 'success', target=UID)
 
 
 def test_segundo_login_reutiliza_el_usuario_sombra(app, directorio):
@@ -85,7 +85,7 @@ def test_contrasena_erronea_da_401_sin_sesion(client, directorio):
     assert respuesta.get_json()['status'] == 'error'
     assert usuario_en_sesion(client) is None
     assert User.query.count() == 0
-    assert hay_auditoria(f'ACCESO FALLIDO: {UID}', 'error')
+    assert hay_auditoria('ACCESO FALLIDO', 'error', target=UID)
 
 
 def test_usuario_inexistente_da_401_y_no_crea_cuenta(client, directorio):
