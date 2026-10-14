@@ -15,7 +15,7 @@
 | **Finalizada** | 2026-10-14 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-023-pruebas-servicios` |
-| **Commits / PR** | Commit local `[FNC-023]` en `fnc/FNC-023-pruebas-servicios` (sin push) |
+| **Commits / PR** | `81986e7` y corrección de la revisión (locales, sin push) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No (solo pruebas; la app no cambia) |
 
@@ -76,7 +76,7 @@ Probar notificaciones, auditoría del CRUD, respaldo, secretos en respuestas, ru
 - No verificado: SMTP, MySQL y navegador reales (todo simulado); CSRF desde un navegador real de otro sitio.
 
 ## Impacto en elementos compartidos
-- `impacto.py` (contra `develop`): `ninguno detectado (comparado contra develop; 13 archivos cambiados)`.
+- `impacto.py` (contra `develop`, 14 archivos): reporta 11 nombres (`ConexionFalsa`, `__init__`, `clase`, `correo`, `datos`, `frontend`, `login`, `quit`, `send_message`, `set_debuglevel`, `starttls`). Son métodos del SMTP simulado y fixtures locales de `tests/`: coincidencias de nombre, sin impacto real.
 - Solo se agregaron archivos en `tests/` y documentación; la app no cambia.
 
 ## Observaciones
@@ -93,3 +93,4 @@ Probar notificaciones, auditoría del CRUD, respaldo, secretos en respuestas, ru
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-14 | Aprobada por el dueño; implementada y probada (426 passed, 35 xfailed, código 0) |
+- revisor (2026-10-14): Requiere cambios de la ficha; corregidos (impacto real, commit). Sugerencias para FNC-009 anotadas en su ficha.
