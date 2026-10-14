@@ -8,10 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | contratos |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | En revisión |
 | **Creada** | 2026-10-13 |
-| **Estatus Git** | — |
-| **Rama** | `fnc/FNC-038-contratos-gestor-accesos` |
+| **Estatus Git** | Rama `fnc/FNC-038-contratos-v1` desde `develop` (worktree `pokemon-wt-038`) |
+| **Rama** | `fnc/FNC-038-contratos-v1` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -50,14 +50,43 @@
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
-| Forma de respuesta de `/api/v1` | Convención de API | Todo el frontend (`lib/api.ts`, `lib/types.ts`) | Pendiente |
+| Forma de error de `/api/v1`: campos nuevos opcionales `code` y `correlation_id` (aditivos; `status` y `message` igual) | Convención de API (solo documentada) | Todo el frontend (`lib/api.ts` lee `message`); backend `_error` de `crud.py` y `admin.py` al implementar | Pendiente (dueño) |
+| Lista paginada `{items, page, per_page, total}` para endpoints nuevos | Convención de API (solo documentada) | Endpoints nuevos de la fase 3 | Pendiente (dueño) |
+| `GET /audit`: sin `page` devuelve el arreglo actual; con `page`, paginado | Endpoint existente | `lib/api.ts:74` (`api.audit`), `components/audit-log.tsx:19` (pantalla Auditoría): sin cambio mientras no envíen `page` | Pendiente (dueño) |
+| `managed_area_ids` en `POST/PUT /users` → 400; `POST /users` con `admin_area` ya no copia áreas | Endpoint existente | `components/users-list.tsx:115,124` (pantalla Usuarios) | Pendiente (dueño); lo adapta FNC-069/DIS-019 |
+| Retirados `PUT /platforms/<id>/users` y `PUT /users/<id>/platforms` (FNC-065) | Endpoints existentes | `lib/api.ts:123` (`setPlatformUsers`, sin uso en componentes), `lib/api.ts:136` (`setUserPlatforms`) y `components/users-list.tsx` | Pendiente (dueño) |
+| Anexo A de `docs/seguridad/LINEAMIENTOS.md`: baja de áreas para admin (sus áreas); §12 sin la pregunta 17 | Lineamiento compartido | Revisor, auditor-seguridad y pruebas de matriz (`tests/matriz_proteccion.py` al implementar FNC-045) | Pendiente (dueño) |
+
+`impacto.py` (2026-10-14, tras las correcciones, contra `develop`): **Impacto en elementos compartidos:** ninguno detectado (comparado contra `develop`; 14 archivos cambiados). Detecta solo código; las filas de arriba son de contrato y se listan a mano.
 
 ## Criterios de aceptación
-- [ ] Un contrato por sección, con versión 1 y fecha
-- [ ] Cada endpoint declara método, ruta, permiso por rol, entrada con límites, salida con ejemplo y errores
-- [ ] Revisado por el dueño (decisiones de las preguntas de FNC-037 reflejadas)
-- [ ] Integrado a `develop` antes de iniciar FNC-044 y FNC-069
-- [ ] Criterios comunes backend (FNC-037)
+- [x] Un contrato por sección, con versión 1 y fecha (8 contratos + índice)
+- [x] Cada endpoint declara método, ruta, permiso por rol, entrada con límites, salida con ejemplo y errores
+- [ ] Revisado por el dueño (decisiones de FNC-037 reflejadas en `docs/contratos/README.md`; pendiente su revisión y las *Por confirmar*)
+- [ ] Integrado a `develop` antes de iniciar FNC-044 y FNC-069 (pendiente de aprobación de merge)
+- [ ] Criterios comunes backend (FNC-037): no aplican en su mayoría (sin código ni endpoints); sin IPs ni secretos verificado
+
+## Verificación
+| Comando | Resultado |
+|---|---|
+| Extraer y `json.loads` de los bloques JSON de `docs/contratos/*.md` | 18 bloques válidos |
+| `grep -rnE` de IPv4 en `docs/contratos/` | Sin coincidencias |
+| `python3 ~/.claude/agentes/herramientas/impacto.py` | Ninguno detectado; código 0 |
+
+- No verificado: no hay código que probar; sin pytest ni Vitest (la tarea es solo documentación). Revisor: 1.ª revisión Requiere cambios (9 puntos), corregidos en `a5869b4`; 2.ª revisión Aprobado con 3 detalles de redacción, corregidos.
+
+## Respuestas del dueño (2026-10-14)
+- P7: revocar no requiere motivo (`reason` opcional, ≤ 500)
+- P8: el portal no maneja contraseñas de cuentas LDAP; la contraseña la maneja Authelia
+- P10: aviso a admins del área y superadmin; reintento manual solo superadmin (confirmado)
+- P11: baja de áreas también por el admin de esas áreas; 409 con plataformas o accesos vigentes. Anexo A y §12 de `docs/seguridad/LINEAMIENTOS.md` actualizados
+
+## Por confirmar (valor más seguro aplicado)
+- P10 (resto): el aviso no depende de `pref_email_notifications`
+- P13: no cambia la forma; el contrato exige CSRF (cabecera y token según FNC-008)
+- P6 (resto): nivel `admin` del acceso automático del creador; otros admins y retiro del área en FNC-055
+- Seguridad §12.11: lista blanca de hosts fijada por el despliegue
+- Superadmin en grupos LDAP: sin registros de acceso; FNC-055 decide
 
 ## Impacto cruzado
 - Genera → FNC-069 (consumidor web)
@@ -71,3 +100,12 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-14 | Aprobada por el dueño (vía orquestador); En curso en `fnc/FNC-038-contratos-v1` |
+| 2026-10-14 | 8 contratos v1 + `docs/contratos/README.md`; commit local `e092ee9` sin push |
+| 2026-10-14 | Respuestas P7, P8, P10, P11 y 9 hallazgos del revisor corregidos; En revisión hasta el merge |
+
+## Respuestas del dueño a P6 (2026-10-14)
+- Acceso automático al dar de alta una plataforma: nivel `usuario`.
+- Lo reciben todos los admins del área.
+- Al quitarle el área a un admin se revocan sus accesos automáticos de esa área.
+- El superadmin no se agrega a los grupos LDAP; su acceso es solo en el portal.
