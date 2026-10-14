@@ -199,6 +199,9 @@ venv/bin/python run.py        # API en el puerto 5001
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 13 `xfail` con su tarea (lista en la ficha).
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, **config)` simula `ldap3` (personas, grupos, binds, filtros recibidos).
   - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria`.
+  - Servicios (FNC-023): `test_notificaciones.py`, `test_auditoria_crud.py`, `test_respaldo.py`, `test_secretos_en_respuestas.py`, `test_rutas_heredadas.py`, `test_csrf.py`, `test_arranque.py`; 13 `xfail` con su tarea (lista en la ficha).
+  - `tests/smtp_falso.py`: `instalar_smtp(monkeypatch)` simula `smtplib` (mensajes enviados, conexiones, logins, fallo con `.error`).
+  - `test_arranque.py` llama `create_app()` sin overrides; `instance/` va a un directorio temporal.
   - SSO en pruebas: el cliente llega desde loopback (de confianza por defecto); otro origen se simula con `TRUSTED_PROXIES` y `REMOTE_ADDR` ficticios.
   - `utils/test_*.py` y `scratch/test_*.py` son scripts manuales con conexiones reales: pytest no los recoge.
   - `create_app(config_overrides=None)`: el parámetro opcional solo lo usan las pruebas; sin él no cambia nada.
@@ -234,7 +237,7 @@ No hay registro de qué migraciones se aplicaron (no hay Alembic ni tabla de ver
 | 12 | Redis conectado pero sin uso. | `app/utils/redis_client.py` |
 | 13 | `user_platforms` se edita pero no restringe la visibilidad. | `authz.scoped_platforms` |
 | 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `api/admin.py` |
-| 15 | Sin control de migraciones aplicadas. Pruebas: suite base (FNC-019), protección por rol de `/api/v1` (FNC-020), alcance por área (FNC-021) y autenticación (FNC-022); servicios siguen en FNC-023. | — |
+| 15 | Sin control de migraciones aplicadas. Pruebas del backend completas: suite base (FNC-019), protección por rol (FNC-020), alcance por área (FNC-021), autenticación (FNC-022) y servicios, respaldo, heredadas, CSRF y arranque (FNC-023). | — |
 | 16 | `purge_inactive_users` de `auth/services.py` devuelve un mensaje de error de LDAP no relacionado; la API usa su propia implementación en `crud.py` (duplicado). | `auth/services.py`, `api/crud.py` |
 | 17 | `utils/seed_users.py` usa roles `admin`/`user` que el código ya no reconoce. | `utils/seed_users.py` |
 | 18 | Mensajes de error que devuelven el texto de la excepción al cliente (LDAP, SMTP, respaldo). | `api/admin.py` |
