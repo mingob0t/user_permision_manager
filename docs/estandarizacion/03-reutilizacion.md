@@ -23,6 +23,11 @@
 | `redis_registry` | Cliente | `app/utils/redis_client.py` | Registro Redis | `app/__init__.py:93` |
 | `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py:191` | Envío de correo por plantilla | auth, SSO, admin |
 | `_validate_logo`, `MAX_LOGO_BYTES` | Función/constante | `app/modules/api/admin.py:46,51` | Validar logo (data URI) | settings |
+| Fixtures de pruebas (`app`, `client`, `cliente_como`, `cliente_de_rol`, `cliente_admin`, `cliente_admin_area`, `cliente_usuario`) | Fixtures pytest | `tests/conftest.py` | App con BD temporal y clientes con sesión por rol, sin servicios externos | `tests/` |
+| `crear_area`, `crear_plataforma`, `crear_usuario`, `crear_usuario_de_rol` | Fábricas de pruebas | `tests/fabricas.py` | Datos de prueba por rol | `tests/` |
+| `CASOS`, `crear_escenario`, `crear_actor`, `publica`/`con_sesion`/`administradores`/`solo_superadmin` | Matriz de protección | `tests/matriz_proteccion.py` | Código esperado por rol de cada ruta /api/v1; todo endpoint nuevo agrega aquí su caso | `tests/test_proteccion_por_rol.py`, `tests/test_guardia_rutas.py` |
+| `parseColor`, `componer`, `razonContraste`, `MIN_TEXTO`, `MIN_NO_TEXTO` | Utilidades de pruebas | `frontend/tests/utils/wcag.ts` | Medir contraste WCAG | `frontend/tests/accesibilidad/` |
+| `cargarContextos`, `resolver` | Utilidades de pruebas | `frontend/tests/utils/tokens-css.ts` | Leer los tokens de cada tema de `tokens.css` | `frontend/tests/accesibilidad/` |
 | `scripts/lineamientos/comun.py`, `reglas.py` | Utilidades de control | `scripts/lineamientos/` | Controles pre-commit del método | `.githooks/pre-commit` |
 
 ## Duplicados conocidos (deben converger)
@@ -44,3 +49,4 @@
 | D-13 | Capa de modal duplicada en CSS | `components.css:1551-1621` y `global.css:204-335` (`nexus-modal`, `modal-*`) | Ninguna: ambas son código muerto (el `Modal` usa Tailwind) |
 | D-14 | Scripts de BD con la misma cadena de conexión | `scratch/list_dbs.py:5`, `cross_db_search_v2.py:8`, `multi_fix_db.py:8` | Borrar `scratch/` |
 | D-15 | Páginas `page.tsx` con la misma estructura | `frontend/src/app/*/page.tsx` (10 archivos, 5 líneas útiles) | Aceptable: patrón de Next.js |
+| D-16 | Definición de "color literal" | `frontend/tests/accesibilidad/colores-literales.test.ts:16-25` (hex, rgb/hsl y paleta Tailwind); `scripts/lineamientos/reglas.py:21-23` (hex y rgb/hsl) | Fines distintos (tope en repo vs. bloqueo en pre-commit); mantener alineadas al cambiar una |

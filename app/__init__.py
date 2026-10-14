@@ -23,7 +23,13 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 
-def create_app():
+def create_app(config_overrides=None):
+    """Crea la aplicación.
+
+    `config_overrides` (opcional) reemplaza claves de configuración antes de
+    iniciar las extensiones; lo usan las pruebas para apuntar a una BD
+    temporal. Sin él (producción, `run.py`), el comportamiento no cambia.
+    """
     # Flask es solo API: no sirve frontend. `static_folder=None` desactiva la
     # ruta /static, que ya no tiene contenido. Las plantillas se conservan
     # únicamente para las páginas de error.
@@ -57,6 +63,9 @@ def create_app():
         "pool_pre_ping": True,
         "pool_recycle": 3600,
     }
+
+    if config_overrides:
+        app.config.update(config_overrides)
 
 
 
