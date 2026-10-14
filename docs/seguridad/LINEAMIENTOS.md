@@ -194,7 +194,8 @@ No bloquean: cada una se decide en la fase indicada, al llegar la tarea que la n
 14. **[Fase 5]** ¿HSTS con `includeSubDomains`?
 15. **[Fase 5]** ¿La auditoría basta con permisos de BD, o se requiere cadena de hash o envío a un SIEM?
 16. **[Fase 3]** ¿Qué cola de trabajos se usa para los conectores (se decide en un ADR)?
-17. **[Fase 3]** ¿Un admin puede dar de baja sus áreas?
+
+Resuelta y retirada: la 17 (baja de áreas por el admin): sí, sus áreas (dueño, 2026-10-14; P11 de FNC-037).
 
 ## Anexo A. Matriz de permisos
 Los casos "sin sesión" siempre dan 401. "Ajena" significa un área que el admin no gestiona y responde 404.
@@ -204,7 +205,8 @@ Los casos "sin sesión" siempre dan 401. "Ajena" significa un área que el admin
 | Ver el catálogo y solicitar acceso | Sí | Ver | Sí | Ver |
 | Aprobar, rechazar o revocar | No | Sí, salvo lo propio | No | Sí, salvo lo propio |
 | Alta y edición de áreas y plataformas | No | Sí | No | Sí |
-| Baja de áreas; DN de grupos; conectores | No | No | No | Sí |
+| Baja de áreas (409 con plataformas o accesos vigentes) | No | Sí | No | Sí |
+| DN de grupos; conectores | No | No | No | Sí |
 | Crear cuentas en OpenLDAP | No | Sí (para sus áreas) | No | Sí |
 | Elevar o gestionar admins | No | No | No | Sí |
 | Gestionar usuarios no admin | No | Sí (sin contraseña `ldap`/`sso`) | No | Sí |

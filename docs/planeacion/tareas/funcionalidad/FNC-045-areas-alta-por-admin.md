@@ -27,7 +27,7 @@
 - **Incluye:**
   - `POST /areas` con `any_admin_required`; si lo crea un admin de área, se agrega a `area_admins` en la misma transacción
   - `PUT /areas/<id>` sigue con `area_admin_required`
-  - `DELETE /areas/<id>`: según P11 (recomendado: solo superadmin, y 409 si tiene plataformas o accesos activos)
+  - `DELETE /areas/<id>`: según P11 (dueño, 2026-10-14): el admin de esas áreas y el superadmin; 409 si tiene plataformas o accesos activos. Agregar el caso a `tests/matriz_proteccion.py`
   - Auditoría del alta con actor y área
 - **No incluye:**
   - Asignar admins a un área (FNC-044, superadmin)
