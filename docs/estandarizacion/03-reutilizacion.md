@@ -25,6 +25,7 @@
 | `_validate_logo`, `MAX_LOGO_BYTES` | Función/constante | `app/modules/api/admin.py:46,51` | Validar logo (data URI) | settings |
 | Fixtures de pruebas (`app`, `client`, `cliente_como`, `cliente_de_rol`, `cliente_admin`, `cliente_admin_area`, `cliente_usuario`) | Fixtures pytest | `tests/conftest.py` | App con BD temporal y clientes con sesión por rol, sin servicios externos | `tests/` |
 | `crear_area`, `crear_plataforma`, `crear_usuario`, `crear_usuario_de_rol` | Fábricas de pruebas | `tests/fabricas.py` | Datos de prueba por rol | `tests/` |
+| `CASOS`, `crear_escenario`, `crear_actor`, `publica`/`con_sesion`/`administradores`/`solo_superadmin` | Matriz de protección | `tests/matriz_proteccion.py` | Código esperado por rol de cada ruta /api/v1; todo endpoint nuevo agrega aquí su caso | `tests/test_proteccion_por_rol.py`, `tests/test_guardia_rutas.py` |
 | `parseColor`, `componer`, `razonContraste`, `MIN_TEXTO`, `MIN_NO_TEXTO` | Utilidades de pruebas | `frontend/tests/utils/wcag.ts` | Medir contraste WCAG | `frontend/tests/accesibilidad/` |
 | `cargarContextos`, `resolver` | Utilidades de pruebas | `frontend/tests/utils/tokens-css.ts` | Leer los tokens de cada tema de `tokens.css` | `frontend/tests/accesibilidad/` |
 | `scripts/lineamientos/comun.py`, `reglas.py` | Utilidades de control | `scripts/lineamientos/` | Controles pre-commit del método | `.githooks/pre-commit` |
