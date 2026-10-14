@@ -8,8 +8,9 @@
 | **Fase** | 1 |
 | **Módulo / Área** | seguridad |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | En curso |
 | **Creada** | 2026-10-13 |
+| **Inicio** | 2026-10-13 |
 | **Rama** | `fnc/FNC-036-lineamientos-de-seguridad` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí |
@@ -46,3 +47,4 @@ Escribir `docs/seguridad/LINEAMIENTOS.md`: reglas verificables que cada tarea de
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta por decisión del dueño sobre el orden de fases |
+| 2026-10-13 | Aprobada por el dueño; en curso |

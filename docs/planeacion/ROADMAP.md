@@ -5,7 +5,7 @@ Orden de fases decidido por el dueño el 2026-10-13. Detalle de los hallazgos: [
 **Regla:** las correcciones de seguridad esperan a la fase 5, **salvo** que una tarea anterior modifique el módulo afectado; en ese caso la tarea lo deja cumpliendo `docs/seguridad/LINEAMIENTOS.md`. El portal no se expone en un entorno accesible antes de cerrar la fase 5.
 
 ## Fase 0 — Incorporación
-- [ ] Estructura, línea base y diagnóstico inicial (FNC-001)
+- [x] Estructura, línea base y diagnóstico inicial (FNC-001)
 
 ## Fase 1 — Lineamientos de seguridad
 - [ ] Reglas de seguridad del proyecto (FNC-036)

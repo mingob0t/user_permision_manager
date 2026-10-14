@@ -2,7 +2,7 @@
 
 | ID | Tarea | Plataforma | Fase | Módulo | Prioridad | Estatus | Creada | Inicio | Finalizada | Git | Vínculos |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| FNC-001 | Incorporar el proyecto al método | infra | 0 | global | Alta | En curso | 2026-10-13 | 2026-10-13 | | `fnc/FNC-001-incorporacion-metodo` | |
+| FNC-001 | Incorporar el proyecto al método | infra | 0 | global | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (634e9f1) | |
 | FNC-002 | Login de directorio seguro: sin purga de cuentas, filtro LDAP escapado y mensajes genéricos | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — |  |
 | FNC-003 | Eliminar credenciales por defecto y crear el primer superadmin con un comando explícito | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — |  |
 | FNC-004 | nginx: limpiar cabeceras Remote-* en todas las location, bloquear /api y /auth sin distinguir mayúsculas, TLS y cabeceras de seguridad | infra | 5 | deploy | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-005 y FNC-006 cierra SEG-04 |
@@ -49,4 +49,4 @@
 | DIS-010 | Componentes comunes: DataTable, botón de peligro, filtros, tonos de estado y toast | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — |  |
 | DIS-011 | Dividir settings-panel.tsx, users-list.tsx y platform-admin.tsx | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — | Después de DIS-010 |
 | DIS-012 | Eliminar estilos inline y colores literales en TSX | web | 4 | estilos | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-033 |
-| FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | Propuesta | 2026-10-13 | | | — | Base de todas las fases siguientes |
+| FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | En curso | 2026-10-13 | 2026-10-13 | | `fnc/FNC-036-lineamientos-de-seguridad` | Base de todas las fases siguientes |
