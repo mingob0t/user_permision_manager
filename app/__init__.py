@@ -63,6 +63,11 @@ def create_app(config_overrides=None):
     if config_overrides:
         app.config.update(config_overrides)
 
+    # Con LDAP_URL definida, sin TLS o con configuración incompleta del
+    # directorio la app no arranca (FNC-040, SEC-LDAP-02).
+    from app.modules.directory.configuracion import validar_al_arrancar
+    validar_al_arrancar()
+
 
 
     # Inicializar Extensiones

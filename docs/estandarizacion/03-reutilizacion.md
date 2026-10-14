@@ -23,6 +23,8 @@
 | `limpiar_detalle` | Utilidad | `app/modules/audit/sanitizar.py` | Quita datos sensibles de antes/después (SEC-AUD-05) | `add_audit_log` |
 | `sanitize_display_name` | Función | `app/utils/naming.py` | Normalizar nombres | `crud.py` |
 | `redis_registry` | Cliente | `app/utils/redis_client.py` | Registro Redis | `app/__init__.py:93` |
+| `ClienteDirectorio`, `escapar_filtro`, `escapar_valor_dn`, `ErrorDirectorio` | Cliente | `app/modules/directory/ldap_client.py` | Única conexión a OpenLDAP (TLS validado, espera, escape); todo uso nuevo de `ldap3` pasa por aquí | (sin llamadores hasta FNC-041/042/043) |
+| `cargar_configuracion`, `validar_al_arrancar` | Configuración | `app/modules/directory/configuracion.py` | Configuración del directorio desde `LDAP_*` (ADR-004) | `app/__init__.py`, `ldap_client.py` |
 | `construir_uri_bd` | Función | `app/utils/uri_bd.py` | URI de la BD desde `DB_*` | `app/__init__.py`, `migrations/env.py` |
 | `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py:191` | Envío de correo por plantilla | auth, SSO, admin |
 | `_validate_logo`, `MAX_LOGO_BYTES` | Función/constante | `app/modules/api/admin.py:46,51` | Validar logo (data URI) | settings |
@@ -30,6 +32,7 @@
 | `crear_area`, `crear_plataforma`, `crear_usuario`, `crear_usuario_de_rol` | Fábricas de pruebas | `tests/fabricas.py` | Datos de prueba por rol | `tests/` |
 | `CASOS`, `crear_escenario`, `crear_actor`, `publica`/`con_sesion`/`administradores`/`solo_superadmin` | Matriz de protección | `tests/matriz_proteccion.py` | Código esperado por rol de cada ruta /api/v1; todo endpoint nuevo agrega aquí su caso | `tests/test_proteccion_por_rol.py`, `tests/test_guardia_rutas.py` |
 | `instalar_directorio`, `DirectorioFalso` | Doble de pruebas | `tests/directorio_falso.py` | Simular `ldap3` en el login por directorio, sin red | `tests/test_login_directorio.py` |
+| `DirectorioMock`, `directorio`, `crear_directorio` | Doble de pruebas | `tests/directory/conftest.py` | `ldap3` `MOCK_SYNC` para el cliente del directorio, sin red | `tests/directory/` |
 | `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` | Utilidades de pruebas | `tests/peticiones_auth.py` | Login real por API y comprobaciones de sesión y auditoría (`hay_auditoria(..., target=)` desde FNC-047) | `tests/test_login_*.py`, `tests/test_sso.py`, `tests/test_sesion_y_logout.py` |
 | `instalar_smtp`, `SmtpFalso` | Doble de pruebas | `tests/smtp_falso.py` | Simular `smtplib` en notificaciones, sin red | `tests/test_notificaciones.py` |
 | `parseColor`, `componer`, `razonContraste`, `MIN_TEXTO`, `MIN_NO_TEXTO` | Utilidades de pruebas | `frontend/tests/utils/wcag.ts` | Medir contraste WCAG | `frontend/tests/accesibilidad/` |
@@ -45,7 +48,7 @@
 | D-03 | `_payload()` y `_error()` | `app/modules/api/crud.py:23,27`; `admin.py:25,29` | `app/modules/api/helpers.py` (`json_payload`, `error_response`) |
 | D-04 | Aviso "usuario creado" (con `NOTIFY_USER_CREATED`/`BASE_URL`) | `app/modules/api/auth.py:111-121`; `app/modules/auth/services.py:151-158` | Función única en `notifications/services.py` |
 | D-05 | Purga de usuarios inactivos | `app/modules/auth/services.py:172` (heredada, con criterio distinto) y `app/modules/api/crud.py:415-435` | La de `crud.py` (considera nulos) movida a `app/modules/users/services.py` |
-| D-06 | Conexión LDAP (`Server`/`Connection`/`Tls`) | `app/modules/auth/services.py:42,213`; `app/modules/api/admin.py:607-614` | `app/modules/auth/ldap_client.py` |
+| D-06 | Conexión LDAP (`Server`/`Connection`/`Tls`) | `app/modules/auth/services.py:42,213`; `app/modules/api/admin.py:607-614` | `app/modules/directory/ldap_client.py` (creado en FNC-040; migran los llamadores FNC-042 y FNC-043) |
 | D-07 | `fetch` directo en `api.ts` | `frontend/src/lib/api.ts:41,199,212` | Un solo `request()` con soporte de blobs |
 | D-08 | Botón "Eliminar" en línea (`rounded px-2 py-1 text-xs text-red-600 hover:bg-red-500/10 dark:text-red-300`) | `areas-list.tsx:200`, `platform-admin.tsx:277`, `users-list.tsx:526` | Variante `danger` de `Button` o clase `nx-btn-danger` |
 | D-09 | Clase de entrada de texto/selector | `audit-log.tsx:47`, `platform-catalog.tsx:50,58` (y `TextInput` en `form.tsx` ya existe) | Reutilizar `TextInput`/`Select` |

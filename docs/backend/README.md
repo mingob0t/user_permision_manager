@@ -156,6 +156,14 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 
 ## 5. Integraciones
 
+### Cliente OpenLDAP centralizado (`app/modules/directory/`, FNC-040)
+- Activo solo con `LDAP_URL`; la configuración (`LDAP_*`, ver `VARIABLES.md`) se valida en `create_app()` y, si falla, la app no arranca.
+- TLS obligatorio: `ldaps://` o `ldap://` + StartTLS antes del bind; `CERT_REQUIRED`, nombre del host verificado, CA de `LDAP_CA_CERT_FILE` o del sistema.
+- `ClienteDirectorio`: `conexion_servicio()` (solo lectura), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`.
+- Escape: `escapar_filtro` (RFC 4515) y `escapar_valor_dn` (RFC 4514).
+- Errores: `ErrorDirectorio` con mensaje genérico; detalle al log sin la contraseña de bind.
+- Aún sin llamadores: login (FNC-042), búsqueda y prueba de conexión (FNC-043) siguen en el código heredado de abajo; escritura en FNC-041.
+
 ### LDAP / OpenLDAP (solo lectura)
 - Configuración en la tabla `auth_config`, editable desde Ajustes → Directorio. No hay variables de entorno para LDAP (salvo `DEBUG_LDAP`).
 - `authenticate_user_ldap`: bind de servicio → búsqueda por `ldap_user_attr` → bind con el DN del usuario para validar la contraseña → crea/actualiza el usuario local (`auth_source=ldap`) y le asigna rol por `ldap_role_mappings` o, en su defecto, por `ldap_group_admin`.
@@ -213,6 +221,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (casos `xfail` hasta FNC-007 y FNC-015).
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 13 `xfail` con su tarea (lista en la ficha).
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, **config)` simula `ldap3` (personas, grupos, binds, filtros recibidos).
+  - `tests/directory/conftest.py`: `directorio` / `crear_directorio(**LDAP_*)` usan `ldap3` `MOCK_SYNC` con el cliente centralizado; `tests/directory/test_tls.py` abre TLS real solo hacia `localhost`.
   - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` (con `target=` para el correo).
   - Auditoría (FNC-047): `tests/audit/` (registro ampliado, inmutabilidad y regresión de SEG-25).
   - Servicios (FNC-023): `test_notificaciones.py`, `test_auditoria_crud.py`, `test_respaldo.py`, `test_secretos_en_respuestas.py`, `test_rutas_heredadas.py`, `test_csrf.py`, `test_arranque.py`; 13 `xfail` con su tarea (lista en la ficha).
@@ -283,7 +292,7 @@ Quedan como referencia; la línea base `0001` ya refleja su resultado. FNC-028 d
 | 4 | **Dirección IP literal** como valor por defecto de `BASE_URL` en el correo de bienvenida LDAP (incumple el lineamiento "sin IPs"). | `auth/services.py` |
 | 5 | CSRF exento en todos los blueprints; la API depende solo de la cookie de sesión (SameSite por defecto del navegador). | `app/__init__.py` |
 | 6 | Contraseñas de LDAP y SMTP guardadas en claro en BD. | `auth_config`, `smtp_config` |
-| 7 | LDAP con TLS sin validar certificado (`CERT_NONE`). | `auth/services.py`, `api/admin.py` |
+| 7 | LDAP con TLS sin validar certificado (`CERT_NONE`) en el código heredado; el cliente nuevo ya valida (FNC-040), falta migrar los llamadores (FNC-042, FNC-043). | `auth/services.py`, `api/admin.py` |
 | 8 | Borrado automático de la cuenta local si no aparece en el directorio. | `auth/services.py` |
 | 9 | `run.py` usa `debug=True` y escucha en todas las interfaces; `PORT_APP` no se lee. | `run.py` |
 | 10 | `DB_ENGINE` distinto de `mysql` cae a SQLite (no hay rama PostgreSQL aunque `psycopg2-binary` está en dependencias). | `app/__init__.py` |

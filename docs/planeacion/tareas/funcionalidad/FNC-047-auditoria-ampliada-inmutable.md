@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | auditoria |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-047-auditoria-ampliada` (worktree `pokemon-wt-047`) |
@@ -134,3 +134,4 @@
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-14 | Aprobada por el dueño (comunicado por el orquestador); implementada por desarrollador en `pokemon-wt-047`; queda En revisión (falta `auditor-seguridad` y revisor) |
 | 2026-10-14 | `auditor-seguridad`: Aprobado. `revisor`: Requiere cambios; corregidos SEC-AUD-04, prueba de FK, 33 llamadas, `FRAGMENTOS_SENSIBLES` y forma par, requisitos de FNC-060; creadas FNC-075 y FNC-076. Sigue En revisión |
+- Cierre (2026-10-14): revisor y auditor-seguridad atendidos; merge local a `develop` aprobado por el dueño.
