@@ -6,7 +6,7 @@
 """
 
 import pytest
-from sqlalchemy import delete, update
+from sqlalchemy import delete, event, update
 
 from app import db
 from app.authz import ROLE_USER
@@ -85,13 +85,34 @@ def test_ninguna_ruta_modifica_ni_borra_auditoria(app):
     assert escrituras == []
 
 
-def test_borrar_un_usuario_conserva_su_auditoria(app, cliente_admin):
-    usuario = fabricas.crear_usuario(ROLE_USER, email='borrable@pruebas.local')
-    add_audit_log('EVENTO PREVIO', target=usuario.email,
-                  target_user_id=usuario.id)
+def _activar_fk(conexion, _registro):
+    conexion.execute('PRAGMA foreign_keys=ON')
 
-    respuesta = cliente_admin.delete(f'{A}/users/{usuario.id}')
+
+@pytest.fixture
+def fk_activas(app):
+    """SQLite no aplica las FK por defecto: se activan en conexiones nuevas."""
+    event.listen(db.engine, 'connect', _activar_fk)
+    db.session.remove()
+    db.engine.dispose()
+    yield
+    db.session.remove()
+    event.remove(db.engine, 'connect', _activar_fk)
+    db.engine.dispose()
+
+
+def test_borrar_un_usuario_conserva_su_auditoria(app, fk_activas,
+                                                 cliente_admin):
+    usuario = fabricas.crear_usuario(ROLE_USER, email='borrable@pruebas.local')
+    usuario_id = usuario.id
+    add_audit_log('EVENTO PREVIO', target=usuario.email,
+                  target_user_id=usuario_id)
+    assert db.session.execute(db.text('PRAGMA foreign_keys')).scalar() == 1
+
+    respuesta = cliente_admin.delete(f'{A}/users/{usuario_id}')
 
     assert respuesta.status_code == 200
+    db.session.expire_all()
     previo = AuditLog.query.filter_by(action='EVENTO PREVIO').one()
     assert previo.target == 'borrable@pruebas.local'
+    assert previo.target_user_id is None

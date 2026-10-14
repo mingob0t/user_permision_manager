@@ -18,7 +18,7 @@
 | Tokens de color y temas | CSS | `frontend/src/styles/tokens.css` (claro `:51`, oscuro `:271` y `:207`) | Única fuente de colores | `tailwind.config.ts` |
 | Decoradores de permisos (`admin_required`, `any_admin_required`, `area_admin_required`, `platform_manage_required`, `platform_access_required`) | Decoradores Flask | `app/authz.py` | Reglas de acceso por rol y área | `app/modules/api/*` |
 | `scoped_areas`, `scoped_users`, `can_manage_area`, `can_manage_user`, `is_admin` | Funciones | `app/authz.py` | Alcance multitenant por área | `crud.py`, `routes.py` |
-| `add_audit_log` | Servicio | `app/modules/audit/services.py` | Única forma de registrar auditoría; desde FNC-047 acepta usuario afectado, área, plataforma, antes/después y `as_system` | 40 llamadas en `app/` |
+| `add_audit_log` | Servicio | `app/modules/audit/services.py` | Única forma de registrar auditoría; desde FNC-047 acepta usuario afectado, área, plataforma, antes/después y `as_system` | 33 llamadas en `app/` |
 | `Evento`, `ACTOR_SISTEMA` | Catálogo | `app/modules/audit/events.py` | Valores de `action` del gestor de accesos (contrato `auditoria.md`) | Tareas de la fase 3 |
 | `limpiar_detalle` | Utilidad | `app/modules/audit/sanitizar.py` | Quita datos sensibles de antes/después (SEC-AUD-05) | `add_audit_log` |
 | `sanitize_display_name` | Función | `app/utils/naming.py` | Normalizar nombres | `crud.py` |

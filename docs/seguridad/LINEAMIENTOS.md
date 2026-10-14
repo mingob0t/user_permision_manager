@@ -106,7 +106,7 @@ Son reglas obligatorias para toda tarea y sirven de criterio de revisión para `
 | SEC-AUD-01 | Se auditan: logins y fallos, bloqueos, cambios de usuario, rol o áreas, solicitudes, otorgar y revocar, conectores fallidos, configuración, DN de grupos, respaldo, purga, alta del superadmin y 403 de administración | Prueba por evento | — |
 | SEC-AUD-02 | Cada registro guarda: fecha en UTC, id y correo del actor, acción enumerada, área y plataforma (columnas), antes y después, resultado e IP | Revisión del modelo | SEG-16, 25 |
 | SEC-AUD-03 | Inmutable: sin rutas de edición ni borrado, la app sin `UPDATE`/`DELETE` en la tabla y sin cascada al borrar usuarios | Prueba y permisos de BD | — |
-| SEC-AUD-04 | IP real con `ProxyFix` solo para el proxy de confianza; nginx sobrescribe `X-Forwarded-For` | Prueba con un XFF falso | SEG-25 |
+| SEC-AUD-04 | IP real solo para la auditoría: último valor de `X-Forwarded-For` si el origen está en `TRUSTED_PROXIES`, si no `remote_addr` (sin `ProxyFix` global: rompería el SSO); que nginx sobrescriba `X-Forwarded-For` queda para FNC-004/017 | Prueba con un XFF falso | SEG-25 |
 | SEC-AUD-05 | Nunca se registran contraseñas, tokens, cookies, cabeceras completas ni secretos | Prueba | — |
 | SEC-AUD-06 | Otorgar, revocar, aprobar o cambiar el rol se auditan en la misma transacción | Prueba de *rollback* | — |
 
@@ -165,7 +165,7 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 | `app/modules/api/admin.py` | 06 / 08, 17, 22 / 13 / 21, 29 | 008 / 010 / 012 / 017 |
 | `auth/models.py`, `notifications/models.py` | 08 | 010 |
 | `notifications/services.py` | 23 | 017 |
-| `api/routes.py` (`/audit`), `audit/` | 16 (25 cerrado por FNC-047) | 060 (015 parcial) |
+| `api/routes.py` (`/audit`), `audit/` | 16 (25 cerrado por FNC-047) | 060 (015 parcial); requisito previo de FNC-054/056 |
 | `run.py` | 18 | 009 |
 | `deploy/nginx.conf.tmpl` | 04, 15 / 29 | 004 / 017 |
 | `frontend/next.config.ts` | 04 | 005 |

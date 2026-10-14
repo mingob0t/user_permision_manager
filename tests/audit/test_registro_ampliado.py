@@ -141,3 +141,27 @@ def test_get_audit_sin_page_sigue_siendo_arreglo_con_campos_nuevos(
     cuerpo = respuesta.get_json()
     assert isinstance(cuerpo, list) and len(cuerpo) == 1
     assert set(cuerpo[0]) == CAMPOS_EXISTENTES | CAMPOS_NUEVOS
+
+
+def test_configuracion_ldap_y_smtp_sin_credenciales(app):
+    """Campos reales de AuthConfig y SMTPConfig, y la forma par key/value."""
+    ldap = {'ldap_host': 'ldap.pruebas.invalid', 'ldap_port': 636,
+            'ldap_user': 'cn=servicio', 'ldap_pass': 'p1', 'ldap_ssl': True}
+    smtp = {'server': 'smtp.pruebas.invalid', 'username': 'envios',
+            'password': 'p2', 'auth_enabled': True}
+    otros = {'pwd': 'a', 'passwd': 'b', 'private_key': 'c', 'otp': 'd',
+             'session_id': 'e', 'api_key': 'f',
+             'pares': [{'key': 'smtp_password', 'value': 'g'},
+                       {'name': 'ldap_host', 'value': 'ldap.pruebas.invalid'}]}
+
+    add_audit_log(Evento.CONECTOR_CONFIGURADO, 'success', before=ldap,
+                  after={'smtp': smtp, 'otros': otros})
+
+    datos = _unico().to_dict()
+    assert datos['before'] == {**ldap, 'ldap_pass': VALOR_OMITIDO}
+    assert datos['after']['smtp'] == {**smtp, 'password': VALOR_OMITIDO}
+    esperado = {k: VALOR_OMITIDO for k in otros if k != 'pares'}
+    esperado['pares'] = [
+        {'key': 'smtp_password', 'value': VALOR_OMITIDO},
+        {'name': 'ldap_host', 'value': 'ldap.pruebas.invalid'}]
+    assert datos['after']['otros'] == esperado

@@ -53,6 +53,8 @@
 | FNC-072 | Corregir los hallazgos de lint de la línea base web | web | 2 | frontend | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (851846f) | Depende de FNC-024 |
 | FNC-073 | Alinear la versión mínima de Node en el despliegue | infra | 6 | deploy | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-025 |
 | FNC-074 | Unificar el LDAP simulado de las pruebas | backend | 4 | pruebas | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-022 |
+| FNC-075 | Permisos de BD solo INSERT/SELECT sobre audit_logs | infra | 3 | auditoria | Media | Propuesta | 2026-10-14 | | | — | Origen: revisión de FNC-047; pendiente del dueño |
+| FNC-076 | Mover _trusted_proxy de api/auth.py a app/utils/ | backend | 4 | utils | Baja | Propuesta | 2026-10-14 | | | — | Origen: revisión de FNC-047 |
 | FNC-037 | Planeación de la fase 3: gestor de accesos | backend | 3 | planeacion | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-14 | Merge local a develop | Plan de la fase 3; genera FNC-038 a FNC-071 y DIS-013 a DIS-024 |
 | FNC-038 | Contratos v1 backend↔web del gestor de accesos | backend | 3 | contratos | Alta | Hecha | 2026-10-13 | 2026-10-14 | 2026-10-14 | Merge local a develop (434a51c) | Depende de P1, P14, FNC-037, ADR-006 |
 | FNC-039 | Migraciones versionadas de MySQL para la fase 3 (según ADR-002) | backend | 3 | bd | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-039-migraciones-alembic` (commit local, sin push) | Depende de ADR-002; Alembic 1.20.0, línea base `0001`; pendiente prueba del dueño en MySQL |
@@ -63,7 +65,7 @@
 | FNC-044 | Roles: solo el superadmin crea o eleva admins y asigna las áreas administradas | backend | 3 | usuarios-roles | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-038, FNC-047 |
 | FNC-045 | Áreas: el admin da de alta sus áreas y queda como su administrador | backend | 3 | areas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-044, FNC-038, FNC-047 |
 | FNC-046 | Plataformas: tipo de integración y grupos LDAP por nivel | backend | 3 | plataformas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-039, FNC-040, FNC-038, FNC-047 |
-| FNC-047 | Auditoría ampliada: registro inmutable con detalle del cambio, actor, área y plataforma | backend | 3 | auditoria | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-047-auditoria-ampliada` (commit local `41f1219`, sin push) | Depende de FNC-039; migración `0002`; cierra SEG-25 (FNC-015 parcial); falta auditor-seguridad |
+| FNC-047 | Auditoría ampliada: registro inmutable con detalle del cambio, actor, área y plataforma | backend | 3 | auditoria | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-047-auditoria-ampliada` (commit local `41f1219`, sin push) | Depende de FNC-039; migración `0002`; cierra SEG-25 (FNC-015 parcial); auditor-seguridad Aprobado; correcciones del revisor |
 | FNC-048 | Notificaciones del gestor de accesos: plantillas y envío por evento | backend | 3 | notificaciones | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-039, ADR-003 |
 | FNC-049 | Ejecutor de aprovisionamiento: cola, worker, reintentos y bitácora (según ADR-003) | backend | 3 | aprovisionamiento | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-039, FNC-041, FNC-047, FNC-048, ADR-003 |
 | FNC-050 | Conectores: interfaz, registro, configuración por plataforma y credenciales desde Vaultwarden (según ADR-005) | backend | 3 | conectores | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-049, FNC-046, ADR-005 |

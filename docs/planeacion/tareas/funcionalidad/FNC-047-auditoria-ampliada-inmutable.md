@@ -36,7 +36,7 @@
 - **No incluye:**
   - Consultas y visibilidad por rol (FNC-060)
   - Política de retención y seudonimización (FNC-018)
-  - Migrar las 40 llamadas existentes a los campos nuevos (se ajustan solo las que toque cada tarea)
+  - Migrar las 33 llamadas existentes a los campos nuevos (se ajustan solo las que toque cada tarea)
 
 ## Hallazgos de seguridad que absorbe
 - **FNC-015** parcial: SEG-25 (longitud de `action`, IP real). SEG-16 lo cierra FNC-060.
@@ -51,7 +51,7 @@
 - `tests/audit/`
 
 ## Reutilización
-- `add_audit_log` (única forma de registrar, 40 llamadas)
+- `add_audit_log` (única forma de registrar, 33 llamadas)
 
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
@@ -88,10 +88,10 @@
 - [x] IP del cliente detrás del proxy de confianza; `X-Forwarded-For` de otro origen se ignora (`test_ip_real_...`, `test_x_forwarded_for_de_otro_origen_se_ignora`)
 - [x] Ninguna ruta modifica o borra registros (`test_ninguna_ruta_modifica_ni_borra_auditoria`)
 - [x] Criterios comunes backend (FNC-037): sin endpoints nuevos; lógica en el servicio del módulo; sin IPs ni secretos; variables registradas; tabla de `impacto.py`
-- [ ] `auditor-seguridad` en modo cambio (la ficha lo exige; no lanzado por instrucción del orquestador)
+- [x] `auditor-seguridad` en modo cambio: **Aprobado** (2026-10-14)
 
 ## Impacto cruzado
-- Genera → FNC-060
+- Genera → FNC-060, FNC-075, FNC-076
 - Origen ← FNC-037
 - Depende de → FNC-036, FNC-019, FNC-039
 
@@ -117,10 +117,13 @@
 |---|---|
 | `venv/bin/python -m pytest -q tests/audit/test_regresion_seg25.py` antes del cambio | 3 failed, 2 passed (acción con correo; recorte sin registro; IP del proxy) |
 | `venv/bin/python -m pytest -q tests/audit tests/test_migraciones.py` | 30 passed |
-| `venv/bin/python -m pytest -q` (completo) | 456 passed, 35 xfailed, código de salida 0 (antes: 431 passed, 35 xfailed) |
+| `venv/bin/python -m pytest -q` (completo) | 456 passed, 35 xfailed, código 0 (antes: 431); tras correcciones: 457 passed, 35 xfailed, código 0 |
 | `alembic upgrade 0001:0002 --sql` y `downgrade 0002:0001 --sql` con dialecto MySQL (BD ficticia, sin conexión) | SQL generado; índices antes de FK y FK antes de índices al bajar |
 
-- No verificado: migración contra un MySQL real (sin acceso; pendiente del dueño, como FNC-039); permisos de BD; pantalla `/audit` con los campos nuevos (FNC-069).
+- No verificado: migración contra un MySQL real (sin acceso; pendiente del dueño, como FNC-039); permisos de BD (FNC-075); pantalla `/audit` con los campos nuevos (FNC-069).
+- No verificado: INSERT con textos largos en MySQL estricto; SQLite no impone largos, la prueba solo comprueba el recorte al largo de la columna.
+- `ON DELETE SET NULL` verificado en SQLite con `PRAGMA foreign_keys=ON` (`test_borrar_un_usuario_conserva_su_auditoria`).
+- Revisión 1: `auditor-seguridad` Aprobado; `revisor` Requiere cambios (6 puntos), corregidos en el commit de correcciones.
 
 ## Commits / PR
 - Rama `fnc/FNC-047-auditoria-ampliada`; commit local `41f1219` `[FNC-047] Auditoría ampliada e inmutable` + commit de registro del hash. Sin push ni PR.
@@ -130,3 +133,4 @@
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-14 | Aprobada por el dueño (comunicado por el orquestador); implementada por desarrollador en `pokemon-wt-047`; queda En revisión (falta `auditor-seguridad` y revisor) |
+| 2026-10-14 | `auditor-seguridad`: Aprobado. `revisor`: Requiere cambios; corregidos SEC-AUD-04, prueba de FK, 33 llamadas, `FRAGMENTOS_SENSIBLES` y forma par, requisitos de FNC-060; creadas FNC-075 y FNC-076. Sigue En revisión |
