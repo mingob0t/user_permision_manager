@@ -84,3 +84,9 @@
 - P12. ¿Se prohíbe decidir la propia solicitud? (FNC-057)
 - P13. Regla de absorber hallazgos: ¿por función/archivo tocado (supuesto del plan) o por módulo completo? ¿Se adelanta FNC-008 (CSRF) a antes de la fase 3?
 - P14. Decidir ADR-002 (migraciones), ADR-003 (cola y worker), ADR-004 (OpenLDAP), ADR-005 (Vaultwarden en ejecución) y ADR-006 (refresco de la interfaz).
+
+## Respuestas del dueño (2026-10-13)
+- P1: el catálogo muestra solo las plataformas de las áreas del usuario.
+- P5: un solo nivel por plataforma (usuario **o** admin); subir a admin reemplaza al de usuario.
+- P2: el superadmin y los admins pueden crear cuentas en OpenLDAP (el admin, para sus áreas).
+- P9: aún no hay plataformas con conector definidas; se hace la base (FNC-049, FNC-050) y los tipos FNC-051 a FNC-053 esperan.
