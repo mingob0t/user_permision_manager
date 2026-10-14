@@ -123,7 +123,7 @@
 - No verificado: migración contra un MySQL real (sin acceso; pendiente del dueño, como FNC-039); permisos de BD; pantalla `/audit` con los campos nuevos (FNC-069).
 
 ## Commits / PR
-- Rama `fnc/FNC-047-auditoria-ampliada`; commit local `[FNC-047] Auditoría ampliada e inmutable` (hash en el tablero y en el informe). Sin push ni PR.
+- Rama `fnc/FNC-047-auditoria-ampliada`; commit local `41f1219` `[FNC-047] Auditoría ampliada e inmutable` + commit de registro del hash. Sin push ni PR.
 
 ## Bitácora
 | Fecha | Nota |
