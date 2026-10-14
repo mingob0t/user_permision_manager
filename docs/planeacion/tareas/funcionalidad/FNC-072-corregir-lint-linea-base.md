@@ -37,6 +37,7 @@
 - No verificado: navegación manual en el navegador (no hay backend levantado en este worktree).
 - `auditor-accesibilidad` no aplica: no hay cambio visual ni de tokens.
 - Revisor: "Con observaciones", solo de documentación y commit; atendidas.
+- auditor-accesibilidad (modo cambio): Aprobado. El enlace "Ir al inicio" sigue siendo <a href="/"> (next/link), con las mismas clases, texto y foco; sin cambio de color ni tamaño; el resto son imports y comentarios.
 
 ## Impacto en elementos compartidos
 | Elemento | Definido en | Usado en | Validar |
