@@ -49,3 +49,7 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+
+## Nota (2026-10-13, revisión de seguridad de FNC-024)
+- ESLint agregó 2 rutas más hacia `braces` (vía `@next/eslint-plugin-next` → `fast-glob`); resolver con overrides, no bajando `eslint-config-next`.
+- Para CI: valorar `npm ci --ignore-scripts` (nuevo script de instalación de `unrs-resolver`).
