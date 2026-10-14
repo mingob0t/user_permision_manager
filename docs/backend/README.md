@@ -219,7 +219,7 @@ venv/bin/python run.py        # API en el puerto 5001
 Alembic 1.20.0 directo (ADR-002, FNC-039). Sin Flask-Migrate: `migrations/env.py` no llama a `create_app()`, así no corren `create_all()` ni el admin semilla.
 
 - **URL:** la de la app (`construir_uri_bd()`, variables `DB_*` del entorno o del `.env`); nada en `alembic.ini`.
-- **Otra cuenta para migrar** (SEC-CFG-09): exportar `DB_USER` y `DB_PASS` solo para el comando; el entorno manda sobre el `.env`.
+- **Otra cuenta para migrar** (SEC-CFG-09): exportar `DB_USER` y `DB_PASS` solo para el comando; el entorno manda sobre el `.env`. No dejar la contraseña en el historial de la shell: leerla con `read -s DB_PASS` o usar un archivo de entorno con permisos 600.
 - **Modelos:** `env.py` importa todo `app/modules/*/models.py`; un módulo nuevo con `models.py` entra solo.
 - **SQLite:** la ruta relativa `nexus.db` se resuelve en `instance/`, igual que Flask-SQLAlchemy.
 - **`render_as_batch`:** activo, para que las migraciones también corran en SQLite (pruebas).

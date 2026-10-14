@@ -8,12 +8,12 @@
 | **Fase** | 3 |
 | **Módulo / Área** | bd |
 | **Prioridad** | Alta |
-| **Estatus** | Hecha |
+| **Estatus** | En revisión (falta la prueba del dueño en MySQL real) |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-039-migraciones-alembic` |
 | **Requiere migración BD** | Sí |
-| **Requiere auditor-seguridad** | No |
+| **Requiere auditor-seguridad** | Sí (dependencia nueva) — Aprobado |
 
 ## Contexto
 - Los cambios de esquema se aplican a mano desde `utils/migrations/` sin registro de cuáles se aplicaron, y `db.create_all()` (`app/__init__.py`) no altera tablas existentes (`docs/backend/README.md` §7)
@@ -95,6 +95,11 @@ Salida de `impacto.py` (contra `develop`):
 - [x] Prueba automatizada que verifica que el esquema de los modelos y el de las migraciones coinciden (`tests/test_migraciones.py`)
 - [ ] Criterios comunes backend (FNC-037) — sin endpoints nuevos; revisor y auditor-seguridad no lanzados (indicación del orquestador)
 
+Salida actual de `impacto.py` (2026-10-14, 7 elementos):
+- `DB_ENGINE`, `DB_HOST`, `DB_NAME`, `DB_USER` (definidas ahora en `app/utils/uri_bd.py`): misma regla de antes; las validan `tests/conftest.py` y `tests/test_arranque.py`.
+- `SECRET_KEY`: falso positivo (líneas de contexto del bloque editado; no cambió).
+- `columnas`, `migrar`: funciones locales de `tests/test_migraciones.py` con el mismo nombre que código de `app/modules/audit/services.py`, `utils/db_inspector.py` y `utils/migrations/003_logo_to_db.py`: homónimos, sin impacto.
+
 ## Impacto cruzado
 - Genera → Base de FNC-043, FNC-046, FNC-047, FNC-048, FNC-049, FNC-050, FNC-054, FNC-056, FNC-065
 - Origen ← FNC-037
@@ -110,3 +115,6 @@ Salida de `impacto.py` (contra `develop`):
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-14 | Aprobada por el dueño; En curso en `fnc/FNC-039-migraciones-alembic` |
 | 2026-10-14 | Hecha: Alembic 1.20.0, línea base `0001`, `tests/test_migraciones.py`; 431 passed, 35 xfailed; MySQL real pendiente del dueño |
+- auditor-seguridad (modo cambio, 2026-10-14): Aprobado. Sin secretos ni IPs; la URL no se registra en logs; `pip-audit` sin avisos en alembic, Mako ni SQLAlchemy.
+- revisor (2026-10-14): Requiere cambios de proceso y documentación (seguridad, estatus, impacto); corregidos. Sugerencias no aplicadas: probar `importar_modelos()` y `url_bd()` sin la fixture `app`, y subir el import de `construir_uri_bd` al inicio de `app/__init__.py` (estilo).
+- Cierre: queda En revisión hasta que el dueño ejecute `alembic upgrade head` en su MySQL nuevo (docs/backend/README.md §7).
