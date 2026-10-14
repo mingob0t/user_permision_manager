@@ -15,9 +15,9 @@
 | **Finalizada** | |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-024-linea-base-web` |
-| **Commits / PR** | |
+| **Commits / PR** | `edb8f45`, `56e0112` (locales, sin push) |
 | **Requiere migración BD** | No |
-| **Requiere auditor-seguridad** | No |
+| **Requiere auditor-seguridad** | Sí (devDependencies nuevas) — Con observaciones |
 
 ## Contexto
 No se pudo verificar `typecheck` ni `lint` (sin `node_modules`; ESLint sin configurar).
@@ -64,7 +64,7 @@ Hallazgos de lint (por regla y archivo):
 Notas:
 - **Ojo:** antes de esta tarea `next build` omitía el lint (ESLint no estaba instalado). Ahora lo ejecuta y el error de `error.tsx` rompe `npm run build`. Hay que decidir antes de unir a `develop` (ver "Decisión pendiente").
 - `next lint` está obsoleto y desaparece en Next.js 16; migrar a la CLI de ESLint cuando se actualice Next.
-- `npm audit`: 11 vulnerabilidades (1 crítica en `next`, 8 altas, 2 moderadas). Se atienden en FNC-016; aquí no se tocan.
+- `npm audit`: 13 vulnerabilidades (1 crítica en `next`, 10 altas, 2 moderadas). Antes de esta tarea eran 11; las 2 altas nuevas son `eslint-config-next` y `@next/eslint-plugin-next`, por `fast-glob` → `braces` (aviso ya existente). Se atienden en FNC-016.
 
 ## Decisión pendiente (del dueño)
 - Opción A (recomendada): tarea nueva que cambie el `<a>` por `Link` en `error.tsx` (1 línea; toca un componente, por eso no se hizo aquí).
@@ -79,7 +79,7 @@ Notas:
 - No verificado: arranque con `npm run dev` ni contra el backend (fuera de alcance).
 
 ## Impacto en elementos compartidos
-- `impacto.py` (contra `develop`, 3 archivos): ninguno detectado.
+- `impacto.py` (contra `develop`, 9 archivos): ninguno detectado.
 - Nota manual: `package.json` y el lockfile son de todo el frontend; el cambio visible es que `npm run build` ahora corre ESLint en todas las páginas.
 
 ## Impacto cruzado
@@ -92,3 +92,5 @@ Notas:
 | 2026-10-13 | Aprobada por el dueño; implementada por desarrollador. Línea base registrada; build roto por 1 error de lint, decisión pendiente |
 
 - auditor-seguridad (modo cambio, 2026-10-13): Con observaciones; sin hallazgos críticos ni altos introducidos.
+- revisor (2026-10-13): Con observaciones; documentación corregida (conteo de npm audit, commits, impacto, auditor-seguridad).
+- Condición de merge: build limpio vía FNC-072.
