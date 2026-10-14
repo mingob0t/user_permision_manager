@@ -23,7 +23,7 @@
 | FNC-019 | Suite base de pruebas del backend (pytest, fixtures, cliente por rol, excluir utils/test_*) | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-019-suite-base-pruebas-backend` (commit local, sin push) |  |
 | FNC-020 | Pruebas de protección por rol de todos los endpoints /api/v1 con guardia de rutas sin clasificar | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-020-pruebas-proteccion-por-rol` (commit local, sin push) | Depende de FNC-019; 2 xfail hasta FNC-007 |
 | FNC-021 | Pruebas de alcance por área y de escalada de privilegios | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-021-pruebas-alcance-por-area` (commit local, sin push) | Depende de FNC-019; 7 xfail hasta FNC-007 y FNC-015 |
-| FNC-022 | Pruebas de autenticación SSO, LDAP y local con dobles | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
+| FNC-022 | Pruebas de autenticación SSO, LDAP y local con dobles | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-022-pruebas-autenticacion` (commit local, sin push) | Depende de FNC-019; 13 xfail hasta FNC-002/003/006/013/014 |
 | FNC-023 | Pruebas de notificaciones, auditoría, respaldo y arranque | backend | 2 | pruebas | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-024 | Línea base web: instalar dependencias, configurar ESLint y ejecutar typecheck y lint | web | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (fd2a22d) | Build roto por 1 error de lint: decisión pendiente |
 | FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (85e220c) | Depende de FNC-024; fallas de contraste a DIS-001 a DIS-006 |
@@ -52,3 +52,4 @@
 | FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop | Base de todas las fases siguientes |
 | FNC-072 | Corregir los hallazgos de lint de la línea base web | web | 2 | frontend | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (851846f) | Depende de FNC-024 |
 | FNC-073 | Alinear la versión mínima de Node en el despliegue | infra | 6 | deploy | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-025 |
+| FNC-074 | Unificar el LDAP simulado de las pruebas | backend | 4 | pruebas | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-022 |
