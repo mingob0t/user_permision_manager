@@ -26,6 +26,8 @@
 | Fixtures de pruebas (`app`, `client`, `cliente_como`, `cliente_de_rol`, `cliente_admin`, `cliente_admin_area`, `cliente_usuario`) | Fixtures pytest | `tests/conftest.py` | App con BD temporal y clientes con sesión por rol, sin servicios externos | `tests/` |
 | `crear_area`, `crear_plataforma`, `crear_usuario`, `crear_usuario_de_rol` | Fábricas de pruebas | `tests/fabricas.py` | Datos de prueba por rol | `tests/` |
 | `CASOS`, `crear_escenario`, `crear_actor`, `publica`/`con_sesion`/`administradores`/`solo_superadmin` | Matriz de protección | `tests/matriz_proteccion.py` | Código esperado por rol de cada ruta /api/v1; todo endpoint nuevo agrega aquí su caso | `tests/test_proteccion_por_rol.py`, `tests/test_guardia_rutas.py` |
+| `instalar_directorio`, `DirectorioFalso` | Doble de pruebas | `tests/directorio_falso.py` | Simular `ldap3` en el login por directorio, sin red | `tests/test_login_directorio.py` |
+| `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` | Utilidades de pruebas | `tests/peticiones_auth.py` | Login real por API y comprobaciones de sesión y auditoría | `tests/test_login_*.py`, `tests/test_sso.py`, `tests/test_sesion_y_logout.py` |
 | `parseColor`, `componer`, `razonContraste`, `MIN_TEXTO`, `MIN_NO_TEXTO` | Utilidades de pruebas | `frontend/tests/utils/wcag.ts` | Medir contraste WCAG | `frontend/tests/accesibilidad/` |
 | `cargarContextos`, `resolver` | Utilidades de pruebas | `frontend/tests/utils/tokens-css.ts` | Leer los tokens de cada tema de `tokens.css` | `frontend/tests/accesibilidad/` |
 | `scripts/lineamientos/comun.py`, `reglas.py` | Utilidades de control | `scripts/lineamientos/` | Controles pre-commit del método | `.githooks/pre-commit` |
