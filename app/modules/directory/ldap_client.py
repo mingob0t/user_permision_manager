@@ -18,7 +18,8 @@ from dataclasses import dataclass, field
 from ldap3 import BASE, SUBTREE, SYNC, Connection, Server, Tls
 from ldap3.core.exceptions import (LDAPException, LDAPInvalidDnError,
                                    LDAPNoSuchObjectResult,
-                                   LDAPSizeLimitExceededResult)
+                                   LDAPSizeLimitExceededResult,
+                                   LDAPStartTLSError)
 from ldap3.utils.conv import escape_filter_chars
 from ldap3.utils.dn import escape_rdn, parse_dn
 
@@ -123,6 +124,9 @@ class ClienteDirectorio:
             conexion.open()
             if not cfg.usa_ldaps:
                 conexion.start_tls()
+                if not conexion.tls_started:
+                    # Sin TLS efectivo la credencial nunca sale en claro.
+                    raise LDAPStartTLSError('StartTLS no quedó activo')
             conexion.bind()
         except LDAPException as exc:
             self._cerrar(conexion)
@@ -166,8 +170,10 @@ class ClienteDirectorio:
                 entradas = list(conexion.entries)
                 ambiguo = len(entradas) > 1
         if ambiguo:
-            logger.error('Directorio: el filtro %s corresponde a más de una '
-                         'entrada', filtro)
+            # Sin el identificador: es dato de entrada del usuario.
+            logger.error('Directorio: la búsqueda por %s bajo %s corresponde '
+                         'a más de una entrada', cfg.atributo_usuario,
+                         cfg.usuarios_base_dn)
             raise ErrorDirectorio(MENSAJE_AMBIGUO)
         if not entradas:
             return None

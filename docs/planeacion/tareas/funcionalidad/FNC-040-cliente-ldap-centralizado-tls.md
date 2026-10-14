@@ -69,10 +69,12 @@
 | `venv/bin/pytest tests/directory -q` | 64 passed |
 | Mismo, con `validate=ssl.CERT_NONE` en el cliente (mutación, revertida) | 3 failed (`test_certificado_no_confiable…`, `test_nombre_del_certificado_distinto…`, `test_servidor_exige_certificado…`) |
 | `venv/bin/pytest -q` | 495 passed, 35 xfailed, código 0 (antes 431 + 64 nuevas) |
+| Regresiones de auditor-seguridad antes de corregir (`pytest tests/directory`) | 5 failed (StartTLS sin efecto, log de búsqueda ambigua, 3 formas de IPv4 abreviada) |
+| `venv/bin/pytest -q -p no:warnings` tras corregir | 500 passed, 35 xfailed, código 0 |
 | `python3 ~/.claude/agentes/herramientas/impacto.py` | 9 nombres: `__init__`, `_cliente`, `_crear`, `_error`, `agregar`, `bind`, `cerrar`, `directorio`, `grupo` (ver abajo) |
 - TLS probado con un servidor TLS real en `localhost` y certificado autofirmado generado en la prueba (no confiable → falla; nombre distinto → falla; CA y nombre correctos → saludo completo)
 - No verificado: OpenLDAP real (no hay servidor ni valores; el dueño los define, ADR-004); StartTLS real (el doble `MOCK_SYNC` no lo implementa: se prueba el orden StartTLS → bind con un espía)
-- No ejecutados: `revisor`, `auditor-seguridad` (requerido por la ficha), por indicación del orquestador
+- `revisor` y `auditor-seguridad` ejecutados por el orquestador (ver bitácora)
 
 ## Impacto en elementos compartidos
 - `impacto.py` (2026-10-14): 9 nombres. Son funciones y métodos nuevos de `app/modules/directory/` y `tests/directory/` que se llaman igual que código existente (p. ej. `_error` de `ldap_client.py` frente a `_error` de `api/admin.py` y `api/crud.py`; `directorio`/`agregar` frente a `tests/directorio_falso.py`): homónimos, sin impacto real.
@@ -84,7 +86,7 @@
 - [x] Sin TLS configurado la app no arranca con el directorio activo (`test_create_app_no_arranca_con_directorio_sin_tls` y casos de `LDAP_URL`)
 - [x] Un filtro con `*`, `(`, `)` o `\` se escapa (`test_filtro_escapa_…`, `test_comodin_o_parentesis_no_amplian_la_busqueda`)
 - [x] La contraseña de bind nunca se registra en logs ni en respuestas (pruebas de bind rechazado, ocultación en el detalle y `repr`)
-- [ ] Criterios comunes backend (FNC-037): sin endpoints nuevos; falta `revisor` y `auditor-seguridad`
+- [x] Criterios comunes backend (FNC-037): sin endpoints nuevos; revisor y auditor-seguridad atendidos
 - Pendiente fuera de esta ficha: SEC-LDAP-01 (un solo módulo usa `ldap3`) se cumple al cerrar FNC-042 y FNC-043
 
 ## Commits / PR
@@ -106,3 +108,8 @@
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-14 | Aprobada por el dueño; implementada en `fnc/FNC-040-cliente-ldap`; 495 passed, 35 xfailed; En revisión (falta revisor y auditor-seguridad) |
 - revisor (2026-10-14): Requiere cambios de cierre; corregidos (impacto real, lista de usos de `create_app`, nombre `configuracion.py`). Falta el veredicto de auditor-seguridad.
+- auditor-seguridad (modo cambio, 2026-10-14): **Aprobado**, 3 hallazgos Baja, corregidos con prueba de regresión que primero falló:
+  - StartTLS sin efecto: se exige `tls_started` antes del bind (`test_starttls_sin_efecto_no_envia_la_credencial`)
+  - Búsqueda ambigua: el log ya no incluye el identificador, solo atributo y base (`test_busqueda_ambigua_no_registra_el_identificador`)
+  - `LDAP_URL` con IPv4 abreviada o decimal (solo números y puntos) se rechaza (`test_url_con_ipv4_abreviada_se_rechaza`)
+- Estatus: En revisión hasta el merge.

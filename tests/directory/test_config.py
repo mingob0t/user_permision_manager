@@ -93,6 +93,15 @@ def test_variable_obligatoria_faltante_detiene_el_arranque(variable):
         validar_al_arrancar(_con(**{variable: None}))
 
 
+@pytest.mark.parametrize('host', ['127.1', '2130706433', '10.1.2'])
+def test_url_con_ipv4_abreviada_se_rechaza(host):
+    # Formas abreviadas o decimales de IPv4 que `ipaddress` no reconoce pero
+    # el resolvedor sí (inet_aton). Sin IPv4 de 4 octetos: lo prohíbe el
+    # control del proyecto.
+    with pytest.raises(ErrorConfiguracionDirectorio, match='no una dirección IP'):
+        validar_al_arrancar(_con(LDAP_URL=f'ldaps://{host}'))
+
+
 def test_dn_invalido_detiene_el_arranque():
     with pytest.raises(ErrorConfiguracionDirectorio, match='LDAP_USERS_BASE_DN'):
         validar_al_arrancar(_con(LDAP_USERS_BASE_DN='sin-igual'))

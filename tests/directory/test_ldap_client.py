@@ -88,6 +88,7 @@ def test_ldap_negocia_starttls_antes_de_enviar_la_credencial(
 
     def start_tls(self, *args, **kwargs):
         orden.append('start_tls')
+        self.tls_started = True  # como ldap3 tras un StartTLS exitoso
         return True
 
     def bind(self, *args, **kwargs):
@@ -245,3 +246,37 @@ def test_dn_mal_formado_no_existe_y_no_consulta(directorio, monkeypatch, dn):
     monkeypatch.setattr(ldap_client, 'Connection', None)  # falla si conecta
 
     assert directorio.cliente.existe_dn(dn) is False
+
+
+# --------------------------------------------------------------------------- #
+# Regresiones de auditor-seguridad (FNC-040, hallazgos Baja)
+# --------------------------------------------------------------------------- #
+
+def test_starttls_sin_efecto_no_envia_la_credencial(crear_directorio,
+                                                    monkeypatch):
+    # start_tls() devuelve sin error pero la conexión sigue sin TLS.
+    directorio = crear_directorio(LDAP_URL=f'ldap://{HOST_LDAP_FICTICIO}')
+    binds = []
+    monkeypatch.setattr(ldap3.Connection, 'start_tls',
+                        lambda self, *a, **k: False)
+    monkeypatch.setattr(ldap3.Connection, 'bind',
+                        lambda self, *a, **k: binds.append(1))
+
+    with pytest.raises(ErrorDirectorio, match=MENSAJE_ERROR):
+        directorio.cliente.buscar_usuario('jperez')
+    assert binds == []
+
+
+def test_busqueda_ambigua_no_registra_el_identificador(directorio, caplog):
+    identificador = 'jperez'
+    directorio.persona(identificador)
+    directorio.agregar(f'uid={identificador},ou=otra,{USUARIOS_BASE_DN}',
+                       objectClass='inetOrgPerson', uid=identificador,
+                       cn='x', sn='x')
+    caplog.set_level(logging.DEBUG)
+
+    with pytest.raises(ErrorDirectorio, match=MENSAJE_AMBIGUO):
+        directorio.cliente.buscar_usuario(identificador)
+
+    assert identificador not in caplog.text
+    assert 'uid' in caplog.text and USUARIOS_BASE_DN in caplog.text

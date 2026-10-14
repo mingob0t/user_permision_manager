@@ -42,6 +42,11 @@ ESQUEMAS_PERMITIDOS = {'ldaps': (True, 636), 'ldap': (False, 389)}
 
 # Nombre de atributo o clase (RFC 4512: descriptor) u OID numérico. Se valida
 # porque estos valores se insertan en filtros sin escapar.
+# Formas abreviadas, decimales u octales/hexadecimales de IPv4 (`inet_aton`
+# las resuelve aunque `ipaddress` no): un "host" solo con números se rechaza.
+_IPV4_NUMERICA = re.compile(r'^(?:0x[0-9a-f]+|\d+)(?:\.(?:0x[0-9a-f]+|\d+))*\.?$',
+                            re.IGNORECASE)
+
 _NOMBRE_ATRIBUTO = re.compile(r'^(?:[A-Za-z][A-Za-z0-9-]*|\d+(?:\.\d+)+)$')
 
 
@@ -90,9 +95,10 @@ def _validar_url(url):
         raise ErrorConfiguracionDirectorio(f'{VAR_URL} no tiene nombre de host.')
     try:
         ipaddress.ip_address(host)
+        es_ip = True
     except ValueError:
-        pass
-    else:
+        es_ip = bool(_IPV4_NUMERICA.match(host))
+    if es_ip:
         raise ErrorConfiguracionDirectorio(
             f'{VAR_URL} debe usar un nombre de host, no una dirección IP '
             '(el certificado se valida contra el nombre).')
