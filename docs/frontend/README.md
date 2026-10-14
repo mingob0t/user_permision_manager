@@ -93,7 +93,11 @@ npm run build          # build standalone
 
 Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 
-**Estado al documentar:** en esta copia no hay `node_modules`, así que `typecheck`, `lint` y `build` **no se ejecutaron** en FNC-001. Además, `eslint` y `eslint-config-next` no están en `devDependencies` ni hay configuración de ESLint, por lo que `npm run lint` pedirá configurarlo la primera vez.
+**Línea base (FNC-024, 2026-10-13):**
+- ESLint configurado en `eslint.config.mjs` (`next/core-web-vitals` + `next/typescript`); `npm run lint` ya no pregunta nada.
+- `typecheck`: sin errores. `lint`: 1 error y 3 avisos (detalle en la ficha de FNC-024).
+- `build`: falla en el paso de lint por el error de `app/error.tsx`; sin lint (`next build --no-lint`) compila. Decisión pendiente en FNC-024.
+- `next lint` está obsoleto en Next.js 15.5; migrar a la CLI de ESLint al pasar a Next.js 16.
 
 ## 8. Deuda conocida
 
@@ -104,7 +108,7 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 | 3 | Colores literales en `tailwind.config.ts` (`warning`, `error`, `info`) en lugar de tokens. | `tailwind.config.ts` |
 | 4 | `text-white` fijo en el botón de `error.tsx`. | `app/error.tsx` |
 | 5 | Sin selector de tema; temas adicionales definidos pero inalcanzables. | `styles/tokens.css` |
-| 6 | ESLint no instalado ni configurado; sin pruebas de frontend. | `package.json` |
+| 6 | Sin pruebas de frontend. ESLint ya configurado (FNC-024), con 1 error y 3 avisos sin corregir. | `package.json`, `eslint.config.mjs` |
 | 7 | Componentes grandes con varias responsabilidades (`settings-panel.tsx`, `users-list.tsx`). | `components/` |
 | 8 | Navegación lateral oculta en móvil (`hidden md:block`) sin menú alternativo. | `app-shell.tsx` |
 | 9 | Valor por defecto del backend escrito como dirección de loopback numérica en el código (incumple "sin IPs"; debería ser `localhost` o configuración). | `next.config.ts`, `lib/api.ts` |
