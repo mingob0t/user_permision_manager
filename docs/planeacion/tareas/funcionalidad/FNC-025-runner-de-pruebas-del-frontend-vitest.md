@@ -15,9 +15,9 @@
 | **Finalizada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-025-runner-pruebas-frontend` |
-| **Commits / PR** | |
+| **Commits / PR** | `dbd0e30` y la corrección de la ficha (locales, sin push) |
 | **Requiere migración BD** | No |
-| **Requiere auditor-seguridad** | No |
+| **Requiere auditor-seguridad** | Sí (dependencias nuevas) — Aprobado |
 
 ## Contexto
 El frontend no tiene runner de pruebas ni prueba de contraste.
@@ -88,7 +88,8 @@ Temas: claro, so-oscuro, html.dark, emerald, obsidian, rose, violet. 88 celdas e
 - No verificado: ejecución en CI (no existe aún, FNC-026); Node 20.
 
 ## Impacto en elementos compartidos
-- `impacto.py`: "ninguno detectado (comparado contra `develop`; 13 archivos cambiados)".
+- `impacto.py` (contra `develop`): reporta 8 nombres (`Tipo`, `Variables`, `archivos`, `color`, `comprobar`, `error`, `respuesta`, `texto`). Son funciones o tipos locales de `frontend/tests/` que se llaman igual que código de `app/`, `frontend/src/` y `scripts/`: coincidencias de nombre, sin impacto real (revisado).
+- `frontend/package.json`: npm reordenó alfabéticamente las devDependencies existentes; ninguna versión cambió.
 - `package.json` y `package-lock.json` del frontend son compartidos por todo el frontend: solo se agregaron devDependencies y `overrides.vite`; el build no cambia.
 - No se tocaron componentes, estilos, tokens ni `next.config.ts`.
 
@@ -100,3 +101,5 @@ Temas: claro, so-oscuro, html.dark, emerald, obsidian, rose, violet. 88 celdas e
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-13 | Aprobada por el dueño. Implementada en `fnc/FNC-025-runner-pruebas-frontend`; pruebas, lint, typecheck y build en verde; commit local sin push |
+- auditor-seguridad (modo cambio, 2026-10-13): Aprobado; npm audit baja de 13 a 12, nada nuevo en producción.
+- revisor (2026-10-13): Requiere cambios menores de la ficha; corregidos (seguridad, impacto, reordenamiento, commit).
