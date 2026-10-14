@@ -25,7 +25,7 @@
 | FNC-021 | Pruebas de alcance por área y de escalada de privilegios | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-022 | Pruebas de autenticación SSO, LDAP y local con dobles | backend | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
 | FNC-023 | Pruebas de notificaciones, auditoría, respaldo y arranque | backend | 2 | pruebas | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 |
-| FNC-024 | Línea base web: instalar dependencias, configurar ESLint y ejecutar typecheck y lint | web | 2 | pruebas | Alta | Propuesta | 2026-10-13 | | | — |  |
+| FNC-024 | Línea base web: instalar dependencias, configurar ESLint y ejecutar typecheck y lint | web | 2 | pruebas | Alta | En revisión | 2026-10-13 | 2026-10-13 | | `fnc/FNC-024-linea-base-web` (local) | Build roto por 1 error de lint: decisión pendiente |
 | FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-024 |
 | FNC-026 | CI que ejecute pytest, typecheck, lint y los controles del pre-commit | infra | 2 | ci | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 y FNC-024; requiere repositorio remoto |
 | FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | Propuesta | 2026-10-13 | | | — | Antes de FNC-020 |
@@ -50,3 +50,4 @@
 | DIS-011 | Dividir settings-panel.tsx, users-list.tsx y platform-admin.tsx | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — | Después de DIS-010 |
 | DIS-012 | Eliminar estilos inline y colores literales en TSX | web | 4 | estilos | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-033 |
 | FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | Propuesta | 2026-10-13 | | | — | Base de todas las fases siguientes |
+| FNC-072 | Corregir los hallazgos de lint de la línea base web | web | 2 | frontend | Alta | En revisión | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-072-corregir-lint-linea-base` (local) | Depende de FNC-024 |

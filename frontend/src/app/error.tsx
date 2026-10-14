@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect } from 'react';
 
 /** Error de renderizado. Sustituye a templates/errors/500.html. */
@@ -33,12 +34,12 @@ export default function ErrorPage({
           >
             Reintentar
           </button>
-          <a
+          <Link
             href="/"
             className="rounded-lg border border-panel-border px-4 py-2 text-sm text-label"
           >
             Ir al inicio
-          </a>
+          </Link>
         </div>
       </div>
     </div>

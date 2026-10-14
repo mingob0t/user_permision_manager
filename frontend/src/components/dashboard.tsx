@@ -8,7 +8,7 @@ import {
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import { useSession } from './session-provider';
-import { Card, ErrorNote, EmptyNote, Spinner, StatTile } from './ui';
+import { Card, ErrorNote, Spinner, StatTile } from './ui';
 
 export function Dashboard() {
   const { session } = useSession();
