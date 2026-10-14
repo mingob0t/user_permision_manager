@@ -1,6 +1,6 @@
 # ADR-003 — Cola y worker de aprovisionamiento
 
-- **Estatus:** Propuesta · **Fecha:** 2026-10-13 · **Tarea:** FNC-037 → FNC-049, FNC-067
+- **Estatus:** Aceptada · **Fecha:** 2026-10-13 · **Tarea:** FNC-037 → FNC-049, FNC-067
 
 ## Contexto
 - Otorgar y revocar (LDAP o conector) va en segundo plano con reintentos y bitácora
@@ -17,3 +17,6 @@
 ## Consecuencias
 - Nueva unidad `<nombre>-worker` (FNC-067)
 - Variables `PROVISIONING_*` registradas
+
+## Decisión del dueño (2026-10-14)
+- Redis + RQ como cola de los conectores.

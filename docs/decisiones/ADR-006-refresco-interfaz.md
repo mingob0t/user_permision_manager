@@ -1,6 +1,6 @@
 # ADR-006 — Refresco de datos en la interfaz
 
-- **Estatus:** Propuesta · **Fecha:** 2026-10-13 · **Tarea:** FNC-037 → FNC-071
+- **Estatus:** Aceptada · **Fecha:** 2026-10-13 · **Tarea:** FNC-037 → FNC-071
 
 ## Contexto
 - Estados que cambian en el servidor: solicitudes, accesos `en_proceso`, pendientes
@@ -12,3 +12,6 @@
 
 ## Recomendación
 - A (latencia tolerable; sin cambios de infraestructura)
+
+## Decisión del dueño (2026-10-14)
+- Consulta periódica (polling) cada X segundos; sin SSE.

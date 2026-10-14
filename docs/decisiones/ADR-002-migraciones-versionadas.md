@@ -1,6 +1,6 @@
 # ADR-002 — Migraciones versionadas de MySQL
 
-- **Estatus:** Propuesta · **Fecha:** 2026-10-13 · **Tarea:** FNC-037 → FNC-039
+- **Estatus:** Aceptada · **Fecha:** 2026-10-13 · **Tarea:** FNC-037 → FNC-039
 
 ## Contexto
 - `create_all()` no altera tablas; `utils/migrations/` se aplica a mano sin registro
@@ -16,3 +16,6 @@
 ## Consecuencias
 - FNC-028 conserva solo la limpieza de `scratch/` y `utils/`
 - `RELEASES.md` agrega el paso de migración
+
+## Decisión del dueño (2026-10-14)
+- Alembic (Flask-Migrate o Alembic directo); cada cambio de tablas queda versionado.

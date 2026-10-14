@@ -1,6 +1,6 @@
 # ADR-004 — Grupos y esquema de OpenLDAP
 
-- **Estatus:** Propuesta · **Fecha:** 2026-10-13 · **Tarea:** FNC-037 → FNC-040, FNC-041, FNC-043, FNC-046, FNC-064
+- **Estatus:** Aceptada · **Fecha:** 2026-10-13 · **Tarea:** FNC-037 → FNC-040, FNC-041, FNC-043, FNC-046, FNC-064
 
 ## Contexto
 - OpenLDAP es la fuente de verdad; dos grupos por plataforma (usuario y admin)
@@ -16,3 +16,6 @@
 
 ## Recomendación
 - Configuración por variables; credencial nunca en BD; LDAPS o StartTLS con `CERT_REQUIRED`; grupos creados por el administrador del directorio en v1
+
+## Decisión del dueño (2026-10-14)
+- La convención (servidor, base DN, OU y formato de nombres de grupos) es configurable por variables del `.env`; el dueño define los valores después.
