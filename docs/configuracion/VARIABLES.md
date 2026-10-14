@@ -11,12 +11,12 @@
 | Variable | Propósito | Tipo / valores | Por defecto en código | Ejemplo (sin secretos) | Obligatoria | Sensible | En `.env.example` | Dónde se usa | Alta | Estado |
 |---|---|---|---|---|---|---|---|---|---|---|
 | `SECRET_KEY` | Firma de la cookie de sesión y CSRF | texto aleatorio largo | `nexus-premium-secret-key` (inseguro) | — | Sí | **Sí** | Sí (marcador) | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
-| `DB_ENGINE` | Motor de BD. `mysql` usa PyMySQL; cualquier otro valor cae a SQLite `nexus.db` | `mysql` / otro | `sqlite` | `mysql` | Sí (prod) | No | Sí | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
-| `DB_HOST` | Host de la BD | nombre de host | — (sin valor: URI inválida) | `localhost` | Sí con mysql | No | Sí | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
-| `DB_PORT` | Puerto de la BD | entero | — en código; `3306` en preflight | `3306` | Sí con mysql | No | Sí | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
-| `DB_NAME` | Nombre de la BD | texto | — | `pokemon_dev` | Sí con mysql | No | Sí (`admin_test`) | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
-| `DB_USER` | Usuario de la BD | texto | — | `nexus` | Sí con mysql | No | Sí | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
-| `DB_PASS` | Contraseña de la BD | texto | — | — | Sí con mysql | **Sí** | Sí (vacía) | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
+| `DB_ENGINE` | Motor de BD. `mysql` usa PyMySQL; cualquier otro valor cae a SQLite `nexus.db` | `mysql` / otro | `sqlite` | `mysql` | Sí (prod) | No | Sí | `app/utils/uri_bd.py` (app y Alembic, FNC-039) | FNC-001, 2026-10-13 | Vigente |
+| `DB_HOST` | Host de la BD | nombre de host | — (sin valor: URI inválida) | `localhost` | Sí con mysql | No | Sí | `app/utils/uri_bd.py` (app y Alembic, FNC-039), `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
+| `DB_PORT` | Puerto de la BD | entero | — en código; `3306` en preflight | `3306` | Sí con mysql | No | Sí | `app/utils/uri_bd.py` (app y Alembic, FNC-039), `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
+| `DB_NAME` | Nombre de la BD | texto | — | `pokemon_dev` | Sí con mysql | No | Sí (`admin_test`) | `app/utils/uri_bd.py` (app y Alembic, FNC-039), `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
+| `DB_USER` | Usuario de la BD | texto | — | `nexus` | Sí con mysql | No | Sí | `app/utils/uri_bd.py` (app y Alembic, FNC-039) | FNC-001, 2026-10-13 | Vigente |
+| `DB_PASS` | Contraseña de la BD | texto | — | — | Sí con mysql | **Sí** | Sí (vacía) | `app/utils/uri_bd.py` (app y Alembic, FNC-039) | FNC-001, 2026-10-13 | Vigente |
 | `REDIS_HOST` | Host de Redis | nombre de host | `localhost` | `localhost` | No (Redis sin uso funcional) | No | Sí | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
 | `REDIS_PORT` | Puerto de Redis | entero | `6379` | `6379` | No | No | Sí | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
 | `REDIS_PASS` | Contraseña de Redis | texto | ninguna | — | No | **Sí** | **No (faltante)** | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
@@ -93,6 +93,8 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `SESSION_COOKIE_NAME` | Nombre de la cookie | `nexus_session` | — | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `WTF_CSRF_TIME_LIMIT` | Caducidad del token CSRF | sin límite | — | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `pool_recycle` | Reciclado de conexiones de BD | 3600 | s | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
+| `SQLITE_URI_POR_DEFECTO` | BD SQLite cuando `DB_ENGINE` no es `mysql` (en `instance/`) | `sqlite:///nexus.db` | — | `app/utils/uri_bd.py` | FNC-001, 2026-10-13; constante con nombre FNC-039 | Vigente |
+| `CARPETA_INSTANCIA` | Dónde resuelve Alembic la ruta SQLite relativa (igual que Flask) | `instance/` de la raíz | — | `migrations/env.py` | FNC-039, 2026-10-14 | Vigente |
 | `MAX_LOGO_BYTES` | Tamaño máximo del logo del portal | 512 | KB | `app/modules/api/admin.py` | FNC-001, 2026-10-13 | Vigente |
 | `ALLOWED_LOGO_TYPES` | Tipos de imagen del logo | png, jpeg, gif, webp, svg+xml | — | `app/modules/api/admin.py` | FNC-001, 2026-10-13 | Vigente |
 | `PURGE_MIN_DAYS` | Mínimo de días de inactividad para purgar | 7 | días | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |

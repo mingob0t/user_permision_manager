@@ -12,7 +12,8 @@
 - **Extensiones:** Flask-SQLAlchemy (`pool_pre_ping`, `pool_recycle=3600`), Flask-Login, Flask-WTF, Flask-Compress.
 - **Zona horaria:** al importar `app` se fija `TZ` del proceso con `TZ_APP` (o `TZ`), por defecto `America/Mexico_City`.
 - **Redis:** `app/utils/redis_client.py` crea un cliente global (`registry`) y lo conecta al arrancar. Si falla solo imprime el error; **ningún módulo lo usa hoy**.
-- **Creación de esquema:** `create_app()` ejecuta `db.create_all()` en cada arranque y, si no existe ningún usuario, crea un administrador inicial con credenciales por defecto conocidas (ver deuda).
+- **Creación de esquema:** el esquema se versiona con Alembic (§7). `create_app()` sigue ejecutando `db.create_all()` en cada arranque y, si no existe ningún usuario, crea un administrador inicial con credenciales por defecto conocidas (ver deuda).
+- **URI de la BD:** `construir_uri_bd()` (`app/utils/uri_bd.py`) la arma desde `DB_*`; la usan `create_app()` y `migrations/env.py`.
 
 ### Estructura
 
@@ -23,6 +24,7 @@ app/
 ├── decorators.py      # Compatibilidad: reexporta decoradores de authz
 ├── utils/
 │   ├── naming.py      # sanitize_display_name(): limpia nombres visibles (máx. 100)
+│   ├── uri_bd.py      # construir_uri_bd(): URI de la BD desde DB_* (app y Alembic)
 │   └── redis_client.py# Cliente Redis global (sin uso funcional)
 └── modules/
     ├── api/           # API v1 que consume el frontend
@@ -37,6 +39,11 @@ app/
     ├── settings/      # Modelo SystemConfig; rutas heredadas
     ├── users/         # Solo rutas heredadas
     └── areas/         # Solo rutas heredadas
+alembic.ini            # Configuración de Alembic (sin URL ni secretos)
+migrations/
+├── env.py             # URL de construir_uri_bd(); importa app/modules/*/models.py
+├── script.py.mako     # Plantilla de nuevas migraciones
+└── versions/          # 0001_linea_base_esquema_actual.py y las siguientes
 ```
 
 ## 2. Autorización (`app/authz.py`)
@@ -55,7 +62,7 @@ Tres roles (columna `users.role`, comparada en minúsculas):
 
 ## 3. Modelo de datos
 
-Las tablas las crea `db.create_all()` desde los modelos. `utils/nexus_structure.sql` es un volcado parcial (no incluye `areas`, `platforms` ni las tablas de relación).
+Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue activo al arrancar. `utils/nexus_structure.sql` es un volcado parcial (no incluye `areas`, `platforms` ni las tablas de relación).
 
 | Tabla | Modelo | Campos clave |
 |---|---|---|
@@ -177,6 +184,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 cp .env.example .env          # rellenar credenciales (nunca commitear .env)
 python3.11 -m venv venv       # o 3.12
 venv/bin/pip install -r requirements.txt
+venv/bin/alembic upgrade head # crea o actualiza el esquema (§7), antes de arrancar
 venv/bin/python run.py        # API en el puerto 5001
 ```
 
@@ -208,16 +216,54 @@ venv/bin/python run.py        # API en el puerto 5001
 
 ## 7. Migraciones
 
-`create_all()` crea tablas nuevas pero no altera las existentes. Los cambios de esquema se aplican a mano, en orden, desde `utils/migrations/` (el instalador no las ejecuta):
+Alembic 1.20.0 directo (ADR-002, FNC-039). Sin Flask-Migrate: `migrations/env.py` no llama a `create_app()`, así no corren `create_all()` ni el admin semilla.
 
-| Archivo | Tipo | Qué hace |
+- **URL:** la de la app (`construir_uri_bd()`, variables `DB_*` del entorno o del `.env`); nada en `alembic.ini`.
+- **Otra cuenta para migrar** (SEC-CFG-09): exportar `DB_USER` y `DB_PASS` solo para el comando; el entorno manda sobre el `.env`. No dejar la contraseña en el historial de la shell: leerla con `read -s DB_PASS` o usar un archivo de entorno con permisos 600.
+- **Modelos:** `env.py` importa todo `app/modules/*/models.py`; un módulo nuevo con `models.py` entra solo.
+- **SQLite:** la ruta relativa `nexus.db` se resuelve en `instance/`, igual que Flask-SQLAlchemy.
+- **`render_as_batch`:** activo, para que las migraciones también corran en SQLite (pruebas).
+
+### Comandos (desde la raíz, con el venv)
+
+| Para | Comando |
+|---|---|
+| Crear las tablas en una BD nueva y vacía | `venv/bin/alembic upgrade head` (**antes** del primer arranque de la app) |
+| Aplicar las migraciones pendientes | `venv/bin/alembic upgrade head` |
+| Ver la versión aplicada | `venv/bin/alembic current` |
+| Ver si los modelos tienen cambios sin migración | `venv/bin/alembic check` |
+| Crear una migración nueva | cambiar el modelo y `venv/bin/alembic revision --autogenerate -m "descripcion"`; revisar el archivo generado |
+| Revertir la última | `venv/bin/alembic downgrade -1` |
+| Ver el SQL sin aplicarlo (MySQL) | `venv/bin/alembic upgrade head --sql` |
+| Marcar una BD existente como en la línea base | `venv/bin/alembic stamp 0001` |
+
+### BD existente de NEXUS (creada con `create_all()` + `utils/migrations/`)
+- Respaldo previo (`docs/operacion/RESPALDOS.md`).
+- Confirmar que 001, 002 y 004 están aplicadas (columnas `pref_*` en `users`; sin `storage_stats`, `drive_activity` ni `access_requests`).
+- `venv/bin/alembic stamp 0001`: registra la línea base sin tocar tablas.
+- `venv/bin/alembic check`: si reporta diferencias, se abre una tarea con una migración que las corrija (no se edita `0001`).
+
+### Convivencia con `create_all()`
+- `create_all()` sigue en `create_app()` hasta FNC-003/FNC-028 (ADR-002); crea tablas que falten, nunca altera.
+- Orden obligatorio: **migrar primero, arrancar después**. Si la app arrancó antes en una BD nueva, `upgrade` falla con "table already exists": usar `alembic stamp head` (las tablas ya coinciden con los modelos).
+- Una migración que cree una tabla nueva falla si la app arrancó con ese modelo antes de migrar: en despliegues, `upgrade head` va antes de reiniciar el servicio (`docs/operacion/RELEASES.md`).
+
+### Reglas para nuevas migraciones
+- Una migración por tarea, en su rama; `alembic check` vacío antes del commit.
+- Tablas nuevas de la fase 3 con prefijo `platform_access_*`; nunca `access_requests` (la borra 004).
+- Cada migración con `downgrade()` real; si es irreversible, se dice en su docstring.
+- Dos ramas con migraciones en paralelo: el integrador fusiona cabezas (`alembic merge heads`); la prueba `test_hay_una_sola_cabeza` lo exige.
+- Pruebas: `tests/test_migraciones.py` (upgrade sobre SQLite vacío = modelos, autogenerate vacío, downgrade a `base`, una sola cabeza).
+
+### Histórico (`utils/migrations/`, ya no se usan)
+Quedan como referencia; la línea base `0001` ya refleja su resultado. FNC-028 decide su retiro.
+
+| Archivo | Tipo | Qué hizo |
 |---|---|---|
-| `001_user_prefs.sql` | SQL (MySQL) | Agrega las columnas `pref_*` a `users`. |
-| `002_drop_drive.sql` | SQL (MySQL) | Elimina `storage_stats`, `drive_activity` y columnas de archivos de `platforms`. Irreversible sin respaldo. |
-| `003_logo_to_db.py` | Python | Pasa el logo del portal de archivo a data URI en `system_config`. Idempotente. |
-| `004_drop_access_requests.sql` | SQL (MySQL) | Elimina la tabla huérfana `access_requests`. |
-
-No hay registro de qué migraciones se aplicaron (no hay Alembic ni tabla de versiones).
+| `001_user_prefs.sql` | SQL (MySQL) | Agregó las columnas `pref_*` a `users`. |
+| `002_drop_drive.sql` | SQL (MySQL) | Eliminó `storage_stats`, `drive_activity` y columnas de archivos de `platforms`. Irreversible sin respaldo. |
+| `003_logo_to_db.py` | Python | Pasa el logo del portal de archivo a data URI en `system_config` (datos, no esquema). Idempotente. |
+| `004_drop_access_requests.sql` | SQL (MySQL) | Eliminó la tabla huérfana `access_requests`. |
 
 ## 8. Deuda conocida
 
@@ -237,7 +283,7 @@ No hay registro de qué migraciones se aplicaron (no hay Alembic ni tabla de ver
 | 12 | Redis conectado pero sin uso. | `app/utils/redis_client.py` |
 | 13 | `user_platforms` se edita pero no restringe la visibilidad. | `authz.scoped_platforms` |
 | 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `api/admin.py` |
-| 15 | Sin control de migraciones aplicadas. Pruebas del backend completas: suite base (FNC-019), protección por rol (FNC-020), alcance por área (FNC-021), autenticación (FNC-022) y servicios, respaldo, heredadas, CSRF y arranque (FNC-023). | — |
+| 15 | Control de migraciones resuelto con Alembic (FNC-039). Pruebas del backend completas: suite base (FNC-019), protección por rol (FNC-020), alcance por área (FNC-021), autenticación (FNC-022) y servicios, respaldo, heredadas, CSRF y arranque (FNC-023). | — |
 | 16 | `purge_inactive_users` de `auth/services.py` devuelve un mensaje de error de LDAP no relacionado; la API usa su propia implementación en `crud.py` (duplicado). | `auth/services.py`, `api/crud.py` |
 | 17 | `utils/seed_users.py` usa roles `admin`/`user` que el código ya no reconoce. | `utils/seed_users.py` |
 | 18 | Mensajes de error que devuelven el texto de la excepción al cliente (LDAP, SMTP, respaldo). | `api/admin.py` |

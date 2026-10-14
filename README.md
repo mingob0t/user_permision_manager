@@ -75,6 +75,13 @@ Las variables y su significado están en [docs/configuracion/VARIABLES.md](docs/
 python3.11 -m venv venv
 venv/bin/pip install -r requirements.txt
 
+# esquema de la BD (Alembic): crea las tablas en una BD nueva o aplica
+# las migraciones pendientes; siempre antes de arrancar la app
+venv/bin/alembic upgrade head
+
+# crear una migración tras cambiar un modelo (revisar el archivo generado)
+# venv/bin/alembic revision --autogenerate -m "descripcion"
+
 # iniciar en desarrollo
 venv/bin/python run.py                     # API en http://localhost:5001
 

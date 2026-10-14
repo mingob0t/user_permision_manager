@@ -38,13 +38,9 @@ def create_app(config_overrides=None):
 
     # Configuración de base de datos y seguridad
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'nexus-premium-secret-key')
-    db_engine = os.getenv('DB_ENGINE', 'sqlite')
-    if db_engine == 'mysql':
-        db_uri = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-    else:
-        db_uri = 'sqlite:///nexus.db'
-    
-    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+    # La misma regla la usan las migraciones (migrations/env.py).
+    from app.utils.uri_bd import construir_uri_bd
+    app.config['SQLALCHEMY_DATABASE_URI'] = construir_uri_bd()
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Configuración de Sesiones para evitar cierres inesperados

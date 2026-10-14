@@ -176,8 +176,11 @@ Rellenar `server_name` y las rutas de los certificados.
 
 ## Migraciones
 
-No las aplica el instalador. En una actualización, revisar
-`utils/migrations/` y ejecutar las que falten en orden:
+No las aplica el instalador. Desde FNC-039 se usa Alembic: respaldo,
+`venv/bin/alembic upgrade head` y reinicio del servicio. Una BD existente se
+marca una vez con `venv/bin/alembic stamp 0001` (ver `docs/backend/README.md` §7).
+
+Histórico (anterior a Alembic; ya incluido en la línea base `0001`):
 
 ```bash
 mysql -u USUARIO -p BASE < utils/migrations/002_drop_drive.sql
