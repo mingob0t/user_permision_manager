@@ -1,6 +1,6 @@
 # FNC-001 — Incorporar el proyecto al método
 
-- **Plataforma:** infra · **Módulo:** global · **Estatus:** En curso
+- **Plataforma:** infra · **Módulo:** global · **Estatus:** Hecha (merge local a `develop`, 634e9f1; sin push)
 - **Rama:** `fnc/FNC-001-incorporacion-metodo` (desde `develop`)
 - **Creada / inicio:** 2026-10-13
 

@@ -8,8 +8,9 @@
 | **Fase** | 1 |
 | **Módulo / Área** | seguridad |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
+| **Inicio** | 2026-10-13 |
 | **Rama** | `fnc/FNC-036-lineamientos-de-seguridad` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí |
@@ -34,9 +35,9 @@ Escribir `docs/seguridad/LINEAMIENTOS.md`: reglas verificables que cada tarea de
 - **No incluye:** corregir código (eso es la fase 5 o la tarea que toque el módulo).
 
 ## Criterios de aceptación
-- [ ] Cada regla tiene motivo, verificación y referencia al hallazgo que la origina (SEG-xx)
-- [ ] El dueño revisó y aprobó el documento
-- [ ] `docs/seguridad/README.md` enlaza el documento
+- [x] Cada regla tiene motivo, verificación y referencia al hallazgo que la origina (SEG-xx)
+- [x] El dueño aprobó el documento (2026-10-13)
+- [x] `docs/seguridad/README.md` enlaza el documento
 
 ## Impacto cruzado
 - Genera → criterio de revisión para todas las tareas de las fases 2 a 6
@@ -46,3 +47,5 @@ Escribir `docs/seguridad/LINEAMIENTOS.md`: reglas verificables que cada tarea de
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta por decisión del dueño sobre el orden de fases |
+| 2026-10-13 | Aprobada por el dueño; en curso |
+| 2026-10-13 | Aprobada por el dueño. Las 17 preguntas no bloquean: se deciden en la fase 3 (9) o en la fase 5 (8). Matriz corregida: los admins crean cuentas en OpenLDAP para sus áreas |
