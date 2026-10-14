@@ -15,7 +15,7 @@
 | **Finalizada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-019-suite-base-pruebas-backend` |
-| **Commits / PR** | |
+| **Commits / PR** | `e96d406` (más el ajuste con el hash) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí (dependencias nuevas de desarrollo y `create_app`): sin hallazgos |
 
