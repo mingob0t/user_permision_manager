@@ -5,7 +5,7 @@
 | **Carril** | Funcionalidad |
 | **Plataforma** | backend |
 | **Agente** | desarrollador |
-| **Fase** | 1 |
+| **Fase** | 5 |
 | **Módulo / Área** | auth |
 | **Prioridad** | Alta |
 | **Estatus** | Propuesta |
@@ -26,6 +26,8 @@ Origen (diagnóstico inicial, FNC-001):
 - [`docs/seguridad/auditorias/2026-10-13-auditoria-inicial.md`](../../../seguridad/auditorias/2026-10-13-auditoria-inicial.md): SEG-13
 - [`docs/estandarizacion/auditorias/2026-10-13-auditoria-inicial.md`](../../../estandarizacion/auditorias/2026-10-13-auditoria-inicial.md): D-LDAP: 3 conexiones duplicadas
 - [`docs/backend/README.md`](../../../backend/README.md): atributos de AD
+
+> **Regla de fases (2026-10-13):** esta corrección se hace en la fase 5 (seguridad final), **salvo** que una tarea anterior modifique este módulo: en ese caso la tarea debe dejarlo cumpliendo `docs/seguridad/LINEAMIENTOS.md` y corrige este hallazgo de paso.
 
 ## Objetivo
 _Se completa al aprobar la tarea._

@@ -5,7 +5,7 @@
 | **Carril** | Diseño |
 | **Plataforma** | web |
 | **Agente** | disenador-web |
-| **Fase** | 3 |
+| **Fase** | 4 |
 | **Módulo / Área** | estilos |
 | **Prioridad** | Alta |
 | **Estatus** | Propuesta |

@@ -5,7 +5,7 @@
 | **Carril** | Funcionalidad |
 | **Plataforma** | backend |
 | **Agente** | desarrollador |
-| **Fase** | 1 |
+| **Fase** | 5 |
 | **Módulo / Área** | audit |
 | **Prioridad** | Media |
 | **Estatus** | Propuesta |
@@ -24,6 +24,8 @@ El admin de área ve lo que sus usuarios hicieron en otras áreas (`routes.py:43
 
 Origen (diagnóstico inicial, FNC-001):
 - [`docs/seguridad/auditorias/2026-10-13-auditoria-inicial.md`](../../../seguridad/auditorias/2026-10-13-auditoria-inicial.md): SEG-16, SEG-25
+
+> **Regla de fases (2026-10-13):** esta corrección se hace en la fase 5 (seguridad final), **salvo** que una tarea anterior modifique este módulo: en ese caso la tarea debe dejarlo cumpliendo `docs/seguridad/LINEAMIENTOS.md` y corrige este hallazgo de paso.
 
 ## Objetivo
 _Se completa al aprobar la tarea._

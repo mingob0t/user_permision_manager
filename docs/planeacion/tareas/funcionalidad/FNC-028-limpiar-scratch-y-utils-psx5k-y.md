@@ -5,7 +5,7 @@
 | **Carril** | Funcionalidad |
 | **Plataforma** | backend |
 | **Agente** | desarrollador |
-| **Fase** | 3 |
+| **Fase** | 4 |
 | **Módulo / Área** | bd |
 | **Prioridad** | Media |
 | **Estatus** | Propuesta |

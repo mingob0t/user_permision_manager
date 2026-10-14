@@ -5,7 +5,7 @@
 | **Carril** | Funcionalidad |
 | **Plataforma** | infra |
 | **Agente** | devops |
-| **Fase** | 1 |
+| **Fase** | 5 |
 | **Módulo / Área** | dependencias |
 | **Prioridad** | Media |
 | **Estatus** | Propuesta |
@@ -25,6 +25,8 @@ Next 15.5.7 con posibles avisos; dependencias Python sin versión y sin uso (Fla
 Origen (diagnóstico inicial, FNC-001):
 - [`docs/seguridad/auditorias/2026-10-13-auditoria-inicial.md`](../../../seguridad/auditorias/2026-10-13-auditoria-inicial.md): SEG-19, SEG-27
 - [`docs/backend/README.md`](../../../backend/README.md): stack
+
+> **Regla de fases (2026-10-13):** esta corrección se hace en la fase 5 (seguridad final), **salvo** que una tarea anterior modifique este módulo: en ese caso la tarea debe dejarlo cumpliendo `docs/seguridad/LINEAMIENTOS.md` y corrige este hallazgo de paso.
 
 ## Objetivo
 _Se completa al aprobar la tarea._

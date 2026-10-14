@@ -5,7 +5,7 @@
 | **Carril** | Funcionalidad |
 | **Plataforma** | web |
 | **Agente** | desarrollador |
-| **Fase** | 1 |
+| **Fase** | 5 |
 | **Módulo / Área** | config |
 | **Prioridad** | Crítica |
 | **Estatus** | Propuesta |
@@ -25,6 +25,8 @@ Los rewrites de `frontend/next.config.ts:15-20` siguen activos en producción y 
 Origen (diagnóstico inicial, FNC-001):
 - [`docs/seguridad/auditorias/2026-10-13-auditoria-inicial.md`](../../../seguridad/auditorias/2026-10-13-auditoria-inicial.md): SEG-04
 - [`docs/backend/README.md`](../../../backend/README.md): discrepancias
+
+> **Regla de fases (2026-10-13):** esta corrección se hace en la fase 5 (seguridad final), **salvo** que una tarea anterior modifique este módulo: en ese caso la tarea debe dejarlo cumpliendo `docs/seguridad/LINEAMIENTOS.md` y corrige este hallazgo de paso.
 
 ## Objetivo
 _Se completa al aprobar la tarea._

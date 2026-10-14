@@ -5,7 +5,7 @@
 | **Carril** | Funcionalidad |
 | **Plataforma** | backend |
 | **Agente** | desarrollador |
-| **Fase** | 1 |
+| **Fase** | 5 |
 | **Módulo / Área** | authz |
 | **Prioridad** | Alta |
 | **Estatus** | Propuesta |
@@ -24,6 +24,8 @@ Un admin de área puede tomar la cuenta de otro (`app/authz.py:398-414`, `crud.p
 
 Origen (diagnóstico inicial, FNC-001):
 - [`docs/seguridad/auditorias/2026-10-13-auditoria-inicial.md`](../../../seguridad/auditorias/2026-10-13-auditoria-inicial.md): SEG-05, SEG-09
+
+> **Regla de fases (2026-10-13):** esta corrección se hace en la fase 5 (seguridad final), **salvo** que una tarea anterior modifique este módulo: en ese caso la tarea debe dejarlo cumpliendo `docs/seguridad/LINEAMIENTOS.md` y corrige este hallazgo de paso.
 
 ## Objetivo
 _Se completa al aprobar la tarea._

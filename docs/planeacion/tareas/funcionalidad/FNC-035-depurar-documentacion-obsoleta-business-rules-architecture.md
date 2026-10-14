@@ -5,7 +5,7 @@
 | **Carril** | Funcionalidad |
 | **Plataforma** | infra |
 | **Agente** | devops |
-| **Fase** | 4 |
+| **Fase** | 6 |
 | **Módulo / Área** | docs |
 | **Prioridad** | Baja |
 | **Estatus** | Propuesta |

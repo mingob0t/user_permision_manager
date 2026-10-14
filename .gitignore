@@ -45,7 +45,7 @@ backups/
 storage/
 uploads/
 # Logs de ejecución
-logs/
+/logs/
 # Sistema operativo y editores
 Thumbs.db
 .idea/

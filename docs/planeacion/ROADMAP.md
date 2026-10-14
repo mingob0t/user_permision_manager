@@ -1,23 +1,27 @@
 # Roadmap
 
-Detalle y motivos: [DIAGNOSTICO-INICIAL.md](../DIAGNOSTICO-INICIAL.md).
+Orden de fases decidido por el dueño el 2026-10-13. Detalle de los hallazgos: [DIAGNOSTICO-INICIAL.md](../DIAGNOSTICO-INICIAL.md).
+
+**Regla:** las correcciones de seguridad esperan a la fase 5, **salvo** que una tarea anterior modifique el módulo afectado; en ese caso la tarea lo deja cumpliendo `docs/seguridad/LINEAMIENTOS.md`. El portal no se expone en un entorno accesible antes de cerrar la fase 5.
 
 ## Fase 0 — Incorporación
-- [ ] Incorporar el proyecto al método: estructura, línea base y diagnóstico inicial (FNC-001)
+- [ ] Estructura, línea base y diagnóstico inicial (FNC-001)
 
-## Fase 1 — Seguridad
-- [ ] Críticas antes de cualquier despliegue: FNC-002, FNC-003, FNC-004, FNC-005, FNC-006
-- [ ] Altas: FNC-007 a FNC-012
-- [ ] Medias y bajas: FNC-013 a FNC-018
+## Fase 1 — Lineamientos de seguridad
+- [ ] Reglas de seguridad del proyecto (FNC-036)
 
-## Fase 2 — Pruebas de lo crítico
-- [ ] FNC-019 a FNC-026
+## Fase 2 — Pruebas
+- [ ] Suite base y pruebas de lo crítico, línea base web y CI (FNC-019 a FNC-026)
 
-## Fase 3 — Estándares, modularidad y accesibilidad
+## Fase 3 — Gestor de accesos
+- [ ] Solicitudes, niveles por plataforma, escritura de grupos en OpenLDAP, conectores y auditoría completa (pendiente de planificar)
+
+## Fase 4 — Estándares, modularidad y accesibilidad
 - [ ] FNC-027 a FNC-034, DIS-001 a DIS-012
 
-## Fase 4 — Documentación y operación
-- [ ] FNC-035
+## Fase 5 — Seguridad final
+- [ ] Auditoría de seguridad completa del proyecto terminado
+- [ ] Correcciones pendientes del diagnóstico inicial (FNC-002 a FNC-018) y de la auditoría final
 
-## Fase 5 — Gestor de accesos
-- [ ] Solicitudes, niveles por plataforma, escritura de grupos en OpenLDAP, conectores y auditoría completa (pendiente de planificar)
+## Fase 6 — Documentación y operación
+- [ ] FNC-035

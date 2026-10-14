@@ -48,13 +48,17 @@ Los hallazgos que reportó más de un agente aparecen una sola vez con todas sus
 
 La lista completa, con archivo y línea, está en cada informe y en las fichas de `planeacion/tareas/`.
 
-## Propuesta de fases
+## Fases (decididas por el dueño el 2026-10-13)
 
-1. **Seguridad crítica y alta** (FNC-002 a FNC-018). FNC-002, FNC-003 y el bloque FNC-004/005/006 van antes de cualquier despliegue. FNC-011 bloquea el primer push al repositorio nuevo.
-2. **Pruebas de lo crítico** (FNC-019 a FNC-026): suite pytest, matriz de permisos por rol y por área, autenticación, línea base web y CI.
-3. **Deuda de estándares, modularidad y accesibilidad** (FNC-027 a FNC-034, DIS-001 a DIS-012).
-4. **Documentación y operación** (FNC-035).
-5. **Gestor de accesos** (requerimientos F-* de [REQUERIMIENTOS.md](REQUERIMIENTOS.md)): solicitudes, niveles por plataforma, escritura de grupos en OpenLDAP, conectores y auditoría completa. Lo parte el `planificador` en tareas aparte. Se apoya en FNC-007, FNC-012 y FNC-015.
+0. **Incorporación** (FNC-001).
+1. **Lineamientos de seguridad** (FNC-036): reglas que todo el desarrollo debe cumplir.
+2. **Pruebas** (FNC-019 a FNC-026).
+3. **Gestor de accesos**: requerimientos F-* de [REQUERIMIENTOS.md](REQUERIMIENTOS.md), pendiente de planificar.
+4. **Estándares, modularidad y accesibilidad** (FNC-027 a FNC-034, DIS-001 a DIS-012).
+5. **Seguridad final**: auditoría completa y correcciones (FNC-002 a FNC-018 y lo que encuentre la auditoría final).
+6. **Documentación y operación** (FNC-035).
+
+Regla: una tarea que modifique un módulo con un hallazgo de seguridad abierto lo deja cumpliendo los lineamientos y corrige el hallazgo de paso. El portal no se expone en un entorno accesible antes de cerrar la fase 5.
 
 ## Decisiones que le tocan al dueño
 
