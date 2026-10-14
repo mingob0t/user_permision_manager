@@ -49,5 +49,5 @@
 | DIS-010 | Componentes comunes: DataTable, botón de peligro, filtros, tonos de estado y toast | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — |  |
 | DIS-011 | Dividir settings-panel.tsx, users-list.tsx y platform-admin.tsx | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — | Después de DIS-010 |
 | DIS-012 | Eliminar estilos inline y colores literales en TSX | web | 4 | estilos | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-033 |
-| FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | En curso | 2026-10-13 | 2026-10-13 | | `fnc/FNC-036-lineamientos-de-seguridad` | Base de todas las fases siguientes |
+| FNC-036 | Lineamientos de seguridad del proyecto | backend | 1 | seguridad | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop | Base de todas las fases siguientes |
 | FNC-072 | Corregir los hallazgos de lint de la línea base web | web | 2 | frontend | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (851846f) | Depende de FNC-024 |

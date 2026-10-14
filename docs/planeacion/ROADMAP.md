@@ -8,7 +8,7 @@ Orden de fases decidido por el dueño el 2026-10-13. Detalle de los hallazgos: [
 - [x] Estructura, línea base y diagnóstico inicial (FNC-001)
 
 ## Fase 1 — Lineamientos de seguridad
-- [ ] Reglas de seguridad del proyecto (FNC-036)
+- [x] Reglas de seguridad del proyecto (FNC-036)
 
 ## Fase 2 — Pruebas
 - [ ] Suite base y pruebas de lo crítico, línea base web y CI (FNC-019 a FNC-026)

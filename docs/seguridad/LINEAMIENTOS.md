@@ -177,23 +177,24 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 | `RETENCION.md`, `.claude/seudonimizacion.json` | 28 | 018 |
 
 ## 12. Preguntas para el dueño
-1. ¿MFA para el superadmin y los admins? ¿Y para los usuarios?
-2. ¿Duración de la sesión (inactividad y absoluta)? ¿Se permite "recordarme"?
-3. ¿Retención de auditoría, logs, bitácora de conectores y cuentas? ¿Quién responde por el aviso de privacidad y los derechos ARCO?
-4. ¿Se conservan cuentas locales (solo la de emergencia del superadmin)? ¿Longitud mínima de contraseña?
-5. ¿Cómo se transfiere el superadmin o se recupera el acceso de emergencia?
-6. ¿Cómo se entrega la contraseña inicial de las cuentas creadas en OpenLDAP? ¿Hay `ppolicy`?
-7. ¿Qué convención de OpenLDAP se usa: OUs, atributo de membresía y atributos de las cuentas nuevas?
-8. ¿Quién define el DN de grupo de una plataforma? ¿Lo crea el portal?
-9. ¿Cuántas cuentas de servicio (lectura y escritura)? ¿Quién configura las ACL?
-10. ¿Las credenciales de conectores se cargan al desplegar o se consultan a Vaultwarden en tiempo de ejecución?
-11. ¿La lista blanca de hosts de conectores la fija el despliegue o la edita el superadmin?
-12. ¿Quién aprueba la solicitud del único admin de un área? ¿El superadmin se otorga accesos sin aprobación?
-13. ¿Umbral del límite de intentos y política de bloqueo actual de OpenLDAP?
-14. ¿HSTS con `includeSubDomains`?
-15. ¿La auditoría basta con permisos de BD, o se requiere cadena de hash o envío a un SIEM?
-16. ¿Qué cola de trabajos se usa para los conectores (se decide en un ADR)?
-17. ¿Un admin puede dar de baja sus áreas?
+No bloquean: cada una se decide en la fase indicada, al llegar la tarea que la necesita (decisión del dueño, 2026-10-13).
+1. **[Fase 5]** ¿MFA para el superadmin y los admins? ¿Y para los usuarios?
+2. **[Fase 5]** ¿Duración de la sesión (inactividad y absoluta)? ¿Se permite "recordarme"?
+3. **[Fase 5]** ¿Retención de auditoría, logs, bitácora de conectores y cuentas? ¿Quién responde por el aviso de privacidad y los derechos ARCO?
+4. **[Fase 5]** ¿Se conservan cuentas locales (solo la de emergencia del superadmin)? ¿Longitud mínima de contraseña?
+5. **[Fase 5]** ¿Cómo se transfiere el superadmin o se recupera el acceso de emergencia?
+6. **[Fase 3]** ¿Cómo se entrega la contraseña inicial de las cuentas creadas en OpenLDAP? ¿Hay `ppolicy`?
+7. **[Fase 3]** ¿Qué convención de OpenLDAP se usa: OUs, atributo de membresía y atributos de las cuentas nuevas?
+8. **[Fase 3]** ¿Quién define el DN de grupo de una plataforma? ¿Lo crea el portal?
+9. **[Fase 3]** ¿Cuántas cuentas de servicio (lectura y escritura)? ¿Quién configura las ACL?
+10. **[Fase 3]** ¿Las credenciales de conectores se cargan al desplegar o se consultan a Vaultwarden en tiempo de ejecución?
+11. **[Fase 3]** ¿La lista blanca de hosts de conectores la fija el despliegue o la edita el superadmin?
+12. **[Fase 3]** ¿Quién aprueba la solicitud del único admin de un área? ¿El superadmin se otorga accesos sin aprobación?
+13. **[Fase 5]** ¿Umbral del límite de intentos y política de bloqueo actual de OpenLDAP?
+14. **[Fase 5]** ¿HSTS con `includeSubDomains`?
+15. **[Fase 5]** ¿La auditoría basta con permisos de BD, o se requiere cadena de hash o envío a un SIEM?
+16. **[Fase 3]** ¿Qué cola de trabajos se usa para los conectores (se decide en un ADR)?
+17. **[Fase 3]** ¿Un admin puede dar de baja sus áreas?
 
 ## Anexo A. Matriz de permisos
 Los casos "sin sesión" siempre dan 401. "Ajena" significa un área que el admin no gestiona y responde 404.
@@ -204,7 +205,8 @@ Los casos "sin sesión" siempre dan 401. "Ajena" significa un área que el admin
 | Aprobar, rechazar o revocar | No | Sí, salvo lo propio | No | Sí, salvo lo propio |
 | Alta y edición de áreas y plataformas | No | Sí | No | Sí |
 | Baja de áreas; DN de grupos; conectores | No | No | No | Sí |
-| Crear cuentas; elevar o gestionar admins | No | No | No | Sí |
+| Crear cuentas en OpenLDAP | No | Sí (para sus áreas) | No | Sí |
+| Elevar o gestionar admins | No | No | No | Sí |
 | Gestionar usuarios no admin | No | Sí (sin contraseña `ldap`/`sso`) | No | Sí |
 | Ver usuarios e inventario | Los propios | Sí | No | Todo |
 | Ver la auditoría | La propia | Área afectada | No | Todo |
