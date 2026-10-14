@@ -8,10 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | contratos |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
-| **Estatus Git** | — |
-| **Rama** | `fnc/FNC-038-contratos-gestor-accesos` |
+| **Estatus Git** | Rama `fnc/FNC-038-contratos-v1` desde `develop` (worktree `pokemon-wt-038`) |
+| **Rama** | `fnc/FNC-038-contratos-v1` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -50,14 +50,36 @@
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
-| Forma de respuesta de `/api/v1` | Convención de API | Todo el frontend (`lib/api.ts`, `lib/types.ts`) | Pendiente |
+| Forma de error de `/api/v1`: campos nuevos opcionales `code` y `correlation_id` (aditivos; `status` y `message` igual) | Convención de API (solo documentada) | Todo el frontend (`lib/api.ts` lee `message`); backend `_error` de `crud.py` y `admin.py` al implementar | Pendiente (dueño) |
+| Lista paginada `{items, page, per_page, total}` para endpoints nuevos | Convención de API (solo documentada) | Endpoints nuevos de la fase 3; `GET /audit` conserva `limit` | Pendiente (dueño) |
+
+`impacto.py` (2026-10-14, contra `develop`): **Impacto en elementos compartidos:** ninguno detectado (comparado contra `develop`; 11 archivos cambiados). Solo documentación; no cambia código.
 
 ## Criterios de aceptación
-- [ ] Un contrato por sección, con versión 1 y fecha
-- [ ] Cada endpoint declara método, ruta, permiso por rol, entrada con límites, salida con ejemplo y errores
-- [ ] Revisado por el dueño (decisiones de las preguntas de FNC-037 reflejadas)
-- [ ] Integrado a `develop` antes de iniciar FNC-044 y FNC-069
-- [ ] Criterios comunes backend (FNC-037)
+- [x] Un contrato por sección, con versión 1 y fecha (8 contratos + índice)
+- [x] Cada endpoint declara método, ruta, permiso por rol, entrada con límites, salida con ejemplo y errores
+- [ ] Revisado por el dueño (decisiones de FNC-037 reflejadas en `docs/contratos/README.md`; pendiente su revisión y las *Por confirmar*)
+- [ ] Integrado a `develop` antes de iniciar FNC-044 y FNC-069 (pendiente de aprobación de merge)
+- [ ] Criterios comunes backend (FNC-037): no aplican en su mayoría (sin código ni endpoints); sin IPs ni secretos verificado
+
+## Verificación
+| Comando | Resultado |
+|---|---|
+| Extraer y `json.loads` de los bloques JSON de `docs/contratos/*.md` | 18 bloques válidos |
+| `grep -rnE` de IPv4 en `docs/contratos/` | Sin coincidencias |
+| `python3 ~/.claude/agentes/herramientas/impacto.py` | Ninguno detectado; código 0 |
+
+- No verificado: no hay código que probar; sin pytest ni Vitest (la tarea es solo documentación). Sin revisor (indicación del orquestador).
+
+## Por confirmar (valor más seguro aplicado)
+- P7: motivo obligatorio al revocar (10–500)
+- P8: cuenta LDAP sin contraseña; restablecimiento por Authelia
+- P10: aviso a admins del área y superadmin sin depender de la preferencia; reintento solo superadmin
+- P11: baja de áreas solo superadmin; 409 con plataformas o accesos vigentes
+- P13: no cambia la forma; el contrato exige CSRF (cabecera y token según FNC-008)
+- P6 (resto): nivel `admin` del acceso automático del creador; otros admins y retiro del área en FNC-055
+- Seguridad §12.11: lista blanca de hosts fijada por el despliegue
+- Superadmin en grupos LDAP: sin registros de acceso; FNC-055 decide
 
 ## Impacto cruzado
 - Genera → FNC-069 (consumidor web)
@@ -71,3 +93,5 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-14 | Aprobada por el dueño (vía orquestador); En curso en `fnc/FNC-038-contratos-v1` |
+| 2026-10-14 | Hecha: 8 contratos v1 + `docs/contratos/README.md`; commit local sin push |

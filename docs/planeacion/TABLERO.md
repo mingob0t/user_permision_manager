@@ -54,7 +54,7 @@
 | FNC-073 | Alinear la versión mínima de Node en el despliegue | infra | 6 | deploy | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-025 |
 | FNC-074 | Unificar el LDAP simulado de las pruebas | backend | 4 | pruebas | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-022 |
 | FNC-037 | Planeación de la fase 3: gestor de accesos | backend | 3 | planeacion | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-14 | Merge local a develop | Plan de la fase 3; genera FNC-038 a FNC-071 y DIS-013 a DIS-024 |
-| FNC-038 | Contratos v1 backend↔web del gestor de accesos | backend | 3 | contratos | Alta | Propuesta | 2026-10-13 | | | — | Depende de P1, P14, FNC-037, ADR-006 |
+| FNC-038 | Contratos v1 backend↔web del gestor de accesos | backend | 3 | contratos | Alta | Hecha | 2026-10-13 | 2026-10-14 | 2026-10-14 | Rama local `fnc/FNC-038-contratos-v1` | Depende de P1, P14, FNC-037, ADR-006 |
 | FNC-039 | Migraciones versionadas de MySQL para la fase 3 (según ADR-002) | backend | 3 | bd | Alta | Propuesta | 2026-10-13 | | | — | Depende de ADR-002 |
 | FNC-040 | Cliente LDAP centralizado con TLS validado y esquema de OpenLDAP configurable | backend | 3 | directorio | Alta | Propuesta | 2026-10-13 | | | — | Depende de ADR-004 |
 | FNC-041 | Servicio de escritura en OpenLDAP: membresía de grupos y alta de cuentas | backend | 3 | directorio | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-040, ADR-004 |
