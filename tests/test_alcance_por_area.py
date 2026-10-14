@@ -300,7 +300,10 @@ def test_superadmin_lista_a_todos(alcance, cliente_como):
 def test_admin_a_no_toca_cuentas_ajenas(alcance, cliente_como, objetivo,
                                         metodo, sufijo, cuerpo):
     esc = alcance
-    hash_antes = _usuario(esc.actor[objetivo]).password_hash
+    antes = _usuario(esc.actor[objetivo])
+    hash_antes = antes.password_hash
+    areas_antes = {a.id for a in antes.areas}
+    plataformas_antes = {p.id for p in antes.platforms}
     respuesta = _como(cliente_como, esc, ADMIN_A).open(
         f'{A}/users/{esc.actor[objetivo]}{sufijo}', method=metodo, json=cuerpo)
     _assert_denegado(respuesta)
@@ -308,6 +311,8 @@ def test_admin_a_no_toca_cuentas_ajenas(alcance, cliente_como, objetivo,
     assert cuenta is not None and cuenta.is_active
     assert cuenta.nombre != 'Editado desde otra área'
     assert cuenta.password_hash == hash_antes
+    assert {a.id for a in cuenta.areas} == areas_antes
+    assert {p.id for p in cuenta.platforms} == plataformas_antes
 
 
 @pytest.mark.parametrize('actor', USUARIOS)

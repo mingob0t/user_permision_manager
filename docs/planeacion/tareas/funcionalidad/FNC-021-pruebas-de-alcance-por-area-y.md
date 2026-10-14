@@ -15,7 +15,7 @@
 | **Finalizada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-021-pruebas-alcance-por-area` |
-| **Commits / PR** | |
+| **Commits / PR** | `e96f9a3` y corrección de la revisión (locales, sin push) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No (solo pruebas; la app no cambia) |
 
@@ -60,7 +60,7 @@ Probar que cada actor solo ve y modifica lo de su área, y que no puede escalar 
 - No verificado: con MySQL real (la suite usa SQLite).
 
 ## Impacto en elementos compartidos
-- `impacto.py`: **ninguno detectado** (comparado contra `develop`; 6 archivos cambiados). Solo un archivo nuevo en `tests/` y documentación.
+- `impacto.py` (contra `develop`): reporta `Alcance` (clase) y `alcance` (fixture) del test nuevo; son coincidencias con la palabra "alcance" en `app/authz.py`, `app/modules/api/*` y `frontend/src/components/*`. Falso positivo: no se modificó ningún elemento compartido.
 
 ## Observaciones
 - Hoy un admin de B que **no** es miembro de A queda fuera del alcance del admin de A (pasa); el defecto aparece cuando es miembro de A.
@@ -76,3 +76,4 @@ Probar que cada actor solo ve y modifica lo de su área, y que no puede escalar 
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-13 | Aprobada por el dueño; implementada y probada (299 passed, 9 xfailed) |
+- revisor (2026-10-13): Aprobado con 4 observaciones menores; corregidas la ficha (impacto, commit) y la prueba de cuentas ajenas, que ahora también verifica que no cambien áreas ni plataformas.
