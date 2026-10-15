@@ -178,28 +178,65 @@ def test_decision_respeta_la_preferencia_del_solicitante(correo, escenario):
 
 def test_fallo_de_aprovisionamiento_va_a_admins_del_area_y_superadmin(
         correo, escenario):
-    """P10; no depende de `pref_email_notifications` (contrato, Por confirmar)."""
+    """P10 (respuesta del dueño 2026-10-15): respeta `pref_email_notifications`."""
     e = escenario
     e['admin1'].pref_email_notifications = False
-    e['super'].pref_email_notifications = False
     db.session.commit()
 
     resultado = avisos.notificar_aprovisionamiento_fallido(
         e['ana'], e['plataforma'], 'usuario', avisos.OPERACION_OTORGAR)
 
-    assert resultado == {'status': 'success', 'recipients': 3}
+    assert resultado == {'status': 'success', 'recipients': 2}
     [mensaje] = correo.enviados
-    assert _para(mensaje) == ['admin1@pruebas.local', 'admin2@pruebas.local',
-                              'super@pruebas.local']
+    assert _para(mensaje) == ['admin2@pruebas.local', 'super@pruebas.local']
     assert mensaje['Subject'] == \
         'Fallo de aprovisionamiento (otorgar) en Contabilidad'
     assert 'ana@pruebas.local' in _cuerpo(mensaje)
 
 
-def test_fallo_de_aprovisionamiento_rechaza_operacion_desconocida(escenario):
-    with pytest.raises(ValueError):
-        avisos.notificar_aprovisionamiento_fallido(
-            escenario['ana'], escenario['plataforma'], 'usuario', 'borrar')
+def test_fallo_de_aprovisionamiento_sin_preferencia_no_va_al_superadmin(
+        correo, escenario):
+    e = escenario
+    e['super'].pref_email_notifications = False
+    db.session.commit()
+
+    avisos.notificar_aprovisionamiento_fallido(
+        e['ana'], e['plataforma'], 'usuario', avisos.OPERACION_REVOCAR)
+
+    assert _para(correo.enviados[0]) == ['admin1@pruebas.local',
+                                         'admin2@pruebas.local']
+
+
+def test_fallo_de_aprovisionamiento_con_operacion_desconocida_no_lanza(
+        correo, escenario):
+    resultado = avisos.notificar_aprovisionamiento_fallido(
+        escenario['ana'], escenario['plataforma'], 'usuario', 'borrar')
+
+    assert resultado == {'status': 'error', 'recipients': 0}
+    assert correo.conexiones == []
+
+
+class _PlataformaSinArea:
+    id = None
+    name = 'Huérfana'
+    area = None
+
+
+@pytest.mark.parametrize('llamar', [
+    lambda u, p: avisos.notificar_solicitud_nueva(u, p, 'usuario',
+                                                  JUSTIFICACION),
+    lambda u, p: avisos.notificar_solicitud_aprobada(u, p, 'usuario'),
+    lambda u, p: avisos.notificar_solicitud_rechazada(u, p, 'usuario', MOTIVO),
+    lambda u, p: avisos.notificar_aprovisionamiento_fallido(
+        u, p, 'usuario', avisos.OPERACION_OTORGAR),
+    lambda u, p: avisos.notificar_solicitud_aprobada(None, p, 'usuario'),
+])
+def test_datos_incompletos_no_lanzan(correo, escenario, llamar):
+    """Endurecimiento: plataforma sin área o datos faltantes → registro y salida."""
+    resultado = llamar(escenario['ana'], _PlataformaSinArea())
+
+    assert resultado == {'status': 'error', 'recipients': 0}
+    assert correo.conexiones == []
 
 
 def test_correo_invalido_en_la_bd_se_omite(correo, escenario):

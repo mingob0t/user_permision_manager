@@ -2,8 +2,11 @@
 
 - Una función por evento; los módulos de solicitudes, aprobaciones y
   aprovisionamiento solo llaman a la del evento.
-- Se llaman **después del commit** de la operación: un fallo de correo nunca la
-  revierte; queda en el log y en auditoría (`notificacion_fallida`).
+- Se llaman **después del commit** de la operación (y dentro de `try` en el
+  llamador): un fallo de correo nunca la revierte; queda en el log y en
+  auditoría (`notificacion_fallida`).
+- Ninguna función pública lanza: datos incompletos (sin área, sin usuario,
+  operación desconocida) se registran en el log y devuelven `error`.
 - Los destinatarios salen de la BD, nunca de la petición (SEC-MAIL-03), y van
   agrupados en un solo envío por evento.
 - El contexto lleva solo las claves de `CLAVES_POR_PLANTILLA` (SEC-MAIL-02); el
@@ -14,6 +17,7 @@
 import logging
 import os
 import re
+from functools import wraps
 
 from sqlalchemy import func
 
@@ -159,9 +163,43 @@ def _enviar(slug, destinatarios, contexto, *, area_id=None, platform_id=None,
 # Un aviso por evento
 # --------------------------------------------------------------------------- #
 
+class DatosIncompletos(ValueError):
+    """Faltan datos para armar el aviso; se registra y no se envía."""
+
+
+def _sin_excepciones(funcion):
+    """El aviso nunca rompe al llamador: registra y devuelve `error`."""
+    @wraps(funcion)
+    def envoltura(*args, **kwargs):
+        try:
+            return funcion(*args, **kwargs)
+        except DatosIncompletos as error:
+            logger.warning("Aviso '%s' omitido: %s", funcion.__name__, error)
+        except Exception:
+            logger.exception("Error inesperado al preparar el aviso '%s'.",
+                             funcion.__name__)
+        return {'status': FALLIDO, 'recipients': 0}
+    return envoltura
+
+
+def _area_de(plataforma):
+    area = getattr(plataforma, 'area', None)
+    if area is None:
+        raise DatosIncompletos('plataforma sin área')
+    return area
+
+
+def _exigir(usuario):
+    if usuario is None:
+        raise DatosIncompletos('sin usuario')
+    return usuario
+
+
+@_sin_excepciones
 def notificar_solicitud_nueva(solicitante, plataforma, nivel, justificacion):
     """A los admins del área de la plataforma (no al solicitante)."""
-    area = plataforma.area
+    _exigir(solicitante)
+    area = _area_de(plataforma)
     destinatarios = correos(admins_del_area(area, excluir_id=solicitante.id))
     contexto = _contexto(SLUG_SOLICITUD_NUEVA,
                          solicitante=_nombre(solicitante),
@@ -174,7 +212,8 @@ def notificar_solicitud_nueva(solicitante, plataforma, nivel, justificacion):
 
 
 def _al_solicitante(slug, solicitante, plataforma, nivel, **extra):
-    area = plataforma.area
+    _exigir(solicitante)
+    area = _area_de(plataforma)
     activo = solicitante.is_active and _quiere_correo(solicitante, True)
     destinatarios = correos([solicitante]) if activo else []
     contexto = _contexto(slug, solicitante=_nombre(solicitante), nivel=nivel,
@@ -183,30 +222,32 @@ def _al_solicitante(slug, solicitante, plataforma, nivel, **extra):
                    platform_id=plataforma.id, target_user_id=solicitante.id)
 
 
+@_sin_excepciones
 def notificar_solicitud_aprobada(solicitante, plataforma, nivel):
     """Al solicitante."""
     return _al_solicitante(SLUG_SOLICITUD_APROBADA, solicitante, plataforma,
                            nivel)
 
 
+@_sin_excepciones
 def notificar_solicitud_rechazada(solicitante, plataforma, nivel, motivo):
     """Al solicitante, con el motivo."""
     return _al_solicitante(SLUG_SOLICITUD_RECHAZADA, solicitante, plataforma,
                            nivel, motivo=motivo)
 
 
+@_sin_excepciones
 def notificar_aprovisionamiento_fallido(usuario, plataforma, nivel, operacion):
     """A los admins del área y a los superadmins (P10).
 
-    - No depende de `pref_email_notifications` (contrato
-      `conectores-y-ejecuciones.md`, *Por confirmar*: valor más seguro).
-    - `operacion`: `otorgar` o `revocar`.
+    - Respeta `pref_email_notifications` (respuesta del dueño, 2026-10-15).
+    - `operacion`: `otorgar` o `revocar`; otra se registra y no se envía.
     """
     if operacion not in OPERACIONES:
-        raise ValueError(f'Operación desconocida: {operacion}')
-    area = plataforma.area
-    destinatarios = correos(admins_del_area(area, respetar_preferencia=False)
-                            + superadmins(respetar_preferencia=False))
+        raise DatosIncompletos(f'operación desconocida: {operacion}')
+    _exigir(usuario)
+    area = _area_de(plataforma)
+    destinatarios = correos(admins_del_area(area) + superadmins())
     contexto = _contexto(SLUG_APROVISIONAMIENTO_FALLIDO, operacion=operacion,
                          nivel=nivel, usuario=_nombre(usuario),
                          correo_usuario=usuario.email,

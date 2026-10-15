@@ -13,7 +13,7 @@
 | **Inicio** | 2026-10-15 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-048-notificaciones-gestor` (worktree `pokemon-wt-048`) |
-| **Commits / PR** | `[FNC-048] Notificaciones del gestor de accesos: plantillas, avisos por evento y escape (SEG-23)` (local, sin push ni PR) |
+| **Commits / PR** | `8d8a908` y `[FNC-048] P10 respeta la preferencia y avisos sin excepciones` (locales, sin push ni PR) |
 | **Requiere migración BD** | Sí (datos: plantillas nuevas) |
 | **Requiere auditor-seguridad** | Sí (contenido de usuario en correos) |
 
@@ -75,7 +75,12 @@ Salida real de `impacto.py` (contra `develop`, con los archivos nuevos en `git a
 
 ## Decisiones
 - Envío síncrono después del commit: ADR-003 aprobó Redis + RQ, pero la cola (FNC-049) aún no existe; FNC-049 puede encolar llamando a estas mismas funciones.
-- `aprovisionamiento_fallido` ignora `pref_email_notifications` (contrato `conectores-y-ejecuciones.md`, *Por confirmar*: valor más seguro). Las demás la respetan.
+- Los cuatro avisos respetan `pref_email_notifications`, incluido `aprovisionamiento_fallido` (respuesta del dueño a P10, 2026-10-15; antes se ignoraba como valor más seguro del contrato).
+- Ninguna función pública lanza: plataforma sin área, usuario faltante u operación desconocida → log y `{'status': 'error', 'recipients': 0}` (endurecimiento de seguridad, Baja).
+
+## Para quien llame (FNC-049, FNC-056, FNC-057)
+- Llamar **después del commit** de la operación de negocio y **dentro de `try`**: el aviso nunca debe revertirla ni romper la respuesta.
+- Pasar objetos de la BD (`User`, `Platform` con su `area`), nunca datos de la petición (SEC-MAIL-03).
 - Destinatarios: solo usuarios activos; admins con rol `admin_area` (un degradado que siga en `area_admins` no recibe); un solo envío con todos en `To`.
 - Fallo de correo: log + auditoría `notificacion_fallida` (actor `sistema`, `target` = plantilla, sin el detalle del servidor). Valor nuevo del catálogo, aditivo en `auditoria.md`.
 - "Acceso revocado": no hay plantilla; ni la ficha ni los contratos piden correo al revocar (P7).
@@ -86,7 +91,8 @@ Salida real de `impacto.py` (contra `develop`, con los archivos nuevos en `git a
 - `xfail` de SEG-23 quitado de `test_plantilla_html_escapa_los_valores_del_contexto`; pasa como prueba normal.
 - Nuevas: `tests/notifications/test_access_notifications.py` (destinatarios por evento, preferencia, inactivos, degradado, `<script>` escapado, CR/LF, `BASE_URL`, interruptor, SMTP caído con auditoría, excepción, commit conservado, sin destinatarios) y `test_migracion_plantillas.py` (upgrade, no pisa ediciones, downgrade).
 - `venv/bin/python -m pytest -q` → `552 passed, 34 xfailed in 335.78s`, código 0.
-- No verificado: envío real por SMTP; migración `0003` en MySQL (solo SQLite); edición en Ajustes → Plantillas en el navegador (la pestaña lista por `slug` sin cambios de interfaz). Falta `revisor` y `auditor-seguridad`.
+- Ajuste 2026-10-15 (P10 y endurecimiento): 8 pruebas nuevas o cambiadas primero fallan (`8 failed, 20 passed`); con el cambio `tests/notifications` → 28 passed; suite completa → `558 passed, 34 xfailed in 333.68s`, código 0.
+- No verificado: envío real por SMTP; migración `0003` en MySQL (solo SQLite); edición en Ajustes → Plantillas en el navegador (la pestaña lista por `slug` sin cambios de interfaz). `auditor-seguridad`: Aprobado (2026-10-15). Falta `revisor`.
 
 ## Criterios de aceptación
 - [x] Cada evento envía a los destinatarios correctos con SMTP simulado (pruebas)
@@ -109,3 +115,4 @@ Salida real de `impacto.py` (contra `develop`, con los archivos nuevos en `git a
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-15 | Aprobada por el dueño (comunicado por el orquestador); implementada por desarrollador en `pokemon-wt-048`; migración `0003`; cierra SEG-23 (FNC-017 parcial); queda En revisión (falta revisor y auditor-seguridad) |
+| 2026-10-15 | `auditor-seguridad`: Aprobado. Ajustes: P10 (el aviso de fallo respeta `pref_email_notifications`, decisión del dueño), funciones que nunca lanzan (endurecimiento Baja), nota para llamadores. Sigue En revisión (falta revisor) |

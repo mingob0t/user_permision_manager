@@ -100,6 +100,7 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 | P7 (2026-10-14) | Revocar no requiere motivo | accesos.md |
 | P8 (2026-10-14) | El portal no maneja contraseñas de cuentas LDAP; la contraseña la maneja Authelia | usuarios-directorio.md |
 | P10 (2026-10-14) | Aviso de fallo a admins del área y superadmin; reintento manual solo superadmin | conectores-y-ejecuciones.md |
+| P10 (2026-10-15) | El aviso de fallo respeta `pref_email_notifications` | conectores-y-ejecuciones.md |
 | P11 (2026-10-14) | Baja de áreas: admin (sus áreas) y superadmin; `409` con plataformas o accesos vigentes | areas-y-roles.md |
 
 ## Endpoints retirados en v1
@@ -111,7 +112,6 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 ## Por confirmar (valor más seguro aplicado)
 | Pregunta | Valor aplicado | Dónde |
 |---|---|---|
-| P10 (resto) | El aviso de fallo no depende de `pref_email_notifications` | conectores-y-ejecuciones.md |
 | P13 regla de absorción | Afecta la implementación, no la forma del contrato; el contrato ya exige CSRF (SEC-SES-04) | README.md |
 | P6 (resto) | Nivel del acceso automático del admin creador: `admin`; otros admins del área y revocación al quitarle el área: según FNC-055 | plataformas-integracion.md |
 | §12.11 de seguridad | Lista blanca de hosts de conectores fijada por el despliegue (no editable en la interfaz) | conectores-y-ejecuciones.md |
