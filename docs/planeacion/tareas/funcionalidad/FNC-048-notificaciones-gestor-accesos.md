@@ -13,7 +13,7 @@
 | **Inicio** | 2026-10-15 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-048-notificaciones-gestor` (worktree `pokemon-wt-048`) |
-| **Commits / PR** | `8d8a908`, `ecaf71e` y `[FNC-048] Correcciones del revisor` (locales, sin push ni PR; hash del último en el log de git y en el informe) |
+| **Commits / PR** | `8d8a908`, `ecaf71e`, `8f4acba` y el de hashes en ficha y tablero (locales, sin push ni PR) |
 | **Requiere migración BD** | Sí (datos: plantillas nuevas) |
 | **Requiere auditor-seguridad** | Sí (contenido de usuario en correos) |
 
