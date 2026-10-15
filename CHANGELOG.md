@@ -17,4 +17,5 @@
 - Pruebas del frontend con Vitest (`npm test`): cliente de la API, `AuditLog`, contraste WCAG de los tokens y tope de colores literales (FNC-025, 2026-10-13).
 
 ### Corregido
+- Login por directorio sobre el cliente LDAP con TLS validado: sin purga de cuentas, filtro escapado, respuesta única y sin rol desde LDAP ni `Remote-Groups` (SEG-01, 10, 12; FNC-042, 2026-10-15).
 - El build web ya no falla por lint: enlace de error con `Link` y avisos resueltos (FNC-072, 2026-10-13).

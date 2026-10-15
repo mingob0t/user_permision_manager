@@ -48,3 +48,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-15 | Absorbida por FNC-042 (rama `fnc/FNC-042-login-directorio`, En revisión): SEG-01 y SEG-12 corregidos con regresiones; los `xfail` pasaron a pruebas normales. Se cierra al integrar FNC-042 |

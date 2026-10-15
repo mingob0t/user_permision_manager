@@ -89,8 +89,8 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
 | `GET /context` | Pública | Indica si el SSO está activo, la identidad SSO (solo si la petición viene de `TRUSTED_PROXIES`), si ya hay sesión y si LDAP está disponible (siempre `true`). |
-| `POST /sso` | Pública; exige `AUTHELIA_ENABLED=true` y origen en `TRUSTED_PROXIES` | Crea o actualiza el usuario a partir de las cabeceras de Authelia, deduce el rol por grupos (`AUTHELIA_GROUP_ADMIN`) salvo que sea `admin_area`, inicia sesión y audita. Si es nuevo, envía la plantilla `usuario_creado`. |
-| `POST /login` | Pública | `method=directory` → LDAP (`authenticate_user_ldap`); `method=local` → contraseña local. Audita éxitos y fallos. Mismo mensaje si la cuenta no existe. |
+| `POST /sso` | Pública; exige `AUTHELIA_ENABLED=true` y origen en `TRUSTED_PROXIES` | Crea o actualiza el usuario a partir de las cabeceras de Authelia (nuevo: rol `usuario`; existente: conserva su rol; `Remote-Groups` no se usa, FNC-042), inicia sesión y audita. Si es nuevo, envía la plantilla `usuario_creado`. |
+| `POST /login` | Pública | `method=directory` → LDAP (`authenticate_user_ldap`); `method=local` → contraseña local. Audita éxitos y fallos (el motivo solo en la auditoría). Todo fallo responde 401 `Credenciales incorrectas.` (FNC-042). |
 | `POST /logout` | Sesión | Cierra la sesión y audita; con SSO devuelve la URL de cierre de Authelia (`AUTHELIA_SLO_URL?rd=BASE_URL/login`). |
 
 ### 4.2 Lectura — `app/modules/api/routes.py` (`/api/v1`)
@@ -159,22 +159,26 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 ### Cliente OpenLDAP centralizado (`app/modules/directory/`, FNC-040)
 - Activo solo con `LDAP_URL`; la configuración (`LDAP_*`, ver `VARIABLES.md`) se valida en `create_app()` y, si falla, la app no arranca.
 - TLS obligatorio: `ldaps://` o `ldap://` + StartTLS antes del bind; `CERT_REQUIRED`, nombre del host verificado, CA de `LDAP_CA_CERT_FILE` o del sistema.
-- `ClienteDirectorio`: `conexion_servicio()` (solo lectura), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`.
+- `ClienteDirectorio`: `conexion_servicio()` (solo lectura), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`, `verificar_contrasena()` (bind de la persona; vacía = `False` sin conectar; FNC-042).
 - Escape: `escapar_filtro` (RFC 4515) y `escapar_valor_dn` (RFC 4514).
 - Errores: `ErrorDirectorio` con mensaje genérico; detalle al log sin la contraseña de bind.
-- Aún sin llamadores: login (FNC-042), búsqueda y prueba de conexión (FNC-043) siguen en el código heredado de abajo; escritura en FNC-041.
+- Llamadores: login (FNC-042). Búsqueda y prueba de conexión (FNC-043) siguen en el código heredado de abajo; escritura en FNC-041.
 
-### LDAP / OpenLDAP (solo lectura)
-- Configuración en la tabla `auth_config`, editable desde Ajustes → Directorio. No hay variables de entorno para LDAP (salvo `DEBUG_LDAP`).
-- `authenticate_user_ldap`: bind de servicio → búsqueda por `ldap_user_attr` → bind con el DN del usuario para validar la contraseña → crea/actualiza el usuario local (`auth_source=ldap`) y le asigna rol por `ldap_role_mappings` o, en su defecto, por `ldap_group_admin`.
-- El código **solo lee** del directorio (bind y search); nunca escribe en él. Sin embargo, si el usuario no existe en el directorio, **borra la cuenta local** ("protocolo de purga").
-- TLS con `CERT_NONE`: no valida el certificado del servidor.
-- Los atributos consultados (`sAMAccountName`, `memberOf`, `displayName`) son de Active Directory; con OpenLDAP hay que ajustar `ldap_user_attr` (p. ej. `uid`) y verificar `memberOf` (overlay).
+### Login de directorio (`authenticate_user_ldap`, FNC-042)
+- Usa el cliente centralizado y `LDAP_*`; sin `LDAP_URL` el login de directorio falla siempre.
+- Flujo: `buscar_usuario` (filtro escapado por `LDAP_USER_ATTR`, por defecto `uid`) → `verificar_contrasena` → cuenta local por el `mail` del directorio.
+- Sin `mail` no hay acceso: la cuenta nunca se busca por lo escrito.
+- Cuenta nueva: rol `usuario`, `auth_source=ldap`, sin contraseña; existente: conserva el rol del portal.
+- Nunca borra cuentas; todo fallo devuelve `MENSAJE_CREDENCIALES` y el motivo va a la auditoría.
+
+### LDAP heredado (`auth_config`)
+- Tabla `auth_config` editable en Ajustes → Directorio; el login ya no la usa (FNC-042).
+- `validate_ldap_connection` (prueba de conexión) sigue con `CERT_NONE` hasta FNC-043.
 
 ### Authelia (SSO por cabeceras)
 - Nginx consulta Authelia (`auth_request`, comentado en la plantilla) y reinyecta `Remote-Email`, `Remote-Name`, `Remote-Groups`; antes borra esas cabeceras si vienen del cliente.
 - El backend solo las acepta si `request.remote_addr` está en `TRUSTED_PROXIES` (por defecto loopback) y `AUTHELIA_ENABLED=true`.
-- El rol se deduce de los grupos en `AUTHELIA_GROUP_ADMIN`; un `admin_area` local conserva su rol.
+- El rol no sale de los grupos (FNC-042, RF-04): cuenta nueva `usuario`; existente, conserva su rol. `AUTHELIA_GROUP_ADMIN` y `AUTHELIA_HEADER_GROUPS` obsoletas.
 
 ### SMTP y plantillas
 - `resolve_smtp_settings()`: con `SMTP_FORCE_ENV=true` manda el entorno (y si falta `SMTP_SERVER` no envía); si no, manda la BD y el entorno es respaldo.
@@ -219,8 +223,8 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/matriz_proteccion.py` (FNC-020): código esperado por rol de cada ruta `/api/v1`. **Todo endpoint nuevo agrega aquí su caso**; si no, falla `tests/test_guardia_rutas.py`.
   - `tests/test_proteccion_por_rol.py`: matriz ruta × rol (401/403/2xx), entradas inválidas (400) y RF-04 (casos `xfail` hasta FNC-007).
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (casos `xfail` hasta FNC-007 y FNC-015).
-  - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 13 `xfail` con su tarea (lista en la ficha).
-  - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, **config)` simula `ldap3` (personas, grupos, binds, filtros recibidos).
+  - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 4 `xfail` con su tarea (FNC-003, 006, 014); los 9 de FNC-002 y FNC-013 pasaron a pruebas normales en FNC-042.
+  - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, variables=None, **config)` activa `LDAP_*` ficticias y conecta el cliente centralizado a `MOCK_SYNC` (personas, grupos, filtros recibidos); `config` crea `auth_config` (FNC-042).
   - `tests/directory/conftest.py`: `directorio` / `crear_directorio(**LDAP_*)` usan `ldap3` `MOCK_SYNC` con el cliente centralizado; `tests/directory/test_tls.py` abre TLS real solo hacia `localhost`.
   - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` (con `target=` para el correo).
   - Auditoría (FNC-047): `tests/audit/` (registro ampliado, inmutabilidad y regresión de SEG-25).
@@ -289,11 +293,11 @@ Quedan como referencia; la línea base `0001` ya refleja su resultado. FNC-028 d
 | 1 | Usuario administrador inicial creado en cada BD vacía con credenciales por defecto conocidas e impresas en consola. | `app/__init__.py` |
 | 2 | `SECRET_KEY` tiene valor por defecto en código si falta la variable. | `app/__init__.py` |
 | 3 | Contraseña por defecto fija cuando el alta de usuario no la incluye. | `api/crud.py` `create_user` |
-| 4 | **Dirección IP literal** como valor por defecto de `BASE_URL` en el correo de bienvenida LDAP (incumple el lineamiento "sin IPs"). | `auth/services.py` |
+| 4 | ~~IP literal como valor por defecto de `BASE_URL` en el correo de bienvenida LDAP~~ Resuelta en FNC-042 (vacío = enlace relativo). | `auth/services.py` |
 | 5 | CSRF exento en todos los blueprints; la API depende solo de la cookie de sesión (SameSite por defecto del navegador). | `app/__init__.py` |
 | 6 | Contraseñas de LDAP y SMTP guardadas en claro en BD. | `auth_config`, `smtp_config` |
-| 7 | LDAP con TLS sin validar certificado (`CERT_NONE`) en el código heredado; el cliente nuevo ya valida (FNC-040), falta migrar los llamadores (FNC-042, FNC-043). | `auth/services.py`, `api/admin.py` |
-| 8 | Borrado automático de la cuenta local si no aparece en el directorio. | `auth/services.py` |
+| 7 | LDAP con TLS sin validar certificado (`CERT_NONE`) en la prueba de conexión y la búsqueda heredadas; el login ya usa el cliente validado (FNC-042); falta FNC-043. | `auth/services.py` (`validate_ldap_connection`), `api/admin.py` |
+| 8 | ~~Borrado automático de la cuenta local si no aparece en el directorio~~ Resuelta en FNC-042. | `auth/services.py` |
 | 9 | `run.py` usa `debug=True` y escucha en todas las interfaces; `PORT_APP` no se lee. | `run.py` |
 | 10 | `DB_ENGINE` distinto de `mysql` cae a SQLite (no hay rama PostgreSQL aunque `psycopg2-binary` está en dependencias). | `app/__init__.py` |
 | 11 | Dependencias sin versión fijada (`cryptography`, `ldap3`, `Flask-Mail`, `pandas`, `redis`, `gunicorn`, etc.); algunas sin uso aparente (`Flask-Mail`, `pexpect`, `openpyxl`, `xlrd`, `pandas`, `psycopg2-binary`). | `requirements.txt` |

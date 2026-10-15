@@ -5,11 +5,14 @@ Endpoints JSON que consume el frontend. La emisión y validación de la sesión
 sigue aquí, en Flask-Login: es lo que firma la cookie.
 
 Sobre el SSO: Authelia se aplica mediante cabeceras que inyecta Nginx
-(`Remote-Email`, `Remote-Name`, `Remote-Groups`). Confiar en ellas solo es
+(`Remote-Email`, `Remote-Name`). Confiar en ellas solo es
 seguro si nadie más puede ponerlas, así que este módulo únicamente las acepta
 cuando la petición llega de un proxy declarado en TRUSTED_PROXIES. Sin esa
 comprobación, cualquiera que alcance el puerto podría enviar
 `Remote-Email: admin` y suplantar a quien quisiera.
+
+El rol no sale de `Remote-Groups` ni del directorio: una cuenta nueva entra
+como `usuario` y el superadmin la eleva en el portal (RF-04, FNC-042).
 """
 
 import os
@@ -18,8 +21,10 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import db
+from app.authz import ROLE_USER
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.models import User
+from app.modules.auth.services import MENSAJE_CREDENCIALES
 
 auth_api_bp = Blueprint('api_auth', __name__, url_prefix='/api/v1/auth')
 
@@ -36,16 +41,6 @@ def _trusted_proxy():
 
 def _sso_enabled():
     return os.getenv('AUTHELIA_ENABLED', 'false').lower() == 'true'
-
-
-def _role_from_groups(groups_header):
-    """Deduce el rol a partir de los grupos que envía Authelia."""
-    admin_groups = [g.strip().lower() for g in os.getenv(
-        'AUTHELIA_GROUP_ADMIN', 'administrador').split(',')]
-    if not groups_header:
-        return 'usuario'
-    groups = [g.strip().lower() for g in groups_header.split(',')]
-    return 'administrador' if any(g in groups for g in admin_groups) else 'usuario'
 
 
 @auth_api_bp.route('/context')
@@ -87,21 +82,16 @@ def sso_login():
 
     name = request.headers.get(
         os.getenv('AUTHELIA_HEADER_NAME', 'Remote-Name'), email)
-    groups = request.headers.get(
-        os.getenv('AUTHELIA_HEADER_GROUPS', 'Remote-Groups'), '')
-    role = _role_from_groups(groups)
 
     user = User.query.filter_by(email=email).first()
     created = user is None
     if created:
-        user = User(email=email, nombre=name, role=role, auth_source='sso')
+        # Sin rol desde Remote-Groups (SEG-10): solo el superadmin eleva.
+        user = User(email=email, nombre=name, role=ROLE_USER, auth_source='sso')
         db.session.add(user)
     else:
+        # Se conserva el rol asignado en el portal.
         user.nombre = name
-        # El rol lo manda el directorio, salvo que sea un admin de área local:
-        # ese nivel se gestiona en Nexus y el SSO no lo conoce.
-        if user.role != 'admin_area':
-            user.role = role
     db.session.commit()
 
     login_user(user, remember=True)
@@ -144,10 +134,11 @@ def login():
             add_audit_log('ACCESO DIRECTORIO', status='success', target=email,
                           detail='Autenticación corporativa')
             return jsonify({'status': 'success', 'role': user.role})
+        # El motivo queda en la auditoría; al cliente, la respuesta única.
         add_audit_log('ACCESO FALLIDO', status='error', target=email,
-                      detail=str(result.get('message'))[:200])
+                      detail=f"Directorio: {result.get('motivo')}"[:200])
         return jsonify({'status': 'error',
-                        'message': result.get('message') or 'Credenciales incorrectas.'}), 401
+                        'message': MENSAJE_CREDENCIALES}), 401
 
     user = User.query.filter_by(email=email).first()
     if user and user.password_hash and user.check_password(password):
@@ -163,7 +154,7 @@ def login():
                   detail='Credenciales locales incorrectas')
     # Mismo mensaje exista o no la cuenta, para no revelar qué correos hay.
     return jsonify({'status': 'error',
-                    'message': 'Credenciales incorrectas.'}), 401
+                    'message': MENSAJE_CREDENCIALES}), 401
 
 
 @auth_api_bp.route('/logout', methods=['POST'])

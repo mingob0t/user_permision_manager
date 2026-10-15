@@ -20,6 +20,7 @@ from ldap3.core.exceptions import (LDAPException, LDAPInvalidDnError,
                                    LDAPNoSuchObjectResult,
                                    LDAPSizeLimitExceededResult,
                                    LDAPStartTLSError)
+from ldap3.core.exceptions import LDAPInvalidCredentialsResult
 from ldap3.utils.conv import escape_filter_chars
 from ldap3.utils.dn import escape_rdn, parse_dn
 
@@ -220,3 +221,43 @@ class ClienteDirectorio:
             except LDAPException as exc:
                 raise self._error('comprobación de DN', exc) from None
             return bool(conexion.entries)
+
+    # ------------------------------------------------------------------ #
+    # Autenticación de una persona (FNC-042)
+    # ------------------------------------------------------------------ #
+
+    def verificar_contrasena(self, usuario, contrasena):
+        """`True` si `contrasena` es la de `usuario` (bind simple con su DN).
+
+        - La contraseña vacía da `False` sin conectar: un bind simple sin
+          contraseña es anónimo y el servidor lo acepta (SEC-AUTH-09).
+        - Misma conexión que la de servicio: TLS validado, StartTLS con
+          `ldap://` antes de enviar la contraseña y tiempos de espera.
+        - Credenciales inválidas dan `False`; un fallo del directorio,
+          `ErrorDirectorio`. La contraseña nunca va al log.
+        """
+        if not contrasena:
+            return False
+        cfg = self.configuracion
+        conexion = None
+        try:
+            conexion = Connection(
+                self._servidor(), user=usuario.dn, password=contrasena,
+                client_strategy=ESTRATEGIA, receive_timeout=cfg.tiempo_espera,
+                auto_referrals=False, raise_exceptions=True, read_only=True)
+            conexion.open()
+            if not cfg.usa_ldaps:
+                conexion.start_tls()
+                if not conexion.tls_started:
+                    raise LDAPStartTLSError('StartTLS no quedó activo')
+            conexion.bind()
+            return True
+        except LDAPInvalidCredentialsResult:
+            return False
+        except LDAPException as exc:
+            logger.error('Directorio: fallo en verificación de contraseña '
+                         '(%s): %s', type(exc).__name__,
+                         str(exc).replace(contrasena, '***'))
+            raise ErrorDirectorio(MENSAJE_ERROR) from None
+        finally:
+            self._cerrar(conexion)

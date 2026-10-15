@@ -148,12 +148,34 @@ def test_actualiza_el_nombre_de_un_usuario_existente(client, sso_activo,
     assert User.query.count() == 1
 
 
-@pytest.mark.xfail(strict=True, reason='SEG-10 / FNC-013: Remote-Groups '
-                   'asigna administrador (debe haber un solo superadmin)')
 def test_remote_groups_no_asigna_administrador(client, sso_activo):
     respuesta = _sso(client, grupos='administrador')
 
     assert respuesta.get_json()['role'] != ROLE_ADMIN
+
+
+def test_remote_groups_no_cambia_el_rol_del_portal(client, sso_activo,
+                                                    crear_usuario):
+    # Regresión (FNC-042): el SSO recalculaba el rol en cada acceso y bajaba
+    # a `usuario` al administrador sin el grupo de Authelia.
+    crear_usuario(ROLE_ADMIN, email=CORREO_SSO_FICTICIO)
+
+    respuesta = _sso(client, grupos='usuarios')
+
+    assert respuesta.get_json()['role'] == ROLE_ADMIN
+    usuario = User.query.filter_by(email=CORREO_SSO_FICTICIO).one()
+    assert usuario.role == ROLE_ADMIN
+
+
+def test_grupo_de_admin_de_authelia_no_eleva_una_cuenta(client, sso_activo,
+                                                         monkeypatch,
+                                                         crear_usuario):
+    monkeypatch.setenv('AUTHELIA_GROUP_ADMIN', 'admins-portal')
+    crear_usuario(ROLE_USER, email=CORREO_SSO_FICTICIO)
+
+    respuesta = _sso(client, grupos='admins-portal')
+
+    assert respuesta.get_json()['role'] == ROLE_USER
 
 
 # --------------------------------------------------------------------------- #
