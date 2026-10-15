@@ -307,6 +307,19 @@ def test_interruptor_del_modulo_apagado_no_envia(correo, escenario,
     assert correo.conexiones == []
 
 
+@pytest.mark.parametrize('valor', ['false', '0', 'no'])
+def test_interruptor_global_apagado_devuelve_skipped(correo, escenario,
+                                                     monkeypatch, valor):
+    monkeypatch.setenv('ENABLE_NOTIFICATIONS', valor)
+    e = escenario
+
+    resultado = avisos.notificar_solicitud_nueva(
+        e['ana'], e['plataforma'], 'usuario', JUSTIFICACION)
+
+    assert resultado == {'status': 'skipped', 'recipients': 0}
+    assert correo.conexiones == []
+
+
 def test_smtp_caido_no_lanza_y_queda_en_auditoria(correo, escenario):
     e = escenario
     correo.error = smtplib.SMTPException('servidor caído')

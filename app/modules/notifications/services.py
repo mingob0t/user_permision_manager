@@ -222,6 +222,11 @@ def render_subject(subject, context=None):
     return PATRON_SALTO_DE_LINEA.sub(' ', render_template_text(subject, context))
 
 
+def notifications_enabled():
+    """Interruptor global `ENABLE_NOTIFICATIONS`: solo `true` activa el envío."""
+    return os.getenv('ENABLE_NOTIFICATIONS', 'true').lower() == 'true'
+
+
 def send_notification_by_slug(slug, target_email, context=None):
     """
     Sends a pre-defined notification template using the global SMTP configuration.
@@ -234,7 +239,7 @@ def send_notification_by_slug(slug, target_email, context=None):
     load_dotenv(override=True)
     
     # Global Switch Check
-    if os.getenv('ENABLE_NOTIFICATIONS', 'true').lower() != 'true':
+    if not notifications_enabled():
         print(f"🔕 Notificaciones desactivadas globalmente (.env). Omitiendo slug: {slug}")
         return {"status": "success", "message": "Notifications disabled globally"}
 

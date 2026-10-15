@@ -17,7 +17,7 @@ Portal para gestionar el acceso a plataformas internas agrupadas por **áreas**.
 | ID | Funcionalidad | Estado | Detalle |
 |---|---|---|---|
 | OB-01 | Autenticación con Authelia (cabeceras `Remote-*` desde proxy de confianza) sobre OpenLDAP | Parcial | Existe en `app/modules/api/auth.py`; el bloque `auth_request` de nginx está comentado |
-| OB-02 | Notificaciones por correo (SMTP con plantillas por evento) | Parcial | Motor listo; solo se envía `usuario_creado` |
+| OB-02 | Notificaciones por correo (SMTP con plantillas por evento) | Parcial | Motor con escape (SEG-23) y avisos del gestor listos (FNC-048); faltan los llamadores FNC-049/056/057 |
 | OB-03 | Tema claro y oscuro, tokens, sin estilos inline, responsive, AA | Por verificar | Diagnóstico de accesibilidad en FNC-001 |
 | OB-04 | Sin IPs en código ni configuración; secretos fuera del repo | Por verificar | Diagnóstico de seguridad en FNC-001 |
 
@@ -40,7 +40,7 @@ Portal para gestionar el acceso a plataformas internas agrupadas por **áreas**.
 | F-AUD-02 | Auditoría | Inventario de permisos: quién tiene qué plataforma, nivel, desde cuándo, quién aprobó | Falta |
 | F-AUD-03 | Auditoría | Historial por usuario y por plataforma | Falta |
 | F-AUD-04 | Auditoría | Visibilidad: superadmin todo, admin sus áreas, usuario sus registros | Parcial: el admin filtra por actor, no por área |
-| F-NOT-01 | Notificaciones | Correos: nueva solicitud (admins del área), aprobada o rechazada (usuario), fallo de conector (admin) | Falta |
+| F-NOT-01 | Notificaciones | Correos: nueva solicitud (admins del área), aprobada o rechazada (usuario), fallo de conector (admin) | Parcial: plantillas y avisos listos (FNC-048); faltan los llamadores FNC-049/056/057 |
 
 ## 4. Requerimientos funcionales
 | ID | Requerimiento |

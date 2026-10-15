@@ -4,8 +4,9 @@
   `aprovisionamiento_fallido` en `notification_templates` (HTML, en español).
 - Si ya existe una plantilla con ese `slug` no la toca (puede venir editada
   desde Ajustes → Plantillas o de un respaldo).
-- `downgrade()` borra esas cuatro plantillas por `slug`, incluidas las ediciones
-  hechas desde la interfaz.
+- `downgrade()` borra solo las filas que siguen idénticas a las insertadas
+  (`slug`, `name`, `subject` y `body`): una plantilla preexistente o editada
+  desde la interfaz se conserva.
 - Variables: las de `CLAVES_POR_PLANTILLA` en
   `app/modules/notifications/access_notifications.py`; los valores se escapan
   al enviar (SEC-MAIL-01).
@@ -114,7 +115,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Borra las plantillas de esta migración por `slug`."""
+    """Borra las plantillas de esta migración que no cambiaron."""
     tabla = _tabla()
-    op.execute(tabla.delete().where(
-        tabla.c.slug.in_([p['slug'] for p in PLANTILLAS])))
+    sin_cambios = [sa.and_(*(tabla.c[campo] == p[campo]
+                             for campo in ('slug', 'name', 'subject', 'body')))
+                   for p in PLANTILLAS]
+    op.execute(tabla.delete().where(sa.or_(*sin_cambios)))

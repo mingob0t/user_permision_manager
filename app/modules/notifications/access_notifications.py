@@ -110,7 +110,9 @@ def correos(usuarios):
 # --------------------------------------------------------------------------- #
 
 def avisos_activos():
-    return services._env_flag(VARIABLE_INTERRUPTOR, True)
+    """`ENABLE_NOTIFICATIONS` (global) y `NOTIFY_ACCESS_EVENTS` encendidos."""
+    return (services.notifications_enabled()
+            and services._env_flag(VARIABLE_INTERRUPTOR, True))
 
 
 def _url_portal():
