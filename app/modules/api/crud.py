@@ -10,9 +10,12 @@ from flask_login import current_user, login_required
 
 from app import db
 from app.authz import (admin_required, any_admin_required, area_admin_required,
-                       can_manage_area, can_manage_user, is_admin,
+                       can_manage_area, can_manage_user,
                        platform_manage_required, scoped_areas, scoped_users)
-from app.modules.api.helpers import error_response
+from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
+                                     NO_ENCONTRADO, OPERACION_PROPIA,
+                                     ROL_RESERVADO, error_response,
+                                     is_id_list, json_object)
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
@@ -239,15 +242,6 @@ def set_platform_users(platform_id):
 
 RESERVED_NAMES = ('admin',)
 
-# Errores del contrato `areas-y-roles.md` (FNC-044).
-NOT_FOUND = ('Recurso no encontrado.', 404, 'no_encontrado')
-FIELD_NOT_ALLOWED = ('Hay campos que no se pueden enviar.', 400,
-                     'campo_no_permitido')
-RESERVED_ROLE = ('Ese rol no se puede asignar.', 403, 'rol_reservado')
-OWN_ROLE = ('No puedes cambiar tu propio rol.', 403, 'operacion_propia')
-PASSWORD_FORBIDDEN = ('Solo el superadmin cambia contraseñas locales.', 403,
-                      'sin_permiso')
-
 
 @crud_bp.route('/users', methods=['POST'])
 @login_required
@@ -262,12 +256,12 @@ def create_user():
     if User.query.filter(db.func.lower(User.email) == email).first():
         return _error('El correo ya está registrado.', 409)
     if campos_no_permitidos(data):
-        return _error(*FIELD_NOT_ALLOWED)
+        return _error(*CAMPO_NO_PERMITIDO)
 
     # Solo el superadmin crea admins de área; nadie crea superadmins (RF-04).
     role = data.get('role') or 'usuario'
     if not rol_asignable(role):
-        return _error(*RESERVED_ROLE)
+        return _error(*ROL_RESERVADO)
 
     # Solo áreas dentro del alcance de quien crea.
     allowed = {a.id for a in scoped_areas().all()}
@@ -299,28 +293,27 @@ def update_user(user_id):
     target = User.query.get_or_404(user_id)
     # Fuera de alcance (otra área, otro admin o el superadmin): 404 (SEC-AUTHZ-04).
     if not can_manage_user(target):
-        return _error(*NOT_FOUND)
+        return _error(*NO_ENCONTRADO)
 
     data = _payload()
     if campos_no_permitidos(data):
-        return _error(*FIELD_NOT_ALLOWED)
+        return _error(*CAMPO_NO_PERMITIDO)
 
     # Enviar el rol que ya tiene no es una asignación: se ignora.
     new_role = data.get('role')
     change_role = 'role' in data and not es_el_mismo_rol(target, new_role)
     if change_role:
         if target.id == current_user.id:
-            return _error(*OWN_ROLE)
+            return _error(*OPERACION_PROPIA)
         if not rol_asignable(new_role):
-            return _error(*RESERVED_ROLE)
+            return _error(*ROL_RESERVADO)
 
-    # Contraseña: solo el superadmin, y solo de cuentas locales; el portal no
-    # maneja contraseñas del directorio ni del SSO (SEC-AUTH-12, SEG-05, P8).
-    if data.get('password'):
-        if not is_admin():
-            return _error(*PASSWORD_FORBIDDEN)
-        if (target.auth_source or ORIGEN_LOCAL) != ORIGEN_LOCAL:
-            return _error(*FIELD_NOT_ALLOWED)
+    # Contraseña: superadmin, o admin de área sobre cuentas `usuario` de sus
+    # áreas (ya filtrado por can_manage_user; decisión del dueño 2026-10-15).
+    # Nunca de cuentas del directorio o del SSO (SEG-05, P8).
+    if data.get('password') and (
+            (target.auth_source or ORIGEN_LOCAL) != ORIGEN_LOCAL):
+        return _error(*CAMPO_NO_PERMITIDO)
 
     if change_role:
         cambiar_rol(target, new_role)
@@ -343,7 +336,7 @@ def update_user(user_id):
 def delete_user(user_id):
     target = User.query.get_or_404(user_id)
     if not can_manage_user(target):
-        return _error(*NOT_FOUND)
+        return _error(*NO_ENCONTRADO)
     if target.id == current_user.id:
         return _error('No puedes eliminar tu propia cuenta.', 409)
     if target.email in RESERVED_NAMES:
@@ -366,9 +359,12 @@ def set_user_platforms(user_id):
 
     target = User.query.get_or_404(user_id)
     if not can_manage_user(target):
-        return _error('No puedes administrar este usuario.', 403)
+        return _error(*NO_ENCONTRADO)
 
-    platform_ids = _payload().get('platform_ids') or []
+    data = json_object()
+    platform_ids = (data or {}).get('platform_ids') or []
+    if data is None or not is_id_list(platform_ids):
+        return _error(*CUERPO_INVALIDO)
     allowed = {p.id for p in scoped_platforms().all()}
     if [i for i in platform_ids if i not in allowed]:
         return _error('Hay plataformas fuera de tu alcance.', 403)

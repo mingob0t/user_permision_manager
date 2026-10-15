@@ -231,11 +231,21 @@ def test_admin_area_no_se_gestiona_a_si_mismo(escena, como):
     _codigo(respuesta, 404, 'no_encontrado')
 
 
-def test_admin_area_no_cambia_contrasenas(escena, como):
-    """SEC-AUTH-12: solo el propio usuario o el superadmin."""
+def test_admin_area_cambia_contrasena_local_de_su_usuario(escena, como):
+    """Decisión del dueño (2026-10-15): el admin de área sí puede."""
     respuesta = como(escena['admin_a']).put(
         f"{A}/users/{escena['usuario_a']}", json={'password': CONTRASENA_NUEVA})
-    _codigo(respuesta, 403, 'sin_permiso')
+    assert respuesta.status_code == 200, respuesta.get_data(as_text=True)
+    assert _cuenta(escena['usuario_a']).check_password(CONTRASENA_NUEVA)
+
+
+def test_admin_area_no_cambia_contrasena_de_cuenta_no_local(escena, como):
+    cuenta = _cuenta(escena['usuario_a'])
+    cuenta.auth_source = 'ldap'
+    db.session.commit()
+    respuesta = como(escena['admin_a']).put(
+        f"{A}/users/{escena['usuario_a']}", json={'password': CONTRASENA_NUEVA})
+    _codigo(respuesta, 400, 'campo_no_permitido')
     assert _cuenta(escena['usuario_a']).check_password(CONTRASENA_FICTICIA)
 
 
@@ -379,3 +389,72 @@ def test_si_falla_la_auditoria_no_se_cambia_el_rol(escena, como, monkeypatch):
     cuenta = _cuenta(escena['admin_a'])
     assert cuenta.role == ROLE_AREA_ADMIN
     assert [a.id for a in cuenta.managed_areas] == [escena['A']]
+
+
+# --------------------------------------------------------------------------- #
+# Residual de SEG-05: membresías de otros admins (revisión de seguridad)
+# --------------------------------------------------------------------------- #
+
+def test_admin_area_no_lista_a_otros_admins(escena, como,
+                                           otro_admin_miembro_de_a):
+    respuesta = como(escena['admin_a']).get(f'{A}/users')
+    assert respuesta.status_code == 200
+    ids = {u['id'] for u in respuesta.get_json()}
+    assert ids == {escena['usuario_a']}
+
+
+def test_admin_area_no_saca_a_otro_admin_de_su_area(escena, como,
+                                                    otro_admin_miembro_de_a):
+    respuesta = como(escena['admin_a']).put(
+        f"{A}/areas/{escena['A']}/users", json={'user_ids': [escena['usuario_a']]})
+    assert respuesta.status_code == 200
+    assert escena['A'] in {a.id for a in _cuenta(otro_admin_miembro_de_a).areas}
+
+
+def test_admin_area_no_mete_a_otro_admin_en_su_plataforma(
+        escena, como, otro_admin_miembro_de_a):
+    area_a = db.session.get(Area, escena['A'])
+    plataforma = fabricas.crear_plataforma(area_a)
+    respuesta = como(escena['admin_a']).put(
+        f'{A}/platforms/{plataforma.id}/users',
+        json={'user_ids': [otro_admin_miembro_de_a]})
+    assert respuesta.status_code == 403
+    assert _cuenta(otro_admin_miembro_de_a).platforms == []
+
+
+def test_admin_area_ve_su_propia_auditoria(escena, como):
+    cliente = como(escena['admin_a'])
+    cliente.put(f"{A}/areas/{escena['A']}", json={'description': 'Editada'})
+    respuesta = cliente.get(f'{A}/audit')
+    assert respuesta.status_code == 200
+    correo = _cuenta(escena['admin_a']).email
+    assert correo in {r['user'] for r in respuesta.get_json()}
+
+
+# --------------------------------------------------------------------------- #
+# PUT /users/<id>/areas y /platforms (revisión de seguridad, Baja)
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize('ruta,cuerpo', [
+    ('/areas', {'area_ids': []}),
+    ('/platforms', {'platform_ids': []}),
+])
+def test_cuenta_fuera_de_alcance_da_404(escena, como, otro_admin_miembro_de_a,
+                                        ruta, cuerpo):
+    respuesta = como(escena['admin_a']).put(
+        f'{A}/users/{otro_admin_miembro_de_a}{ruta}', json=cuerpo)
+    _codigo(respuesta, 404, 'no_encontrado')
+
+
+@pytest.mark.parametrize('ruta,cuerpo', [
+    ('/areas', [1]),
+    ('/areas', {'area_ids': 'x'}),
+    ('/areas', {'area_ids': [[1]]}),
+    ('/platforms', [1]),
+    ('/platforms', {'platform_ids': 5}),
+    ('/platforms', {'platform_ids': [{}]}),
+])
+def test_cuerpo_no_valido_da_400(escena, como, ruta, cuerpo):
+    respuesta = como(escena['super']).put(
+        f"{A}/users/{escena['usuario_a']}{ruta}", json=cuerpo)
+    _codigo(respuesta, 400, 'cuerpo_invalido')

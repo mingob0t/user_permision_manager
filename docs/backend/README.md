@@ -32,7 +32,7 @@ app/
     │   ├── crud.py    # Escritura: áreas, plataformas, usuarios, preferencias, purga
     │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, LDAP, respaldo, directorio; notificaciones in-app
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
-    │   └── helpers.py # error_response(): error estándar con `code` (FNC-044)
+    │   └── helpers.py # error_response(), validation_error(), json_object(), is_id_list() y errores del contrato (FNC-044)
     ├── auth/          # Modelos User/AuthConfig y servicios LDAP; rutas heredadas (redirigen/410)
     ├── core/          # Modelos Area/Platform; rutas heredadas
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
@@ -57,7 +57,7 @@ Tres roles (columna `users.role`, comparada en minúsculas):
 | `admin_area` | Administra solo las áreas asignadas en `area_admins`: sus plataformas y las cuentas `usuario` de sus áreas. Nunca gestiona a otro admin ni al superadmin (FNC-044). |
 | `usuario` | Solo consulta las plataformas de las áreas asignadas en `user_areas`. |
 
-- **Alcance por fila:** `scoped_areas()`, `scoped_platforms()`, `scoped_users()` devuelven queries ya filtradas según el usuario.
+- **Alcance por fila:** `scoped_areas()`, `scoped_platforms()`, `scoped_users()` devuelven queries ya filtradas según el usuario. Para un admin de área, `scoped_users()` solo devuelve cuentas `usuario` de sus áreas (FNC-044); `GET /audit` le suma sus propios eventos.
 - **Permisos sobre objetos:** `can_access_platform`, `can_manage_area`, `can_manage_platform`, `can_manage_user` (admin de área: solo rol `usuario` de sus áreas).
 - **Roles asignables** (`users/roles.py`, FNC-044): superadmin `usuario` o `admin_area`; admin de área solo `usuario`; `administrador` nunca por la API.
 - **Decoradores:** `admin_required` (solo superadmin), `any_admin_required` (superadmin o admin de área; la vista debe acotar con `scoped_*`), `area_admin_required('area_id')`, `platform_access_required`, `platform_manage_required`. Al denegar responden `403` JSON si la petición es de API.
@@ -107,7 +107,7 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `POST /platforms/<id>/favorite` | Sesión (en alcance) | Alterna favorito. |
 | `GET /favorites` | Sesión | Favoritos aún visibles. |
 | `GET /users` | `any_admin_required` (`scoped_users`) | Usuarios administrables. |
-| `PUT /users/<id>/areas` | `any_admin_required` + `can_manage_user` | Reasigna áreas dentro del alcance; conserva las que el solicitante no administra. |
+| `PUT /users/<id>/areas` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Reasigna áreas dentro del alcance; conserva las que el solicitante no administra. Cuerpo no objeto o `area_ids` no lista de enteros → `400 cuerpo_invalido`. |
 | `GET /stats` | Sesión (alcance) | Contadores, top 5 de visitas, plataformas por área; `users` solo para administradores. |
 | `GET /audit?limit=` | Sesión (alcance) | Superadmin: todo; admin de área: eventos de sus usuarios; usuario: los propios. Máximo 500. Arreglo de `AuditEntry` con `actor`, `area`, `platform`, `target_user`, `before`, `after` (FNC-047); `page` y alcance por área llegan con FNC-060. |
 
@@ -124,9 +124,9 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `DELETE /platforms/<id>` | `platform_manage_required` | Borra plataforma. |
 | `PUT /platforms/<id>/users` | `platform_manage_required` | Define `user_platforms`. |
 | `POST /users` | `any_admin_required` | Alta de cuenta local (`auth_source` lo fija el servidor). Rol fuera de lo asignable → `403 rol_reservado`; `managed_area_ids`, `auth_source`, `password_hash` → `400 campo_no_permitido`. `admin` es identificador reservado. Si no llega contraseña, se asigna una por defecto (ver deuda). Un `admin_area` nace sin áreas administradas. |
-| `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: solo superadmin (`403 sin_permiso`) y solo cuentas `local` (`400 campo_no_permitido`). |
+| `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: superadmin o admin de área (cuentas `usuario` de sus áreas), solo cuentas `local` (si no, `400 campo_no_permitido`). |
 | `DELETE /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Borra usuario; no permite borrarse a sí mismo ni la cuenta maestra `admin`. |
-| `PUT /users/<id>/platforms` | `any_admin_required` + `can_manage_user` | Define `user_platforms` con plataformas en alcance. |
+| `PUT /users/<id>/platforms` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Define `user_platforms` con plataformas en alcance. Cuerpo no válido → `400 cuerpo_invalido`. |
 | `PUT /me/preferences` | Sesión | Guarda preferencias propias. |
 | `GET /users/inactive?days=` | `admin_required` | Usuarios sin acceso en N días (mínimo `PURGE_MIN_DAYS` = 7), excluye superadmins. |
 | `POST /users/purge` | `admin_required` | Elimina esos usuarios y audita. |

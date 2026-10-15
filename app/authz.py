@@ -125,8 +125,9 @@ def scoped_platforms(user=None):
 def scoped_users(user=None):
     """Query de los usuarios que el usuario puede administrar.
 
-    El superadmin ve a todos. Un admin de área ve a quienes pertenecen a alguna
-    de las áreas que administra. Un usuario normal, solo a sí mismo.
+    El superadmin ve a todos. Un admin de área, solo las cuentas con rol
+    `usuario` de las áreas que administra (el mismo criterio que
+    `can_manage_user`, SEC-AUTHZ-06). Un usuario normal, solo a sí mismo.
     """
     from app import db
     from app.modules.auth.models import User, user_areas
@@ -142,11 +143,11 @@ def scoped_users(user=None):
         # como única entidad y admite filter_by() encadenado por quien llama.
         member_ids = (db.session.query(user_areas.c.user_id)
                       .filter(user_areas.c.area_id.in_(ids)))
-        # Un superadmin puede pertenecer a estas áreas, pero nunca debe quedar
-        # bajo la administración de un admin de área.
+        # Otros admins y el superadmin pueden pertenecer a estas áreas, pero
+        # nunca quedan bajo la administración de un admin de área (SEG-05).
         return User.query.filter(
             User.id.in_(member_ids),
-            db.func.lower(db.func.coalesce(User.role, '')) != ROLE_ADMIN,
+            db.func.lower(db.func.coalesce(User.role, '')) == ROLE_USER,
         )
     return User.query.filter(User.id == user.id) if _valid(user) else User.query.filter(False)
 

@@ -126,8 +126,9 @@ def test_authz_scoped_users(alcance):
     todos = set(esc.actor.values())
     esperado = {
         SUPERADMIN: todos,
-        ADMIN_A: {esc.actor[ADMIN_A], esc.actor[USUARIO_A]},
-        ADMIN_B: {esc.actor[ADMIN_B], esc.actor[USUARIO_B]},
+        # FNC-044: solo cuentas `usuario` de sus áreas (ni él mismo).
+        ADMIN_A: {esc.actor[USUARIO_A]},
+        ADMIN_B: {esc.actor[USUARIO_B]},
         USUARIO_A: {esc.actor[USUARIO_A]},
         USUARIO_B: {esc.actor[USUARIO_B]},
     }
@@ -491,7 +492,7 @@ def test_estadisticas_filtradas(alcance, cliente_como, actor):
     if actor in USUARIOS:
         assert 'users' not in datos
     elif actor in ADMINS_DE_AREA:
-        assert datos['users'] == 2  # el admin y el usuario de su área
+        assert datos['users'] == 1  # el usuario de su área (FNC-044)
     else:
         assert datos['users'] == len(ACTORES)
 
