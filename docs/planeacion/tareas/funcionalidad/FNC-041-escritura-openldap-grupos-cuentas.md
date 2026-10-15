@@ -92,7 +92,8 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py` (contra `develop`)
 - [x] Criterios comunes backend (FNC-037): sin endpoints (no aplica 401/403); lógica en el módulo; variables registradas; sin IPs ni secretos; tabla de impacto abajo
 
 ## Commits / PR
-- Commit local `[FNC-041]` en `fnc/FNC-041-escritura-ldap` (hash en el informe de cierre); sin push ni PR
+- `6ef88f2` [FNC-041] Servicio de escritura en OpenLDAP (local, sin push ni PR)
+- Commit de registro del hash en la ficha; sin push ni PR
 
 ## Impacto cruzado
 - Genera → FNC-049 (proveedor LDAP del ejecutor)
