@@ -12,10 +12,15 @@
 - Último miembro de un grupo que exige uno (`groupOfNames`,
   `groupOfUniqueNames`): con `LDAP_GROUP_PLACEHOLDER_MEMBER` se agrega el
   relleno y se quita al usuario en la misma operación; sin él, no se quita y
-  el resultado es `ERROR_PERMANENTE` (`ultimo_miembro`).
-- Alta de cuentas sin contraseña (P8: la maneja Authelia); el identificador se
-  escapa al formar el DN (SEC-LDAP-06). No hay borrado de cuentas en v1.
-- Nunca lanza por fallos del directorio: devuelve `ResultadoEscritura`.
+  el resultado es `ERROR_PERMANENTE` (`ultimo_miembro`). Al agregar un miembro
+  real se quita el relleno en la misma operación (decisión del dueño,
+  2026-10-15).
+- Alta de cuentas sin contraseña (P8: la maneja Authelia); identificador y
+  correo validados, y el identificador se escapa al formar el DN
+  (SEC-LDAP-06). No hay borrado de cuentas en v1.
+- Nunca lanza por fallos del directorio: devuelve `ResultadoEscritura`. El
+  log de un fallo de escritura lleva solo el código de resultado, sin el DN
+  ni el mensaje del servidor (pueden nombrar a la persona).
 """
 import logging
 import re
@@ -24,13 +29,13 @@ from dataclasses import dataclass
 from ldap3 import BASE, MODIFY_ADD, MODIFY_DELETE, SUBTREE
 from ldap3.core.exceptions import (LDAPAttributeOrValueExistsResult,
                                    LDAPEntryAlreadyExistsResult,
-                                   LDAPException, LDAPInvalidDnError,
-                                   LDAPNoSuchAttributeResult,
+                                   LDAPException, LDAPNoSuchAttributeResult,
                                    LDAPNoSuchObjectResult,
                                    LDAPSizeLimitExceededResult)
-from ldap3.utils.dn import parse_dn
 
+from app.modules.directory.dn import bajo_base, mismo_dn
 from app.modules.directory.errors import (MOTIVO_DATOS_INCOMPLETOS,
+                                          MOTIVO_DATOS_INVALIDOS,
                                           MOTIVO_DIRECTORIO,
                                           MOTIVO_FUERA_DE_BASE,
                                           MOTIVO_GRUPO_INEXISTENTE,
@@ -40,7 +45,7 @@ from app.modules.directory.errors import (MOTIVO_DATOS_INCOMPLETOS,
                                           clasificar_error)
 from app.modules.directory.ldap_client import (
     ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR, ClienteDirectorio, ErrorDirectorio,
-    escapar_filtro, escapar_valor_dn)
+    escapar_filtro, escapar_valor_dn, valor_de_membresia)
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +53,17 @@ logger = logging.getLogger(__name__)
 CLASES_GRUPO_CON_MIEMBRO_OBLIGATORIO = frozenset({'groupofnames',
                                                   'groupofuniquenames'})
 
-# Atributos de inetOrgPerson que se llenan en el alta (ADR-004).
+# Atributos de inetOrgPerson que se llenan en el alta. Provisionales hasta
+# que ADR-004 cierre la lista de atributos de alta (P3).
 ATRIBUTO_NOMBRE_COMPLETO = 'cn'
 ATRIBUTO_APELLIDO = 'sn'
 ATRIBUTO_NOMBRE = 'givenName'
 ATRIBUTO_CORREO = 'mail'
 
-# `\` seguido de dos dígitos hexadecimales o de un carácter (RFC 4514).
-_ESCAPE_DN = re.compile(r'\\([0-9a-fA-F]{2}|.)')
+# Formatos aceptados en el alta (se usan con `fullmatch`) (auditor-seguridad, 2026-10-15). El contrato
+# `usuarios-directorio.md` (FNC-064) agrega largos y primer carácter.
+PATRON_IDENTIFICADOR = re.compile(r'[a-z0-9._-]+')
+PATRON_CORREO = re.compile(r'[^@\s]+@[^@\s]+\.[^@\s]+')
 
 
 @dataclass(frozen=True)
@@ -66,33 +74,6 @@ class DatosCuenta:
     nombre: str
     apellido: str
     correo: str
-
-
-def _desescapar(valor):
-    def reemplazo(coincidencia):
-        texto = coincidencia.group(1)
-        return chr(int(texto, 16)) if len(texto) == 2 else texto
-    return _ESCAPE_DN.sub(reemplazo, valor)
-
-
-def _normalizar_dn(dn):
-    """RDN como tuplas `(atributo, valor)` en minúsculas; `None` si no es DN."""
-    if not dn:
-        return None
-    try:
-        partes = parse_dn(dn)
-    except LDAPInvalidDnError:
-        return None
-    return tuple((atributo.strip().lower(), _desescapar(valor).strip().lower())
-                 for atributo, valor, _ in partes)
-
-
-def _bajo_base(dn, base):
-    """`True` si `dn` está estrictamente debajo de `base` (RDN normalizados)."""
-    rdns, rdns_base = _normalizar_dn(dn), _normalizar_dn(base)
-    if not rdns or not rdns_base or len(rdns) <= len(rdns_base):
-        return False
-    return rdns[-len(rdns_base):] == rdns_base
 
 
 def _leer_grupo(conexion, cfg, dn):
@@ -130,23 +111,17 @@ class EscritorDirectorio:
     # Utilidades
     # ------------------------------------------------------------------ #
 
-    def _por_identificador(self):
-        return (self.configuracion.atributo_miembro.lower()
-                in ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR)
-
-    def _valor_miembro(self, usuario):
-        return usuario.identificador if self._por_identificador() else usuario.dn
-
     def _coincide(self, guardado, valor):
-        if self._por_identificador():
+        if (self.configuracion.atributo_miembro.lower()
+                in ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR):
             return guardado == valor
-        return _normalizar_dn(guardado) == _normalizar_dn(valor)
+        return mismo_dn(guardado, valor)
 
     def _fuera_de_base(self, group_dn, usuario):
         cfg = self.configuracion
-        return not (_bajo_base(group_dn, cfg.grupos_base_dn)
-                    and _bajo_base(usuario.dn, cfg.usuarios_base_dn)
-                    and self._valor_miembro(usuario))
+        return not (bajo_base(group_dn, cfg.grupos_base_dn)
+                    and bajo_base(usuario.dn, cfg.usuarios_base_dn)
+                    and valor_de_membresia(cfg, usuario))
 
     def _ejecutar(self, operacion, dn, accion):
         """Corre `accion(conexion)` y convierte cualquier fallo en resultado."""
@@ -157,7 +132,7 @@ class EscritorDirectorio:
             resultado = ResultadoEscritura(clasificar_error(exc.causa), dn,
                                            MOTIVO_DIRECTORIO)
         except LDAPException as exc:
-            self.cliente._error(operacion, exc)
+            self.cliente.registrar_error(operacion, exc, con_detalle=False)
             resultado = ResultadoEscritura(clasificar_error(exc), dn,
                                            MOTIVO_DIRECTORIO)
         logger.info('Directorio: %s → %s', operacion,
@@ -173,27 +148,34 @@ class EscritorDirectorio:
         if self._fuera_de_base(group_dn, user):
             return ResultadoEscritura(Resultado.ERROR_PERMANENTE, group_dn,
                                       MOTIVO_FUERA_DE_BASE)
-        atributo = self.configuracion.atributo_miembro
-        valor = self._valor_miembro(user)
+        cfg = self.configuracion
+        atributo = cfg.atributo_miembro
+        valor = valor_de_membresia(cfg, user)
 
-        def agregar(conexion):
-            entrada = _leer_grupo(conexion, self.configuracion, group_dn)
+        def alta_miembro(conexion):
+            entrada = _leer_grupo(conexion, cfg, group_dn)
             if entrada is None:
                 return ResultadoEscritura(Resultado.NO_EXISTE, group_dn,
                                           MOTIVO_GRUPO_INEXISTENTE)
             if not _existe(conexion, user.dn):
                 return ResultadoEscritura(Resultado.NO_EXISTE, group_dn,
                                           MOTIVO_USUARIO_INEXISTENTE)
-            if any(self._coincide(guardado, valor)
-                   for guardado in _valores_miembro(entrada, atributo)):
+            guardados = _valores_miembro(entrada, atributo)
+            if any(self._coincide(guardado, valor) for guardado in guardados):
                 return ResultadoEscritura(Resultado.YA_ESTABA, group_dn)
+            cambios = [(MODIFY_ADD, [valor])]
+            rellenos = [g for g in guardados if cfg.miembro_relleno
+                        and self._coincide(g, cfg.miembro_relleno)]
+            if rellenos:
+                # Con un miembro real el relleno sobra; misma operación.
+                cambios.append((MODIFY_DELETE, rellenos))
             try:
-                conexion.modify(group_dn, {atributo: [(MODIFY_ADD, [valor])]})
+                conexion.modify(group_dn, {atributo: cambios})
             except LDAPAttributeOrValueExistsResult:
                 return ResultadoEscritura(Resultado.YA_ESTABA, group_dn)
             return ResultadoEscritura(Resultado.HECHO, group_dn)
 
-        return self._ejecutar('alta de miembro', group_dn, agregar)
+        return self._ejecutar('alta de miembro', group_dn, alta_miembro)
 
     def remove_member(self, group_dn, user):
         """Quita `user` (`UsuarioDirectorio`) del grupo `group_dn`."""
@@ -202,9 +184,9 @@ class EscritorDirectorio:
                                       MOTIVO_FUERA_DE_BASE)
         cfg = self.configuracion
         atributo = cfg.atributo_miembro
-        valor = self._valor_miembro(user)
+        valor = valor_de_membresia(cfg, user)
 
-        def quitar(conexion):
+        def baja_miembro(conexion):
             entrada = _leer_grupo(conexion, cfg, group_dn)
             if entrada is None:
                 return ResultadoEscritura(Resultado.NO_EXISTE, group_dn,
@@ -231,7 +213,7 @@ class EscritorDirectorio:
                 return ResultadoEscritura(Resultado.YA_ESTABA, group_dn)
             return ResultadoEscritura(Resultado.HECHO, group_dn)
 
-        return self._ejecutar('baja de miembro', group_dn, quitar)
+        return self._ejecutar('baja de miembro', group_dn, baja_miembro)
 
     # ------------------------------------------------------------------ #
     # Alta de cuentas
@@ -246,6 +228,11 @@ class EscritorDirectorio:
             return ResultadoEscritura(Resultado.ERROR_PERMANENTE,
                                       cfg.usuarios_base_dn,
                                       MOTIVO_DATOS_INCOMPLETOS)
+        if not (PATRON_IDENTIFICADOR.fullmatch(datos.identificador)
+                and PATRON_CORREO.fullmatch(datos.correo)):
+            return ResultadoEscritura(Resultado.ERROR_PERMANENTE,
+                                      cfg.usuarios_base_dn,
+                                      MOTIVO_DATOS_INVALIDOS)
         dn = (f'{cfg.atributo_usuario}='
               f'{escapar_valor_dn(datos.identificador)},{cfg.usuarios_base_dn}')
         atributos = {
@@ -258,7 +245,7 @@ class EscritorDirectorio:
         filtro = (f'({cfg.atributo_usuario}='
                   f'{escapar_filtro(datos.identificador)})')
 
-        def crear(conexion):
+        def alta_cuenta(conexion):
             try:
                 conexion.search(cfg.usuarios_base_dn, filtro, SUBTREE,
                                 attributes=[], size_limit=1)
@@ -273,4 +260,4 @@ class EscritorDirectorio:
                 return ResultadoEscritura(Resultado.YA_ESTABA, dn)
             return ResultadoEscritura(Resultado.HECHO, dn)
 
-        return self._ejecutar('alta de cuenta', dn, crear)
+        return self._ejecutar('alta de cuenta', dn, alta_cuenta)

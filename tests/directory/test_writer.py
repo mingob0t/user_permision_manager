@@ -5,6 +5,8 @@ servidor se simulan sustituyendo la operación de `ldap3.Connection`.
 """
 
 import inspect
+import logging
+import re
 
 import ldap3
 import pytest
@@ -441,15 +443,51 @@ def test_crear_cuando_el_servidor_dice_que_existe_es_ya_estaba(
     assert resultado.resultado is Resultado.YA_ESTABA
 
 
+@pytest.mark.parametrize('uid', [
+    'ana,ou=admins', 'a+b', 'x\\y', '*)(uid=*', ' borde ', 'Ana', 'ana ruiz',
+    'ana\n',
+])
+def test_identificador_invalido_no_crea_nada(escritor, operaciones, uid):
+    resultado = escritor.create_user(DatosCuenta(uid, 'Ana', 'Ruiz',
+                                                 'ana@pruebas.local'))
+
+    assert resultado.resultado is Resultado.ERROR_PERMANENTE
+    assert resultado.motivo == errors.MOTIVO_DATOS_INVALIDOS
+    assert operaciones == []
+
+
+@pytest.mark.parametrize('correo', [
+    'sin-arroba', 'a@b', 'a b@pruebas.local', '@pruebas.local', 'a@@b.local',
+    'ana@pruebas.local\n',
+])
+def test_correo_invalido_no_crea_nada(escritor, operaciones, correo):
+    resultado = escritor.create_user(DatosCuenta('ana', 'Ana', 'Ruiz', correo))
+
+    assert resultado.resultado is Resultado.ERROR_PERMANENTE
+    assert resultado.motivo == errors.MOTIVO_DATOS_INVALIDOS
+    assert operaciones == []
+
+
+def test_identificador_con_punto_guion_y_guion_bajo_se_acepta(escritor):
+    resultado = escritor.create_user(DatosCuenta('ana.ruiz-2_b', 'Ana', 'Ruiz',
+                                                 'ana@pruebas.local'))
+
+    assert resultado.resultado is Resultado.HECHO
+    assert resultado.dn == f'uid=ana.ruiz-2_b,{USUARIOS_BASE_DN}'
+
+
 @pytest.mark.parametrize('uid, rdn', [
     ('ana,ou=admins', r'uid=ana\,ou\=admins'),
     ('a+b', r'uid=a\+b'),
     ('x\\y', r'uid=x\\y'),
-    ('*)(uid=*', r'uid=*)(uid\=*'),
     (' borde ', r'uid=\ borde\ '),
 ])
 def test_identificador_se_escapa_al_formar_el_dn(directorio, escritor,
-                                                 operaciones, uid, rdn):
+                                                 operaciones, monkeypatch,
+                                                 uid, rdn):
+    # Defensa en profundidad: aun sin la validación, el DN va escapado.
+    monkeypatch.setattr(writer, 'PATRON_IDENTIFICADOR', re.compile(r'.+', re.DOTALL))
+
     resultado = escritor.create_user(DatosCuenta(uid, 'Ana', 'Ruiz',
                                                  'ana@pruebas.local'))
 
@@ -501,3 +539,111 @@ def test_no_hay_operacion_de_borrado_de_cuentas():
 def test_la_lectura_sigue_siendo_de_solo_lectura(directorio):
     with directorio.cliente.conexion_servicio() as conexion:
         assert conexion.read_only is True
+
+
+# --------------------------------------------------------------------------- #
+# Correcciones de la revisión (auditor-seguridad y revisor, 2026-10-15)
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize('dn', [
+    f'cn=x+ou=grupos,{BASE_DN}',            # RDN multivaluado que imita la OU
+    rf'cn=x,ou=\ grupos,{BASE_DN}',          # espacio escapado
+    rf'cn=x,ou=\20grupos,{BASE_DN}',         # espacio escapado en hexadecimal
+])
+def test_grupo_con_rdn_engañoso_queda_fuera_de_la_base(escritor, operaciones,
+                                                      monkeypatch, dn):
+    monkeypatch.setattr(ldap_client, 'Connection',
+                        lambda *a, **k: pytest.fail('no debe conectar'))
+
+    for operacion in (escritor.add_member, escritor.remove_member):
+        resultado = operacion(dn, _usuario('ana'))
+        assert resultado.resultado is Resultado.ERROR_PERMANENTE
+        assert resultado.motivo == errors.MOTIVO_FUERA_DE_BASE
+    assert operaciones == []
+
+
+def test_usuario_con_rdn_multivaluado_queda_fuera_de_la_base(directorio,
+                                                            escritor,
+                                                            operaciones):
+    grupo = directorio.grupo('conta-usuario', [dn_persona('beto')])
+    intruso = UsuarioDirectorio(dn=f'uid=x+ou=personas,{BASE_DN}',
+                                identificador='x')
+
+    resultado = escritor.add_member(grupo, intruso)
+
+    assert resultado.resultado is Resultado.ERROR_PERMANENTE
+    assert resultado.motivo == errors.MOTIVO_FUERA_DE_BASE
+
+
+def test_rdn_multivaluado_se_compara_sin_importar_el_orden(directorio,
+                                                         escritor,
+                                                         operaciones):
+    guardado = f'cn=Ana+uid=ana,{USUARIOS_BASE_DN}'
+    grupo = directorio.grupo('conta-usuario', [guardado, dn_persona('beto')])
+    usuario = UsuarioDirectorio(dn=f'uid=ana+cn=ana,{USUARIOS_BASE_DN}',
+                                identificador='ana')
+
+    resultado = escritor.remove_member(grupo, usuario)
+
+    assert resultado.resultado is Resultado.HECHO
+    assert operaciones[0][2][1] == {
+        'member': [(ldap3.MODIFY_DELETE, [guardado])]}
+
+
+def test_rdn_multivaluado_no_coincide_con_uno_simple(directorio, escritor,
+                                                    operaciones):
+    # `uid=ana+cn=x` no es `uid=ana`: no se quita a otra persona.
+    grupo = directorio.grupo('conta-usuario', [
+        f'uid=ana+cn=x,{USUARIOS_BASE_DN}', dn_persona('beto')])
+
+    resultado = escritor.remove_member(grupo, _usuario('ana'))
+
+    assert resultado.resultado is Resultado.YA_ESTABA
+    assert operaciones == []
+
+
+def test_agregar_miembro_real_quita_el_relleno(crear_directorio, operaciones):
+    directorio = crear_directorio(LDAP_GROUP_PLACEHOLDER_MEMBER=RELLENO)
+    directorio.persona('ana')
+    grupo = directorio.grupo('conta-usuario', [RELLENO])
+
+    resultado = EscritorDirectorio(directorio.cliente).add_member(
+        grupo, _usuario('ana'))
+
+    assert resultado.resultado is Resultado.HECHO
+    assert _miembros(directorio, grupo) == [dn_persona('ana')]
+    assert operaciones == [('modify', False, (grupo, {'member': [
+        (ldap3.MODIFY_ADD, [dn_persona('ana')]),
+        (ldap3.MODIFY_DELETE, [RELLENO])]}), {})]
+
+
+def test_el_log_de_un_fallo_de_escritura_no_lleva_el_dn_de_la_persona(
+        directorio, escritor, monkeypatch, caplog):
+    directorio.persona('ana')
+    grupo = directorio.grupo('conta-usuario', [dn_persona('beto')])
+    error = exc_ldap.LDAPInsufficientAccessRightsResult(
+        result=50, description='insufficientAccessRights',
+        dn=dn_persona('ana'), message=f'sin permiso para {dn_persona("ana")}')
+    _fallar(monkeypatch, 'modify', error)
+
+    with caplog.at_level(logging.ERROR):
+        escritor.add_member(grupo, _usuario('ana'))
+
+    assert 'LDAPInsufficientAccessRightsResult' in caplog.text
+    assert 'insufficientAccessRights' in caplog.text
+    assert 'uid=ana' not in caplog.text
+
+
+def test_registrar_error_es_publico_en_el_cliente(directorio):
+    assert callable(directorio.cliente.registrar_error)
+    assert not hasattr(directorio.cliente, '_error')
+
+
+def test_valor_de_membresia_compartido_por_lectura_y_escritura(
+        crear_directorio):
+    usuario = _usuario('ana')
+    por_dn = crear_directorio().configuracion
+    por_uid = crear_directorio(LDAP_GROUP_MEMBER_ATTR='memberUid').configuracion
+
+    assert ldap_client.valor_de_membresia(por_dn, usuario) == usuario.dn
+    assert ldap_client.valor_de_membresia(por_uid, usuario) == 'ana'

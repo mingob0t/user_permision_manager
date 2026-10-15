@@ -101,3 +101,7 @@
 - P10: avisar a los admins del área y al superadmin; reintento manual solo el superadmin.
 - P11: el admin de un área también puede darla de baja (además del superadmin); 409 si tiene plataformas o accesos vigentes.
 - P6 (2026-10-14): acceso automático nivel `usuario`, para todos los admins del área; se revoca al quitarle el área; el superadmin no entra a los grupos LDAP.
+
+## Respuestas del dueño (2026-10-15)
+- P3 (último miembro de `groupOfNames`): miembro de relleno configurable (`LDAP_GROUP_PLACEHOLDER_MEMBER`, FNC-041).
+- P3 (cuenta de servicio): una sola cuenta LDAP para lectura y escritura (`LDAP_BIND_DN`); ACL acotada en `docs/operacion/ENTORNOS.md`.

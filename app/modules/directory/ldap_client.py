@@ -78,6 +78,14 @@ def escapar_valor_dn(valor):
     return escape_rdn(str(valor))
 
 
+def valor_de_membresia(configuracion, usuario):
+    """Valor que representa a `usuario` en el atributo de membresía:
+    el identificador (`memberUid`) o el DN (`member`, `uniqueMember`)."""
+    if configuracion.atributo_miembro.lower() in ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR:
+        return usuario.identificador
+    return usuario.dn
+
+
 def _texto(entrada, atributo):
     if atributo not in entrada:
         return ''
@@ -108,12 +116,19 @@ class ClienteDirectorio:
         return Server(cfg.host, port=cfg.puerto, use_ssl=cfg.usa_ldaps,
                       tls=self._tls(), connect_timeout=cfg.tiempo_espera)
 
-    def _error(self, operacion, exc):
-        """Registra el detalle sin la contraseña y devuelve el error genérico."""
-        detalle = str(exc)
-        contrasena = self.configuracion.bind_password
-        if contrasena:
-            detalle = detalle.replace(contrasena, '***')
+    def registrar_error(self, operacion, exc, con_detalle=True):
+        """Registra el fallo sin la contraseña y devuelve el error genérico.
+
+        `con_detalle=False` (escritura) registra solo el código de resultado,
+        sin el mensaje ni el DN, que pueden nombrar a la persona.
+        """
+        if con_detalle:
+            detalle = str(exc)
+            contrasena = self.configuracion.bind_password
+            if contrasena:
+                detalle = detalle.replace(contrasena, '***')
+        else:
+            detalle = getattr(exc, 'description', None) or '-'
         logger.error('Directorio: fallo en %s (%s): %s', operacion,
                      type(exc).__name__, detalle)
         return ErrorDirectorio(MENSAJE_ERROR, causa=exc)
@@ -142,7 +157,7 @@ class ClienteDirectorio:
             conexion.bind()
         except LDAPException as exc:
             self._cerrar(conexion)
-            raise self._error('conexión', exc) from None
+            raise self.registrar_error('conexión', exc) from None
         try:
             yield conexion
         finally:
@@ -177,7 +192,7 @@ class ClienteDirectorio:
             except LDAPSizeLimitExceededResult:
                 entradas, ambiguo = [], True
             except LDAPException as exc:
-                raise self._error('búsqueda de usuario', exc) from None
+                raise self.registrar_error('búsqueda de usuario', exc) from None
             else:
                 entradas = list(conexion.entries)
                 ambiguo = len(entradas) > 1
@@ -202,10 +217,7 @@ class ClienteDirectorio:
         Busca bajo `LDAP_GROUPS_BASE_DN`; no depende del overlay `memberOf`.
         """
         cfg = self.configuracion
-        if cfg.atributo_miembro.lower() in ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR:
-            valor = usuario.identificador
-        else:
-            valor = usuario.dn
+        valor = valor_de_membresia(cfg, usuario)
         filtro = (f'(&(objectClass={cfg.clase_grupo})'
                   f'({cfg.atributo_miembro}={escapar_filtro(valor)}))')
         with self.conexion_servicio() as conexion:
@@ -213,7 +225,7 @@ class ClienteDirectorio:
                 conexion.search(cfg.grupos_base_dn, filtro, SUBTREE,
                                 attributes=[])
             except LDAPException as exc:
-                raise self._error('lectura de grupos', exc) from None
+                raise self.registrar_error('lectura de grupos', exc) from None
             return sorted(entrada.entry_dn for entrada in conexion.entries)
 
     def existe_dn(self, dn):
@@ -230,5 +242,5 @@ class ClienteDirectorio:
             except LDAPNoSuchObjectResult:
                 return False
             except LDAPException as exc:
-                raise self._error('comprobación de DN', exc) from None
+                raise self.registrar_error('comprobación de DN', exc) from None
             return bool(conexion.entries)

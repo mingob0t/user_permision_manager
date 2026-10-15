@@ -17,6 +17,8 @@ from urllib.parse import urlsplit
 from ldap3.core.exceptions import LDAPInvalidDnError
 from ldap3.utils.dn import parse_dn
 
+from app.modules.directory.dn import bajo_base
+
 # Nombres de las variables (registradas en docs/configuracion/VARIABLES.md).
 VAR_URL = 'LDAP_URL'
 VAR_CA_CERT_FILE = 'LDAP_CA_CERT_FILE'
@@ -174,10 +176,16 @@ def _clases_usuario(entorno):
     return clases
 
 
-def _miembro_relleno(entorno):
+def _miembro_relleno(entorno, usuarios_base_dn):
+    """DN de relleno: una entrada sin login ni contraseña, nunca una persona."""
     if not _leer(entorno, VAR_MIEMBRO_RELLENO):
         return None
-    return _dn(entorno, VAR_MIEMBRO_RELLENO)
+    relleno = _dn(entorno, VAR_MIEMBRO_RELLENO)
+    if bajo_base(relleno, usuarios_base_dn, incluir_base=True):
+        raise ErrorConfiguracionDirectorio(
+            f'{VAR_MIEMBRO_RELLENO} no puede estar bajo {VAR_USUARIOS_BASE_DN} '
+            '(debe ser una entrada sin login ni contraseña).')
+    return relleno
 
 
 def _ca_cert_file(entorno):
@@ -195,6 +203,7 @@ def cargar_configuracion(entorno=None):
     entorno = os.environ if entorno is None else entorno
     url = _requerida(entorno, VAR_URL)
     host, puerto, usa_ldaps = _validar_url(url)
+    usuarios_base_dn = _dn(entorno, VAR_USUARIOS_BASE_DN)
     return ConfiguracionDirectorio(
         url=url,
         host=host,
@@ -203,7 +212,7 @@ def cargar_configuracion(entorno=None):
         ca_cert_file=_ca_cert_file(entorno),
         bind_dn=_dn(entorno, VAR_BIND_DN),
         bind_password=_requerida(entorno, VAR_BIND_PASSWORD),
-        usuarios_base_dn=_dn(entorno, VAR_USUARIOS_BASE_DN),
+        usuarios_base_dn=usuarios_base_dn,
         grupos_base_dn=_dn(entorno, VAR_GRUPOS_BASE_DN),
         atributo_usuario=_nombre_atributo(
             entorno, VAR_ATRIBUTO_USUARIO, ATRIBUTO_USUARIO_POR_DEFECTO),
@@ -213,7 +222,7 @@ def cargar_configuracion(entorno=None):
             entorno, VAR_ATRIBUTO_MIEMBRO, ATRIBUTO_MIEMBRO_POR_DEFECTO),
         tiempo_espera=_tiempo_espera(entorno),
         clases_usuario=_clases_usuario(entorno),
-        miembro_relleno=_miembro_relleno(entorno),
+        miembro_relleno=_miembro_relleno(entorno, usuarios_base_dn),
     )
 
 

@@ -193,3 +193,14 @@ def test_relleno_que_no_es_dn_detiene_el_arranque():
     with pytest.raises(ErrorConfiguracionDirectorio,
                        match='LDAP_GROUP_PLACEHOLDER_MEMBER'):
         cargar_configuracion(_con(LDAP_GROUP_PLACEHOLDER_MEMBER='no es un dn'))
+
+
+@pytest.mark.parametrize('relleno', [
+    'ou=personas,dc=pruebas,dc=local',              # la OU de personas misma
+    'cn=sin-miembros,ou=personas,dc=pruebas,dc=local',
+    'CN=Sin-Miembros,OU=Personas,DC=Pruebas,DC=Local',
+])
+def test_relleno_bajo_la_ou_de_personas_detiene_el_arranque(relleno):
+    with pytest.raises(ErrorConfiguracionDirectorio,
+                       match='LDAP_GROUP_PLACEHOLDER_MEMBER'):
+        cargar_configuracion(_con(LDAP_GROUP_PLACEHOLDER_MEMBER=relleno))

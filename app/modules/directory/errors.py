@@ -52,6 +52,7 @@ MOTIVO_GRUPO_INEXISTENTE = 'grupo_inexistente'
 MOTIVO_USUARIO_INEXISTENTE = 'usuario_inexistente'
 MOTIVO_ULTIMO_MIEMBRO = 'ultimo_miembro'
 MOTIVO_DATOS_INCOMPLETOS = 'datos_incompletos'
+MOTIVO_DATOS_INVALIDOS = 'datos_invalidos'
 MOTIVO_DIRECTORIO = 'directorio'
 
 
