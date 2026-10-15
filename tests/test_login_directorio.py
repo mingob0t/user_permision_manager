@@ -31,6 +31,14 @@ def directorio(app, monkeypatch):
     return instalar_directorio(monkeypatch)
 
 
+def _cuenta_vinculada(crear_usuario, rol, origen='ldap', **kwargs):
+    """Cuenta ya vinculada al directorio (sin contraseña local)."""
+    cuenta = crear_usuario(rol, **kwargs)
+    cuenta.auth_source = origen
+    db.session.commit()
+    return cuenta
+
+
 def _entrar(cliente, usuario=UID, contrasena=CONTRASENA_FICTICIA):
     return iniciar_sesion_api(cliente, usuario, contrasena, metodo='directory')
 
@@ -319,7 +327,7 @@ def test_directorio_no_asigna_administrador(app, client, monkeypatch):
 
 def test_conserva_admin_area_asignado_localmente(client, directorio,
                                                  crear_usuario):
-    crear_usuario(ROLE_AREA_ADMIN, email=CORREO)
+    _cuenta_vinculada(crear_usuario, ROLE_AREA_ADMIN, email=CORREO)
     directorio.agregar(UID, CONTRASENA_FICTICIA)
 
     _entrar(client)
@@ -331,10 +339,89 @@ def test_directorio_no_degrada_el_rol_del_portal(client, directorio,
                                                  crear_usuario):
     # Regresión: cada login recalculaba el rol desde los grupos y bajaba a
     # `usuario` al administrador asignado en el portal.
-    crear_usuario(ROLE_ADMIN, email=CORREO)
+    _cuenta_vinculada(crear_usuario, ROLE_ADMIN, email=CORREO)
     directorio.agregar(UID, CONTRASENA_FICTICIA)
 
     respuesta = _entrar(client)
 
     assert respuesta.get_json()['role'] == ROLE_ADMIN
     assert User.query.filter_by(email=CORREO).one().role == ROLE_ADMIN
+
+
+# --------------------------------------------------------------------------- #
+# Cuentas existentes: conflicto con cuentas locales y cuentas desactivadas
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize('rol', [ROLE_ADMIN, ROLE_AREA_ADMIN, ROLE_USER])
+def test_mail_igual_a_una_cuenta_local_se_bloquea(client, directorio,
+                                                  crear_usuario, rol):
+    # Regresión (auditor-seguridad, Alto): el mail del directorio enlazaba la
+    # cuenta local con ese correo y la pasaba a `ldap` (decisión del dueño
+    # 2026-10-15: bloquear y avisar).
+    local = crear_usuario(rol, email=CORREO, contrasena=CONTRASENA_FICTICIA)
+    antes = (local.nombre, local.password_hash, local.last_login_at)
+    directorio.agregar(UID, CONTRASENA_FICTICIA, nombre='Otro Nombre')
+
+    respuesta = _entrar(client)
+
+    assert respuesta.status_code == 401
+    assert respuesta.get_json() == {'status': 'error',
+                                    'message': MENSAJE_CREDENCIALES}
+    assert usuario_en_sesion(client) is None
+    cuenta = db.session.get(User, local.id)
+    assert (cuenta.role, cuenta.auth_source) == (rol, 'local')
+    assert (cuenta.nombre, cuenta.password_hash, cuenta.last_login_at) == antes
+    assert User.query.count() == 1
+    assert hay_auditoria('ACCESO BLOQUEADO', 'warning', target=CORREO)
+
+
+def test_cuenta_vinculada_con_contrasena_local_se_bloquea(client, directorio,
+                                                          crear_usuario):
+    _cuenta_vinculada(crear_usuario, ROLE_USER, email=CORREO,
+                      contrasena=CONTRASENA_FICTICIA)
+    directorio.agregar(UID, CONTRASENA_FICTICIA)
+
+    assert _entrar(client).status_code == 401
+    assert usuario_en_sesion(client) is None
+
+
+def test_no_cambia_el_origen_de_una_cuenta_sso(client, directorio,
+                                               crear_usuario):
+    cuenta = _cuenta_vinculada(crear_usuario, ROLE_USER, origen='sso',
+                               email=CORREO)
+    directorio.agregar(UID, CONTRASENA_FICTICIA)
+
+    assert _entrar(client).status_code == 200
+
+    assert db.session.get(User, cuenta.id).auth_source == 'sso'
+
+
+def test_cuenta_desactivada_no_entra_ni_se_modifica(client, directorio,
+                                                    crear_usuario):
+    # Regresión (auditor-seguridad, Bajo): respondía success sin sesión y
+    # actualizaba la cuenta.
+    cuenta = _cuenta_vinculada(crear_usuario, ROLE_USER, email=CORREO,
+                               activo=False)
+    antes = (cuenta.nombre, cuenta.last_login_at)
+    directorio.agregar(UID, CONTRASENA_FICTICIA, nombre='Otro Nombre')
+
+    respuesta = _entrar(client)
+
+    assert respuesta.status_code == 401
+    assert respuesta.get_json()['message'] == MENSAJE_CREDENCIALES
+    assert usuario_en_sesion(client) is None
+    cuenta = db.session.get(User, cuenta.id)
+    assert (cuenta.nombre, cuenta.last_login_at) == antes
+
+
+def test_si_login_user_falla_no_responde_exito(client, directorio,
+                                               monkeypatch):
+    from app.modules.api import auth as api_auth
+    monkeypatch.setattr(api_auth, 'login_user', lambda *a, **k: False)
+    directorio.agregar(UID, CONTRASENA_FICTICIA)
+
+    respuesta = _entrar(client)
+
+    assert respuesta.status_code == 401
+    assert respuesta.get_json()['message'] == MENSAJE_CREDENCIALES
+

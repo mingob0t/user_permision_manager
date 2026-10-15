@@ -24,7 +24,8 @@ from app import db
 from app.authz import ROLE_USER
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.models import User
-from app.modules.auth.services import MENSAJE_CREDENCIALES
+from app.modules.auth.services import (MENSAJE_CREDENCIALES, avisar_bloqueo,
+                                       motivo_de_bloqueo)
 
 auth_api_bp = Blueprint('api_auth', __name__, url_prefix='/api/v1/auth')
 
@@ -41,6 +42,13 @@ def _trusted_proxy():
 
 def _sso_enabled():
     return os.getenv('AUTHELIA_ENABLED', 'false').lower() == 'true'
+
+
+def _acceso_fallido(email, motivo):
+    """Audita el motivo y responde el fallo único (401)."""
+    add_audit_log('ACCESO FALLIDO', status='error', target=email,
+                  detail=motivo[:200])
+    return jsonify({'status': 'error', 'message': MENSAJE_CREDENCIALES}), 401
 
 
 @auth_api_bp.route('/context')
@@ -90,11 +98,17 @@ def sso_login():
         user = User(email=email, nombre=name, role=ROLE_USER, auth_source='sso')
         db.session.add(user)
     else:
-        # Se conserva el rol asignado en el portal.
+        # Cuenta local o desactivada: no se toma ni se modifica.
+        motivo = motivo_de_bloqueo(user)
+        if motivo:
+            avisar_bloqueo(user, 'SSO', motivo)
+            return _acceso_fallido(email, f'SSO: {motivo}')
+        # Se conservan el rol del portal y el origen de la cuenta.
         user.nombre = name
     db.session.commit()
 
-    login_user(user, remember=True)
+    if not login_user(user, remember=True):
+        return _acceso_fallido(email, 'SSO: login_user rechazó la cuenta')
     add_audit_log('ACCESO SSO', status='success', target=email,
                   detail='Sesión iniciada vía Authelia')
 
@@ -130,15 +144,14 @@ def login():
         result = authenticate_user_ldap(email, password)
         if result.get('status') == 'success':
             user = result['user']
-            login_user(user, remember=True)
+            if not login_user(user, remember=True):
+                return _acceso_fallido(
+                    email, 'Directorio: login_user rechazó la cuenta')
             add_audit_log('ACCESO DIRECTORIO', status='success', target=email,
                           detail='Autenticación corporativa')
             return jsonify({'status': 'success', 'role': user.role})
         # El motivo queda en la auditoría; al cliente, la respuesta única.
-        add_audit_log('ACCESO FALLIDO', status='error', target=email,
-                      detail=f"Directorio: {result.get('motivo')}"[:200])
-        return jsonify({'status': 'error',
-                        'message': MENSAJE_CREDENCIALES}), 401
+        return _acceso_fallido(email, f"Directorio: {result.get('motivo')}")
 
     user = User.query.filter_by(email=email).first()
     if user and user.password_hash and user.check_password(password):

@@ -125,6 +125,7 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `ATRIBUTOS_PERFIL` | Atributos de perfil leídos de la persona | `mail`, `cn`, `displayName` | — | `app/modules/directory/ldap_client.py` | FNC-040, 2026-10-14 | Vigente |
 | `MENSAJE_CREDENCIALES` | Respuesta única de login fallido (directorio y local) | `Credenciales incorrectas.` | — | `app/modules/auth/services.py` | FNC-042, 2026-10-15 | Vigente |
 | `ORIGEN_DIRECTORIO` | `auth_source` de las cuentas del login de directorio | `ldap` | — | `app/modules/auth/services.py` | FNC-042, 2026-10-15 | Vigente |
+| `ORIGENES_VINCULADOS` / `MOTIVO_CONFLICTO`, `MOTIVO_DESACTIVADA` | Orígenes que el directorio y el SSO pueden usar / motivos auditados del bloqueo | `ldap`, `sso` / `cuenta_local_en_conflicto`, `cuenta_desactivada` | — | `app/modules/auth/services.py` | FNC-042, 2026-10-15 | Vigente |
 | Gunicorn | Workers / timeout / puerto | 4 / 120 s / 5001 | — | `deploy/backend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | Puerto del backend en dev | Puerto de `run.py` | 5001 | — | `run.py` | FNC-001, 2026-10-13 | Vigente |
 | `client_max_body_size` | Tamaño máximo de petición en nginx | 64 | MB | `deploy/nginx.conf.tmpl` | FNC-001, 2026-10-13 | Vigente |

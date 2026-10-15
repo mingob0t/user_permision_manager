@@ -30,6 +30,35 @@ MENSAJE_CREDENCIALES = 'Credenciales incorrectas.'
 # Origen de las cuentas creadas por el login de directorio.
 ORIGEN_DIRECTORIO = 'ldap'
 
+# Orígenes de cuentas del directorio (login LDAP o SSO de Authelia, que usa el
+# mismo directorio). Una cuenta con otro origen o con contraseña local no se
+# vincula sola (decisión del dueño 2026-10-15: bloquear y avisar).
+ORIGENES_VINCULADOS = frozenset({'ldap', 'sso'})
+MOTIVO_CONFLICTO = 'cuenta_local_en_conflicto'
+MOTIVO_DESACTIVADA = 'cuenta_desactivada'
+
+
+def motivo_de_bloqueo(cuenta):
+    """Por qué no se abre sesión con una cuenta existente, o `None`.
+
+    - Cuenta local (o con contraseña local): conflicto; nunca se toma ni se
+      convierte, sea cual sea su rol.
+    - Cuenta desactivada: no entra ni se modifica.
+    """
+    if cuenta.auth_source not in ORIGENES_VINCULADOS or cuenta.password_hash:
+        return MOTIVO_CONFLICTO
+    if not cuenta.is_active:
+        return MOTIVO_DESACTIVADA
+    return None
+
+
+def avisar_bloqueo(cuenta, via, motivo):
+    """Audita (aviso) un acceso rechazado por el estado de la cuenta."""
+    from app.modules.audit.services import add_audit_log
+    add_audit_log('ACCESO BLOQUEADO', status='warning', target=cuenta.email,
+                  target_user_id=cuenta.id,
+                  detail=f'{via}: {motivo}; la cuenta no se modificó')
+
 
 def _fallo(motivo):
     """Resultado de un login fallido; `motivo` es solo para la auditoría."""
@@ -43,7 +72,8 @@ def authenticate_user_ldap(identificador, password):
     - Busca por `LDAP_USER_ATTR` (filtro escapado) y valida la contraseña con
       un bind de la persona sobre TLS validado (FNC-040).
     - La cuenta local se busca solo por el `mail` del directorio, nunca por
-      lo escrito; sin `mail` no hay acceso.
+      lo escrito; sin `mail` no hay acceso. Una cuenta `local`, con
+      contraseña local o desactivada no se toma ni se modifica.
     - Todo fallo devuelve `MENSAJE_CREDENCIALES`; el detalle va en `motivo`.
     - Un intento nunca borra cuentas locales (SEG-01, SEC-AUTH-08).
     - El directorio no asigna rol: una cuenta nueva entra como `usuario` y una
@@ -90,9 +120,12 @@ def _sincronizar_cuenta(persona):
             cuenta.password_hash = None
             db.session.add(cuenta)
         else:
-            # El rol no se toca: lo asigna el superadmin en el portal.
+            motivo = motivo_de_bloqueo(cuenta)
+            if motivo:
+                avisar_bloqueo(cuenta, 'Directorio', motivo)
+                return _fallo(motivo)
+            # Ni el rol ni el origen se tocan: el rol lo asigna el superadmin.
             cuenta.nombre = nombre
-            cuenta.auth_source = ORIGEN_DIRECTORIO
         cuenta.last_login_at = datetime.now()
         db.session.commit()
     except Exception:

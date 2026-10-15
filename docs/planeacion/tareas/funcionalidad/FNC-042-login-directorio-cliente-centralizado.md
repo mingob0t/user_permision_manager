@@ -93,6 +93,8 @@
 | Regresiones nuevas contra el código anterior (worktree temporal en `HEAD`, doble viejo) | 5 failed: cuenta local tomada por uid sin `mail`, rol del portal degradado por LDAP y por SSO, mensaje distinto al local, sin `verificar_contrasena` |
 | `test_mapeo_de_grupo_exacto_asigna_el_rol` en el código anterior | passed (el mapeo daba `admin_area`); invertida a `..._ya_no_asigna_el_rol` |
 | `venv/bin/python -m pytest -q` (después) | 553 passed, 26 xfailed, código 0 |
+| Regresiones de auditor-seguridad contra `dd0a356` | 11 failed (conflicto con cuenta local por directorio ×3 y SSO ×3, contraseña local, cambio de origen, cuenta desactivada en directorio y SSO, `login_user` falso) |
+| `venv/bin/python -m pytest -q` (tras corregir) | 565 passed, 26 xfailed, código 0 |
 - `xfail` strict quitados (9, XPASS): `test_login_fallido_no_borra_cuentas_locales`, `test_mensaje_uniforme_en_los_fallos`, `test_filtro_ldap_escapa_comodines`, `test_error_del_directorio_no_se_filtra_al_cliente`, `test_grupo_parecido_no_cambia_el_rol[grupo_admin_heredado, mapeo_json]`, `test_directorio_no_asigna_administrador`, `test_conserva_admin_area_asignado_localmente` (`test_login_directorio.py`); `test_remote_groups_no_asigna_administrador` (`test_sso.py`)
 - 18 pruebas nuevas: 11 en `test_login_directorio.py`, 2 en `test_sso.py`, 6 en `tests/directory/test_verificar_contrasena.py` (−1 renombrada)
 - No verificado: OpenLDAP real (sin servidor ni valores, ADR-004); StartTLS real (espía de orden StartTLS → bind)
@@ -102,7 +104,10 @@
 - El directorio no asigna ningún rol; `ldap_role_mappings` y `ldap_group_admin` quedan sin efecto en el login (ficha: "ya no asignan administrador ni admin_area")
 - Cuentas existentes conservan su rol, incluso `administrador` asignado antes por LDAP: el superadmin debe revisarlas antes de desplegar (nota de RELEASES)
 - Cuenta local buscada solo por `mail` del directorio; sin `mail`, 401 (antes caía a lo escrito y podía tomar la cuenta local `admin`)
-- Un `mail` del directorio igual al de una cuenta `local` la sigue enlazando y pasa a `auth_source=ldap` (comportamiento heredado): decidir con el dueño si se bloquea
+- Cuenta existente `local`, con contraseña local o desactivada: login de directorio y SSO responden 401 único, auditan `ACCESO BLOQUEADO` (aviso) y no la modifican; nunca cambia `auth_source` (decisión del dueño 2026-10-15: "bloquear y avisar")
+- Cuentas ya vinculadas (`ldap`/`sso`, sin contraseña) entran aunque sean `administrador` o `admin_area`: el rol lo dio el portal; el bloqueo por rol aplica a las no vinculadas (todas `local`)
+- Propuesta (requiere migración): vincular por DN del directorio en una columna nueva de `users`, en lugar de `mail`
+- Enumeración por tiempo (inexistente vs contraseña errónea): queda para FNC-014
 - "Un solo superadmin al asignar" queda en FNC-044 (no se tocó `crud.py`)
 - `ClienteDirectorio.verificar_contrasena` agregado al final de `ldap_client.py` sin cambiar lo existente (una línea de import aparte)
 - Login de eventos: se mantienen los textos heredados (`ACCESO DIRECTORIO`, `ACCESO FALLIDO`, `usuario creado`): el catálogo `Evento` no tiene eventos de sesión
@@ -117,3 +122,4 @@
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-15 | Aprobada por el dueño (vía orquestador); implementada en `fnc/FNC-042-login-directorio`; 553 passed, 26 xfailed; En revisión (falta revisor y auditor-seguridad) |
+- auditor-seguridad (modo cambio, 2026-10-15): **Bloqueante** (Alto: toma de cuenta local por `mail` en directorio y SSO; Bajo: sin `is_active` ni resultado de `login_user`) → corregido con regresiones que primero fallaron; decisión del dueño: bloquear y avisar. Sigue En revisión.

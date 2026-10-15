@@ -7,10 +7,13 @@ defecto. Para simular otro origen se cambia `TRUSTED_PROXIES` y el
 
 import pytest
 
+from app import db
 from app.authz import ROLE_ADMIN, ROLE_AREA_ADMIN, ROLE_USER
 from app.modules.auth.models import User
 from tests.matriz_proteccion import CORREO_SSO_FICTICIO
-from tests.peticiones_auth import A, hay_auditoria, usuario_en_sesion
+from tests.matriz_proteccion import CONTRASENA_FICTICIA
+from tests.peticiones_auth import (A, MENSAJE_CREDENCIALES, hay_auditoria,
+                                   usuario_en_sesion)
 
 PROXY_FICTICIO = 'proxy.pruebas.invalid'
 ORIGEN_AJENO = 'cliente.pruebas.invalid'
@@ -30,6 +33,14 @@ def _cabeceras(email=CORREO_SSO_FICTICIO, nombre=None, grupos=None):
     if grupos is not None:
         cabeceras['Remote-Groups'] = grupos
     return cabeceras
+
+
+def _cuenta_vinculada(crear_usuario, rol, origen='sso', **kwargs):
+    """Cuenta ya vinculada al SSO o al directorio (sin contraseña local)."""
+    cuenta = crear_usuario(rol, **kwargs)
+    cuenta.auth_source = origen
+    db.session.commit()
+    return cuenta
 
 
 def _sso(cliente, origen=None, **cabeceras):
@@ -128,7 +139,8 @@ def test_grupos_sin_coincidencia_exacta_dan_rol_usuario(client, sso_activo,
 
 def test_conserva_admin_area_asignado_localmente(client, sso_activo,
                                                  crear_usuario):
-    crear_usuario(ROLE_AREA_ADMIN, email=CORREO_SSO_FICTICIO)
+    _cuenta_vinculada(crear_usuario, ROLE_AREA_ADMIN,
+                      email=CORREO_SSO_FICTICIO)
 
     respuesta = _sso(client, grupos='administrador')
 
@@ -139,7 +151,8 @@ def test_conserva_admin_area_asignado_localmente(client, sso_activo,
 
 def test_actualiza_el_nombre_de_un_usuario_existente(client, sso_activo,
                                                      crear_usuario):
-    crear_usuario(ROLE_USER, email=CORREO_SSO_FICTICIO)
+    _cuenta_vinculada(crear_usuario, ROLE_USER, origen='ldap',
+                      email=CORREO_SSO_FICTICIO)
 
     _sso(client, nombre='Nombre desde Authelia')
 
@@ -158,7 +171,7 @@ def test_remote_groups_no_cambia_el_rol_del_portal(client, sso_activo,
                                                     crear_usuario):
     # Regresión (FNC-042): el SSO recalculaba el rol en cada acceso y bajaba
     # a `usuario` al administrador sin el grupo de Authelia.
-    crear_usuario(ROLE_ADMIN, email=CORREO_SSO_FICTICIO)
+    _cuenta_vinculada(crear_usuario, ROLE_ADMIN, email=CORREO_SSO_FICTICIO)
 
     respuesta = _sso(client, grupos='usuarios')
 
@@ -171,11 +184,60 @@ def test_grupo_de_admin_de_authelia_no_eleva_una_cuenta(client, sso_activo,
                                                          monkeypatch,
                                                          crear_usuario):
     monkeypatch.setenv('AUTHELIA_GROUP_ADMIN', 'admins-portal')
-    crear_usuario(ROLE_USER, email=CORREO_SSO_FICTICIO)
+    _cuenta_vinculada(crear_usuario, ROLE_USER, email=CORREO_SSO_FICTICIO)
 
     respuesta = _sso(client, grupos='admins-portal')
 
     assert respuesta.get_json()['role'] == ROLE_USER
+
+
+# --------------------------------------------------------------------------- #
+# Cuentas existentes: conflicto con cuentas locales y cuentas desactivadas
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize('rol', [ROLE_ADMIN, ROLE_AREA_ADMIN, ROLE_USER])
+def test_correo_de_una_cuenta_local_se_bloquea(client, sso_activo,
+                                               crear_usuario, rol):
+    # Regresión (auditor-seguridad, Alto): `Remote-Email` igual al correo de
+    # una cuenta local abría sesión con ella (decisión del dueño 2026-10-15:
+    # bloquear y avisar).
+    local = crear_usuario(rol, email=CORREO_SSO_FICTICIO,
+                          contrasena=CONTRASENA_FICTICIA)
+    antes = (local.nombre, local.password_hash)
+
+    respuesta = _sso(client, nombre='Otro Nombre')
+
+    assert respuesta.status_code == 401
+    assert respuesta.get_json() == {'status': 'error',
+                                    'message': MENSAJE_CREDENCIALES}
+    assert usuario_en_sesion(client) is None
+    cuenta = db.session.get(User, local.id)
+    assert (cuenta.role, cuenta.auth_source) == (rol, 'local')
+    assert (cuenta.nombre, cuenta.password_hash) == antes
+    assert hay_auditoria('ACCESO BLOQUEADO', 'warning',
+                         target=CORREO_SSO_FICTICIO)
+
+
+def test_no_cambia_el_origen_de_una_cuenta_ldap(client, sso_activo,
+                                                crear_usuario):
+    cuenta = _cuenta_vinculada(crear_usuario, ROLE_USER, origen='ldap',
+                               email=CORREO_SSO_FICTICIO)
+
+    assert _sso(client).status_code == 200
+
+    assert db.session.get(User, cuenta.id).auth_source == 'ldap'
+
+
+def test_cuenta_sso_desactivada_no_entra(client, sso_activo, crear_usuario):
+    cuenta = _cuenta_vinculada(crear_usuario, ROLE_USER,
+                               email=CORREO_SSO_FICTICIO, activo=False)
+    nombre = cuenta.nombre
+
+    respuesta = _sso(client, nombre='Otro Nombre')
+
+    assert respuesta.status_code == 401
+    assert usuario_en_sesion(client) is None
+    assert db.session.get(User, cuenta.id).nombre == nombre
 
 
 # --------------------------------------------------------------------------- #
