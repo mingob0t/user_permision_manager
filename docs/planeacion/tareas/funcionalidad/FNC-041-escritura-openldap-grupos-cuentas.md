@@ -83,7 +83,7 @@
 - `revisor` (2026-10-15): **Requiere cambios**, corregidos: tabla de impacto completa (abajo); `registrar_error` público; log sin DN de la persona; atributos de alta provisionales; `valor_de_membresia` compartida
 
 ## Impacto en elementos compartidos
-Salida real de `python3 ~/.claude/agentes/herramientas/impacto.py` (contra `develop`, 2026-10-15, 14 elementos):
+Salida real de `python3 ~/.claude/agentes/herramientas/impacto.py` (contra `develop`, tras `121a932`: 10 elementos; antes de la corrección eran 14):
 
 | Elemento modificado | Tipo | Definido en | Usado en (fuera de la tarea) | Áreas afectadas | ¿Validado? |
 |---|---|---|---|---|---|
@@ -92,21 +92,17 @@ Salida real de `python3 ~/.claude/agentes/herramientas/impacto.py` (contra `deve
 | `__init__` | función | `app/modules/directory/ldap_client.py`, `app/modules/directory/writer.py` | `app/modules/notifications/services.py`, `app/utils/redis_client.py`, `tests/directorio_falso.py`, `tests/directory/conftest.py`, `tests/directory/test_tls.py`, `tests/matriz_proteccion.py`, `tests/smtp_falso.py` | app/modules, app/utils, tests, tests/directory | ☐ |
 | `_error` | función | `app/modules/directory/ldap_client.py` | `app/modules/api/admin.py`, `app/modules/api/crud.py` | app/modules | ☐ |
 | `_usuario` | función | `tests/directory/test_writer.py` | `app/modules/audit/models.py`, `tests/test_alcance_por_area.py` | app/modules, tests | ☐ |
-| `agregar` | función | `app/modules/directory/writer.py` | `scratch/fix_db_schema.py`, `tests/directorio_falso.py`, `tests/directory/conftest.py`, `tests/test_login_directorio.py`, `tests/test_notificaciones.py` | scratch, tests, tests/directory | ☐ |
 | `buscar_usuario` | función | `app/modules/directory/ldap_client.py` | `tests/directory/test_tls.py` | tests/directory | ☐ |
 | `cargar_configuracion` | función | `app/modules/directory/configuracion.py` | `tests/directory/conftest.py`, `tests/directory/test_tls.py` | tests/directory | ☐ |
-| `crear` | función | `app/modules/directory/writer.py` | `app/__init__.py`, `app/authz.py`, `app/modules/api/crud.py`, `app/modules/core/routes.py`, `frontend/src/components/areas-list.tsx`, `frontend/src/components/platform-admin.tsx`, `tests/conftest.py`, `tests/test_rutas_heredadas.py` (+1) | app, app/modules, frontend/src, tests, utils | ☐ |
 | `create_user` | función | `app/modules/directory/writer.py` | `app/modules/api/crud.py`, `app/modules/auth/routes.py` | app/modules | ☐ |
 | `falla` | función | `tests/directory/test_writer.py` | `app/authz.py`, `app/modules/audit/services.py`, `frontend/src/components/platform-card.tsx`, `frontend/tests/accesibilidad/colores-literales.excepciones.ts`, `frontend/tests/accesibilidad/contraste.test.ts`, `migrations/versions/0002_auditoria_ampliada.py`, `tests/directory/test_tls.py`, `tests/matriz_proteccion.py` (+2) | app, app/modules, frontend/src, frontend/tests, migrations/versions, tests, tests/directory | ☐ |
 | `operaciones` | función | `tests/directory/test_writer.py` | `app/modules/api/crud.py` | app/modules | ☐ |
-| `quitar` | función | `app/modules/directory/writer.py` | `app/modules/audit/events.py` | app/modules | ☐ |
-| `reemplazo` | función | `app/modules/directory/writer.py` | `app/modules/auth/routes.py`, `app/modules/notifications/routes.py` | app/modules | ☐ |
 
 - Homónimos (sin impacto real):
   - `create_user`: el de `writer.py` (método de `EscritorDirectorio`) frente a las funciones de `api/crud.py` y `auth/routes.py`
   - `__init__`: los de `ErrorDirectorio` y `EscritorDirectorio` frente a otras clases
   - `_error`: ya no existe en `ldap_client.py` (ahora `registrar_error`); el de `api/crud.py` (importado en `admin.py`) es otra función
-  - `agregar`, `crear`, `quitar`, `reemplazo`: funciones internas renombradas en esta corrección (`alta_miembro`, `alta_cuenta`, `baja_miembro`, `reemplazo_escape` en `dn.py`); la herramienta las toma del diff
+  - `agregar`, `crear`, `quitar`, `reemplazo` (4 de las 14 filas previas): funciones internas renombradas en esta corrección (`alta_miembro`, `alta_cuenta`, `baja_miembro`, `reemplazo_escape`); ya no aparecen
   - `Resultado`, `_usuario`, `falla`, `operaciones`: nombres de `errors.py` y de pruebas que coinciden con variables o funciones ajenas
 - Reales (cambio compatible): `ErrorDirectorio` (`causa`), `buscar_usuario` y `cargar_configuracion` (sin cambio de firma), `conexion_servicio` (`solo_lectura=True` por defecto); fuera de `directory/` no hay llamadores en `app/`; sus pruebas pasan
 - Validar al integrar FNC-042/043: usan `ClienteDirectorio`; `_error` pasó a `registrar_error`
@@ -121,7 +117,8 @@ Salida real de `python3 ~/.claude/agentes/herramientas/impacto.py` (contra `deve
 ## Commits / PR
 - `6ef88f2` [FNC-041] Servicio de escritura en OpenLDAP (local, sin push ni PR)
 - `e651988` registro del hash en la ficha
-- Commit de correcciones de la revisión (este); sin push ni PR
+- `121a932` correcciones de auditor-seguridad y revisor
+- Commit de la tabla de impacto posterior (este); sin push ni PR
 
 ## Impacto cruzado
 - Genera → FNC-049 (proveedor LDAP del ejecutor)
