@@ -38,6 +38,11 @@ MOTIVO_CONFLICTO = 'cuenta_local_en_conflicto'
 MOTIVO_DESACTIVADA = 'cuenta_desactivada'
 
 
+def normalizar_correo(correo):
+    """Correo sin espacios y en minúsculas, como en `crud` y `admin`."""
+    return (correo or '').strip().lower()
+
+
 def motivo_de_bloqueo(cuenta):
     """Por qué no se abre sesión con una cuenta existente, o `None`.
 
@@ -90,7 +95,7 @@ def authenticate_user_ldap(identificador, password):
             return _fallo('usuario no encontrado en el directorio')
         if not cliente.verificar_contrasena(persona, password):
             return _fallo('contraseña incorrecta')
-        if not persona.atributos.get('mail'):
+        if not normalizar_correo(persona.atributos.get('mail')):
             # La cuenta local se identifica por correo; sin `mail` no se
             # enlaza por el uid, que podría coincidir con una cuenta local.
             return _fallo('la persona no tiene correo en el directorio')
@@ -108,11 +113,11 @@ def _sincronizar_cuenta(persona):
     from app.modules.audit.services import add_audit_log
     from app import db
 
-    correo = persona.atributos['mail']
+    correo = normalizar_correo(persona.atributos['mail'])
     nombre = (persona.atributos.get('displayName')
               or persona.atributos.get('cn') or correo)
     try:
-        cuenta = User.query.filter_by(email=correo).first()
+        cuenta = User.query.filter(db.func.lower(User.email) == correo).first()
         es_nueva = cuenta is None
         if es_nueva:
             cuenta = User(email=correo, nombre=nombre, role=ROLE_USER,

@@ -90,7 +90,7 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 |---|---|---|
 | `GET /context` | Pública | Indica si el SSO está activo, la identidad SSO (solo si la petición viene de `TRUSTED_PROXIES`), si ya hay sesión y si LDAP está disponible (siempre `true`). |
 | `POST /sso` | Pública; exige `AUTHELIA_ENABLED=true` y origen en `TRUSTED_PROXIES` | Crea o actualiza el usuario a partir de las cabeceras de Authelia (nuevo: rol `usuario`; existente: conserva su rol; `Remote-Groups` no se usa, FNC-042), inicia sesión y audita. Si es nuevo, envía la plantilla `usuario_creado`. |
-| `POST /login` | Pública | `method=directory` → LDAP (`authenticate_user_ldap`); `method=local` → contraseña local. Audita éxitos y fallos (el motivo solo en la auditoría). Todo fallo responde 401 `Credenciales incorrectas.` (FNC-042). |
+| `POST /login` | Pública | `method=directory` → LDAP (`authenticate_user_ldap`); `method=local` → contraseña local. Audita éxitos y fallos (el motivo solo en la auditoría). Todo fallo, incluida la cuenta desactivada, responde 401 `Credenciales incorrectas.` (FNC-042). |
 | `POST /logout` | Sesión | Cierra la sesión y audita; con SSO devuelve la URL de cierre de Authelia (`AUTHELIA_SLO_URL?rd=BASE_URL/login`). |
 
 ### 4.2 Lectura — `app/modules/api/routes.py` (`/api/v1`)
@@ -170,6 +170,8 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - Sin `mail` no hay acceso: la cuenta nunca se busca por lo escrito.
 - Cuenta nueva: rol `usuario`, `auth_source=ldap`, sin contraseña; existente: conserva el rol y el origen.
 - Cuenta `local`, con contraseña local o desactivada: 401 único y aviso `ACCESO BLOQUEADO`; no se modifica (también en SSO).
+- Correo normalizado (`strip().lower()`) y búsqueda sin distinguir mayúsculas, en directorio y SSO.
+- Una cuenta `sso` entra por directorio y una `ldap` por SSO: Authelia usa el mismo OpenLDAP (requisitos de `mail` en `docs/operacion/ENTORNOS.md`).
 - Nunca borra cuentas; todo fallo devuelve `MENSAJE_CREDENCIALES` y el motivo va a la auditoría.
 
 ### LDAP heredado (`auth_config`)

@@ -25,7 +25,7 @@ from app.authz import ROLE_USER
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.models import User
 from app.modules.auth.services import (MENSAJE_CREDENCIALES, avisar_bloqueo,
-                                       motivo_de_bloqueo)
+                                       motivo_de_bloqueo, normalizar_correo)
 
 auth_api_bp = Blueprint('api_auth', __name__, url_prefix='/api/v1/auth')
 
@@ -84,14 +84,15 @@ def sso_login():
         return jsonify({'status': 'error',
                         'message': 'Origen no autorizado para SSO.'}), 403
 
-    email = request.headers.get(os.getenv('AUTHELIA_HEADER_USER', 'Remote-Email'))
+    email = normalizar_correo(request.headers.get(
+        os.getenv('AUTHELIA_HEADER_USER', 'Remote-Email')))
     if not email:
         return jsonify({'status': 'error', 'message': 'Sin identidad SSO.'}), 401
 
     name = request.headers.get(
         os.getenv('AUTHELIA_HEADER_NAME', 'Remote-Name'), email)
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter(db.func.lower(User.email) == email).first()
     created = user is None
     if created:
         # Sin rol desde Remote-Groups (SEG-10): solo el superadmin eleva.
@@ -155,10 +156,9 @@ def login():
 
     user = User.query.filter_by(email=email).first()
     if user and user.password_hash and user.check_password(password):
-        if not user.is_active:
-            return jsonify({'status': 'error',
-                            'message': 'La cuenta está desactivada.'}), 403
-        login_user(user, remember=True)
+        # Desactivada: respuesta única, no confirma la contraseña (SEC-AUTH-09).
+        if not user.is_active or not login_user(user, remember=True):
+            return _acceso_fallido(email, 'Local: cuenta desactivada')
         add_audit_log('ACCESO LOCAL', status='success', target=email,
                       detail='Autenticación manual')
         return jsonify({'status': 'success', 'role': user.role})

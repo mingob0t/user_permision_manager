@@ -425,3 +425,30 @@ def test_si_login_user_falla_no_responde_exito(client, directorio,
     assert respuesta.status_code == 401
     assert respuesta.get_json()['message'] == MENSAJE_CREDENCIALES
 
+
+
+def test_mail_con_mayusculas_y_espacios_se_bloquea_sin_duplicar(
+        client, directorio, crear_usuario):
+    # Regresión (re-auditoría, Baja): `Admin@...` con espacios no coincidía
+    # con la cuenta local en minúsculas y se creaba una cuenta duplicada.
+    local = crear_usuario(ROLE_ADMIN, email=CORREO,
+                          contrasena=CONTRASENA_FICTICIA)
+    directorio.agregar(UID, CONTRASENA_FICTICIA,
+                       correo=f'  {CORREO.capitalize()} ')
+
+    respuesta = _entrar(client)
+
+    assert respuesta.status_code == 401
+    assert usuario_en_sesion(client) is None
+    assert User.query.count() == 1
+    cuenta = db.session.get(User, local.id)
+    assert (cuenta.role, cuenta.auth_source) == (ROLE_ADMIN, 'local')
+
+
+def test_cuenta_nueva_guarda_el_mail_normalizado(client, directorio):
+    directorio.agregar(UID, CONTRASENA_FICTICIA,
+                       correo=f' {CORREO.upper()} ')
+
+    assert _entrar(client).status_code == 200
+
+    assert User.query.one().email == CORREO

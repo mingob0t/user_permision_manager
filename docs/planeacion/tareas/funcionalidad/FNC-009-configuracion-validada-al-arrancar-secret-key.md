@@ -49,6 +49,7 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-15 | Deuda registrada por FNC-042: `BASE_URL` sin valor deja relativo el enlace del correo de bienvenida (`auth/services.py`); validarla al arrancar en producción |
 
 ## Nota (2026-10-13)
 - `load_dotenv()` busca `.env` subiendo carpetas: si el proyecto no tiene uno, carga el de la carpeta superior (es de otro proyecto). Cargar solo el `.env` de la raíz del proyecto.

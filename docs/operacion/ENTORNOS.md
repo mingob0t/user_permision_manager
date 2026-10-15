@@ -83,6 +83,11 @@ Qué variables cambian por entorno. El valor de cada una está en `docs/configur
 | `DB_*`, `SECRET_KEY`, `SMTP_*` | `.env` local | `.env` del servidor con secretos de Vaultwarden |
 | `LDAP_*` (FNC-040) | `.env` local; vacío = directorio inactivo | `.env` del servidor; `LDAP_BIND_PASSWORD` de Vaultwarden. Con CA interna: copiar su PEM al servidor y apuntar `LDAP_CA_CERT_FILE` (si no, la app no conecta: el certificado se valida) |
 
+## Requisitos del directorio OpenLDAP (FNC-042)
+- `mail` único en todo el directorio.
+- `mail` no editable por el propio usuario (ACL de OpenLDAP): las cuentas vinculadas del portal confían en él.
+- Authelia usa el mismo OpenLDAP: una cuenta `sso` puede entrar por directorio y una `ldap` por SSO.
+
 ## Discrepancias detectadas en `deploy/README.md`
 
 - La instalación manual menciona `deploy/nexus-*.service` y `deploy/nginx-nexus.conf`, que **no existen**; los archivos reales son plantillas (`*.service.tmpl`, `nginx.conf.tmpl`) con marcadores `@APP_NAME@`, `@PREFIX@`, etc., que rellena `install.sh`.

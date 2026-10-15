@@ -218,6 +218,20 @@ def test_correo_de_una_cuenta_local_se_bloquea(client, sso_activo,
                          target=CORREO_SSO_FICTICIO)
 
 
+def test_correo_con_mayusculas_y_espacios_se_bloquea_sin_duplicar(
+        client, sso_activo, crear_usuario):
+    # Regresión (re-auditoría, Baja): el correo se comparaba sin normalizar.
+    local = crear_usuario(ROLE_ADMIN, email=CORREO_SSO_FICTICIO,
+                          contrasena=CONTRASENA_FICTICIA)
+
+    respuesta = _sso(client, email=f'  {CORREO_SSO_FICTICIO.upper()} ')
+
+    assert respuesta.status_code == 401
+    assert usuario_en_sesion(client) is None
+    assert User.query.count() == 1
+    assert db.session.get(User, local.id).auth_source == 'local'
+
+
 def test_no_cambia_el_origen_de_una_cuenta_ldap(client, sso_activo,
                                                 crear_usuario):
     cuenta = _cuenta_vinculada(crear_usuario, ROLE_USER, origen='ldap',
