@@ -8,9 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | notificaciones |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-15 |
+| **Finalizada** | 2026-10-15 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-048-notificaciones-gestor` (worktree `pokemon-wt-048`) |
 | **Commits / PR** | `8d8a908`, `ecaf71e`, `8f4acba` y el de hashes en ficha y tablero (locales, sin push ni PR) |
@@ -119,3 +120,4 @@ Salida real de `impacto.py` (contra `develop`, con los archivos nuevos en `git a
 | 2026-10-15 | Aprobada por el dueño (comunicado por el orquestador); implementada por desarrollador en `pokemon-wt-048`; migración `0003`; cierra SEG-23 (FNC-017 parcial); queda En revisión (falta revisor y auditor-seguridad) |
 | 2026-10-15 | `auditor-seguridad`: Aprobado. Ajustes: P10 (el aviso de fallo respeta `pref_email_notifications`, decisión del dueño), funciones que nunca lanzan (endurecimiento Baja), nota para llamadores. Sigue En revisión (falta revisor) |
 | 2026-10-15 | `revisor`: Requiere cambios: interruptor global → `skipped`, downgrade de `0003` solo borra lo insertado sin cambios, `REQUERIMIENTOS.md` (OB-02, F-NOT-01), hashes en ficha y tablero. Corregidos; la IP literal de `auth/services.py` queda para FNC-042. Pytest completo: 562 passed, 34 xfailed, código 0. Sigue En revisión |
+| 2026-10-15 | Hecha: revisor y auditor-seguridad atendidos; merge local a `develop` aprobado por el dueño |
