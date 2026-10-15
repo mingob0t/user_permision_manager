@@ -13,7 +13,7 @@
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-042`) |
 | **Rama** | `fnc/FNC-042-login-directorio` |
-| **Commits / PR** | ver Bitácora (commit local `[FNC-042]`, sin push ni PR) |
+| **Commits / PR** | `6332bdd` [FNC-042] (local, sin push ni PR) + commit de registro del hash |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí (autenticación y rol) |
 
