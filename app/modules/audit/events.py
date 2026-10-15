@@ -37,3 +37,4 @@ class Evento(str, Enum):
     CONECTOR_ELIMINADO = 'conector_eliminado'
     CONECTOR_PROBADO = 'conector_probado'
     EJECUCION_REINTENTADA = 'ejecucion_reintentada'
+    NOTIFICACION_FALLIDA = 'notificacion_fallida'

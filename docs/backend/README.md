@@ -35,7 +35,7 @@ app/
     ├── auth/          # Modelos User/AuthConfig y servicios LDAP; rutas heredadas (redirigen/410)
     ├── core/          # Modelos Area/Platform; rutas heredadas
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
-    ├── notifications/ # Modelos SMTP/plantillas/in-app y servicios de correo; rutas heredadas
+    ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
     ├── users/         # Solo rutas heredadas
     └── areas/         # Solo rutas heredadas
@@ -178,7 +178,18 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 
 ### SMTP y plantillas
 - `resolve_smtp_settings()`: con `SMTP_FORCE_ENV=true` manda el entorno (y si falta `SMTP_SERVER` no envía); si no, manda la BD y el entorno es respaldo.
-- `send_notification_by_slug(slug, correo, contexto)`: sustituye `{clave}` en asunto y cuerpo (no es Jinja2), envía HTML o texto según `is_html`. `ENABLE_NOTIFICATIONS=false` corta todo envío. Recarga `.env` en cada envío (`load_dotenv(override=True)`).
+- `send_notification_by_slug(slug, correo, contexto)`: sustituye `{clave}` en asunto y cuerpo en una pasada (no es Jinja2), envía HTML o texto según `is_html`. `ENABLE_NOTIFICATIONS=false` corta todo envío. Recarga `.env` en cada envío (`load_dotenv(override=True)`).
+- Escape (FNC-048, SEG-23): en plantillas HTML los valores pasan por `html.escape`; el asunto sale sin CR/LF; un valor no se vuelve a sustituir (`render_template_text`, `render_subject`).
+- Avisos del gestor (`notifications/access_notifications.py`, FNC-048): una función por evento, llamada **después del commit**; nunca lanza; si falla queda en el log y en auditoría `notificacion_fallida` (actor `sistema`). Interruptor `NOTIFY_ACCESS_EVENTS`. Envío síncrono hasta FNC-049 (ADR-003).
+
+| Función | Plantilla | Destinatarios (activos, en un solo envío) |
+|---|---|---|
+| `notificar_solicitud_nueva(solicitante, plataforma, nivel, justificacion)` | `solicitud_nueva` | Admins (`admin_area`) del área de la plataforma con `pref_email_notifications` |
+| `notificar_solicitud_aprobada(solicitante, plataforma, nivel)` | `solicitud_aprobada` | Solicitante, si tiene `pref_email_notifications` |
+| `notificar_solicitud_rechazada(solicitante, plataforma, nivel, motivo)` | `solicitud_rechazada` | Solicitante, si tiene `pref_email_notifications` |
+| `notificar_aprovisionamiento_fallido(usuario, plataforma, nivel, operacion)` | `aprovisionamiento_fallido` | Admins del área y superadmins, sin mirar la preferencia (P10; *Por confirmar*) |
+
+- Plantillas: migración `0003` (HTML, español, editables en Ajustes → Plantillas); variables en `CLAVES_POR_PLANTILLA`; enlace `{url}` = `BASE_URL`.
 - Plantilla usada por el código: `usuario_creado` (alta por LDAP o SSO, si `NOTIFY_USER_CREATED` no es `false`). Variables: `nombre`, `usuario`, `base_url`, `url`.
 - `add_in_app_notification()` existe en servicios.
 
@@ -191,7 +202,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - `before`/`after` sin contraseñas, hashes, tokens, cookies, cabeceras ni secretos (`audit/sanitizar.py`, SEC-AUD-05).
 - Inmutable (`audit/inmutabilidad.py`): el ORM rechaza `UPDATE`/`DELETE` (por objeto y masivos) con `RegistroInmutable`; sin rutas de edición ni borrado; borrar usuario, área o plataforma deja la referencia en NULL.
 - Migración `0002_auditoria_ampliada`.
-- Se audita: accesos (local, directorio, SSO, fallidos, SSO rechazado), cierre de sesión, CRUD de áreas/plataformas/usuarios, configuración, SMTP, LDAP, respaldos, purgas y altas/bajas automáticas por LDAP.
+- Se audita: accesos (local, directorio, SSO, fallidos, SSO rechazado), cierre de sesión, CRUD de áreas/plataformas/usuarios, configuración, SMTP, LDAP, respaldos, purgas, altas/bajas automáticas por LDAP y correos del gestor no enviados (`notificacion_fallida`, FNC-048).
 
 ## 6. Cómo arrancar en dev
 

@@ -49,3 +49,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-15 | SEG-23 (escape en correos) cerrado por FNC-048: `html.escape` en HTML, asunto sin CR/LF, sustitución de una pasada; regresiones en `tests/test_notificaciones.py` (sin `xfail`). Quedan SEG-21, 24, 26, 29 |

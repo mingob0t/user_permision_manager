@@ -115,9 +115,8 @@ def test_plantilla_html_se_envia_como_html(correo):
     assert _cuerpo(correo.enviados[0]) == '<p>Hola Ana</p>'
 
 
-@pytest.mark.xfail(strict=True, reason='SEG-23 / FNC-017: los valores del '
-                   'contexto se insertan sin escape en plantillas HTML')
 def test_plantilla_html_escapa_los_valores_del_contexto(correo):
+    """Regresión SEG-23 (FNC-048; antes xfail de FNC-017)."""
     _smtp_en_bd()
     _plantilla(cuerpo='<p>Hola {nombre}</p>', html=True)
 
@@ -127,6 +126,40 @@ def test_plantilla_html_escapa_los_valores_del_contexto(correo):
     cuerpo = _cuerpo(correo.enviados[0])
     assert '<a href' not in cuerpo
     assert '&lt;a href' in cuerpo
+
+
+def test_plantilla_de_texto_no_escapa_los_valores(correo):
+    _smtp_en_bd()
+    _plantilla(cuerpo='Hola {nombre}')
+
+    services.send_notification_by_slug(SLUG, DESTINO, {'nombre': 'A & <B>'})
+
+    assert _cuerpo(correo.enviados[0]) == 'Hola A & <B>'
+
+
+def test_asunto_sin_saltos_de_linea_de_los_valores(correo):
+    """Regresión SEC-MAIL-01: un valor con CR/LF no agrega cabeceras."""
+    _smtp_en_bd()
+    _plantilla()
+
+    services.send_notification_by_slug(
+        SLUG, DESTINO, {'nombre': 'Ana\r\nBcc: otro@pruebas.invalid'})
+
+    [mensaje] = correo.enviados
+    assert mensaje['Bcc'] is None
+    assert '\n' not in mensaje['Subject'] and '\r' not in mensaje['Subject']
+    assert mensaje['Subject'] == 'Hola Ana Bcc: otro@pruebas.invalid'
+
+
+def test_un_valor_no_inyecta_otra_variable(correo):
+    """SEC-MAIL-02: la sustitución es de una pasada; `{url}` en un valor queda literal."""
+    _smtp_en_bd()
+    _plantilla(cuerpo='{nombre} - {url}')
+
+    services.send_notification_by_slug(
+        SLUG, DESTINO, {'nombre': '{url}', 'url': 'https://portal.pruebas.invalid'})
+
+    assert _cuerpo(correo.enviados[0]) == '{url} - https://portal.pruebas.invalid'
 
 
 def test_plantilla_inexistente_da_error_sin_enviar(correo):
