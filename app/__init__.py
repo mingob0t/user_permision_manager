@@ -127,6 +127,7 @@ def create_app(config_overrides=None):
     from app.modules.api.crud import crud_bp
     from app.modules.api.admin import admin_bp
     from app.modules.api.auth import auth_api_bp
+    from app.modules.users.api import users_api_bp
 
 
 
@@ -143,7 +144,7 @@ def create_app(config_overrides=None):
     app.register_blueprint(areas_bp)
     # La API v1 usa la cookie de sesión y no formularios, así que no
     # participa del CSRF de Flask-WTF.
-    for bp in (api_bp, crud_bp, admin_bp, auth_api_bp):
+    for bp in (api_bp, crud_bp, admin_bp, auth_api_bp, users_api_bp):
         csrf.exempt(bp)
         app.register_blueprint(bp)
 

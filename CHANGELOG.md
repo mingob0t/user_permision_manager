@@ -17,4 +17,5 @@
 - Pruebas del frontend con Vitest (`npm test`): cliente de la API, `AuditLog`, contraste WCAG de los tokens y tope de colores literales (FNC-025, 2026-10-13).
 
 ### Corregido
+- Solo el superadmin crea o eleva admins y asigna áreas administradas (`PUT /users/<id>/managed-areas`); un admin de área ya no gestiona otros admins ni contraseñas (corrige SEG-05 y SEG-09) (FNC-044, 2026-10-15).
 - El build web ya no falla por lint: enlace de error con `Link` y avisos resueltos (FNC-072, 2026-10-13).

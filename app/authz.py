@@ -38,6 +38,11 @@ def _role(user):
     return (getattr(user, 'role', '') or '').lower()
 
 
+def normalized_role(user):
+    """Rol en minúsculas de cualquier cuenta (no exige sesión)."""
+    return _role(user)
+
+
 def _valid(user):
     return bool(user) and user.is_authenticated
 
@@ -180,8 +185,8 @@ def can_manage_platform(platform, user=None):
 def can_manage_user(target, user=None):
     """True si `user` puede administrar la cuenta `target`.
 
-    Un admin de área solo puede administrar usuarios de sus áreas, y nunca a un
-    superadmin.
+    Un admin de área solo administra cuentas con rol `usuario` de sus áreas:
+    nunca a otro admin de área ni al superadmin (SEC-AUTHZ-06, SEG-05).
     """
     if target is None:
         return False
@@ -190,7 +195,7 @@ def can_manage_user(target, user=None):
         return True
     if not is_area_admin(user):
         return False
-    if is_admin(target):
+    if _role(target) != ROLE_USER:
         return False
     managed = set(managed_area_ids(user))
     return bool(managed & {a.id for a in (target.areas or [])})

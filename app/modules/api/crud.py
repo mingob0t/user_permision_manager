@@ -12,9 +12,13 @@ from app import db
 from app.authz import (admin_required, any_admin_required, area_admin_required,
                        can_manage_area, can_manage_user, is_admin,
                        platform_manage_required, scoped_areas, scoped_users)
+from app.modules.api.helpers import error_response
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
+from app.modules.users.roles import (ORIGEN_LOCAL, cambiar_rol,
+                                     campos_no_permitidos, es_el_mismo_rol,
+                                     rol_asignable)
 from app.utils.naming import sanitize_display_name
 
 crud_bp = Blueprint('api_crud', __name__, url_prefix='/api/v1')
@@ -24,8 +28,8 @@ def _payload():
     return request.get_json(silent=True) or {}
 
 
-def _error(message, status=400):
-    return jsonify({'status': 'error', 'message': message}), status
+def _error(message, status=400, code=None):
+    return error_response(message, status, code)
 
 
 # --------------------------------------------------------------------------- #
@@ -233,23 +237,16 @@ def set_platform_users(platform_id):
 # Usuarios
 # --------------------------------------------------------------------------- #
 
-ASSIGNABLE_ROLES = ('usuario', 'admin_area')
 RESERVED_NAMES = ('admin',)
 
-
-def _check_role(role):
-    """Valida el rol solicitado según quién lo pide.
-
-    Solo el superadmin puede crear o promover a superadmin; sin esto, un admin
-    de área podría escalar privilegios a través del formulario.
-    """
-    if not role:
-        return None, None
-    if role == 'administrador' and not is_admin():
-        return None, 'No puedes asignar el rol de administrador global.'
-    if role != 'administrador' and role not in ASSIGNABLE_ROLES:
-        return None, f'Rol no válido: {role}'
-    return role, None
+# Errores del contrato `areas-y-roles.md` (FNC-044).
+NOT_FOUND = ('Recurso no encontrado.', 404, 'no_encontrado')
+FIELD_NOT_ALLOWED = ('Hay campos que no se pueden enviar.', 400,
+                     'campo_no_permitido')
+RESERVED_ROLE = ('Ese rol no se puede asignar.', 403, 'rol_reservado')
+OWN_ROLE = ('No puedes cambiar tu propio rol.', 403, 'operacion_propia')
+PASSWORD_FORBIDDEN = ('Solo el superadmin cambia contraseñas locales.', 403,
+                      'sin_permiso')
 
 
 @crud_bp.route('/users', methods=['POST'])
@@ -264,10 +261,13 @@ def create_user():
         return _error('Ese identificador está reservado por el sistema.', 403)
     if User.query.filter(db.func.lower(User.email) == email).first():
         return _error('El correo ya está registrado.', 409)
+    if campos_no_permitidos(data):
+        return _error(*FIELD_NOT_ALLOWED)
 
-    role, problem = _check_role(data.get('role') or 'usuario')
-    if problem:
-        return _error(problem, 403)
+    # Solo el superadmin crea admins de área; nadie crea superadmins (RF-04).
+    role = data.get('role') or 'usuario'
+    if not rol_asignable(role):
+        return _error(*RESERVED_ROLE)
 
     # Solo áreas dentro del alcance de quien crea.
     allowed = {a.id for a in scoped_areas().all()}
@@ -277,13 +277,13 @@ def create_user():
         email=email,
         nombre=sanitize_display_name(data.get('name'), fallback=email),
         role=role,
-        auth_source=data.get('auth_source') or 'local',
+        auth_source=ORIGEN_LOCAL,
         is_active=data.get('is_active', True),
     )
     user.set_password(data.get('password') or 'nexus123')
+    # Un admin_area nace sin áreas administradas: se asignan aparte con
+    # `PUT /users/<id>/managed-areas` (solo superadmin).
     user.areas = Area.query.filter(Area.id.in_(area_ids)).all()
-    if role == 'admin_area':
-        user.managed_areas = user.areas
 
     db.session.add(user)
     db.session.commit()
@@ -297,31 +297,39 @@ def create_user():
 @any_admin_required
 def update_user(user_id):
     target = User.query.get_or_404(user_id)
+    # Fuera de alcance (otra área, otro admin o el superadmin): 404 (SEC-AUTHZ-04).
     if not can_manage_user(target):
-        return _error('No puedes administrar este usuario.', 403)
+        return _error(*NOT_FOUND)
 
     data = _payload()
-    if 'role' in data:
-        role, problem = _check_role(data['role'])
-        if problem:
-            return _error(problem, 403)
-        target.role = role
-        # Dejar de ser admin_area retira las áreas administradas.
-        if role != 'admin_area':
-            target.managed_areas = []
+    if campos_no_permitidos(data):
+        return _error(*FIELD_NOT_ALLOWED)
 
+    # Enviar el rol que ya tiene no es una asignación: se ignora.
+    new_role = data.get('role')
+    change_role = 'role' in data and not es_el_mismo_rol(target, new_role)
+    if change_role:
+        if target.id == current_user.id:
+            return _error(*OWN_ROLE)
+        if not rol_asignable(new_role):
+            return _error(*RESERVED_ROLE)
+
+    # Contraseña: solo el superadmin, y solo de cuentas locales; el portal no
+    # maneja contraseñas del directorio ni del SSO (SEC-AUTH-12, SEG-05, P8).
+    if data.get('password'):
+        if not is_admin():
+            return _error(*PASSWORD_FORBIDDEN)
+        if (target.auth_source or ORIGEN_LOCAL) != ORIGEN_LOCAL:
+            return _error(*FIELD_NOT_ALLOWED)
+
+    if change_role:
+        cambiar_rol(target, new_role)
     if 'name' in data:
         target.nombre = sanitize_display_name(data['name'], fallback=target.email)
     if 'is_active' in data:
         target.is_active = bool(data['is_active'])
     if data.get('password'):
         target.set_password(data['password'])
-
-    if 'managed_area_ids' in data:
-        allowed = {a.id for a in scoped_areas().all()}
-        ids = [i for i in data['managed_area_ids'] if i in allowed]
-        keep = [a for a in (target.managed_areas or []) if a.id not in allowed]
-        target.managed_areas = keep + Area.query.filter(Area.id.in_(ids)).all()
 
     db.session.commit()
     add_audit_log(f"EDITAR USUARIO: {target.email}", module='Usuarios',
@@ -335,7 +343,7 @@ def update_user(user_id):
 def delete_user(user_id):
     target = User.query.get_or_404(user_id)
     if not can_manage_user(target):
-        return _error('No puedes administrar este usuario.', 403)
+        return _error(*NOT_FOUND)
     if target.id == current_user.id:
         return _error('No puedes eliminar tu propia cuenta.', 409)
     if target.email in RESERVED_NAMES:

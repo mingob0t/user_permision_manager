@@ -15,6 +15,7 @@ from app.authz import (any_admin_required, area_admin_required, can_manage_area,
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
+from app.modules.users.serializacion import usuario_gestionado
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -168,17 +169,7 @@ def list_favorites():
 def list_users():
     """Usuarios que el solicitante puede administrar."""
     users = scoped_users().order_by(User.email).all()
-    return jsonify([{
-        'id': u.id,
-        'email': u.email,
-        'name': u.nombre or u.email,
-        'role': u.role,
-        'is_active': u.is_active,
-        'auth_source': u.auth_source,
-        'areas': [{'id': a.id, 'name': a.name} for a in (u.areas or [])],
-        'managed_areas': [{'id': a.id, 'name': a.name} for a in (u.managed_areas or [])],
-        'last_login_at': u.last_login_at.isoformat() if u.last_login_at else None,
-    } for u in users])
+    return jsonify([usuario_gestionado(u) for u in users])
 
 
 @api_bp.route('/users/<int:user_id>/areas', methods=['PUT'])

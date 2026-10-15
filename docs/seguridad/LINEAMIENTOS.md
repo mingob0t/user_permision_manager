@@ -160,8 +160,8 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 | `app/modules/auth/services.py` | 01, 12 / 13 / 10 / 21, 26 | 002 / 012 / 013 / 017 |
 | `app/modules/api/auth.py` | 01, 12 / 02 / 04 / 10 / 11 / 14 | 002 / 003 / 006 / 013 / 014 / 008 |
 | `app/__init__.py` | 03 / 06, 14 / 07 / 29 | 003 / 008 / 009 / 017 |
-| `app/authz.py` | 05 | 007 |
-| `app/modules/api/crud.py` | 02 / 05, 09 / 06 / 24 | 003 / 007 / 008 / 017 |
+| `app/authz.py` | — (05 cerrado por FNC-044) | — |
+| `app/modules/api/crud.py` | 02 / 06 / 24 (05 y 09 cerrados por FNC-044) | 003 / 008 / 017 |
 | `app/modules/api/admin.py` | 06 / 08, 17, 22 / 13 / 21, 29 | 008 / 010 / 012 / 017 |
 | `auth/models.py`, `notifications/models.py` | 08 | 010 |
 | `notifications/services.py` | 23 | 017 |

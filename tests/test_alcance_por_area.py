@@ -41,14 +41,6 @@ USUARIOS = (USUARIO_A, USUARIO_B)
 AREA_DE = {ADMIN_A: 'A', ADMIN_B: 'B', USUARIO_A: 'A', USUARIO_B: 'B'}
 OTRA = {'A': 'B', 'B': 'A'}
 
-_SEG05 = pytest.mark.xfail(
-    strict=True,
-    reason='SEG-20261013-05 / FNC-007: un admin_area administra a otro '
-           'admin_area que es miembro de su área')
-_SEG09 = pytest.mark.xfail(
-    strict=True,
-    reason='SEG-20261013-09 / FNC-007: admin_area asigna managed_area_ids '
-           '(RF-04: solo el superadmin crea o eleva admins)')
 _SEG16 = pytest.mark.xfail(
     strict=True,
     reason='SEG-20261013-16 / FNC-015: la auditoría del admin_area se filtra '
@@ -376,25 +368,27 @@ def test_managed_area_ids_ajeno_no_se_asigna(alcance, cliente_como):
         [a.id for a in _usuario(esc.actor[USUARIO_A]).managed_areas]
 
 
-@_SEG09
 @pytest.mark.parametrize('area', ('A', 'B'))
 def test_admin_area_no_asigna_managed_area_ids(alcance, cliente_como, area):
+    """SEG-09 (FNC-044, antes xfail): `managed_area_ids` ya no se acepta en
+    `PUT /users/<id>` (contrato: `400 campo_no_permitido`)."""
     esc = alcance
     respuesta = _como(cliente_como, esc, ADMIN_A).put(
         f'{A}/users/{esc.actor[USUARIO_A]}',
         json={'managed_area_ids': [esc.area[area]]})
-    _assert_denegado(respuesta, (403,))
+    _assert_denegado(respuesta, (400,))
+    assert respuesta.get_json()['code'] == 'campo_no_permitido'
     assert _usuario(esc.actor[USUARIO_A]).managed_areas == []
 
 
 def test_admin_a_no_toca_al_admin_de_otra_area(alcance, cliente_como):
-    """Admin de B sin membresía en A: hoy ya queda fuera de alcance."""
+    """Admin de B sin membresía en A: fuera de alcance, 404 (SEC-AUTHZ-04)."""
     esc = alcance
     hash_antes = _usuario(esc.actor[ADMIN_B]).password_hash
     respuesta = _como(cliente_como, esc, ADMIN_A).put(
         f'{A}/users/{esc.actor[ADMIN_B]}',
         json={'password': CONTRASENA_NUEVA, 'role': ROLE_USER})
-    _assert_denegado(respuesta, (403,))
+    _assert_denegado(respuesta, (404,))
     cuenta = _usuario(esc.actor[ADMIN_B])
     assert cuenta.role == ROLE_AREA_ADMIN
     assert cuenta.password_hash == hash_antes
@@ -411,7 +405,6 @@ def admin_b_miembro_de_a(alcance):
     return cuenta.id
 
 
-@_SEG05
 @pytest.mark.parametrize('metodo,cuerpo', [
     ('PUT', {'password': CONTRASENA_NUEVA}),
     ('PUT', {'role': ROLE_USER}),
@@ -420,10 +413,12 @@ def admin_b_miembro_de_a(alcance):
 ])
 def test_admin_area_no_toma_cuenta_de_otro_admin_area(
         alcance, cliente_como, admin_b_miembro_de_a, metodo, cuerpo):
+    """SEG-05 (FNC-044, antes xfail): otro admin, aunque sea miembro del área,
+    queda fuera de alcance: 404 (contrato areas-y-roles.md)."""
     esc = alcance
     respuesta = _como(cliente_como, esc, ADMIN_A).open(
         f'{A}/users/{admin_b_miembro_de_a}', method=metodo, json=cuerpo)
-    _assert_denegado(respuesta, (403,))
+    _assert_denegado(respuesta, (404,))
     cuenta = _usuario(admin_b_miembro_de_a)
     assert cuenta is not None and cuenta.is_active
     assert cuenta.role == ROLE_AREA_ADMIN

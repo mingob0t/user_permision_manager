@@ -65,21 +65,19 @@ def test_entrada_invalida_devuelve_400(app, cliente_como, metodo, ruta,
     _assert_error_estandar(respuesta)
 
 
-_RF04 = pytest.mark.xfail(
-    strict=True,
-    reason='SEG-20261013-09 / FNC-007: admin_area puede asignar admin_area '
-           '(RF-04: solo el superadmin crea o eleva admins)')
-
-
+# RF-04 (FNC-044, antes xfail por SEG-09): solo el superadmin crea o eleva
+# admins de área, y nadie crea un segundo superadmin (`403 rol_reservado`).
 @pytest.mark.parametrize('rol,metodo,rol_pedido,esperado', [
     (ROLE_ADMIN, 'POST', ROLE_AREA_ADMIN, 201),
-    (ROLE_ADMIN, 'POST', ROLE_ADMIN, 201),
+    (ROLE_ADMIN, 'POST', ROLE_ADMIN, 403),
     (ROLE_ADMIN, 'PUT', ROLE_AREA_ADMIN, 200),
+    (ROLE_ADMIN, 'PUT', ROLE_ADMIN, 403),
     (ROLE_AREA_ADMIN, 'POST', ROLE_USER, 201),
+    (ROLE_AREA_ADMIN, 'PUT', ROLE_USER, 200),
     (ROLE_AREA_ADMIN, 'POST', ROLE_ADMIN, 403),
     (ROLE_AREA_ADMIN, 'PUT', ROLE_ADMIN, 403),
-    pytest.param(ROLE_AREA_ADMIN, 'POST', ROLE_AREA_ADMIN, 403, marks=_RF04),
-    pytest.param(ROLE_AREA_ADMIN, 'PUT', ROLE_AREA_ADMIN, 403, marks=_RF04),
+    (ROLE_AREA_ADMIN, 'POST', ROLE_AREA_ADMIN, 403),
+    (ROLE_AREA_ADMIN, 'PUT', ROLE_AREA_ADMIN, 403),
 ])
 def test_solo_el_superadmin_crea_o_eleva_admins(app, cliente_como, rol, metodo,
                                                 rol_pedido, esperado):
@@ -96,3 +94,4 @@ def test_solo_el_superadmin_crea_o_eleva_admins(app, cliente_como, rol, metodo,
     assert respuesta.status_code == esperado, respuesta.get_data(as_text=True)
     if esperado in CODIGOS_DENEGADOS:
         _assert_error_estandar(respuesta)
+        assert respuesta.get_json()['code'] == 'rol_reservado'

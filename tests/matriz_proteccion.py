@@ -76,6 +76,7 @@ class Escenario:
     plataforma_id: int
     objetivo_id: int
     cuenta_local_email: str
+    admin_objetivo_id: int
 
 
 def crear_escenario():
@@ -91,9 +92,12 @@ def crear_escenario():
     objetivo = fabricas.crear_usuario(ROLE_USER, areas=[area])
     cuenta_local = fabricas.crear_usuario(ROLE_USER,
                                           contrasena=CONTRASENA_FICTICIA)
+    # Admin de área sin áreas: destino de `PUT /users/<id>/managed-areas`.
+    admin_objetivo = fabricas.crear_usuario(ROLE_AREA_ADMIN)
     return Escenario(area_id=area.id, area_vacia_id=area_vacia.id,
                      plataforma_id=plataforma.id, objetivo_id=objetivo.id,
-                     cuenta_local_email=cuenta_local.email)
+                     cuenta_local_email=cuenta_local.email,
+                     admin_objetivo_id=admin_objetivo.id)
 
 
 def crear_actor(rol, esc):
@@ -283,6 +287,11 @@ CASOS = (
     Caso('PUT', f'{A}/users/<int:user_id>/platforms', _objetivo('/platforms'),
          administradores(),
          lambda esc: {'json': {'platform_ids': [esc.plataforma_id]}}),
+    Caso('PUT', f'{A}/users/<int:user_id>/managed-areas',
+         lambda esc: f'{A}/users/{esc.admin_objetivo_id}/managed-areas',
+         solo_superadmin(),
+         lambda esc: {'json': {'area_ids': [esc.area_id]}},
+         nota='FNC-044: solo el superadmin asigna áreas administradas'),
     Caso('PUT', f'{A}/me/preferences', _fija(f'{A}/me/preferences'),
          con_sesion(), _json({'tour_enabled': False})),
     Caso('GET', f'{A}/users/inactive', _fija(f'{A}/users/inactive'),
