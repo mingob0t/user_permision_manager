@@ -1,4 +1,4 @@
-"""Cliente único de OpenLDAP (solo lectura) con TLS validado (FNC-040).
+"""Cliente único de OpenLDAP con TLS validado (FNC-040).
 
 - Conexión de servicio por LDAPS o StartTLS, con `CERT_REQUIRED`, verificación
   del nombre del host y la CA de `LDAP_CA_CERT_FILE` (o la del sistema).
@@ -8,7 +8,9 @@
 - Los errores salen como `ErrorDirectorio` con un mensaje genérico; el detalle
   va al log, nunca con la contraseña de bind.
 
-La escritura (membresía de grupos y alta de cuentas) es de FNC-041.
+Las lecturas usan una conexión de solo lectura. La escritura (membresía de
+grupos y alta de cuentas, FNC-041) vive en `writer.py` y pide la conexión con
+`solo_lectura=False`.
 """
 import logging
 import ssl
@@ -46,7 +48,15 @@ MENSAJE_AMBIGUO = 'El identificador corresponde a más de una persona.'
 
 
 class ErrorDirectorio(Exception):
-    """Fallo controlado del directorio; el mensaje es apto para el cliente."""
+    """Fallo controlado del directorio; el mensaje es apto para el cliente.
+
+    `causa` guarda la excepción de `ldap3` para clasificarla (FNC-041); nunca
+    se muestra al cliente.
+    """
+
+    def __init__(self, mensaje, causa=None):
+        super().__init__(mensaje)
+        self.causa = causa
 
 
 @dataclass(frozen=True)
@@ -106,11 +116,12 @@ class ClienteDirectorio:
             detalle = detalle.replace(contrasena, '***')
         logger.error('Directorio: fallo en %s (%s): %s', operacion,
                      type(exc).__name__, detalle)
-        return ErrorDirectorio(MENSAJE_ERROR)
+        return ErrorDirectorio(MENSAJE_ERROR, causa=exc)
 
     @contextmanager
-    def conexion_servicio(self):
-        """Conexión de solo lectura autenticada con la cuenta de servicio.
+    def conexion_servicio(self, solo_lectura=True):
+        """Conexión autenticada con la cuenta de servicio (de solo lectura
+        salvo `solo_lectura=False`, que solo usa `writer.py`).
 
         `ldap://` negocia StartTLS antes de enviar la credencial.
         """
@@ -120,7 +131,8 @@ class ClienteDirectorio:
             conexion = Connection(
                 self._servidor(), user=cfg.bind_dn, password=cfg.bind_password,
                 client_strategy=ESTRATEGIA, receive_timeout=cfg.tiempo_espera,
-                auto_referrals=False, raise_exceptions=True, read_only=True)
+                auto_referrals=False, raise_exceptions=True,
+                read_only=solo_lectura)
             conexion.open()
             if not cfg.usa_ldaps:
                 conexion.start_tls()

@@ -159,10 +159,20 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 ### Cliente OpenLDAP centralizado (`app/modules/directory/`, FNC-040)
 - Activo solo con `LDAP_URL`; la configuración (`LDAP_*`, ver `VARIABLES.md`) se valida en `create_app()` y, si falla, la app no arranca.
 - TLS obligatorio: `ldaps://` o `ldap://` + StartTLS antes del bind; `CERT_REQUIRED`, nombre del host verificado, CA de `LDAP_CA_CERT_FILE` o del sistema.
-- `ClienteDirectorio`: `conexion_servicio()` (solo lectura), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`.
+- `ClienteDirectorio`: `conexion_servicio(solo_lectura=True)` (escritura solo desde `writer.py`), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`.
 - Escape: `escapar_filtro` (RFC 4515) y `escapar_valor_dn` (RFC 4514).
-- Errores: `ErrorDirectorio` con mensaje genérico; detalle al log sin la contraseña de bind.
-- Aún sin llamadores: login (FNC-042), búsqueda y prueba de conexión (FNC-043) siguen en el código heredado de abajo; escritura en FNC-041.
+- Errores: `ErrorDirectorio` con mensaje genérico y `causa` (excepción de `ldap3`, solo para clasificar); detalle al log sin la contraseña de bind.
+- Aún sin llamadores: login (FNC-042), búsqueda y prueba de conexión (FNC-043) siguen en el código heredado de abajo.
+
+### Escritura en OpenLDAP (`app/modules/directory/writer.py`, FNC-041)
+- `EscritorDirectorio(cliente)`: `add_member(group_dn, user)`, `remove_member(group_dn, user)`, `create_user(DatosCuenta)`; sin borrado de cuentas.
+- Devuelve `ResultadoEscritura` (`errors.py`): `hecho`, `ya_estaba`, `no_existe`, `error_transitorio` (reintentable), `error_permanente`; nunca lanza por fallos del directorio.
+- Solo bajo `LDAP_GROUPS_BASE_DN` / `LDAP_USERS_BASE_DN` (RDN normalizados); fuera → `error_permanente` `fuera_de_base` sin conectar.
+- Membresía: lee el grupo y aplica un solo `MODIFY_ADD`/`MODIFY_DELETE`; DN comparados normalizados; `memberUid` usa el identificador.
+- Último miembro de `groupOfNames`/`groupOfUniqueNames`: con `LDAP_GROUP_PLACEHOLDER_MEMBER` agrega el relleno y quita al usuario en la misma operación; sin él, `error_permanente` `ultimo_miembro`.
+- Alta: DN `LDAP_USER_ATTR=<uid escapado>,LDAP_USERS_BASE_DN`; clases `LDAP_USER_OBJECT_CLASSES`; `cn`, `sn`, `givenName`, `mail`; sin `userPassword` (P8: Authelia).
+- La cuenta de servicio es la misma de `LDAP_BIND_DN`; su ACL de escritura acotada a esas OU es del administrador del directorio (SEC-LDAP-03).
+- Sin llamadores hasta FNC-049 (ejecutor) y FNC-064 (alta de cuentas); que el grupo pertenezca a una plataforma lo valida el llamador.
 
 ### LDAP / OpenLDAP (solo lectura)
 - Configuración en la tabla `auth_config`, editable desde Ajustes → Directorio. No hay variables de entorno para LDAP (salvo `DEBUG_LDAP`).

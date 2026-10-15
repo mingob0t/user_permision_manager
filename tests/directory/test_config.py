@@ -9,6 +9,7 @@ from app import create_app
 from app.modules.directory.configuracion import (ATRIBUTO_MIEMBRO_POR_DEFECTO,
                                           ATRIBUTO_USUARIO_POR_DEFECTO,
                                           CLASE_GRUPO_POR_DEFECTO,
+                                          CLASES_USUARIO_POR_DEFECTO,
                                           TIEMPO_ESPERA_POR_DEFECTO,
                                           ErrorConfiguracionDirectorio,
                                           cargar_configuracion,
@@ -159,3 +160,36 @@ def test_create_app_arranca_con_directorio_valido(monkeypatch, tmp_path):
     aplicacion = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI':
                              f"sqlite:///{tmp_path / 'pruebas.db'}"})
     assert aplicacion is not None
+
+
+# --------------------------------------------------------------------------- #
+# Variables de la escritura (FNC-041)
+# --------------------------------------------------------------------------- #
+
+def test_escritura_por_defecto_inetorgperson_y_sin_relleno():
+    cfg = cargar_configuracion(_con())
+
+    assert cfg.clases_usuario == CLASES_USUARIO_POR_DEFECTO == ('inetOrgPerson',)
+    assert cfg.miembro_relleno is None
+
+
+def test_clases_y_relleno_se_leen_de_variables():
+    cfg = cargar_configuracion(_con(
+        LDAP_USER_OBJECT_CLASSES='inetOrgPerson, posixAccount',
+        LDAP_GROUP_PLACEHOLDER_MEMBER='cn=sin-miembros,dc=pruebas,dc=local'))
+
+    assert cfg.clases_usuario == ('inetOrgPerson', 'posixAccount')
+    assert cfg.miembro_relleno == 'cn=sin-miembros,dc=pruebas,dc=local'
+
+
+@pytest.mark.parametrize('valor', ['inetOrgPerson,', 'a)(b', 'inet Org'])
+def test_clases_invalidas_detienen_el_arranque(valor):
+    with pytest.raises(ErrorConfiguracionDirectorio,
+                       match='LDAP_USER_OBJECT_CLASSES'):
+        cargar_configuracion(_con(LDAP_USER_OBJECT_CLASSES=valor))
+
+
+def test_relleno_que_no_es_dn_detiene_el_arranque():
+    with pytest.raises(ErrorConfiguracionDirectorio,
+                       match='LDAP_GROUP_PLACEHOLDER_MEMBER'):
+        cargar_configuracion(_con(LDAP_GROUP_PLACEHOLDER_MEMBER='no es un dn'))

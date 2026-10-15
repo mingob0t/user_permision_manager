@@ -24,6 +24,7 @@
 | `sanitize_display_name` | Función | `app/utils/naming.py` | Normalizar nombres | `crud.py` |
 | `redis_registry` | Cliente | `app/utils/redis_client.py` | Registro Redis | `app/__init__.py:93` |
 | `ClienteDirectorio`, `escapar_filtro`, `escapar_valor_dn`, `ErrorDirectorio` | Cliente | `app/modules/directory/ldap_client.py` | Única conexión a OpenLDAP (TLS validado, espera, escape); todo uso nuevo de `ldap3` pasa por aquí | (sin llamadores hasta FNC-041/042/043) |
+| `EscritorDirectorio`, `DatosCuenta`, `ResultadoEscritura`, `Resultado`, `clasificar_error` | Servicio | `app/modules/directory/writer.py`, `errors.py` | Única escritura en OpenLDAP (membresía y alta de cuentas), idempotente y con resultado tipificado | (sin llamadores hasta FNC-049/064) |
 | `cargar_configuracion`, `validar_al_arrancar` | Configuración | `app/modules/directory/configuracion.py` | Configuración del directorio desde `LDAP_*` (ADR-004) | `app/__init__.py`, `ldap_client.py` |
 | `construir_uri_bd` | Función | `app/utils/uri_bd.py` | URI de la BD desde `DB_*` | `app/__init__.py`, `migrations/env.py` |
 | `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py:191` | Envío de correo por plantilla | auth, SSO, admin |

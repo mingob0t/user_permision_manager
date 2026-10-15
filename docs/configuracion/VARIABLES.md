@@ -43,6 +43,8 @@
 | `LDAP_GROUP_OBJECT_CLASS` | Clase de los grupos | `groupOfNames` / `groupOfUniqueNames` / `posixGroup` | `groupOfNames` | `groupOfNames` | No | No | Sí | `app/modules/directory/configuracion.py` | FNC-040, 2026-10-14 | Vigente (sin llamadores hasta FNC-041/042/043) |
 | `LDAP_GROUP_MEMBER_ATTR` | Atributo de membresía del grupo (`memberUid` guarda el identificador; el resto, el DN) | nombre de atributo LDAP | `member` | `member` | No | No | Sí | `app/modules/directory/configuracion.py` | FNC-040, 2026-10-14 | Vigente (sin llamadores hasta FNC-041/042/043) |
 | `LDAP_TIMEOUT_SECONDS` | Espera de conexión y de respuesta del directorio | entero > 0 | `5` | `5` | No | No | Sí | `app/modules/directory/configuracion.py` | FNC-040, 2026-10-14 | Vigente (sin llamadores hasta FNC-041/042/043) |
+| `LDAP_USER_OBJECT_CLASSES` | Clases de las cuentas que crea el portal | clases LDAP separadas por coma | `inetOrgPerson` | `inetOrgPerson` | No | No | Sí | `configuracion.py`, `writer.py` | FNC-041, 2026-10-15 | Vigente (sin llamadores hasta FNC-064) |
+| `LDAP_GROUP_PLACEHOLDER_MEMBER` | Miembro de relleno al quitar al último miembro de un `groupOfNames`/`groupOfUniqueNames` | DN | vacío (no se quita el último miembro: `error_permanente`) | `cn=<sin-miembros>,<base>` | No | No | Sí | `configuracion.py`, `writer.py` | FNC-041, 2026-10-15 | Vigente (sin llamadores hasta FNC-049) |
 | `SMTP_FORCE_ENV` | `true`: el SMTP sale siempre del entorno y la interfaz queda en solo lectura | booleano (`1/true/yes/on/si`) | `false` | `false` | No | No | Sí | `notifications/services.py`, `api/admin.py` | FNC-001, 2026-10-13 | Vigente |
 | `SMTP_SERVER` | Servidor SMTP (respaldo o forzado) | nombre de host | ninguno (sin él no hay config de entorno) | `smtp.<dominio>` | Sí si `SMTP_FORCE_ENV` | No | Sí (vacío) | `notifications/services.py` | FNC-001, 2026-10-13 | Vigente |
 | `SMTP_PORT` | Puerto SMTP | entero | `587` | `587` | No | No | Sí | `notifications/services.py` | FNC-001, 2026-10-13 | Vigente |
@@ -123,6 +125,9 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `ESQUEMAS_PERMITIDOS` | Esquemas de `LDAP_URL` y puerto por defecto | `ldaps` 636 / `ldap` 389 (StartTLS) | — | `app/modules/directory/configuracion.py` | FNC-040, 2026-10-14 | Vigente |
 | `LIMITE_BUSQUEDA_USUARIO` | Entradas pedidas al buscar una persona (2 = detectar duplicados) | 2 | entradas | `app/modules/directory/ldap_client.py` | FNC-040, 2026-10-14 | Vigente |
 | `ATRIBUTOS_PERFIL` | Atributos de perfil leídos de la persona | `mail`, `cn`, `displayName` | — | `app/modules/directory/ldap_client.py` | FNC-040, 2026-10-14 | Vigente |
+| `CLASES_GRUPO_CON_MIEMBRO_OBLIGATORIO` | Clases de grupo que no pueden quedar sin miembros | `groupOfNames`, `groupOfUniqueNames` | — | `app/modules/directory/writer.py` | FNC-041, 2026-10-15 | Vigente |
+| `ATRIBUTO_NOMBRE_COMPLETO`, `ATRIBUTO_APELLIDO`, `ATRIBUTO_NOMBRE`, `ATRIBUTO_CORREO` | Atributos que se llenan en el alta de cuenta | `cn`, `sn`, `givenName`, `mail` | — | `app/modules/directory/writer.py` | FNC-041, 2026-10-15 | Vigente |
+| `ERRORES_TRANSITORIOS` | Errores de `ldap3` que se reintentan | red, espera, `busy`, `unavailable`, límites de tiempo/administración | — | `app/modules/directory/errors.py` | FNC-041, 2026-10-15 | Vigente |
 | Gunicorn | Workers / timeout / puerto | 4 / 120 s / 5001 | — | `deploy/backend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | Puerto del backend en dev | Puerto de `run.py` | 5001 | — | `run.py` | FNC-001, 2026-10-13 | Vigente |
 | `client_max_body_size` | Tamaño máximo de petición en nginx | 64 | MB | `deploy/nginx.conf.tmpl` | FNC-001, 2026-10-13 | Vigente |

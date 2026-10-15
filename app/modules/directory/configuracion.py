@@ -28,6 +28,8 @@ VAR_ATRIBUTO_USUARIO = 'LDAP_USER_ATTR'
 VAR_CLASE_GRUPO = 'LDAP_GROUP_OBJECT_CLASS'
 VAR_ATRIBUTO_MIEMBRO = 'LDAP_GROUP_MEMBER_ATTR'
 VAR_TIEMPO_ESPERA = 'LDAP_TIMEOUT_SECONDS'
+VAR_CLASES_USUARIO = 'LDAP_USER_OBJECT_CLASSES'
+VAR_MIEMBRO_RELLENO = 'LDAP_GROUP_PLACEHOLDER_MEMBER'
 
 # Valores por defecto: esquema estándar de OpenLDAP (inetOrgPerson y
 # groupOfNames), no datos de un directorio real.
@@ -35,6 +37,8 @@ ATRIBUTO_USUARIO_POR_DEFECTO = 'uid'
 CLASE_GRUPO_POR_DEFECTO = 'groupOfNames'
 ATRIBUTO_MIEMBRO_POR_DEFECTO = 'member'
 TIEMPO_ESPERA_POR_DEFECTO = 5  # segundos; el mismo que usaba el código heredado
+# Clases de una cuenta creada por el portal (FNC-041); separadas por coma.
+CLASES_USUARIO_POR_DEFECTO = ('inetOrgPerson',)
 
 # Esquema de la URL → (TLS desde la conexión, puerto por defecto).
 # `ldap://` siempre negocia StartTLS antes del bind.
@@ -71,6 +75,9 @@ class ConfiguracionDirectorio:
     clase_grupo: str = CLASE_GRUPO_POR_DEFECTO
     atributo_miembro: str = ATRIBUTO_MIEMBRO_POR_DEFECTO
     tiempo_espera: int = TIEMPO_ESPERA_POR_DEFECTO
+    clases_usuario: tuple = CLASES_USUARIO_POR_DEFECTO
+    # Miembro que ocupa un grupo que exige al menos uno (FNC-041); None = sin él.
+    miembro_relleno: str | None = None
 
 
 def _leer(entorno, nombre):
@@ -155,6 +162,24 @@ def _tiempo_espera(entorno):
     return segundos
 
 
+def _clases_usuario(entorno):
+    valor = _leer(entorno, VAR_CLASES_USUARIO)
+    if not valor:
+        return CLASES_USUARIO_POR_DEFECTO
+    clases = tuple(clase.strip() for clase in valor.split(','))
+    if not all(_NOMBRE_ATRIBUTO.match(clase) for clase in clases):
+        raise ErrorConfiguracionDirectorio(
+            f'{VAR_CLASES_USUARIO} debe ser una lista de clases de LDAP '
+            'separadas por coma.')
+    return clases
+
+
+def _miembro_relleno(entorno):
+    if not _leer(entorno, VAR_MIEMBRO_RELLENO):
+        return None
+    return _dn(entorno, VAR_MIEMBRO_RELLENO)
+
+
 def _ca_cert_file(entorno):
     ruta = _leer(entorno, VAR_CA_CERT_FILE)
     if not ruta:
@@ -187,6 +212,8 @@ def cargar_configuracion(entorno=None):
         atributo_miembro=_nombre_atributo(
             entorno, VAR_ATRIBUTO_MIEMBRO, ATRIBUTO_MIEMBRO_POR_DEFECTO),
         tiempo_espera=_tiempo_espera(entorno),
+        clases_usuario=_clases_usuario(entorno),
+        miembro_relleno=_miembro_relleno(entorno),
     )
 
 
