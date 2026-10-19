@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | configuracion-directorio |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Inicio** | 2026-10-18 |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-043`) |
@@ -132,3 +132,4 @@
 | 2026-10-18 | Aprobada (modo autónomo, vía orquestador); implementada en `fnc/FNC-043-configuracion-directorio`; 805 passed, 17 xfailed, código 0; En revisión (falta revisor y auditor-seguridad) |
 - auditor-seguridad (modo cambio, 2026-10-18): **Aprobado**; cierra SEG-08, 13, 21 y 22 en la parte LDAP; SMTP y respaldo siguen en FNC-010/016.
 - revisor (2026-10-18): **Requiere cambios** → corregidos: bitácora y fila de DIS-023, riesgo de staging, `impacto.py` actual, `correos_registrados` a `app/modules/users/correos.py`, `_a_usuario` en `ldap_client.py`, contrato aclarado (aditivo). Sigue En revisión.
+- Cierre (2026-10-19): revisor y auditor-seguridad atendidos; merge local a `develop` (modo autónomo autorizado por el dueño).
