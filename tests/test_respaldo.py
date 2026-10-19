@@ -8,6 +8,7 @@ import json
 import zipfile
 
 import pytest
+from sqlalchemy import text
 
 from app import db
 from app.authz import ROLE_ADMIN, ROLE_USER
@@ -30,12 +31,16 @@ def configuracion(app):
     """Portal, LDAP, SMTP, una plantilla y una cuenta local con contraseña."""
     db.session.add_all([
         SystemConfig(portal_name='Portal respaldado'),
-        AuthConfig(ldap_host=HOST_LDAP_FICTICIO, ldap_base_dn='dc=pruebas',
-                   ldap_pass=CLAVE_LDAP),
+        AuthConfig(ldap_host=HOST_LDAP_FICTICIO, ldap_base_dn='dc=pruebas'),
         SMTPConfig(server=HOST_SMTP_FICTICIO, port=2525, password=CLAVE_SMTP),
         NotificationTemplate(slug='aviso', name='Aviso', subject='Asunto',
                              body='Cuerpo'),
     ])
+    db.session.commit()
+    # BD previa a la migración 0004 (FNC-043): contraseña de bind guardada.
+    # Por SQL directo: el modelo ya no permite escribirla.
+    db.session.execute(text('UPDATE auth_config SET ldap_pass = :clave'),
+                       {'clave': CLAVE_LDAP})
     db.session.commit()
     return fabricas.crear_usuario(ROLE_USER, email='local@pruebas.local',
                                   contrasena=CONTRASENA_FICTICIA)
@@ -141,6 +146,17 @@ def test_importar_no_borra_las_contrasenas_guardadas(configuracion,
 
     assert SMTPConfig.query.one().password == CLAVE_SMTP
     assert AuthConfig.query.one().ldap_pass == CLAVE_LDAP
+
+
+def test_importar_no_escribe_la_clave_de_bind(app, cliente_admin):
+    """FNC-043: un respaldo con `ldap_pass` no la devuelve a la BD."""
+    carga = {'payload': {'auth_config': {'ldap_host': HOST_LDAP_FICTICIO,
+                                         'ldap_pass': CLAVE_LDAP}}}
+
+    respuesta = _importar(cliente_admin, _zip(json.dumps(carga)))
+
+    assert respuesta.status_code == 200
+    assert AuthConfig.query.one().ldap_pass is None
 
 
 def test_importar_no_sobrescribe_usuarios_existentes(configuracion,

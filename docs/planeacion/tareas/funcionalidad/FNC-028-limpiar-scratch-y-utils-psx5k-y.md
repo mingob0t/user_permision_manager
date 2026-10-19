@@ -47,3 +47,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-18 | FNC-043 retiró `validate_ldap_connection`: `utils/test_ldap.py` y `utils/nexus_health.py` la importan (ya fallaban: la llamaban sin argumentos); limpiar o pasar a `ClienteDirectorio` aquí |

@@ -50,3 +50,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-18 | Resto cerrado por FNC-043 (En revisión): prueba de conexión y búsqueda sobre el cliente centralizado (TLS validado, `uid`, filtro escapado); `validate_ldap_connection` retirada y `ldap3` solo en `app/modules/directory/` (SEC-LDAP-01). Con FNC-042, FNC-012 queda cubierta |

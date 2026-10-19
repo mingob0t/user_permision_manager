@@ -1,6 +1,7 @@
 from app import db
 from datetime import datetime
 from flask_login import UserMixin
+from sqlalchemy.orm import validates
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Helper Table for Area-User Relationship
@@ -54,6 +55,12 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password_hash, password)
 
 class AuthConfig(db.Model):
+    """Configuración LDAP heredada: OBSOLETA desde FNC-043.
+
+    El directorio se configura solo con las variables `LDAP_*` (ADR-004,
+    `app/modules/directory/configuracion.py`); nada lee estas columnas, que
+    se conservan para el respaldo y la reversión (migración 0004).
+    """
     __tablename__ = 'auth_config'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -62,15 +69,25 @@ class AuthConfig(db.Model):
     ldap_ssl = db.Column(db.Boolean, default=False)
     ldap_base_dn = db.Column(db.String(200), nullable=True)
     ldap_user = db.Column(db.String(100), nullable=True)
+    # Obsoleta (FNC-043, SEG-08): la migración 0004 la vacía y no se escribe
+    # más; la credencial de bind es `LDAP_BIND_PASSWORD` (SEC-LDAP-11).
     ldap_pass = db.Column(db.String(100), nullable=True)
     ldap_user_attr = db.Column(db.String(50), default='sAMAccountName')
     
-    # Role Mapping (LDAP Groups)
+    # Mapeo de roles por grupos: obsoleto (FNC-042, RF-04); nada lo lee.
     ldap_group_admin = db.Column(db.String(200), nullable=True)
     ldap_group_user = db.Column(db.String(200), nullable=True)
     ldap_role_mappings = db.Column(db.Text, nullable=True) # JSON string for dynamic mappings
     
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    @validates('ldap_pass')
+    def _sin_credencial_en_bd(self, clave, valor):
+        """La credencial de bind nunca vuelve a la BD (SEC-CFG-03)."""
+        if valor:
+            raise ValueError('auth_config.ldap_pass es obsoleta: la credencial '
+                             'de bind va en LDAP_BIND_PASSWORD.')
+        return None
 
     def to_dict(self):
         return {

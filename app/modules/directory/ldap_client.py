@@ -27,8 +27,12 @@ from ldap3.utils.conv import escape_filter_chars
 from ldap3.utils.dn import escape_rdn, parse_dn
 
 from app.modules.directory.configuracion import cargar_configuracion
+from app.modules.directory.depuracion import activar_si_se_pide
 
 logger = logging.getLogger(__name__)
+
+# `DEBUG_LDAP` (antes en `auth/services.py`, al importar; FNC-043).
+activar_si_se_pide()
 
 # Estrategia de `ldap3`. Las pruebas la cambian por `MOCK_SYNC` (sin red).
 ESTRATEGIA = SYNC
@@ -43,6 +47,9 @@ ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR = frozenset({'memberuid'})
 # Una búsqueda por identificador debe dar a lo sumo una persona; se piden dos
 # para detectar duplicados.
 LIMITE_BUSQUEDA_USUARIO = 2
+
+# Personas devueltas por la búsqueda libre del alta desde el directorio (FNC-043).
+LIMITE_BUSQUEDA_PERSONAS = 50
 
 MENSAJE_ERROR = 'No se pudo consultar el directorio.'
 MENSAJE_AMBIGUO = 'El identificador corresponde a más de una persona.'
@@ -211,6 +218,35 @@ class ClienteDirectorio:
             identificador=_texto(entrada, cfg.atributo_usuario) or str(identificador),
             atributos={nombre: _texto(entrada, nombre)
                        for nombre in ATRIBUTOS_PERFIL})
+
+    def buscar_personas(self, texto, limite=LIMITE_BUSQUEDA_PERSONAS):
+        """Personas cuyo `LDAP_USER_ATTR`, `mail`, `cn` o `displayName`
+        contiene `texto` (FNC-043), bajo `LDAP_USERS_BASE_DN`.
+
+        El texto se escapa: `*` o `)(` se buscan literalmente. Si hay más de
+        `limite`, se devuelven las primeras `limite`.
+        """
+        cfg = self.configuracion
+        valor = escapar_filtro(texto)
+        filtro = '(|{})'.format(''.join(
+            f'({atributo}=*{valor}*)'
+            for atributo in (cfg.atributo_usuario, *ATRIBUTOS_PERFIL)))
+        atributos = [cfg.atributo_usuario, *ATRIBUTOS_PERFIL]
+        with self.conexion_servicio() as conexion:
+            try:
+                conexion.search(cfg.usuarios_base_dn, filtro, SUBTREE,
+                                attributes=atributos, size_limit=limite)
+            except LDAPSizeLimitExceededResult:
+                pass  # se usan las entradas ya recibidas
+            except LDAPException as exc:
+                raise self.registrar_error('búsqueda de personas', exc) from None
+            entradas = list(conexion.entries)[:limite]
+        return [UsuarioDirectorio(
+            dn=entrada.entry_dn,
+            identificador=_texto(entrada, cfg.atributo_usuario),
+            atributos={nombre: _texto(entrada, nombre)
+                       for nombre in ATRIBUTOS_PERFIL})
+            for entrada in entradas]
 
     def grupos_de_usuario(self, usuario):
         """DN de los grupos (`LDAP_GROUP_OBJECT_CLASS`) de los que es miembro.

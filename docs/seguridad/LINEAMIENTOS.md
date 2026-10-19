@@ -157,13 +157,13 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 
 | Módulo | SEG | FNC |
 |---|---|---|
-| `app/modules/auth/services.py` | 13 (solo `validate_ldap_connection`) / 21, 26 (01, 10, 12 cerrados y la IP de 26 quitada por FNC-042) | 012 resto en FNC-043 / 017 |
+| `app/modules/auth/services.py` | 21, 26 (01, 10, 12 cerrados y la IP de 26 quitada por FNC-042; 13 cerrado por FNC-043: `validate_ldap_connection` retirada) | 017 |
 | `app/modules/api/auth.py` | 02 / 04 / 11 / 14 (01, 10, 12 cerrados por FNC-042) | 003 / 006 / 014 / 008 |
 | `app/__init__.py` | 03 / 06, 14 / 07 / 29 | 003 / 008 / 009 / 017 |
 | `app/authz.py` | — (05 cerrado por FNC-044) | — |
 | `app/modules/api/crud.py` | 02 / 06 / 24 (05 y 09 cerrados por FNC-044) | 003 / 008 / 017 |
-| `app/modules/api/admin.py` | 06 / 08, 17, 22 / 13 / 21, 29 | 008 / 010 / 012 / 017 |
-| `auth/models.py`, `notifications/models.py` | 08 | 010 |
+| `app/modules/api/admin.py` | 06 / 08 (SMTP), 17 / 21, 29 (FNC-043 movió LDAP a `directory/api.py` y cerró 08 de LDAP, 13, 22 y 21 de LDAP) | 008 / 010 / 017 |
+| `notifications/models.py` (`auth/models.py`: 08 cerrado por FNC-043) | 08 | 010 |
 | `notifications/services.py` | — (23 cerrado por FNC-048) | — |
 | `api/routes.py` (`/audit`), `audit/` | 16 (25 cerrado por FNC-047) | 060 (015 parcial); requisito previo de FNC-054/056 |
 | `run.py` | 18 | 009 |

@@ -41,7 +41,6 @@ import pytest  # noqa: E402
 
 from app import create_app, db  # noqa: E402
 from app.authz import ROLE_ADMIN, ROLE_AREA_ADMIN, ROLE_USER  # noqa: E402
-from app.modules.auth import services as auth_services  # noqa: E402
 from app.modules.directory import ldap_client  # noqa: E402
 from app.utils.redis_client import RedisClient  # noqa: E402
 from tests import fabricas  # noqa: E402
@@ -64,7 +63,6 @@ def sin_servicios_externos(monkeypatch):
     monkeypatch.setattr(RedisClient, 'connect', lambda self: None)
     monkeypatch.setattr(smtplib, 'SMTP', _bloqueado('SMTP'))
     monkeypatch.setattr(smtplib, 'SMTP_SSL', _bloqueado('SMTP'))
-    monkeypatch.setattr(auth_services, 'Connection', _bloqueado('LDAP'))
     monkeypatch.setattr(ldap_client, 'Connection', _bloqueado('LDAP'))
 
 
