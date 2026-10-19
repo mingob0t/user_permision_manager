@@ -119,6 +119,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 
 - Orden de carga en `app/layout.tsx`: `styles/tokens.css` → `styles/global.css` → `styles/components.css` → `app/globals.css` (Tailwind).
 - **Tokens:** variables CSS en `styles/tokens.css` (`--color-primary`, `--color-body-bg`, `--color-panel-fill`, `--color-input-*`, `--color-tab-*`, `--color-success`, `--radius-base`, `--radius-panel`, etc.), muchas como canales `R G B` para admitir opacidad.
+- **Marca como texto (DIS-001):** `primary`, `brand`, `accent`, `accent-sky`, `peach` son rellenos. Como texto se usa `text-primary-text`, `text-brand-text`, `text-accent-text`, `text-accent-sky-text`, `text-accent-peach-text` (>= 4.5:1 por tema). Relleno con texto encima: `bg-primary-solid` + `text-on-primary`. `texto-de-marca.test.ts` falla si vuelve `text-primary`.
 - **Tailwind** (`tailwind.config.ts`) mapea esas variables a utilidades (`bg-panel-fill`, `text-label`, `bg-primary/15`…). Fuente `Inter`.
 - **Tema claro/oscuro:** claro en `:root, html.light`; oscuro automático por `@media (prefers-color-scheme: dark)` (salvo `html.light`) y forzable con `html.dark`. Existen temas adicionales (`theme-emerald-light`, `theme-obsidian-dark`, `theme-rose-light`, `theme-violet-dark`). **No hay selector de tema en la interfaz**: solo aplica la preferencia del sistema.
 - Clases de componentes portadas del portal original en `components.css` (`.nexus-btn`, `.nx-badge-*`, `.nx-modal-glass`, estilos tipo DataTables `.dt-*`).

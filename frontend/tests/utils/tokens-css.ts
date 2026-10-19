@@ -15,7 +15,8 @@ export type Variables = Record<string, string>;
 /** Selector de cada contexto y nombre legible. El base es `:root, html.light`. */
 export const CONTEXTOS = {
   claro: ':root, html.light',
-  'so-oscuro': ':root:not(.light)',
+  // DIS-001: excluye los temas con nombre (no deben recibir el bloque oscuro).
+  'so-oscuro': ':root:not(.light):not([class*="theme-"])',
   'html.dark': 'html.dark',
   emerald: 'html.theme-emerald-light',
   obsidian: 'html.theme-obsidian-dark',

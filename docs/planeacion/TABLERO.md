@@ -37,8 +37,8 @@
 | FNC-033 | Validar el contraste de los colores elegidos por el usuario (onColor) | web | 4 | tema | Media | Propuesta | 2026-10-13 | | | — | Depende de DIS-001 |
 | FNC-034 | Semántica accesible: aria-label contextual, scope en th y texto del tipo de notificación | web | 4 | global | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-035 | Depurar documentación obsoleta (business_rules, ARCHITECTURE, README raíz, deploy/README) | infra | 6 | docs | Baja | Propuesta | 2026-10-13 | | | — |  |
-| DIS-001 | Completar tokens por tema: panel-header-text, badge, on-primary, brand y accent en oscuro | web | 4 | tokens | Alta | Propuesta | 2026-10-13 | | | — |  |
-| DIS-002 | Tokens semánticos de texto (success, danger, warning, primary) y sustituir clases Tailwind literales | web | 4 | tokens | Alta | Propuesta | 2026-10-13 | | | — |  |
+| DIS-001 | Completar tokens por tema: panel-header-text, badge, on-primary, brand y accent en oscuro | web | 4 | tokens | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `dis/DIS-001-tokens-por-tema` (commit local `a46ee94`, sin push) | Adelantada de fase 4 (las pantallas de fase 3 usan sus tokens); desbloquea DIS-004 y FNC-033; 56 celdas de contraste pasan; decisiones del orquestador en la ficha |
+| DIS-002 | Tokens semánticos de texto (success, danger, warning) y sustituir clases Tailwind literales | web | 4 | tokens | Alta | Propuesta | 2026-10-13 | | | — | `primary` como texto absorbido por DIS-001 |
 | DIS-003 | Gráfica del inicio: corregir variables --nx-* inexistentes y colores de ejes | web | 4 | dashboard | Alta | Propuesta | 2026-10-13 | | | — |  |
 | DIS-004 | Botones: texto sobre primary por token, peligro y advertencia, hover del secundario | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — | Depende de DIS-001 |
 | DIS-005 | Texto atenuado con tokens muted de 4.5:1 | web | 4 | tokens | Media | Propuesta | 2026-10-13 | | | — |  |

@@ -16,7 +16,7 @@ const TONES: Record<string, string> = {
   success: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
   error: 'bg-red-500/15 text-red-600 dark:text-red-300',
   warning: 'bg-amber-500/15 text-amber-600 dark:text-amber-300',
-  info: 'bg-primary/15 text-primary',
+  info: 'bg-primary/15 text-primary-text',
 };
 
 export function NotificationsList() {

@@ -201,7 +201,7 @@ function PlatformAdminContent() {
                             type="button"
                             onClick={(e) => open(e, () => setEditing(platform))}
                             aria-label={`Editar ${platform.name}`}
-                            className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
+                            className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
                           >
                             Editar
                           </button>

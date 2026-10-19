@@ -52,7 +52,7 @@ function TagPicker<T extends { id: number; name: string }>({
             }
             className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
               on
-                ? 'border-primary bg-primary/15 text-primary'
+                ? 'border-primary bg-primary/15 text-primary-text'
                 : 'border-panel-border text-label hover:text-body-text'
             }`}
           >
@@ -527,7 +527,7 @@ export function UsersList() {
                   <button
                     type="button"
                     onClick={() => setEditing(user)}
-                    className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
+                    className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
                   >
                     Editar
                   </button>
