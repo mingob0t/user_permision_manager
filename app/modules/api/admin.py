@@ -2,7 +2,9 @@
 API v1 — configuración del sistema.
 
 Todo aquí es exclusivo del superadmin: identidad del portal, SMTP, plantillas
-de correo y LDAP. Un admin de área administra su tenant, no el sistema.
+de correo y respaldo. Un admin de área administra su tenant, no el sistema.
+El directorio (`/auth-config`, `/directory/search`) vive en
+`app/modules/directory/api.py` (FNC-043).
 """
 
 import json
@@ -332,85 +334,6 @@ def delete_notifications():
 
 
 # --------------------------------------------------------------------------- #
-# LDAP
-# --------------------------------------------------------------------------- #
-
-@admin_bp.route('/auth-config')
-@login_required
-@admin_required
-def get_auth_config():
-    config = AuthConfig.query.first()
-    # to_dict() omite ldap_pass a propósito.
-    return jsonify(config.to_dict() if config else AuthConfig().to_dict())
-
-
-@admin_bp.route('/auth-config', methods=['PUT'])
-@login_required
-@admin_required
-def save_auth_config():
-    config = AuthConfig.query.first()
-    if config is None:
-        config = AuthConfig()
-        db.session.add(config)
-
-    data = _payload()
-    for field in ('ldap_host', 'ldap_base_dn', 'ldap_user', 'ldap_user_attr',
-                  'ldap_group_admin', 'ldap_group_user'):
-        if field in data:
-            setattr(config, field, data[field])
-    if 'ldap_port' in data:
-        try:
-            config.ldap_port = int(data['ldap_port'])
-        except (TypeError, ValueError):
-            return _error('Puerto no válido.')
-    if 'ldap_ssl' in data:
-        config.ldap_ssl = bool(data['ldap_ssl'])
-    if data.get('ldap_pass'):
-        config.ldap_pass = data['ldap_pass']
-    if 'ldap_role_mappings' in data:
-        mappings = data['ldap_role_mappings']
-        config.ldap_role_mappings = (
-            mappings if isinstance(mappings, str) else json.dumps(mappings))
-
-    db.session.commit()
-    add_audit_log('ACTUALIZAR CONFIGURACIÓN LDAP', module='Seguridad',
-                  status='success')
-    return jsonify({'status': 'success', 'config': config.to_dict()})
-
-
-@admin_bp.route('/auth-config/test', methods=['POST'])
-@login_required
-@admin_required
-def test_auth_config():
-    """Comprueba la conexión con el directorio."""
-    from app.modules.auth.services import validate_ldap_connection
-
-    # Se prueban los valores del payload si vienen, para poder validar antes de
-    # guardar; si no, lo que ya está configurado.
-    data = _payload()
-    config = AuthConfig.query.first()
-    if config is None and not data:
-        return _error('No hay configuración de directorio.')
-
-    try:
-        result = validate_ldap_connection(
-            host=data.get('ldap_host') or (config.ldap_host if config else None),
-            port=int(data.get('ldap_port') or (config.ldap_port if config else 389)),
-            use_ssl=data.get('ldap_ssl', config.ldap_ssl if config else False),
-            bind_dn=data.get('ldap_user') or (config.ldap_user if config else None),
-            bind_pass=data.get('ldap_pass') or (config.ldap_pass if config else None),
-        )
-    except Exception as exc:
-        return _error(f'Error al conectar: {exc}', 502)
-
-    ok = (result or {}).get('status') == 'success'
-    add_audit_log('PRUEBA LDAP', module='Seguridad',
-                  status='success' if ok else 'error',
-                  detail=str((result or {}).get('message'))[:200])
-    return jsonify(result), (200 if ok else 502)
-
-
-# --------------------------------------------------------------------------- #
 # Respaldo y restauración
 # --------------------------------------------------------------------------- #
 
@@ -570,76 +493,3 @@ def import_backup():
     add_audit_log('IMPORTAR CONFIGURACIÓN', module='Ajustes', status='success',
                   detail=f"Restaurado: {', '.join(restored) or 'nada'}")
     return jsonify({'status': 'success', 'restored': restored})
-
-
-# --------------------------------------------------------------------------- #
-# Búsqueda en el directorio
-# --------------------------------------------------------------------------- #
-
-def _escape_ldap_filter(value):
-    """Escapa un valor para un filtro LDAP (RFC 4515).
-
-    Sin esto, un asterisco o un paréntesis en la búsqueda alteran la estructura
-    del filtro: con `*)(objectClass=*` se podría ampliar el conjunto devuelto
-    más allá de lo buscado.
-    """
-    replacements = {'\\': r'\5c', '*': r'\2a', '(': r'\28',
-                    ')': r'\29', '\0': r'\00', '/': r'\2f'}
-    return ''.join(replacements.get(char, char) for char in value)
-
-
-@admin_bp.route('/directory/search')
-@login_required
-@admin_required
-def directory_search():
-    """Busca usuarios en el directorio corporativo, para darlos de alta."""
-    query = (request.args.get('q') or '').strip()
-    if len(query) < 2:
-        return _error('Indica al menos dos caracteres.')
-
-    config = AuthConfig.query.first()
-    if not config or not config.ldap_host:
-        return _error('El directorio no está configurado.')
-
-    try:
-        import ssl as ssl_module
-
-        from ldap3 import Connection, Server, Tls
-
-        tls = None
-        if config.ldap_ssl:
-            tls = Tls(validate=ssl_module.CERT_NONE,
-                      version=ssl_module.PROTOCOL_TLSv1_2)
-        server = Server(config.ldap_host, port=int(config.ldap_port or 389),
-                        use_ssl=config.ldap_ssl, tls=tls, connect_timeout=5)
-
-        safe = _escape_ldap_filter(query)
-        ldap_filter = (f'(|(sAMAccountName=*{safe}*)(mail=*{safe}*)'
-                       f'(displayName=*{safe}*))')
-
-        with Connection(server, user=config.ldap_user, password=config.ldap_pass,
-                        auto_bind=True, auto_referrals=False) as conn:
-            conn.search(config.ldap_base_dn, ldap_filter,
-                        attributes=['mail', 'displayName', 'cn',
-                                    'sAMAccountName', 'uid'],
-                        size_limit=50)
-
-            def attr(entry, name, fallback=''):
-                return str(entry[name].value) if name in entry else fallback
-
-            results = [{
-                'name': attr(entry, 'displayName') or attr(entry, 'cn'),
-                'email': attr(entry, 'mail'),
-                'account': attr(entry, 'sAMAccountName') or attr(entry, 'uid'),
-            } for entry in conn.entries]
-
-    except Exception as exc:
-        return _error(f'No se pudo consultar el directorio: {exc}', 502)
-
-    # Marca quién existe ya en Nexus, para no ofrecer un alta duplicada.
-    from app.modules.auth.models import User
-    emails = {(u.email or '').lower() for u in User.query.all()}
-    for item in results:
-        item['exists'] = (item['email'] or '').lower() in emails
-
-    return jsonify({'count': len(results), 'users': results})

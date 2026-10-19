@@ -58,3 +58,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-18 | FNC-043 (En revisión) cambia la API: `GET /auth-config` → `{active, source, editable: false, config, origins, variables, error}` (sin `ldap_*` ni clave); `PUT` y `POST /auth-config/test` sin cuerpo (cualquier campo → `400 campo_no_permitido`); `409 directorio_no_configurado` y `503 directorio_no_disponible`; búsqueda con `q` 2–64. Contrato: [usuarios-directorio.md → Configuración del directorio](../../../contratos/usuarios-directorio.md#configuración-del-directorio-fnc-043-consumidor-dis-023). La pestaña actual no funciona hasta esta tarea |

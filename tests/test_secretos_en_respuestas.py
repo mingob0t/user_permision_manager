@@ -5,6 +5,7 @@ de contraseña aparecen, venga la configuración de la BD o del entorno.
 """
 
 import pytest
+from sqlalchemy import text
 
 from app import db
 from app.modules.auth.models import AuthConfig
@@ -35,8 +36,15 @@ def smtp_en_bd(app):
 
 @pytest.fixture
 def ldap_en_bd(app):
-    db.session.add(AuthConfig(ldap_host=HOST_LDAP_FICTICIO,
-                              ldap_user='cn=servicio', ldap_pass=CLAVE_LDAP))
+    """BD previa a la migración 0004 (FNC-043): clave de bind guardada.
+
+    Por SQL directo: el modelo ya no permite escribirla.
+    """
+    db.session.execute(text(
+        'INSERT INTO auth_config (ldap_host, ldap_user, ldap_pass) '
+        'VALUES (:host, :usuario, :clave)'),
+        {'host': HOST_LDAP_FICTICIO, 'usuario': 'cn=servicio',
+         'clave': CLAVE_LDAP})
     db.session.commit()
 
 
@@ -67,22 +75,19 @@ def test_get_auth_config(ldap_en_bd, cliente_admin):
     _sin_secretos(cliente_admin.get(f'{A}/auth-config'), CLAVE_LDAP)
 
 
-def test_put_auth_config_no_devuelve_la_clave(app, cliente_admin):
+def test_put_auth_config_no_guarda_la_clave(app, cliente_admin):
+    """FNC-043 (SEG-08): la clave de bind ya no se guarda en la BD."""
     respuesta = cliente_admin.put(f'{A}/auth-config', json={
         'ldap_host': HOST_LDAP_FICTICIO, 'ldap_pass': CLAVE_LDAP})
 
-    _sin_secretos(respuesta, CLAVE_LDAP)
-    assert AuthConfig.query.one().ldap_pass == CLAVE_LDAP
+    assert respuesta.status_code == 400
+    assert respuesta.get_json()['code'] == 'campo_no_permitido'
+    assert CLAVE_LDAP not in respuesta.get_data(as_text=True)
+    assert AuthConfig.query.filter(AuthConfig.ldap_pass.isnot(None)).count() == 0
 
 
-@pytest.mark.parametrize('ruta,campo,modelo,clave', [
-    ('/smtp', 'password', SMTPConfig, CLAVE_SMTP),
-    ('/auth-config', 'ldap_pass', AuthConfig, CLAVE_LDAP),
-])
-def test_clave_vacia_no_borra_la_guardada(smtp_en_bd, ldap_en_bd,
-                                          cliente_admin, ruta, campo, modelo,
-                                          clave):
-    respuesta = cliente_admin.put(A + ruta, json={campo: ''})
+def test_clave_vacia_no_borra_la_guardada(smtp_en_bd, cliente_admin):
+    respuesta = cliente_admin.put(f'{A}/smtp', json={'password': ''})
 
     assert respuesta.status_code == 200
-    assert getattr(modelo.query.one(), campo) == clave
+    assert SMTPConfig.query.one().password == CLAVE_SMTP

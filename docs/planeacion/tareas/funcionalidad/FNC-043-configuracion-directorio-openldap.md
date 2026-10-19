@@ -8,10 +8,12 @@
 | **Fase** | 3 |
 | **Módulo / Área** | configuracion-directorio |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | Hecha |
+| **Inicio** | 2026-10-18 |
 | **Creada** | 2026-10-13 |
-| **Estatus Git** | — |
-| **Rama** | `fnc/FNC-043-configuracion-directorio-openldap` |
+| **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-043`) |
+| **Rama** | `fnc/FNC-043-configuracion-directorio` |
+| **Commits / PR** | `e8939b4` [FNC-043] (local, sin push ni PR) + commit de registro del hash |
 | **Requiere migración BD** | Sí (vaciar y marcar obsoleta `auth_config.ldap_pass`) |
 | **Requiere auditor-seguridad** | Sí (secretos) |
 
@@ -50,6 +52,12 @@
 - `app/__init__.py` (registro del blueprint)
 - `tests/directory/test_api.py`
 
+### Archivos reales
+- Nuevos: `app/modules/directory/api.py` (rutas), `resumen.py` (vista sin secretos), `depuracion.py` (`DEBUG_LDAP`), `migrations/versions/0004_vaciar_credencial_ldap.py`
+- Cambiados: `directory/ldap_client.py` (`buscar_personas`, `LIMITE_BUSQUEDA_PERSONAS`), `api/admin.py` (−rutas LDAP y búsqueda), `auth/services.py` (−`validate_ldap_connection`, −`ldap3`), `auth/models.py` (obsoleta + validador), `app/__init__.py` (blueprint)
+- Pruebas: `tests/directory/test_api.py`, `test_aislamiento.py`, `tests/test_migracion_0004.py` (nuevas); `conftest.py`, `matriz_proteccion.py`, `test_respaldo.py`, `test_secretos_en_respuestas.py` (ajustadas)
+- Docs: contrato `usuarios-directorio.md` (sección configuración), `VARIABLES.md`, `HISTORIAL.md`, `docs/backend/README.md`, `LINEAMIENTOS.md` §11, CHANGELOG, log
+
 ## Reutilización
 - Cliente de FNC-040
 - `admin_required` de `app/authz.py`
@@ -57,19 +65,31 @@
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
-| `/api/v1/auth-config` y `/directory/search` | Endpoints | Pestaña Directorio (`settings-panel.tsx`), alta de usuarios desde el directorio (`users-list.tsx`) | Pendiente |
-| `AuthConfig` | Modelo | `app/__init__.py`, `auth/services.py`, `api/admin.py`, respaldo `GET/POST /backup` | Pendiente |
-| `app/__init__.py` | Arranque | Toda la app | Pendiente |
+| `/api/v1/auth-config` (GET/PUT/POST test) | Endpoints (forma nueva) | Pestaña Directorio (`settings-panel.tsx`, `api.ts`, `types.ts`): **deja de funcionar** hasta DIS-023 (lee `ldap_*`, envía `ldap_pass` y host al probar → 400) | Pendiente (DIS-023) |
+| `/api/v1/directory/search` | Endpoint (misma forma) | Alta desde el directorio (`users-list.tsx`): mismos campos `name/email/account/exists`; errores nuevos `409`/`503` y `q` ≤ 64 | Pruebas; pantalla: validar el dueño |
+| `AuthConfig` | Modelo | Respaldo `GET/POST /backup` (sin cambios de formato), `tests/directorio_falso.py`, `test_login_directorio.py`, `utils/test_ldap.py`, `utils/nexus_health.py` | Pruebas; `utils/` ver Decisiones |
+| `ClienteDirectorio.buscar_personas` (nuevo, solo agregado) | Método | `directory/api.py` | Pruebas |
+| `validate_ldap_connection` (retirada) | Función | Solo `utils/test_ldap.py`, `utils/nexus_health.py` (ya fallaban) | FNC-028 |
+| `app/__init__.py` | Arranque | Toda la app (una línea de import y el blueprint en la tupla) | Suite completa |
+| `tests/conftest.py`, `tests/matriz_proteccion.py` | Base de pruebas | Toda la suite | Suite completa |
+
+### Salida real de `impacto.py` (2026-10-18, tras las correcciones del revisor)
+- 14 nombres (el revisor contó 13; `buscar_usuario` se suma por `_a_usuario`):
+  - Reales: `/auth-config`, `/auth-config/test`, `/directory/search` (movidas a `directory/api.py`; consumidor `frontend/src/lib/api.ts` → DIS-023; los `_moved(...)` heredados solo citan la ruta), `AuthConfig` (obsoleto; respaldo, dobles de prueba y `utils/`), `validate_ldap_connection` (retirada; solo `utils/`, FNC-028)
+  - `buscar_usuario`: misma firma y resultado; ahora arma la persona con `_a_usuario` (`test_ldap_client.py`, `test_tls.py` pasan)
+  - `purge_inactive_users`: sin cambios; contexto del diff
+  - Homónimos: `_codigo` (helper de `test_api.py` / `test_roles_y_areas_administradas.py`), `directorio` (fixture de `test_api.py` / palabra y fixtures en el resto), `upgrade`/`downgrade` (funciones de cada migración de Alembic), `__init__`/`search` (doble `_ConexionLdapFalsa` retirado y wrapper de `test_api.py`), `configuracion` (fixture de `test_respaldo.py` / módulo `directory/configuracion.py`)
 
 ## Variables y configuración
 - Las de FNC-040 pasan a ser la fuente; `auth_config.ldap_pass` marcada obsoleta en `VARIABLES.md` (configuración en BD) con motivo.
+- Hecho: sin variables de entorno nuevas (`.env.example` sin cambios); `auth_config.*` obsoletos en `VARIABLES.md` (sección nueva "Configuración en la BD"); `DEBUG_LDAP` movida; constantes `LIMITE_BUSQUEDA_PERSONAS`, `MIN_BUSQUEDA`, `MAX_BUSQUEDA`; todo en `HISTORIAL.md` con motivo
 
 ## Criterios de aceptación
-- [ ] Ninguna respuesta incluye la credencial (prueba)
-- [ ] Un `PUT` con contraseña o host nuevo para probar con la guardada se rechaza (prueba)
-- [ ] El respaldo `GET /backup` deja de exportar `ldap_pass` (prueba)
-- [ ] La búsqueda en el directorio funciona con `uid` y escapa la entrada
-- [ ] Criterios comunes backend (FNC-037)
+- [x] Ninguna respuesta incluye la credencial (`_sin_credenciales` en GET/PUT/test; `test_secretos_en_respuestas.py`)
+- [x] `PUT` con contraseña o `POST /test` con host nuevo se rechazan (`test_put_rechaza_credenciales_y_cualquier_campo`, `test_prueba_no_acepta_un_host_nuevo_con_la_clave_guardada`)
+- [x] El respaldo no exporta ni importa `ldap_pass` (`test_exportar_no_incluye_contrasenas_de_servicio` con clave previa por SQL, `test_importar_no_escribe_la_clave_de_bind`)
+- [x] Búsqueda con `uid` y entrada escapada (`test_busqueda_por_uid_...`, `test_busqueda_escapa_la_entrada`); OpenLDAP real no verificado
+- [ ] Criterios comunes backend (FNC-037): pruebas, errores genéricos, variables e impacto hechos; falta revisor y auditor-seguridad
 
 ## Impacto cruzado
 - Genera → DIS-023
@@ -77,11 +97,39 @@
 - Depende de → FNC-036, FNC-019, FNC-040, FNC-039, FNC-038
 - Contrato → docs/contratos/usuarios-directorio.md (sección configuración)
 
+## Verificación
+| Comando | Resultado real |
+|---|---|
+| `venv/bin/python -m pytest -q` (antes, `develop` 636d145) | 771 passed, 17 xfailed, código 0 |
+| 8 regresiones contra el código anterior (`git stash -u` de `app/` y `migrations/`) | 8 failed: PUT guarda la clave, prueba con host del cuerpo, `str(exc)` en prueba y búsqueda, `ldap3` y `CERT_NONE` fuera del paquete, migración 0004 ×2 |
+| `venv/bin/python -m pytest -q` (después) | 805 passed, 17 xfailed, código 0 (+34 pruebas) |
+| `venv/bin/python -m pytest -q` (tras el revisor) | 805 passed, 17 xfailed, código 0 |
+- Sin `xfail` que quitar: ninguno cubría SEG-08/13/21/22
+- No verificado: OpenLDAP real (sin servidor ni valores, ADR-004); el `MOCK_SYNC` no compara valores escapados ni devuelve entradas con `sizeLimitExceeded` (se prueban el filtro y el límite enviados)
+
+## Decisiones y observaciones
+- Decisión del orquestador (pendiente de validar en la prueba de concepto): `PUT /auth-config` sin campos editables (ADR-004 deja todo en `.env`); se conserva la ruta para responder `400 campo_no_permitido` en lugar de 405
+- Decisión del orquestador (pendiente de validar en la prueba de concepto): `GET /auth-config` no conecta al directorio (evita esperas y carga en cada lectura); el estado de conexión sale de `POST /auth-config/test`
+- Decisión del orquestador (pendiente de validar en la prueba de concepto): `POST /auth-config/test` rechaza cualquier campo del cuerpo (SEG-22); `409 directorio_no_configurado` si está inactivo; `503 directorio_no_disponible` genérico si falla (SEG-21)
+- Decisión del orquestador (pendiente de validar en la prueba de concepto): no se expone la ruta de `LDAP_CA_CERT_FILE` (solo `custom`/`system`); `bind_dn` sí
+- Decisión del orquestador (pendiente de validar en la prueba de concepto): el modelo rechaza escribir `ldap_pass` (validador); la migración la vacía y `downgrade` no la restaura
+- Decisión del orquestador (pendiente de validar en la prueba de concepto): búsqueda con `q` de 2–64 caracteres; se mantiene `admin_required` (solo superadmin, como antes); P2 (admin crea cuentas) queda en FNC-064
+- Contrato: sección "Configuración del directorio" agregada a `usuarios-directorio.md` (endpoints sin contrato previo); decisión del orquestador (pendiente de validar en la prueba de concepto)
+- `DEBUG_LDAP` movida a `directory/depuracion.py` sin cambiar su efecto (SEC-LDAP-01)
+- El respaldo sigue exportando/importando `auth_config` (sin `ldap_pass`); quitarlo es SEG-17/FNC-010
+- `utils/test_ldap.py` y `utils/nexus_health.py` importan `validate_ldap_connection` (retirada); ya fallaban al llamarla sin argumentos; quedan para FNC-028
+- Frontend sin tocar: DIS-023 debe leer la forma nueva de `GET /auth-config`, no enviar campos en `PUT`/test y mostrar `409`/`503`
+
 ## Riesgos y reversión
 - Entornos que dependían de la configuración por interfaz deben cargar las variables antes de desplegar (RELEASES).
 - Reversión: la migración conserva la columna (solo la vacía); bajar restaura la lectura previa sin el valor.
+- **No promover a staging sin DIS-023**: la pestaña Directorio actual lee la forma heredada y su prueba envía campos (→ 400).
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-18 | Aprobada (modo autónomo, vía orquestador); implementada en `fnc/FNC-043-configuracion-directorio`; 805 passed, 17 xfailed, código 0; En revisión (falta revisor y auditor-seguridad) |
+- auditor-seguridad (modo cambio, 2026-10-18): **Aprobado**; cierra SEG-08, 13, 21 y 22 en la parte LDAP; SMTP y respaldo siguen en FNC-010/016.
+- revisor (2026-10-18): **Requiere cambios** → corregidos: bitácora y fila de DIS-023, riesgo de staging, `impacto.py` actual, `correos_registrados` a `app/modules/users/correos.py`, `_a_usuario` en `ldap_client.py`, contrato aclarado (aditivo). Sigue En revisión.
+- Cierre (2026-10-19): revisor y auditor-seguridad atendidos; merge local a `develop` (modo autónomo autorizado por el dueño).
