@@ -13,7 +13,7 @@
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-049`) |
 | **Rama** | `fnc/FNC-049-ejecutor-aprovisionamiento` |
-| **Commits / PR** | `7709a09`, `305e028` y `69dafb5` (correcciones de la revisión) [FNC-049], locales, sin push ni PR |
+| **Commits / PR** | `7709a09`, `305e028`, `69dafb5` (revisión), `684fffa` y `03d94f5` (re-auditoría) [FNC-049], locales, sin push ni PR |
 | **Requiere migración BD** | Sí (tablas de ejecuciones e intentos) |
 | **Requiere auditor-seguridad** | Sí (ejecución privilegiada en segundo plano) |
 
