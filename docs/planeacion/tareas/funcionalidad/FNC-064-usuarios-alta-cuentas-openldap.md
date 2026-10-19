@@ -92,7 +92,7 @@ Salida real de `python3 ~/.claude/agentes/herramientas/impacto.py`:
 ## Commits / PR
 | Commit | Descripción |
 |---|---|
-| (ver bitácora) | `[FNC-064] Alta de cuentas en OpenLDAP desde el portal` — local, sin push ni PR |
+| `3299f5b` | `[FNC-064] Alta de cuentas en OpenLDAP desde el portal` — local, sin push ni PR |
 
 ## Impacto cruzado
 - Genera → DIS-019
