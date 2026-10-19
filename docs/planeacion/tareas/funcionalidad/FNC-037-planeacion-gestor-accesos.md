@@ -103,3 +103,7 @@
 - P10 (2026-10-15): el aviso de fallo de aprovisionamiento respeta `pref_email_notifications`, como los demás avisos (FNC-048).
 - P6 (2026-10-14): acceso automático nivel `usuario`, para todos los admins del área; se revoca al quitarle el área; el superadmin no entra a los grupos LDAP.
 | 2026-10-15 | Respuesta del dueño sobre P10 (resto): el aviso de fallo respeta `pref_email_notifications`; aplicada en FNC-048 y en `conectores-y-ejecuciones.md` |
+
+## Respuestas del dueño (2026-10-15)
+- P3 (último miembro de `groupOfNames`): miembro de relleno configurable (`LDAP_GROUP_PLACEHOLDER_MEMBER`, FNC-041).
+- P3 (cuenta de servicio): una sola cuenta LDAP para lectura y escritura (`LDAP_BIND_DN`); ACL acotada en `docs/operacion/ENTORNOS.md`.

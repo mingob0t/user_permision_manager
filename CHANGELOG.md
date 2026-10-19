@@ -13,6 +13,7 @@
 - Contratos v1 backend↔web del gestor de accesos en `docs/contratos/` (FNC-038, 2026-10-14).
 - Migraciones versionadas con Alembic: línea base `0001` del esquema actual y prueba de desfase modelos↔migraciones (FNC-039, 2026-10-14).
 - Cliente OpenLDAP centralizado de solo lectura con TLS validado, CA y esquema configurables por `LDAP_*` (FNC-040, 2026-10-14).
+- Servicio de escritura en OpenLDAP: alta y baja idempotentes de miembros de grupo y alta de cuentas sin contraseña, con resultado tipificado (FNC-041, 2026-10-15).
 - Auditoría ampliada e inmutable: actor, usuario afectado, área, plataforma, antes/después, catálogo de eventos e IP real del cliente (corrige SEG-25); migración `0002` (FNC-047, 2026-10-14).
 - Avisos por correo del gestor de accesos (solicitud nueva, aprobada, rechazada y fallo de aprovisionamiento) con plantillas en la migración `0003`; los correos HTML escapan los valores (corrige SEG-23) (FNC-048, 2026-10-15).
 - Pruebas del frontend con Vitest (`npm test`): cliente de la API, `AuditLog`, contraste WCAG de los tokens y tope de colores literales (FNC-025, 2026-10-13).

@@ -132,7 +132,7 @@ def test_bind_rechazado_da_error_controlado_sin_la_contrasena(
 
 
 def test_la_contrasena_se_oculta_si_aparece_en_el_detalle(directorio, caplog):
-    error = directorio.cliente._error(
+    error = directorio.cliente.registrar_error(
         'prueba', ldap3.core.exceptions.LDAPException(
             f'detalle con {CONTRASENA_FICTICIA}'))
 

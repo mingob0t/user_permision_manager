@@ -1,4 +1,4 @@
-"""Cliente único de OpenLDAP (solo lectura) con TLS validado (FNC-040).
+"""Cliente único de OpenLDAP con TLS validado (FNC-040).
 
 - Conexión de servicio por LDAPS o StartTLS, con `CERT_REQUIRED`, verificación
   del nombre del host y la CA de `LDAP_CA_CERT_FILE` (o la del sistema).
@@ -8,7 +8,9 @@
 - Los errores salen como `ErrorDirectorio` con un mensaje genérico; el detalle
   va al log, nunca con la contraseña de bind.
 
-La escritura (membresía de grupos y alta de cuentas) es de FNC-041.
+Las lecturas usan una conexión de solo lectura. La escritura (membresía de
+grupos y alta de cuentas, FNC-041) vive en `writer.py` y pide la conexión con
+`solo_lectura=False`.
 """
 import logging
 import ssl
@@ -46,7 +48,15 @@ MENSAJE_AMBIGUO = 'El identificador corresponde a más de una persona.'
 
 
 class ErrorDirectorio(Exception):
-    """Fallo controlado del directorio; el mensaje es apto para el cliente."""
+    """Fallo controlado del directorio; el mensaje es apto para el cliente.
+
+    `causa` guarda la excepción de `ldap3` para clasificarla (FNC-041); nunca
+    se muestra al cliente.
+    """
+
+    def __init__(self, mensaje, causa=None):
+        super().__init__(mensaje)
+        self.causa = causa
 
 
 @dataclass(frozen=True)
@@ -66,6 +76,14 @@ def escapar_filtro(valor):
 def escapar_valor_dn(valor):
     """Escapa un valor para un RDN (RFC 4514): `,`, `+`, `"`, `\\`, `<`, `>`, `;`, `=`."""
     return escape_rdn(str(valor))
+
+
+def valor_de_membresia(configuracion, usuario):
+    """Valor que representa a `usuario` en el atributo de membresía:
+    el identificador (`memberUid`) o el DN (`member`, `uniqueMember`)."""
+    if configuracion.atributo_miembro.lower() in ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR:
+        return usuario.identificador
+    return usuario.dn
 
 
 def _texto(entrada, atributo):
@@ -98,19 +116,27 @@ class ClienteDirectorio:
         return Server(cfg.host, port=cfg.puerto, use_ssl=cfg.usa_ldaps,
                       tls=self._tls(), connect_timeout=cfg.tiempo_espera)
 
-    def _error(self, operacion, exc):
-        """Registra el detalle sin la contraseña y devuelve el error genérico."""
-        detalle = str(exc)
-        contrasena = self.configuracion.bind_password
-        if contrasena:
-            detalle = detalle.replace(contrasena, '***')
+    def registrar_error(self, operacion, exc, con_detalle=True):
+        """Registra el fallo sin la contraseña y devuelve el error genérico.
+
+        `con_detalle=False` (escritura) registra solo el código de resultado,
+        sin el mensaje ni el DN, que pueden nombrar a la persona.
+        """
+        if con_detalle:
+            detalle = str(exc)
+            contrasena = self.configuracion.bind_password
+            if contrasena:
+                detalle = detalle.replace(contrasena, '***')
+        else:
+            detalle = getattr(exc, 'description', None) or '-'
         logger.error('Directorio: fallo en %s (%s): %s', operacion,
                      type(exc).__name__, detalle)
-        return ErrorDirectorio(MENSAJE_ERROR)
+        return ErrorDirectorio(MENSAJE_ERROR, causa=exc)
 
     @contextmanager
-    def conexion_servicio(self):
-        """Conexión de solo lectura autenticada con la cuenta de servicio.
+    def conexion_servicio(self, solo_lectura=True):
+        """Conexión autenticada con la cuenta de servicio (de solo lectura
+        salvo `solo_lectura=False`, que solo usa `writer.py`).
 
         `ldap://` negocia StartTLS antes de enviar la credencial.
         """
@@ -120,7 +146,8 @@ class ClienteDirectorio:
             conexion = Connection(
                 self._servidor(), user=cfg.bind_dn, password=cfg.bind_password,
                 client_strategy=ESTRATEGIA, receive_timeout=cfg.tiempo_espera,
-                auto_referrals=False, raise_exceptions=True, read_only=True)
+                auto_referrals=False, raise_exceptions=True,
+                read_only=solo_lectura)
             conexion.open()
             if not cfg.usa_ldaps:
                 conexion.start_tls()
@@ -130,7 +157,7 @@ class ClienteDirectorio:
             conexion.bind()
         except LDAPException as exc:
             self._cerrar(conexion)
-            raise self._error('conexión', exc) from None
+            raise self.registrar_error('conexión', exc) from None
         try:
             yield conexion
         finally:
@@ -165,7 +192,7 @@ class ClienteDirectorio:
             except LDAPSizeLimitExceededResult:
                 entradas, ambiguo = [], True
             except LDAPException as exc:
-                raise self._error('búsqueda de usuario', exc) from None
+                raise self.registrar_error('búsqueda de usuario', exc) from None
             else:
                 entradas = list(conexion.entries)
                 ambiguo = len(entradas) > 1
@@ -190,10 +217,7 @@ class ClienteDirectorio:
         Busca bajo `LDAP_GROUPS_BASE_DN`; no depende del overlay `memberOf`.
         """
         cfg = self.configuracion
-        if cfg.atributo_miembro.lower() in ATRIBUTOS_MIEMBRO_POR_IDENTIFICADOR:
-            valor = usuario.identificador
-        else:
-            valor = usuario.dn
+        valor = valor_de_membresia(cfg, usuario)
         filtro = (f'(&(objectClass={cfg.clase_grupo})'
                   f'({cfg.atributo_miembro}={escapar_filtro(valor)}))')
         with self.conexion_servicio() as conexion:
@@ -201,7 +225,7 @@ class ClienteDirectorio:
                 conexion.search(cfg.grupos_base_dn, filtro, SUBTREE,
                                 attributes=[])
             except LDAPException as exc:
-                raise self._error('lectura de grupos', exc) from None
+                raise self.registrar_error('lectura de grupos', exc) from None
             return sorted(entrada.entry_dn for entrada in conexion.entries)
 
     def existe_dn(self, dn):
@@ -218,5 +242,5 @@ class ClienteDirectorio:
             except LDAPNoSuchObjectResult:
                 return False
             except LDAPException as exc:
-                raise self._error('comprobación de DN', exc) from None
+                raise self.registrar_error('comprobación de DN', exc) from None
             return bool(conexion.entries)
