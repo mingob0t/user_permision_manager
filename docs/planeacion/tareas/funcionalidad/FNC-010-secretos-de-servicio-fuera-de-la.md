@@ -49,3 +49,4 @@ _Se completa al aprobar la tarea._
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-18 | SEG-08 (bind LDAP) y SEG-22 (prueba LDAP) cerrados por FNC-043 (En revisión): `ldap_pass` vaciada (migración 0004) y rechazada por el modelo; la prueba usa solo la configuración `LDAP_*`. Quedan SMTP y SEG-17 |
+| 2026-10-19 | Tras FNC-077 (login local solo para `administrador` local), importar un respaldo con `role=administrador` y `password_hash` equivale a crear otra cuenta de emergencia (SEG-17): sube la prioridad del bloqueo de la importación |

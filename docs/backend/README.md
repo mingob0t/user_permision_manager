@@ -94,7 +94,7 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 |---|---|---|
 | `GET /context` | Pública | Indica si el SSO está activo, la identidad SSO (solo si la petición viene de `TRUSTED_PROXIES`), si ya hay sesión y si LDAP está disponible (siempre `true`). |
 | `POST /sso` | Pública; exige `AUTHELIA_ENABLED=true` y origen en `TRUSTED_PROXIES` | Crea o actualiza el usuario a partir de las cabeceras de Authelia (nuevo: rol `usuario`; existente: conserva su rol; `Remote-Groups` no se usa, FNC-042), inicia sesión y audita. Si es nuevo, envía la plantilla `usuario_creado`. |
-| `POST /login` | Pública | `method=directory` → LDAP (`authenticate_user_ldap`); `method=local` → contraseña local. Audita éxitos y fallos (el motivo solo en la auditoría). Todo fallo, incluida la cuenta desactivada, responde 401 `Credenciales incorrectas.` (FNC-042). |
+| `POST /login` | Pública | `method=directory` → LDAP (`authenticate_user_ldap`); `method=local` → contraseña local, solo para la cuenta de emergencia (superadmin con `auth_source=local`); otra cuenta → 401 (FNC-077, `auth/acceso_local.py`). En desarrollo, `APP_ENV=development` + `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true` admite cualquier cuenta local. Audita éxitos y fallos (el motivo solo en la auditoría). Todo fallo, incluida la cuenta desactivada, responde 401 `Credenciales incorrectas.` (FNC-042). |
 | `POST /logout` | Sesión | Cierra la sesión y audita; con SSO devuelve la URL de cierre de Authelia (`AUTHELIA_SLO_URL?rd=BASE_URL/login`). |
 
 ### 4.2 Lectura — `app/modules/api/routes.py` (`/api/v1`)
@@ -118,8 +118,8 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
 | `PUT /areas/<id>/users` | `area_admin_required` | Define los miembros del área dentro del alcance. |
-| `POST /users` | `any_admin_required` | Alta de cuenta local (`auth_source` lo fija el servidor). Rol fuera de lo asignable → `403 rol_reservado`; `managed_area_ids`, `auth_source`, `password_hash` → `400 campo_no_permitido`. `admin` es identificador reservado. Si no llega contraseña, se asigna una por defecto (ver deuda). Un `admin_area` nace sin áreas administradas. |
-| `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: superadmin o admin de área (cuentas `usuario` de sus áreas), solo cuentas `local` (si no, `400 campo_no_permitido`). |
+| `POST /users` | `any_admin_required` | Alta de cuenta local (`auth_source` lo fija el servidor). Rol fuera de lo asignable → `403 rol_reservado`; `managed_area_ids`, `auth_source`, `password_hash` → `400 campo_no_permitido`. `admin` es identificador reservado. Fuera de desarrollo nace `auth_source=ldap` sin clave y se vincula al entrar por directorio/SSO (con la bandera: `local`); sin contraseña local: `password` → `400 campo_no_permitido` salvo en desarrollo con `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (FNC-077, SEG-02). Un `admin_area` nace sin áreas administradas. |
+| `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: solo la de la cuenta de emergencia (superadmin local); otra cuenta → `400 campo_no_permitido`, salvo en desarrollo con `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (cuentas `local` del alcance) (FNC-077). |
 | `DELETE /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Borra usuario; no permite borrarse a sí mismo ni la cuenta maestra `admin`. |
 | `PUT /users/<id>/platforms` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Define `user_platforms` con plataformas en alcance. Cuerpo no válido → `400 cuerpo_invalido`. |
 | `PUT /me/preferences` | Sesión | Guarda preferencias propias. |
@@ -275,6 +275,7 @@ venv/bin/python run.py        # API en el puerto 5001
 
 - Con `DB_ENGINE=mysql` usa MySQL/MariaDB vía PyMySQL; con cualquier otro valor (o sin definir) usa **SQLite** en `nexus.db`.
 - Redis es opcional: si no responde, la app arranca igual.
+- Sin Authelia: entra la cuenta de emergencia (`admin`) con el login local; otras cuentas locales solo con `APP_ENV=development` y `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true` (ver `docs/operacion/ENTORNOS.md`, FNC-077).
 - El frontend se arranca aparte (ver `docs/frontend/README.md`); su `rewrite` reenvía `/api/*` y `/auth/*` a este backend.
 - Utilidades de mantenimiento en `utils/` (usan `create_app()`): `check_db.py`, `db_check.py`, `db_inspector.py`, `db_migrate.py`, `reset_admin.py`, `emergency_reset.py`, `seed_users.py`, `test_ldap.py`, `test_smtp.py`, `nexus_health.py`, `toggle_authelia.py` (edita el `.env` y la config de nginx).
 - **Pruebas** (FNC-019): suite pytest en `tests/`, sin `.env` ni servicios externos.
@@ -290,9 +291,10 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/test_proteccion_por_rol.py`: matriz ruta × rol (401/403/2xx), entradas inválidas (400) y RF-04 (sin `xfail` desde FNC-044).
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (SEG-05 y SEG-09 sin `xfail` desde FNC-044; queda el de FNC-015).
   - Roles y áreas administradas (FNC-044): `tests/users/test_roles_y_areas_administradas.py`.
+  - Contraseñas locales y cuenta de emergencia (FNC-077): `tests/users/test_contrasenas_locales.py`; `peticiones_auth.activar_login_local_de_todas(monkeypatch, entorno)`.
   - Alta, edición y baja de áreas por el admin (FNC-045): `tests/areas/test_alta_y_baja_por_admin.py`.
   - Plataformas (FNC-046): `tests/platforms/` (tipo, DN, derivación, avisos, 409, auditoría; regresión SEG-24).
-  - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 4 `xfail` con su tarea (FNC-003, 006, 014); los 9 de FNC-002 y FNC-013 pasaron a pruebas normales en FNC-042.
+  - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 3 `xfail` con su tarea (FNC-006, 014; el de SEG-02 pasó a prueba normal en FNC-077); los 9 de FNC-002 y FNC-013 pasaron a pruebas normales en FNC-042.
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, variables=None, **config)` activa `LDAP_*` ficticias y conecta el cliente centralizado a `MOCK_SYNC` (personas, grupos, filtros recibidos); `config` crea `auth_config` (FNC-042).
   - Directorio (FNC-043): `tests/directory/test_api.py` (configuración, prueba, búsqueda y escape, modelo sin clave), `tests/directory/test_aislamiento.py` (SEC-LDAP-01/02), `tests/test_migracion_0004.py`. El `MOCK_SYNC` no compara valores escapados ni devuelve entradas con `sizeLimitExceeded`: esas pruebas revisan el filtro y el límite pedidos.
   - `tests/directory/conftest.py`: `directorio` / `crear_directorio(**LDAP_*)` usan `ldap3` `MOCK_SYNC` con el cliente centralizado; `tests/directory/test_tls.py` abre TLS real solo hacia `localhost`.
@@ -362,7 +364,7 @@ Quedan como referencia; la línea base `0001` ya refleja su resultado. FNC-028 d
 |---|---|---|
 | 1 | Usuario administrador inicial creado en cada BD vacía con credenciales por defecto conocidas e impresas en consola. | `app/__init__.py` |
 | 2 | `SECRET_KEY` tiene valor por defecto en código si falta la variable. | `app/__init__.py` |
-| 3 | Contraseña por defecto fija cuando el alta de usuario no la incluye. | `api/crud.py` `create_user` |
+| 3 | ~~Contraseña por defecto fija cuando el alta de usuario no la incluye.~~ Resuelta en FNC-077 (nace sin clave local). | `api/crud.py` `create_user` |
 | 4 | ~~IP literal como valor por defecto de `BASE_URL` en el correo de bienvenida LDAP~~ Resuelta en FNC-042 (vacío = enlace relativo). | `auth/services.py` |
 | 5 | CSRF exento en todos los blueprints; la API depende solo de la cookie de sesión (SameSite por defecto del navegador). | `app/__init__.py` |
 | 6 | Contraseña de SMTP guardada en claro en BD (la de LDAP se vació y quedó obsoleta en FNC-043). | `smtp_config` |

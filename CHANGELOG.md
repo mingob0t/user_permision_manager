@@ -24,6 +24,7 @@
 - Plataformas con tipo de integración (`ldap`/`conector`) y grupos del directorio por nivel validados bajo `LDAP_GROUPS_BASE_DN`; URLs solo `https://` (corrige SEG-24 en el backend); migración `0005` (FNC-046, 2026-10-19).
 
 ### Corregido
+- Login local solo para la cuenta de emergencia (superadmin local) y con `auth_source=local`; el alta de usuarios ya no fija `nexus123` y el portal no fija contraseñas locales salvo la de emergencia; excepción de desarrollo `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (corrige SEG-02) (FNC-077, 2026-10-19).
 - Configuración del directorio solo desde `LDAP_*`: la contraseña de bind sale de la BD (migración `0004`), la prueba de conexión y la búsqueda usan el cliente con TLS validado y responden errores genéricos (corrige SEG-08 de LDAP, SEG-13, SEG-21 de LDAP y SEG-22) (FNC-043, 2026-10-18).
 - Login por directorio sobre el cliente LDAP con TLS validado: sin purga de cuentas, filtro escapado, respuesta única y sin rol desde LDAP ni `Remote-Groups` (SEG-01, 10, 12; FNC-042, 2026-10-15).
 - Solo el superadmin crea o eleva admins y asigna áreas administradas (`PUT /users/<id>/managed-areas`); un admin de área ya no gestiona otros admins ni contraseñas no locales (corrige SEG-05 y SEG-09) (FNC-044, 2026-10-15).

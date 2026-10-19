@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | FNC-001 | Incorporar el proyecto al método | infra | 0 | global | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (634e9f1) | |
 | FNC-002 | Login de directorio seguro: sin purga de cuentas, filtro LDAP escapado y mensajes genéricos | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — | Absorbida por FNC-042 (En revisión) |
-| FNC-003 | Eliminar credenciales por defecto y crear el primer superadmin con un comando explícito | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — |  |
+| FNC-003 | Eliminar credenciales por defecto y crear el primer superadmin con un comando explícito | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — | SEG-02 cerrado por FNC-077 (En revisión); queda SEG-03 |
 | FNC-004 | nginx: limpiar cabeceras Remote-* en todas las location, bloquear /api y /auth sin distinguir mayúsculas, TLS y cabeceras de seguridad | infra | 5 | deploy | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-005 y FNC-006 cierra SEG-04 |
 | FNC-005 | Next.js: rewrites hacia la API solo en desarrollo y sin IP por defecto en BACKEND_URL | web | 5 | config | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-004 y FNC-006 |
 | FNC-006 | SSO: autenticar al proxy con un secreto compartido además de la IP | backend | 5 | auth | Alta | Propuesta | 2026-10-13 | | | — | Junto con FNC-004 y FNC-005 |
@@ -55,9 +55,10 @@
 | FNC-074 | Unificar el LDAP simulado de las pruebas | backend | 4 | pruebas | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-022 |
 | FNC-075 | Permisos de BD solo INSERT/SELECT sobre audit_logs | infra | 3 | auditoria | Media | Propuesta | 2026-10-14 | | | — | Origen: revisión de FNC-047; pendiente del dueño |
 | FNC-076 | Mover _trusted_proxy de api/auth.py a app/utils/ | backend | 4 | utils | Baja | Propuesta | 2026-10-14 | | | — | Origen: revisión de FNC-047 |
-| FNC-077 | Deshabilitar el login local (solo Authelia/directorio), salvo acceso de emergencia del superadmin | backend | 3 | auth | Alta | Propuesta | 2026-10-15 | | | — | Origen: decisión del dueño en la revisión de FNC-044 |
+| FNC-077 | Deshabilitar el login local (solo Authelia/directorio), salvo acceso de emergencia del superadmin | backend | 3 | auth | Alta | Hecha | 2026-10-15 | 2026-10-19 | 2026-10-19 | `fnc/FNC-077-deshabilitar-login-local` (commit local, sin push) | Origen: decisión del dueño en la revisión de FNC-044; cierra SEG-02 de FNC-003; contrato areas-y-roles v2; impacto en cliente para DIS-018/DIS-019 y FNC-079 |
 | FNC-078 | Lista blanca completa de campos en POST/PUT /users (SEC-AUTHZ-09) e is_active | backend | 3 | usuarios-roles | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044 |
-| FNC-079 | Alta de cuentas de directorio en el servidor (auth_source=ldap, sin contraseña) para el importador | backend | 3 | usuarios | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044; vincula FNC-064, FNC-069, DIS-018, DIS-019 |
+| FNC-079 | Alta de cuentas de directorio en el servidor (auth_source=ldap, sin contraseña) para el importador | backend | 3 | usuarios | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044; vincula FNC-064, FNC-069, DIS-018, DIS-019; FNC-077 ya crea `ldap` en `POST /users` |
+| FNC-081 | Purgar hashes de contraseña heredados de cuentas locales no administrador y política mínima de la contraseña de emergencia | backend | 5 | auth | Baja | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-077 |
 | FNC-037 | Planeación de la fase 3: gestor de accesos | backend | 3 | planeacion | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-14 | Merge local a develop | Plan de la fase 3; genera FNC-038 a FNC-071 y DIS-013 a DIS-024 |
 | FNC-038 | Contratos v1 backend↔web del gestor de accesos | backend | 3 | contratos | Alta | Hecha | 2026-10-13 | 2026-10-14 | 2026-10-14 | Merge local a develop (434a51c) | Depende de P1, P14, FNC-037, ADR-006 |
 | FNC-039 | Migraciones versionadas de MySQL para la fase 3 (según ADR-002) | backend | 3 | bd | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-039-migraciones-alembic` (commit local, sin push) | Depende de ADR-002; Alembic 1.20.0, línea base `0001`; pendiente prueba del dueño en MySQL |

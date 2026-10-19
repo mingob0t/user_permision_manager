@@ -23,6 +23,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from app import db
 from app.authz import ROLE_USER
 from app.modules.audit.services import add_audit_log
+from app.modules.auth.acceso_local import motivo_rechazo_login_local
 from app.modules.auth.models import User
 from app.modules.auth.services import (MENSAJE_CREDENCIALES, avisar_bloqueo,
                                        motivo_de_bloqueo, normalizar_correo)
@@ -130,7 +131,10 @@ def sso_login():
 
 @auth_api_bp.route('/login', methods=['POST'])
 def login():
-    """Inicio de sesión con credenciales: directorio o cuenta local."""
+    """Inicio de sesión con credenciales: directorio o cuenta local.
+
+    El local solo admite la cuenta de emergencia (`acceso_local`, FNC-077).
+    """
     data = request.get_json(silent=True) or {}
     email = (data.get('email') or '').strip()
     password = data.get('password') or ''
@@ -156,6 +160,11 @@ def login():
 
     user = User.query.filter_by(email=email).first()
     if user and user.password_hash and user.check_password(password):
+        # Solo la cuenta de emergencia (o, en desarrollo, la bandera):
+        # respuesta única, el motivo solo a la auditoría (FNC-077).
+        motivo = motivo_rechazo_login_local(user)
+        if motivo:
+            return _acceso_fallido(email, f'Local: {motivo}')
         # Desactivada: respuesta única, no confirma la contraseña (SEC-AUTH-09).
         if not user.is_active or not login_user(user, remember=True):
             return _acceso_fallido(email, 'Local: cuenta desactivada')

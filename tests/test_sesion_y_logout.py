@@ -3,6 +3,7 @@
 import pytest
 
 from app import db
+from app.authz import ROLE_ADMIN
 from tests.matriz_proteccion import CONTRASENA_FICTICIA
 from tests.peticiones_auth import (A, hay_auditoria, iniciar_sesion_api,
                                    usuario_en_sesion)
@@ -14,7 +15,8 @@ URL_BASE_FICTICIA = 'https://portal.pruebas.invalid'
 
 @pytest.fixture
 def usuario_local(crear_usuario):
-    return crear_usuario(contrasena=CONTRASENA_FICTICIA)
+    # Cuenta de emergencia: la única con login local (FNC-077).
+    return crear_usuario(ROLE_ADMIN, contrasena=CONTRASENA_FICTICIA)
 
 
 @pytest.fixture
