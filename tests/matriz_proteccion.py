@@ -251,9 +251,15 @@ CASOS = (
          lambda esc: {'json': {'user_ids': [esc.objetivo_id]}}),
     Caso('POST', f'{A}/platforms', _fija(f'{A}/platforms'), administradores(201),
          lambda esc: {'json': {'name': 'Plataforma nueva de prueba',
-                               'area_id': esc.area_id}}),
+                               'description': 'Plataforma de prueba',
+                               'area_id': esc.area_id,
+                               'integration_type': 'conector'}},
+         nota='FNC-046: movida a platforms/api.py; contrato plataformas-integracion'),
+    # FNC-046: el admin de área recibe 404 fuera de su área (no 403); se
+    # prueba en tests/platforms/test_integracion_y_grupos.py.
     Caso('PUT', f'{A}/platforms/<int:platform_id>', _plataforma(),
-         administradores(), _json({'description': 'Descripción editada'})),
+         administradores(), _json({'description': 'Descripción editada'}),
+         nota='FNC-046: movida a platforms/api.py'),
     Caso('DELETE', f'{A}/platforms/<int:platform_id>', _plataforma(),
          administradores()),
     Caso('PUT', f'{A}/platforms/<int:platform_id>/users', _plataforma('/users'),
@@ -318,7 +324,9 @@ CASOS_400 = (
     ('POST', f'{A}/auth/login', _json({})),
     # POST y PUT /areas con datos inválidos: 422 `validacion` (FNC-045,
     # tests/areas/).
-    ('POST', f'{A}/platforms', _json({'name': ''})),
+    # FNC-046: un campo vacío es `422 validacion`; el 400 es la lista blanca.
+    ('POST', f'{A}/platforms', _json({'user_ids': []})),
+    ('PUT', f'{A}/platforms/{{plataforma_id}}', _json({'visits': 0})),
     ('POST', f'{A}/users', _json({'email': ''})),
     ('PUT', f'{A}/me/preferences', _json({'refresh_interval': 'no-numero'})),
     ('POST', f'{A}/users/purge', _json({'days': 'no-numero'})),

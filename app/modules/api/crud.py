@@ -10,8 +10,7 @@ from flask_login import current_user, login_required
 
 from app import db
 from app.authz import (admin_required, any_admin_required, area_admin_required,
-                       can_manage_area, can_manage_user,
-                       platform_manage_required, scoped_areas, scoped_users)
+                       can_manage_user, scoped_areas, scoped_users)
 from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
                                      NO_ENCONTRADO, OPERACION_PROPIA,
                                      ROL_RESERVADO, error_response,
@@ -67,104 +66,8 @@ def set_area_users(area_id):
 
 
 # --------------------------------------------------------------------------- #
-# Plataformas
+# Plataformas: `app/modules/platforms/api.py` (FNC-046)
 # --------------------------------------------------------------------------- #
-
-def _apply_platform_fields(platform, data):
-    """Copia los campos editables del payload a la plataforma."""
-    if 'name' in data:
-        platform.name = sanitize_display_name(data.get('name'), fallback='')
-    for field in ('description', 'direct_link', 'icon', 'logo_url',
-                  'bg_color', 'text_color', 'status'):
-        if field in data:
-            setattr(platform, field, data[field])
-
-
-@crud_bp.route('/platforms', methods=['POST'])
-@login_required
-@any_admin_required
-def create_platform():
-    data = _payload()
-    name = sanitize_display_name(data.get('name'), fallback='')
-    if not name:
-        return _error('El nombre es obligatorio.')
-
-    area_id = data.get('area_id')
-    if not can_manage_area(area_id):
-        return _error('No administras el área indicada.', 403)
-
-    platform = Platform(
-        name=name,
-        description=data.get('description') or '',
-        area_id=area_id,
-        direct_link=data.get('direct_link'),
-        icon=data.get('icon') or 'box',
-        logo_url=data.get('logo_url'),
-        bg_color=data.get('bg_color') or '#6366f1',
-        text_color=data.get('text_color') or '#ffffff',
-        status=data.get('status') or 'Activo',
-    )
-    db.session.add(platform)
-    db.session.commit()
-    add_audit_log(f"CREAR PLATAFORMA: {name}", module='Plataformas',
-                  target=name, status='success')
-    return jsonify({'status': 'success', 'platform': platform.to_dict()}), 201
-
-
-@crud_bp.route('/platforms/<int:platform_id>', methods=['PUT'])
-@login_required
-@platform_manage_required('platform_id')
-def update_platform(platform_id):
-    platform = Platform.query.get_or_404(platform_id)
-    data = _payload()
-
-    # Mover de área exige administrar también la de destino.
-    if 'area_id' in data and data['area_id'] != platform.area_id:
-        if not can_manage_area(data['area_id']):
-            return _error('No administras el área de destino.', 403)
-        platform.area_id = data['area_id']
-
-    _apply_platform_fields(platform, data)
-    if not platform.name:
-        return _error('El nombre es obligatorio.')
-
-    db.session.commit()
-    add_audit_log(f"EDITAR PLATAFORMA: {platform.name}", module='Plataformas',
-                  target=platform.name, status='success')
-    return jsonify({'status': 'success', 'platform': platform.to_dict()})
-
-
-@crud_bp.route('/platforms/<int:platform_id>', methods=['DELETE'])
-@login_required
-@platform_manage_required('platform_id')
-def delete_platform(platform_id):
-    platform = Platform.query.get_or_404(platform_id)
-    name = platform.name
-    db.session.delete(platform)
-    db.session.commit()
-    add_audit_log(f"ELIMINAR PLATAFORMA: {name}", module='Plataformas',
-                  target=name, status='warning')
-    return jsonify({'status': 'success'})
-
-
-@crud_bp.route('/platforms/<int:platform_id>/users', methods=['PUT'])
-@login_required
-@platform_manage_required('platform_id')
-def set_platform_users(platform_id):
-    """Define qué usuarios tienen asignada la plataforma."""
-    platform = Platform.query.get_or_404(platform_id)
-    user_ids = _payload().get('user_ids') or []
-
-    allowed = {u.id for u in scoped_users().all()}
-    if [i for i in user_ids if i not in allowed]:
-        return _error('Hay usuarios fuera de tu alcance.', 403)
-
-    keep = [u for u in platform.platform_users.all() if u.id not in allowed]
-    platform.platform_users = keep + User.query.filter(User.id.in_(user_ids)).all()
-    db.session.commit()
-    add_audit_log(f"ACTUALIZAR ACCESO: {platform.name}", module='Plataformas',
-                  target=platform.name, status='success')
-    return jsonify({'status': 'success'})
 
 
 # --------------------------------------------------------------------------- #

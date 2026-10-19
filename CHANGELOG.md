@@ -21,6 +21,7 @@
 - Hook web `usePolling`: refresco periódico con el intervalo del usuario, pausa con la pestaña oculta y *backoff* ante errores (ADR-006) (FNC-071, 2026-10-19).
 - Menú por rol del gestor de accesos (Mis solicitudes, Aprobaciones, Inventario, Conectores; Plataformas pasa a Catálogo), guarda `RequireRole` y rutas reservadas (FNC-070, 2026-10-19).
 - Pruebas del frontend con Vitest (`npm test`): cliente de la API, `AuditLog`, contraste WCAG de los tokens y tope de colores literales (FNC-025, 2026-10-13).
+- Plataformas con tipo de integración (`ldap`/`conector`) y grupos del directorio por nivel validados bajo `LDAP_GROUPS_BASE_DN`; URLs solo `https://` (corrige SEG-24 en el backend); migración `0005` (FNC-046, 2026-10-19).
 
 ### Corregido
 - Configuración del directorio solo desde `LDAP_*`: la contraseña de bind sale de la BD (migración `0004`), la prueba de conexión y la búsqueda usan el cliente con TLS validado y responden errores genéricos (corrige SEG-08 de LDAP, SEG-13, SEG-21 de LDAP y SEG-22) (FNC-043, 2026-10-18).

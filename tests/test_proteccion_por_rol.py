@@ -58,7 +58,9 @@ def test_entrada_invalida_devuelve_400(app, cliente_como, metodo, ruta,
     esc = crear_escenario()
     cliente = cliente_como(crear_actor(ROLE_ADMIN, esc))
 
-    respuesta = cliente.open(ruta.format(area_id=esc.area_id), method=metodo,
+    respuesta = cliente.open(ruta.format(area_id=esc.area_id,
+                                         plataforma_id=esc.plataforma_id),
+                             method=metodo,
                              **peticion(esc))
 
     assert respuesta.status_code == 400, respuesta.get_data(as_text=True)

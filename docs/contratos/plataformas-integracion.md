@@ -28,6 +28,8 @@ Convenciones comunes: [README.md](README.md). Cambia `POST /platforms`, `PUT /pl
 | `active_grants` | int | Accesos vigentes (definición en accesos.md) |
 
 - `user_ids` deja de exponerse (FNC-065; P4: los accesos de NEXUS se descartan).
+- Plataformas heredadas: tras la migración 0005 quedan `integration_type: "ldap"` con ambos DN `null` y `groups_status: "sin_verificar"`; se editan sin completarlos y el superadmin define sus grupos (FNC-046).
+- `direct_link` y `logo_url` guardados que no cumplan la regla de entrada se devuelven `null` (FNC-046).
 - Los demás campos de `Platform` no cambian.
 
 ## Entrada (`POST` y `PUT`, lista blanca)
@@ -73,9 +75,10 @@ En la misma transacción:
 ## Errores
 | HTTP | `code` | Mensaje |
 |---|---|---|
-| 403 | `dn_solo_superadmin` | Solo el superadmin define los grupos del directorio. |
+| 403 | `dn_solo_superadmin` | Solo el superadmin define los grupos del directorio (también al cambiar `integration_type` en `PUT`). |
 | 409 | `plataforma_con_accesos` | No se puede cambiar el tipo, los grupos ni el área con accesos vigentes. |
 | 409 | `grupos_iguales` | Los grupos de usuario y admin deben ser distintos. |
+| 409 | `grupo_en_uso` | El grupo ya pertenece a otra plataforma. |
 | 422 | `validacion` | `fields.direct_link`: "Usa una dirección https://." · `fields.ldap_group_user_dn`: "El grupo debe estar en la OU de plataformas." |
 
 - Directorio sin respuesta al verificar: no es error; se guarda con `groups_status: "sin_verificar"` y aviso `directorio_no_disponible`.
@@ -94,3 +97,4 @@ En la misma transacción:
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
+| 1 | 2026-10-19 | Aditivo (FNC-046): nota de plataformas heredadas (0005), URL guardadas no válidas como `null`, `409 grupo_en_uso`; cambiar `integration_type` en `PUT` solo superadmin (`403 dn_solo_superadmin`) |
