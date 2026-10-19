@@ -1,164 +1,32 @@
 'use client';
 
-/** Administración de plataformas: crear, editar y eliminar los enlaces. */
+/**
+ * Administración de plataformas: crear, editar y eliminar, con el tipo de
+ * integración y los grupos de acceso por nivel (DIS-017).
+ */
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
+import { enlaceSeguro } from '@/lib/enlace-seguro';
 import { useAsync } from '@/lib/use-async';
-import type { Area, Platform, PlatformInput } from '@/lib/types';
-import { Button, Checkbox, ConfirmDialog, Field, Modal, Select, TextArea, TextInput } from './form';
+import type { Platform, PlatformWarning } from '@/lib/types';
+import { Button, ConfirmDialog } from './form';
+import { PlatformForm } from './platforms/platform-form';
+import { describeDeleteError } from './platforms/platform-save-errors';
+import { PlatformSaveNotice, type SaveNotice } from './platforms/platform-save-notice';
+import { RequireRole } from './require-role';
 import { useSession } from './session-provider';
 import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
 
-const EMPTY: PlatformInput = {
-  name: '',
-  description: '',
-  direct_link: '',
-  bg_color: '#6366f1',
-  text_color: '#ffffff',
-  status: 'Activo',
-};
-
-function PlatformForm({
-  areas,
-  platform,
-  onClose,
-  onSaved,
-}: {
-  areas: Area[];
-  platform: Platform | null;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [form, setForm] = useState<PlatformInput>(
-    platform
-      ? {
-          name: platform.name,
-          description: platform.description,
-          area_id: platform.area_id,
-          direct_link: platform.direct_link ?? '',
-          bg_color: platform.bg_color,
-          text_color: platform.text_color,
-          status: platform.status,
-        }
-      : { ...EMPTY, area_id: areas[0]?.id },
-  );
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  function set<K extends keyof PlatformInput>(key: K, value: PlatformInput[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }
-
-  async function save() {
-    if (!form.name?.trim()) {
-      setError('El nombre es obligatorio.');
-      return;
-    }
-    if (!form.area_id) {
-      setError('Selecciona un área.');
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      if (platform) await api.updatePlatform(platform.id, form);
-      else await api.createPlatform(form);
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo guardar');
-    } finally {
-      setSaving(false);
-    }
-  }
-
+export function PlatformAdmin() {
   return (
-    <Modal
-      title={platform ? `Editar ${platform.name}` : 'Nueva plataforma'}
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={save} disabled={saving}>
-            {saving ? 'Guardando…' : 'Guardar'}
-          </Button>
-        </>
-      }
-    >
-      {error ? <ErrorNote message={error} /> : null}
-
-      <Field label="Nombre">
-        <TextInput
-          value={form.name ?? ''}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="Nombre de la plataforma"
-        />
-      </Field>
-
-      <Field label="Descripción">
-        <TextArea
-          rows={2}
-          value={form.description ?? ''}
-          onChange={(e) => set('description', e.target.value)}
-        />
-      </Field>
-
-      <Field
-        label="Enlace"
-        hint="URL a la que lleva la tarjeta. Sin enlace, la plataforma se muestra pero no se puede abrir."
-      >
-        <TextInput
-          type="url"
-          value={form.direct_link ?? ''}
-          onChange={(e) => set('direct_link', e.target.value)}
-          placeholder="https://…"
-        />
-      </Field>
-
-      <Field label="Área">
-        <Select
-          value={form.area_id ?? ''}
-          onChange={(e) => set('area_id', Number(e.target.value))}
-        >
-          {areas.map((area) => (
-            <option key={area.id} value={area.id}>
-              {area.name}
-            </option>
-          ))}
-        </Select>
-      </Field>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Color de fondo">
-          <TextInput
-            type="color"
-            value={form.bg_color ?? '#6366f1'}
-            onChange={(e) => set('bg_color', e.target.value)}
-            className="h-10 p-1"
-          />
-        </Field>
-        <Field label="Color de texto">
-          <TextInput
-            type="color"
-            value={form.text_color ?? '#ffffff'}
-            onChange={(e) => set('text_color', e.target.value)}
-            className="h-10 p-1"
-          />
-        </Field>
-      </div>
-
-      <Checkbox
-        label="Activa"
-        checked={form.status === 'Activo'}
-        onChange={(e) => set('status', e.target.checked ? 'Activo' : 'Inactivo')}
-      />
-    </Modal>
+    <RequireRole requires="any_admin">
+      <PlatformAdminContent />
+    </RequireRole>
   );
 }
 
-export function PlatformAdmin() {
+function PlatformAdminContent() {
   const { session } = useSession();
   const areas = useAsync(() => api.areas(), []);
   const platforms = useAsync(() => api.platforms(), []);
@@ -166,37 +34,102 @@ export function PlatformAdmin() {
   const [creating, setCreating] = useState(false);
   const [removing, setRemoving] = useState<Platform | null>(null);
   const [busy, setBusy] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<SaveNotice | null>(null);
+  // Foco: al cerrar un diálogo vuelve al disparador; tras guardar, al aviso.
+  const trigger = useRef<HTMLElement | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const noticeRef = useRef<HTMLDivElement>(null);
+  const [focusTarget, setFocusTarget] = useState<'trigger' | 'notice' | null>(null);
+  const dialogOpen = creating || editing !== null || removing !== null;
 
+  useEffect(() => {
+    if (dialogOpen || !focusTarget) return;
+    if (focusTarget === 'notice' && noticeRef.current) noticeRef.current.focus();
+    else if (trigger.current?.isConnected) trigger.current.focus();
+    else heading.current?.focus();
+    setFocusTarget(null);
+  }, [dialogOpen, focusTarget]);
+
+  function open(event: React.MouseEvent<HTMLElement>, action: () => void) {
+    trigger.current = event.currentTarget;
+    action();
+  }
+
+  function closeDialogs() {
+    setCreating(false);
+    setEditing(null);
+    setRemoving(null);
+    setFocusTarget('trigger');
+  }
+
+  const isSuperadmin = Boolean(session?.permissions.is_admin);
   const canManage =
     session?.permissions.is_admin || session?.permissions.is_area_admin;
 
   async function remove() {
     if (!removing) return;
     setBusy(true);
+    setRemoveError(null);
     try {
       await api.deletePlatform(removing.id);
-      setRemoving(null);
+      closeDialogs();
       platforms.reload();
+    } catch (err) {
+      closeDialogs();
+      setRemoveError(describeDeleteError(err));
     } finally {
       setBusy(false);
     }
   }
 
-  const missingLink = (platforms.data ?? []).filter((p) => !p.direct_link);
+  function handleSaved(result: { platform: Platform; warnings: PlatformWarning[] }) {
+    setCreating(false);
+    setEditing(null);
+    setNotice({ name: result.platform.name, warnings: result.warnings });
+    setFocusTarget('notice');
+    platforms.reload();
+  }
+
+  const missingLink = (platforms.data ?? []).filter((p) => !enlaceSeguro(p.direct_link));
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Administrar plataformas</h1>
+          <h1 ref={heading} tabIndex={-1} className="text-2xl font-semibold">Administrar plataformas</h1>
           <p className="mt-1 text-sm text-label">
             Los enlaces del catálogo y a qué área pertenecen.
           </p>
         </div>
         {canManage ? (
-          <Button onClick={() => setCreating(true)}>Nueva plataforma</Button>
+          <Button
+            onClick={(e) => open(e, () => setCreating(true))}
+            disabled={areas.loading || (areas.data ?? []).length === 0}
+          >
+            Nueva plataforma
+          </Button>
         ) : null}
       </div>
+
+      {/* Región de estado siempre montada: el aviso se anuncia al aparecer. */}
+      <div role="status">
+        {notice ? (
+          <PlatformSaveNotice
+            ref={noticeRef}
+            notice={notice}
+            onDismiss={() => {
+              setNotice(null);
+              heading.current?.focus();
+            }}
+          />
+        ) : null}
+      </div>
+      {removeError ? <ErrorNote message={removeError} /> : null}
+      {areas.error ? <ErrorNote message={areas.error} /> : null}
+      {canManage && !areas.loading && !areas.error && (areas.data ?? []).length === 0 ? (
+        <EmptyNote message="No hay áreas en tu alcance: da de alta un área antes de crear plataformas." />
+      ) : null}
 
       {missingLink.length > 0 ? (
         <Card className="border-amber-500/40 bg-amber-500/10">
@@ -248,8 +181,8 @@ export function PlatformAdmin() {
                       {platform.area_name ?? '—'}
                     </td>
                     <td className="max-w-xs px-4 py-2.5">
-                      {platform.direct_link ? (
-                        <span className="block truncate text-label" title={platform.direct_link}>
+                      {enlaceSeguro(platform.direct_link) ? (
+                        <span className="block truncate text-label" title={platform.direct_link ?? undefined}>
                           {platform.direct_link}
                         </span>
                       ) : (
@@ -266,14 +199,16 @@ export function PlatformAdmin() {
                         <div className="flex justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => setEditing(platform)}
+                            onClick={(e) => open(e, () => setEditing(platform))}
+                            aria-label={`Editar ${platform.name}`}
                             className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
                           >
                             Editar
                           </button>
                           <button
                             type="button"
-                            onClick={() => setRemoving(platform)}
+                            onClick={(e) => open(e, () => setRemoving(platform))}
+                            aria-label={`Eliminar ${platform.name}`}
                             className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-500/10 dark:text-red-300"
                           >
                             Eliminar
@@ -293,11 +228,9 @@ export function PlatformAdmin() {
         <PlatformForm
           areas={areas.data ?? []}
           platform={null}
-          onClose={() => setCreating(false)}
-          onSaved={() => {
-            setCreating(false);
-            platforms.reload();
-          }}
+          isSuperadmin={isSuperadmin}
+          onClose={closeDialogs}
+          onSaved={handleSaved}
         />
       ) : null}
 
@@ -305,11 +238,9 @@ export function PlatformAdmin() {
         <PlatformForm
           areas={areas.data ?? []}
           platform={editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            platforms.reload();
-          }}
+          isSuperadmin={isSuperadmin}
+          onClose={closeDialogs}
+          onSaved={handleSaved}
         />
       ) : null}
 
@@ -318,7 +249,7 @@ export function PlatformAdmin() {
           title="Eliminar plataforma"
           message={`Se eliminará "${removing.name}". Esta acción no se puede deshacer.`}
           onConfirm={remove}
-          onCancel={() => setRemoving(null)}
+          onCancel={closeDialogs}
           busy={busy}
         />
       ) : null}

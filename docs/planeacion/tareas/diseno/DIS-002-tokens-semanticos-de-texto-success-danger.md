@@ -47,3 +47,4 @@ _Se completa al aprobar la tarea._
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-19 | FNC-070 (auditor-accesibilidad): `ErrorNote` `text-error` en claro da 3.30 (< 4.5); lo usa también el estado "sin permiso" de `RequireRole` |
+| 2026-10-19 | DIS-017 (auditor-accesibilidad): `text-error` de los errores por campo y de `ErrorNote`; tarjeta `amber` de "sin enlace" y botón Eliminar `text-red-*` en `platform-admin.tsx`; heredado, no corregido en DIS-017 |

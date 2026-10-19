@@ -46,3 +46,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-19 | DIS-017 (auditor-accesibilidad): botones Editar/Eliminar de la tabla de `platform-admin.tsx` miden 24 px de alto; heredado, no corregido en DIS-017 |
