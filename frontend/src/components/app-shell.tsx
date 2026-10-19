@@ -4,6 +4,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { meetsRequirement, type RoleRequirement } from './require-role';
 import { SessionProvider, useSession } from './session-provider';
 import { ErrorNote, Spinner } from './ui';
 
@@ -11,18 +12,23 @@ interface NavItem {
   href: string;
   label: string;
   /** Permiso mínimo; sin él el enlace no se muestra. */
-  requires?: 'any_admin' | 'admin';
+  requires?: RoleRequirement;
 }
 
-const NAV: NavItem[] = [
+/** Entradas por rol según la tabla de pantallas (REQUERIMIENTOS §4, FNC-070). */
+export const NAV: NavItem[] = [
   { href: '/', label: 'Panel' },
-  { href: '/platforms', label: 'Plataformas' },
+  { href: '/platforms', label: 'Catálogo' },
+  { href: '/requests', label: 'Mis solicitudes', requires: 'requester' },
   { href: '/favorites', label: 'Favoritos' },
   { href: '/notifications', label: 'Notificaciones' },
+  { href: '/approvals', label: 'Aprobaciones', requires: 'any_admin' },
   { href: '/admin/platforms', label: 'Administrar plataformas', requires: 'any_admin' },
   { href: '/areas', label: 'Áreas', requires: 'any_admin' },
   { href: '/users', label: 'Usuarios', requires: 'any_admin' },
+  { href: '/inventory', label: 'Inventario' },
   { href: '/audit', label: 'Auditoría' },
+  { href: '/admin/connectors', label: 'Conectores', requires: 'admin' },
   { href: '/settings', label: 'Ajustes' },
 ];
 
@@ -31,12 +37,9 @@ function Nav() {
   const pathname = usePathname();
   if (!session) return null;
 
-  const { is_admin: isAdmin, is_area_admin: isAreaAdmin } = session.permissions;
-  const visible = NAV.filter((item) => {
-    if (item.requires === 'admin') return isAdmin;
-    if (item.requires === 'any_admin') return isAdmin || isAreaAdmin;
-    return true;
-  });
+  const visible = NAV.filter((item) =>
+    meetsRequirement(item.requires, session.permissions),
+  );
 
   return (
     <nav className="flex flex-col gap-1" aria-label="Principal">
