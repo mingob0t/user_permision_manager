@@ -8,8 +8,9 @@
 | **Fase** | 3 |
 | **Módulo / Área** | directorio |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
+| **Finalizada** | 2026-10-18 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-041-escritura-ldap` |
 | **Requiere migración BD** | No |
@@ -136,3 +137,4 @@ Salida real de `python3 ~/.claude/agentes/herramientas/impacto.py` (contra `deve
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-15 | Implementada en `fnc/FNC-041-escritura-ldap` (worktree `pokemon-wt-041`); 592 passed, 35 xfailed; En revisión (falta revisor y auditor-seguridad; último miembro por confirmar) |
 | 2026-10-15 | Decisiones del dueño (relleno configurable; una sola cuenta de servicio). auditor-seguridad Aprobado y revisor Requiere cambios: hallazgos corregidos; 619 passed, 35 xfailed; sigue En revisión |
+| 2026-10-18 | Hecha: revisor y auditor-seguridad atendidos; merge local a `develop` aprobado por el dueño |
