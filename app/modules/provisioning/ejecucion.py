@@ -92,12 +92,16 @@ def sentencia_reserva(trabajo_id, worker, cfg, momento):
 
 
 def bloqueado_por_anterior(trabajo_id):
-    """`True` si un trabajo anterior de la misma terna no terminó.
+    """`True` si otro trabajo de la misma terna debe ir antes o está en curso.
 
     Los trabajos de una terna (usuario, plataforma, nivel) corren en orden de
-    creación (auditor-seguridad, FNC-049). Consulta previa y no subconsulta
-    del `UPDATE` (MySQL no la permite sobre la misma tabla): sin carrera, un
-    anterior solo puede pasar a terminado y los ids nuevos son mayores.
+    creación (auditor-seguridad, FNC-049): bloquea uno anterior sin terminar
+    o **cualquiera** en ejecución (un trabajo reabierto por FNC-062 tiene id
+    menor que otros ya en curso; re-auditoría). Consulta previa y no
+    subconsulta del `UPDATE` (MySQL no la permite sobre la misma tabla).
+    Carrera residual: dos workers que pasan la consulta a la vez con un
+    trabajo recién reabierto; el reintento manual es del superadmin y poco
+    frecuente.
     """
     actual = (ProvisioningJob.query
               .with_entities(ProvisioningJob.user_id,
@@ -108,11 +112,25 @@ def bloqueado_por_anterior(trabajo_id):
         return True
     return db.session.query(
         ProvisioningJob.query.filter(
-            ProvisioningJob.id < trabajo_id,
+            ProvisioningJob.id != trabajo_id,
             ProvisioningJob.user_id == actual.user_id,
             ProvisioningJob.platform_id == actual.platform_id,
             ProvisioningJob.level == actual.level,
-            ProvisioningJob.status.in_(ESTADOS_SIN_TERMINAR)).exists()
+            or_(and_(ProvisioningJob.id < trabajo_id,
+                     ProvisioningJob.status.in_(ESTADOS_SIN_TERMINAR)),
+                ProvisioningJob.status == ESTADO_EN_EJECUCION)).exists()
+    ).scalar()
+
+
+def revocado_despues(trabajo):
+    """`True` si hay una revocación posterior de la terna de `trabajo`."""
+    return db.session.query(
+        ProvisioningJob.query.filter(
+            ProvisioningJob.id > trabajo.id,
+            ProvisioningJob.operation == OPERACION_REVOCAR,
+            ProvisioningJob.user_id == trabajo.user_id,
+            ProvisioningJob.platform_id == trabajo.platform_id,
+            ProvisioningJob.level == trabajo.level).exists()
     ).scalar()
 
 
@@ -152,6 +170,9 @@ def reabrir(trabajo, cfg):
     """
     if trabajo.status != ESTADO_FALLIDO:
         raise EstadoInvalido('Solo se reabre un trabajo fallido.')
+    if trabajo.operation == OPERACION_OTORGAR and revocado_despues(trabajo):
+        # Reabrirlo volvería a meter a una persona ya revocada (re-auditoría).
+        raise EstadoInvalido('El acceso se revocó después de este trabajo.')
     momento = ahora()
     trabajo.status = ESTADO_PENDIENTE
     trabajo.max_attempts = trabajo.attempts_count + cfg.max_intentos

@@ -138,7 +138,10 @@
 | `venv/bin/python -m pytest -q -p no:cacheprovider` (completo, commit `7709a09`) | 1019 passed, 17 xfailed, código 0 (795 s) |
 | Regresiones de la revisión **antes** de corregir | `test_versionado.py` 1 failed (`config.py` ignorado); `test_mensajes_rq.py` 9 failed, 1 passed; `test_orden_y_reserva.py` 5 failed, 1 passed (el que pasa es de no regresión); exactitud por `mail` 3 failed; tiempo corto de despertar 1 failed |
 | `venv/bin/python -m pytest tests/provisioning -q` (tras corregir) | 96 passed |
+| Regresiones de la re-auditoría **antes** de corregir (`test_reauditoria.py`) | 5 failed |
+| `venv/bin/python -m pytest tests/provisioning -q` (tras la re-auditoría) | 101 passed |
 | `git ls-files app/modules/provisioning` | los 14 `.py` del módulo (todos los del disco), incluido `configuracion.py` |
+| `venv/bin/python -m pytest -q -p no:cacheprovider` (completo, tras la re-auditoría) | 1045 passed, 17 xfailed, código 0 (476 s) |
 | `venv/bin/python -m pytest -q -p no:cacheprovider` (completo, tras la revisión) | 1040 passed, 17 xfailed, código 0 (449 s; una corrida previa dio 1 failed en `test_el_catalogo_coincide_con_el_contrato` por editar `auditoria.md` durante la corrida: 10 passed al repetirla) |
 - Implementación inicial sin regresiones (código nuevo); cada defecto de la revisión tiene su regresión, que falló antes de corregir (fila de arriba)
 - No verificado: Redis real y un worker RQ real (las pruebas usan la cola en el mismo proceso, sin servicios); el `job_timeout` de RQ por señal (se probó la excepción `JobTimeoutException`, no la alarma); OpenLDAP real (solo `ldap3` `MOCK_SYNC`); MySQL real para 0006 (solo SQLite); `SIGTERM` real durante un intento
@@ -160,7 +163,8 @@ Todas: **decisión del orquestador (pendiente de validar en la prueba de concept
 - Observación (sin tarea): los avisos de FNC-048 siguen síncronos dentro del worker; moverlos a la cola sería otra tarea si hace falta
 - Revisión: una revocación **cancela** los otorgar en espera de su terna (estado `cancelado`, auditoría `ejecucion_cancelada` en la transacción del llamador); un otorgar ya en ejecución no se cancela: la revocación espera. Los trabajos de una terna (usuario, plataforma, nivel) corren en orden de creación
 - Revisión: reintento manual (FNC-062) con `ejecucion.reabrir(trabajo, cfg)`: solo desde `fallido`, conserva la bitácora y **sube** `max_attempts` en `PROVISIONING_MAX_ATTEMPTS` (no reinicia el contador). El tope de intentos al reservar solo aplica a reservas vencidas
-- Revisión: mensajes RQ en JSON; el worker descarta sin ejecutar (log y borrado) todo mensaje que no sea `ejecutar_trabajo(<int>)`
+- Re-auditoría: `reabrir` de un otorgar con una revocación posterior de su terna → `EstadoInvalido` (FNC-062 responde 409); el orden por terna bloquea también si **cualquier** trabajo de la terna está en ejecución. Carrera residual documentada en `bloqueado_por_anterior` (dos workers con un trabajo recién reabierto)
+- Revisión: mensajes RQ en JSON; el worker descarta sin ejecutar (log y borrado) todo mensaje que no sea `ejecutar_trabajo(<int>)` o que traiga *callbacks* de RQ
 - Revisión: despertar desde la web con `TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS` = 0,5 s. Riesgo: con Redis caído, cada commit que encola tarda hasta ~1 s más; los trabajos esperan al barrido
 - Revisión: `redis==8.1.0` fijada (la que resuelve `rq==2.12.0`); `croniter` y `click` siguen como dependencias transitivas de `rq`
 - Impacto cruzado (web): el contrato agrega `cancelado` a `status` de `Job` y `ejecucion_cancelada` al catálogo de auditoría; `frontend/src/lib/access/types.ts` (`JobStatus`, FNC-069/DIS-022) debe incluirlo: solicitud para la base
@@ -169,6 +173,7 @@ Todas: **decisión del orquestador (pendiente de validar en la prueba de concept
 | Fecha | Revisor | Veredicto | Estado |
 |---|---|---|---|
 | 2026-10-19 | auditor-seguridad | **Bloqueante** (1 Bloqueante, 2 Media, 2 Baja) | Corregido: `config.py` ignorado → `configuracion.py`; JSON + rechazo de mensajes ajenos; cancelar otorgar y orden por terna; cierre con `locked_by`; filtro exacto `(mail=…)`; `redis` fijado |
+| 2026-10-19 | auditor-seguridad (re-auditoría) | **Aprobado** con 1 Media y 1 Baja | Corregido: `reabrir` rechaza un otorgar con revocación posterior de la terna y un reabierto espera a cualquier trabajo de su terna en ejecución; mensajes RQ con *callbacks* se rechazan |
 | 2026-10-19 | revisor | Requiere cambios (1 Media, 1 Baja, documentación) | Corregido: tope solo en reservas vencidas + `reabrir`; timeout corto al despertar; impacto real y fila de *listeners*; hashes en el tablero |
 
 ## Impacto cruzado
@@ -184,5 +189,6 @@ Todas: **decisión del orquestador (pendiente de validar en la prueba de concept
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-19 | Re-auditoría de seguridad: Aprobado con 1 Media y 1 Baja, corregidas en un commit nuevo; sigue En revisión |
 | 2026-10-19 | Correcciones de auditor-seguridad (Bloqueante) y revisor en un commit nuevo; sigue En revisión |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador); implementada en `fnc/FNC-049-ejecutor-aprovisionamiento` (worktree `pokemon-wt-049`): módulo `provisioning`, migración 0006, `rq==2.12.0`, 6 variables `PROVISIONING_*`, `REDIS_PASS` obligatoria para el worker. Sin revisores (por instrucción): queda En revisión; pendiente `revisor` y `auditor-seguridad` |

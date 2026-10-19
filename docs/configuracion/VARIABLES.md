@@ -156,6 +156,7 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `LOTE_BARRIDO` | Trabajos enviados a la cola por barrido | 100 | trabajos | `app/modules/provisioning/worker.py` | FNC-049, 2026-10-19 | Vigente |
 | `TIEMPO_ESPERA_REDIS_SEGUNDOS` | Conexión y lectura de Redis del worker (RQ sube la lectura para su espera) | 5 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
 | `TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS` | Conexión y envío a Redis al despertar al worker desde la app web (dentro del commit) | 0,5 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
+| `ATRIBUTOS_CALLBACK` | *Callbacks* de RQ que hacen rechazar un mensaje | `_success_callback_name`, `_failure_callback_name`, `_stopped_callback_name` | — | `app/modules/provisioning/worker.py` | FNC-049, 2026-10-19 | Vigente |
 | `SERIALIZADOR_RQ` | Mensajes RQ en JSON (sin pickle) en la cola y el worker | `JSONSerializer` | — | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
 | `TTL_RESULTADO_RQ` | RQ no guarda resultados (el estado vive en la BD) | 0 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
 | `LARGO_ERROR`, `LARGO_CLAVE_IDEMPOTENCIA` | Error de la bitácora truncado / largo de la clave | 500 / 100 | caracteres | `app/modules/provisioning/tipos.py` | FNC-049, 2026-10-19 | Vigente |

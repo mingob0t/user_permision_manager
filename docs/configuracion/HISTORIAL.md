@@ -46,3 +46,4 @@
 | 2026-10-19 | `TIEMPO_ESPERA_REDIS_SEGUNDOS` | todos | 5 s también al despertar desde la web | 5 s solo en el worker; la web usa `TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS` = 0,5 s (alta) | Hallazgo Baja del revisor: con Redis caído cada commit que encola se frenaba hasta 10 s | FNC-049 | desarrollador |
 | 2026-10-19 | `SERIALIZADOR_RQ` | todos | pickle (por defecto de RQ) | `JSONSerializer` (alta) | Hallazgo Media de auditor-seguridad: un mensaje en Redis no debe poder traer código | FNC-049 | desarrollador |
 | 2026-10-19 | `ATRIBUTO_CORREO` | todos | literal `'mail'` en `ATRIBUTOS_PERFIL` | constante con nombre (mismo valor) | Filtro exacto por correo en `buscar_por_correo` (auditor-seguridad, Baja) | FNC-049 | desarrollador |
+| 2026-10-19 | `ATRIBUTOS_CALLBACK` | todos | — | alta (constante) | Re-auditoría de seguridad (Baja): un mensaje RQ con *callbacks* haría importar y llamar otra función | FNC-049 | desarrollador |

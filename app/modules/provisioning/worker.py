@@ -53,11 +53,20 @@ class ControlApagado:
         self._evento.wait(segundos)
 
 
+# Funciones que RQ importa y llama al terminar un mensaje: no se aceptan.
+ATRIBUTOS_CALLBACK = ('_success_callback_name', '_failure_callback_name',
+                      '_stopped_callback_name')
+
+
 def mensaje_valido(job):
-    """`True` solo si el mensaje pide `ejecutar_trabajo(<id entero>)`."""
+    """`True` solo si el mensaje pide `ejecutar_trabajo(<id entero>)` y no
+    trae *callbacks* (re-auditoría)."""
     try:
         args, kwargs = tuple(job.args or ()), job.kwargs or {}
+        sin_callbacks = not any(getattr(job, atributo, None)
+                                for atributo in ATRIBUTOS_CALLBACK)
         return (job.func_name == FUNCION_TRABAJO and not kwargs
+                and sin_callbacks
                 and len(args) == 1 and type(args[0]) is int)
     except Exception:  # datos ilegibles o con otra forma
         return False
