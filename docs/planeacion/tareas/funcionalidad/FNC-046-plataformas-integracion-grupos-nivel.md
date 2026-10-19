@@ -13,7 +13,7 @@
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-046`) |
 | **Rama** | `fnc/FNC-046-plataformas-integracion` |
-| **Commits / PR** | (pendiente de registrar) [FNC-046] (local, sin push ni PR) |
+| **Commits / PR** | `81241d5` [FNC-046] (local, sin push ni PR) + commit de registro del hash |
 | **Requiere migración BD** | Sí (columnas nuevas en `platforms`) |
 | **Requiere auditor-seguridad** | Sí (validación de URL y DN) |
 
