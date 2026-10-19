@@ -13,7 +13,7 @@
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-049`) |
 | **Rama** | `fnc/FNC-049-ejecutor-aprovisionamiento` |
-| **Commits / PR** | (ver bitácora) [FNC-049], local, sin push ni PR |
+| **Commits / PR** | `7709a09` [FNC-049] (local, sin push ni PR) + commit de registro del hash |
 | **Requiere migración BD** | Sí (tablas de ejecuciones e intentos) |
 | **Requiere auditor-seguridad** | Sí (ejecución privilegiada en segundo plano) |
 
@@ -70,7 +70,7 @@
 
 ### Salida real de `impacto.py` (contra `develop`)
 ```
-**Impacto en elementos compartidos:** ninguno detectado (comparado contra `develop`; 29 archivos cambiados).
+**Impacto en elementos compartidos:** ninguno detectado (comparado contra `develop`; 33 archivos cambiados).
 ```
 - La herramienta solo detecta cambios en definiciones existentes; `create_app()` cambió por dentro (dos importaciones y dos llamadas), por eso se lista arriba a mano.
 - Homónimos: `cargar_configuracion`/`validar_al_arrancar` existen en `directory/configuracion.py` y `provisioning/config.py` (distintos módulos; en `create_app` el segundo se importa como `validar_aprovisionamiento`). `MOTIVO_DATOS_INCOMPLETOS` se reutiliza del directorio, no se duplica.
