@@ -73,12 +73,13 @@
 
 | Variable | Propósito | Tipo | Por defecto en código | Ejemplo | Obligatoria | Sensible | En `.env.example` | Dónde se usa | Alta | Estado |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `BACKEND_URL` | URL del backend para los `rewrites` de dev y las llamadas desde el servidor (SSR) | URL | backend local en el puerto 5001, escrito como IP de loopback (deuda) | `http://localhost:5001` | No | No | **No (faltante)** | `frontend/next.config.ts`, `frontend/src/lib/api.ts` | FNC-001, 2026-10-13 | Vigente |
+| `BACKEND_URL` | URL del backend para los `rewrites` de dev y las llamadas desde el servidor (SSR) | URL | `lib/api.ts`: `http://localhost:5001` (constante `BACKEND_URL_POR_DEFECTO`, FNC-069); `next.config.ts`: IP de loopback (deuda, FNC-005) | `http://localhost:5001` | No | No | Sí | `frontend/next.config.ts`, `frontend/src/lib/api.ts` | FNC-001, 2026-10-13 | Vigente |
+| `NEXT_PUBLIC_ACCESS_MOCKS` | `1` = el cliente del gestor de accesos (`lib/access/`) devuelve los datos simulados de los contratos; se ignora con `NODE_ENV=production` | `1` o vacío | vacío (apagado) | `1` | No | No | Sí | `frontend/src/lib/access/client.ts` | FNC-069, 2026-10-19 | Vigente (temporal: se retira al integrar el backend) |
 | `NODE_ENV` | Modo de ejecución | `production` | — | `production` | Sí (prod) | No | No (lo fija la unidad systemd) | `deploy/frontend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | `PORT` | Puerto de `server.js` | entero | 3000 | `3000` | Sí (prod) | No | No (unidad systemd) | `deploy/frontend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | `HOSTNAME` | Interfaz de escucha de `server.js` (solo loopback) | dirección de loopback | — | loopback | Sí (prod) | No | No (unidad systemd) | `deploy/frontend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 
-No hay variables `NEXT_PUBLIC_*`: el navegador usa rutas relativas.
+Única `NEXT_PUBLIC_*`: `NEXT_PUBLIC_ACCESS_MOCKS` (no es secreta; se incrusta en el build). El navegador usa rutas relativas.
 
 ## Variables de los scripts de despliegue
 

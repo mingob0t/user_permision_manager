@@ -16,8 +16,9 @@ frontend/src/
 ├── app/            # Rutas (App Router)
 ├── components/     # Pantallas y piezas de interfaz
 ├── lib/
-│   ├── api.ts      # Cliente de la API v1
+│   ├── api.ts      # Cliente de la API v1 (exporta apiRequest y ApiError)
 │   ├── types.ts    # Contrato de tipos con la API
+│   ├── access/     # Cliente y tipos del gestor de accesos por sección (FNC-069)
 │   └── use-async.ts# Hook de carga con estado loading/error y reload()
 └── styles/         # tokens.css, global.css, components.css (portados del portal original)
 ```
@@ -66,9 +67,28 @@ Dentro de Ajustes, las pestañas de sistema solo se muestran a `administrador`. 
 
 - `request<T>(path, init)` antepone `/api/v1`, envía `credentials: 'include'`, `redirect: 'manual'` y `Accept: application/json`; añade `Content-Type: application/json` si hay cuerpo.
 - En el servidor (SSR) usa `BACKEND_URL`; en el navegador, ruta relativa.
-- Errores como `ApiError(status, message)` con `isForbidden` (403) e `isUnauthenticated` (401/302/redirección opaca).
+- Errores como `ApiError(status, message, {code, fields, correlationId})` con `isForbidden` (403) e `isUnauthenticated` (401/302/redirección opaca); `fields` anidados se aplanan (`params.base_path`).
+- `request` se exporta como `apiRequest`; `BACKEND_URL` por defecto `http://localhost:5001`.
 - El objeto `api` expone una función por endpoint (sesión, áreas, plataformas, usuarios, preferencias, settings, SMTP, plantillas, notificaciones, auth, respaldo como Blob/FormData, LDAP y búsqueda en directorio). Los tipos están en `src/lib/types.ts`.
 - `useAsync(load, deps)` (`src/lib/use-async.ts`) da `data`, `loading`, `error` y `reload()`.
+
+### Gestor de accesos (`src/lib/access/`, FNC-069)
+| Archivo | Contrato | Objeto |
+|---|---|---|
+| `requests.ts` | solicitudes.md | `requestsApi` (catalog, create, mine, inbox, approve, reject) |
+| `grants.ts` | accesos.md | `grantsApi` (mine, ofUser, revoke) |
+| `inventory.ts` | accesos.md | `inventoryApi.list` |
+| `audit.ts` | auditoria.md | `auditApi` (list, ofUser, ofPlatform; siempre paginado) |
+| `connectors.ts` | conectores-y-ejecuciones.md | `connectorsApi` (get, save, remove, test) |
+| `provisioning.ts` | conectores-y-ejecuciones.md | `provisioningApi` (jobs, job, retry) |
+| `users.ts` | areas-y-roles.md, usuarios-directorio.md | `usersApi` (setManagedAreas, createDirectoryAccount) |
+| `directory.ts` | usuarios-directorio.md (FNC-043) | `directoryApi` (config, reload, test) |
+| `home.ts` | inicio.md | `homeApi.summary` |
+| `types.ts`, `client.ts`, `query.ts`, `mocks.ts` | README.md | Tipos, `accessRequest`, `withQuery`/`jsonBody`, datos simulados |
+
+- Plataformas y áreas v1: `api.createPlatform`/`updatePlatform`/`createArea`… de `api.ts` (sin duplicar)
+- Simulados: `NEXT_PUBLIC_ACCESS_MOCKS=1 npm run dev`; ignorados en producción; pendientes de integración
+- Pruebas: `tests/lib/access/` (forma por endpoint, errores 401/403/409/422/500, bandera) y `tests/components/users-list.test.tsx`
 
 ## 6. Estilos, tokens y tema
 
