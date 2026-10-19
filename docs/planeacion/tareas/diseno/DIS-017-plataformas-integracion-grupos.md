@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | plataformas |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `dis/DIS-017-pantalla-plataformas` (worktree `pokemon-wt-d017`) |
@@ -157,3 +157,4 @@ Segunda ejecución (correcciones de revisión), filas nuevas:
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador); implementada en `dis/DIS-017-pantalla-plataformas`; cierra SEG-24 del frontend. En revisión |
 | 2026-10-19 | Revisión: seguridad Aprobado, accesibilidad Con observaciones, revisor Requiere cambios; corregido en un segundo commit. Sigue En revisión |
+- Cierre (2026-10-19): revisor, auditor-accesibilidad y auditor-seguridad atendidos; merge local a `develop` (modo autónomo).
