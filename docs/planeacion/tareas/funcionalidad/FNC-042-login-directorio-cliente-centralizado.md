@@ -8,8 +8,9 @@
 | **Fase** | 3 |
 | **Módulo / Área** | auth |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Inicio** | 2026-10-15 |
+| **Finalizada** | 2026-10-18 |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-042`) |
 | **Rama** | `fnc/FNC-042-login-directorio` |
@@ -139,3 +140,4 @@
 - "Un solo superadmin" (comprobación al asignar) se movió a FNC-044, tarea vinculada que lo resuelve.
 - Veredictos: auditor-seguridad Bloqueante → corregido (`c0bd3a4`), queda re-auditoría del bloqueo; revisor Requiere cambios → corregido. Sigue En revisión.
 - Re-auditoría de seguridad del bloqueo (2026-10-15): **Aprobado**; Baja (correo sin normalizar) corregida con regresión que primero falló; requisitos de `mail` en ENTORNOS.md. Sigue En revisión.
+- Cierre (2026-10-18): Hecha; revisor y auditor-seguridad atendidos; merge local a `develop` aprobado por el dueño.
