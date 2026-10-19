@@ -118,7 +118,6 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
 | `PUT /areas/<id>/users` | `area_admin_required` | Define los miembros del área dentro del alcance. |
-| `PUT /platforms/<id>/users` | `platform_manage_required` | Define `user_platforms`. |
 | `POST /users` | `any_admin_required` | Alta de cuenta local (`auth_source` lo fija el servidor). Rol fuera de lo asignable → `403 rol_reservado`; `managed_area_ids`, `auth_source`, `password_hash` → `400 campo_no_permitido`. `admin` es identificador reservado. Fuera de desarrollo nace `auth_source=ldap` sin clave y se vincula al entrar por directorio/SSO (con la bandera: `local`); sin contraseña local: `password` → `400 campo_no_permitido` salvo en desarrollo con `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (FNC-077, SEG-02). Un `admin_area` nace sin áreas administradas. |
 | `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: solo la de la cuenta de emergencia (superadmin local); otra cuenta → `400 campo_no_permitido`, salvo en desarrollo con `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (cuentas `local` del alcance) (FNC-077). |
 | `DELETE /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Borra usuario; no permite borrarse a sí mismo ni la cuenta maestra `admin`. |
