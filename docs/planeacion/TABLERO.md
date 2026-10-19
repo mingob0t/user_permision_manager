@@ -97,7 +97,7 @@
 | DIS-013 | Catálogo: solicitar acceso con nivel y justificación | web | 3 | catalogo | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-056 |
 | DIS-014 | Mis solicitudes y mis accesos | web | 3 | solicitudes | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-071, FNC-056, FNC-058, DIS-013 |
 | DIS-015 | Bandeja de aprobaciones con rechazo motivado | web | 3 | aprobaciones | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-071, FNC-057 |
-| DIS-016 | Áreas: alta por el admin y asignación de admins por el superadmin | web | 3 | areas | Alta | En revisión | 2026-10-13 | 2026-10-19 | | `dis/DIS-016-pantalla-areas` (commit local, sin push) | Depende de FNC-069, FNC-044, FNC-045; decisiones del orquestador en la ficha; revisión (accesibilidad, revisor) corregida; visual pendiente |
+| DIS-016 | Áreas: alta por el admin y asignación de admins por el superadmin | web | 3 | areas | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `dis/DIS-016-pantalla-areas` (commit local, sin push) | Depende de FNC-069, FNC-044, FNC-045; decisiones del orquestador en la ficha; revisión (accesibilidad, revisor) corregida; visual pendiente |
 | DIS-017 | Plataformas: tipo de integración y grupos por nivel | web | 3 | plataformas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-046 |
 | DIS-018 | Usuarios y accesos: accesos de un usuario y revocación | web | 3 | usuarios | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-071, FNC-058, DIS-013 |
 | DIS-019 | Usuarios: alta en el directorio y elevación a admin | web | 3 | usuarios | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-064, FNC-044, DIS-018 |
