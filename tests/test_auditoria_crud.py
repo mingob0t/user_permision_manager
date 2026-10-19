@@ -13,7 +13,6 @@ from app.modules.audit.models import AuditLog
 from app.modules.auth.models import User
 from app.modules.core.models import Area
 from tests import fabricas
-from tests.matriz_proteccion import CONTRASENA_FICTICIA
 
 A = '/api/v1'
 LIMITE_AUDITORIA = 500
@@ -50,8 +49,7 @@ ACCIONES = [
     ('PUT', '/platforms/{plataforma}/users', {'user_ids': []},
      'ACTUALIZAR ACCESO: Plataforma auditada', 'Plataformas',
      'Plataforma auditada'),
-    ('POST', '/users', {'email': 'nuevo@pruebas.local',
-                        'password': CONTRASENA_FICTICIA},
+    ('POST', '/users', {'email': 'nuevo@pruebas.local'},
      'CREAR USUARIO: nuevo@pruebas.local', 'Usuarios', 'nuevo@pruebas.local'),
     ('PUT', '/users/{objetivo}', {'name': 'Editado'},
      'EDITAR USUARIO: objetivo@pruebas.local', 'Usuarios',

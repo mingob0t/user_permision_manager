@@ -1,6 +1,8 @@
 """Peticiones y comprobaciones comunes de las pruebas de autenticación (FNC-022)."""
 
 from app.modules.audit.models import AuditLog
+from app.modules.auth.acceso_local import (ENTORNO_DESARROLLO, VAR_ENTORNO,
+                                           VAR_LOGIN_LOCAL_TODAS)
 
 A = '/api/v1/auth'
 RUTA_ME = '/api/v1/me'
@@ -35,3 +37,15 @@ def hay_auditoria(prefijo_accion, status=None, target=None):
     if target:
         consulta = consulta.filter_by(target=target)
     return consulta.first() is not None
+
+
+def activar_login_local_de_todas(monkeypatch, entorno=ENTORNO_DESARROLLO):
+    """Bandera de desarrollo de FNC-077 con el `APP_ENV` indicado.
+
+    `entorno=None` deja `APP_ENV` sin definir.
+    """
+    monkeypatch.setenv(VAR_LOGIN_LOCAL_TODAS, 'true')
+    if entorno is None:
+        monkeypatch.delenv(VAR_ENTORNO, raising=False)
+    else:
+        monkeypatch.setenv(VAR_ENTORNO, entorno)

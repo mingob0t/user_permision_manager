@@ -49,3 +49,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-19 | SEG-02 cerrado por FNC-077 (En revisión): sin `nexus123` en `POST /users`, login local solo cuenta de emergencia y `auth_source=local`; xfail retirado. Queda SEG-03 (`admin/admin123` en `create_app`, SQL y `utils/`) |

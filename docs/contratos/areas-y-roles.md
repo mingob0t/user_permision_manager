@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1 (2026-10-14) |
+| Versión | 2 (2026-10-19) |
 | Proveedor | backend (FNC-044, FNC-045, FNC-055) |
 | Consumidores | web (FNC-069; pantallas DIS-016, DIS-019) |
 | Solicitudes | — |
@@ -65,7 +65,8 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 - Degradar `admin_area` → `usuario` borra sus áreas administradas en la misma transacción; auditoría `rol_cambiado` con antes y después.
 - Un admin de área solo gestiona cuentas `usuario` de sus áreas (SEC-AUTHZ-06); sobre otro admin o el superadmin → 404.
 - Nadie cambia su propio rol (SEC-AUTHZ-08) → 403 `operacion_propia`.
-- `password` en `PUT /users/<id>` (2026-10-15, decisión del dueño): superadmin, o admin sobre cuentas `usuario` locales de sus áreas; cuenta `ldap` o `sso` → `400 campo_no_permitido`; sin rol de admin → `403 sin_permiso`.
+- `password` (v2, FNC-077): el portal no fija contraseñas locales. En `POST /users` → `400 campo_no_permitido` (vacía = ausente; la cuenta nace sin clave). En `PUT /users/<id>` solo para la cuenta de emergencia (superadmin local); cualquier otra cuenta → `400 campo_no_permitido`; sin rol de admin → `403 sin_permiso`.
+- Solo desarrollo (`APP_ENV=development` y `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true`): `password` se acepta en cuentas locales del alcance, como en v1. Nunca en cuentas `ldap` o `sso`.
 
 ## Errores
 | HTTP | `code` | Mensaje |
@@ -95,3 +96,4 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
 | 1 | 2026-10-15 | Aditivo (FNC-044): regla de `password` en `PUT /users/<id>` con `400 campo_no_permitido` (cuenta no local) y `403 sin_permiso` |
 | 1 | 2026-10-18 | Aditivo (FNC-045): `409 area_con_otros_admins` en `DELETE /areas/<id>` para el admin de área (decisión del orquestador, pendiente de validar en la PoC) |
+| 2 | 2026-10-19 | FNC-077 (decisión del dueño 2026-10-15: sin login local): `password` → `400 campo_no_permitido` en `POST /users` y en `PUT /users/<id>` salvo la cuenta de emergencia; excepción de desarrollo. Cliente: DIS-018/DIS-019 (decisión del orquestador, pendiente de validar en la PoC) |

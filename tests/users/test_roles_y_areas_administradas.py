@@ -20,6 +20,7 @@ from app.modules.auth.models import User
 from app.modules.core.models import Area
 from tests import fabricas
 from tests.matriz_proteccion import CONTRASENA_FICTICIA
+from tests.peticiones_auth import activar_login_local_de_todas
 
 A = '/api/v1'
 CONTRASENA_NUEVA = 'otra-clave-ficticia-de-prueba'
@@ -72,7 +73,7 @@ def test_admin_area_nuevo_nace_sin_areas_administradas(escena, como):
     """Antes copiaba `area_ids` a las áreas administradas."""
     respuesta = como(escena['super']).post(f'{A}/users', json={
         'email': 'nuevo.admin@pruebas.local', 'role': ROLE_AREA_ADMIN,
-        'area_ids': [escena['A']], 'password': CONTRASENA_FICTICIA})
+        'area_ids': [escena['A']]})
     assert respuesta.status_code == 201, respuesta.get_data(as_text=True)
     cuenta = _cuenta(respuesta.get_json()['id'])
     assert cuenta.role == ROLE_AREA_ADMIN
@@ -97,8 +98,7 @@ def test_crear_con_campo_no_permitido_da_400(escena, como, actor, campo,
 
 def test_el_servidor_fija_el_origen_local(escena, como):
     respuesta = como(escena['admin_a']).post(f'{A}/users', json={
-        'email': 'nuevo@pruebas.local', 'area_ids': [escena['A']],
-        'password': CONTRASENA_FICTICIA})
+        'email': 'nuevo@pruebas.local', 'area_ids': [escena['A']]})
     assert respuesta.status_code == 201
     assert _cuenta(respuesta.get_json()['id']).auth_source == 'local'
 
@@ -112,15 +112,14 @@ def test_el_servidor_fija_el_origen_local(escena, como):
 def test_crear_con_rol_reservado_da_403(escena, como, actor, rol):
     respuesta = como(escena[actor]).post(f'{A}/users', json={
         'email': 'nuevo@pruebas.local', 'role': rol,
-        'area_ids': [escena['A']], 'password': CONTRASENA_FICTICIA})
+        'area_ids': [escena['A']]})
     _codigo(respuesta, 403, 'rol_reservado')
     assert User.query.filter_by(email='nuevo@pruebas.local').first() is None
 
 
 def test_no_existe_un_segundo_superadmin(escena, como):
     como(escena['super']).post(f'{A}/users', json={
-        'email': 'otro.super@pruebas.local', 'role': ROLE_ADMIN,
-        'password': CONTRASENA_FICTICIA})
+        'email': 'otro.super@pruebas.local', 'role': ROLE_ADMIN})
     como(escena['super']).put(f"{A}/users/{escena['usuario_a']}",
                               json={'role': ROLE_ADMIN})
     assert User.query.filter(db.func.lower(User.role) == ROLE_ADMIN).count() == 1
@@ -231,8 +230,11 @@ def test_admin_area_no_se_gestiona_a_si_mismo(escena, como):
     _codigo(respuesta, 404, 'no_encontrado')
 
 
-def test_admin_area_cambia_contrasena_local_de_su_usuario(escena, como):
-    """Decisión del dueño (2026-10-15): el admin de área sí puede."""
+def test_admin_area_cambia_contrasena_local_de_su_usuario(escena, como,
+                                                          monkeypatch):
+    """Decisión del dueño (2026-10-15); desde FNC-077 solo en desarrollo con
+    `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (`tests/users/test_contrasenas_locales.py`)."""
+    activar_login_local_de_todas(monkeypatch)
     respuesta = como(escena['admin_a']).put(
         f"{A}/users/{escena['usuario_a']}", json={'password': CONTRASENA_NUEVA})
     assert respuesta.status_code == 200, respuesta.get_data(as_text=True)
@@ -261,7 +263,8 @@ def test_nadie_cambia_la_contrasena_de_cuentas_no_locales(escena, como,
     assert _cuenta(escena['usuario_a']).check_password(CONTRASENA_FICTICIA)
 
 
-def test_superadmin_cambia_contrasena_local(escena, como):
+def test_superadmin_cambia_contrasena_local(escena, como, monkeypatch):
+    activar_login_local_de_todas(monkeypatch)
     respuesta = como(escena['super']).put(
         f"{A}/users/{escena['usuario_a']}", json={'password': CONTRASENA_NUEVA})
     assert respuesta.status_code == 200

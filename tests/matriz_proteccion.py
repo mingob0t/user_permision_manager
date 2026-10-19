@@ -89,7 +89,8 @@ def crear_escenario():
     area_vacia = fabricas.crear_area()
     plataforma = fabricas.crear_plataforma(area)
     objetivo = fabricas.crear_usuario(ROLE_USER, areas=[area])
-    cuenta_local = fabricas.crear_usuario(ROLE_USER,
+    # Cuenta de emergencia: la única con login local (FNC-077).
+    cuenta_local = fabricas.crear_usuario(ROLE_ADMIN,
                                           contrasena=CONTRASENA_FICTICIA)
     # Admin de área sin áreas: destino de `PUT /users/<id>/managed-areas`.
     admin_objetivo = fabricas.crear_usuario(ROLE_AREA_ADMIN)
@@ -173,8 +174,7 @@ def _cabecera_sso(esc):
 
 def _nuevo_usuario(esc):
     return {'json': {'email': 'nuevo@pruebas.local', 'role': ROLE_USER,
-                     'area_ids': [esc.area_id],
-                     'password': CONTRASENA_FICTICIA}}
+                     'area_ids': [esc.area_id]}}
 
 
 @dataclass(frozen=True)
