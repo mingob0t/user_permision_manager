@@ -114,6 +114,8 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `PURGE_MIN_DAYS` | Mínimo de días de inactividad para purgar | 7 | días | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
 | `ASSIGNABLE_ROLES` / `RESERVED_NAMES` | Roles asignables por admin de área / identificadores reservados | `usuario`, `admin_area` / `admin` | — | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
 | Intervalo de refresco | Límites de `pref_refresh_interval` | 15–3600 | s | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
+| `INTERVALO_POLLING_MIN_S` / `INTERVALO_POLLING_MAX_S` / `INTERVALO_POLLING_POR_DEFECTO_S` | Límites y valor por defecto del polling web (espejo de `pref_refresh_interval`; el máximo es también el tope del *backoff*) | 15 / 3600 / 60 | s | `frontend/src/lib/use-polling.ts` | FNC-071, 2026-10-19 | Vigente |
+| `JITTER_POLLING` | Fracción máxima restada a la espera tras un error | 0.1 | fracción | `frontend/src/lib/use-polling.ts` | FNC-071, 2026-10-19 | Vigente |
 | `MAX_LENGTH` | Longitud máxima de nombres visibles | 100 | caracteres | `app/utils/naming.py` | FNC-001, 2026-10-13 | Vigente |
 | `ACTOR_SISTEMA` | Valor de `AuditLog.user` cuando actúa el sistema | `sistema` | — | `app/modules/audit/events.py` | FNC-001 (`SYSTEM`), 2026-10-13; constante con nombre FNC-047 | Vigente |
 | `IP_INTERNA` | IP de auditoría fuera de una petición | `INTERNAL` | — | `app/modules/audit/services.py` | FNC-001, 2026-10-13; constante con nombre FNC-047 | Vigente |

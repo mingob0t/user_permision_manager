@@ -19,7 +19,8 @@ frontend/src/
 │   ├── api.ts      # Cliente de la API v1 (exporta apiRequest y ApiError)
 │   ├── types.ts    # Contrato de tipos con la API
 │   ├── access/     # Cliente y tipos del gestor de accesos por sección (FNC-069)
-│   └── use-async.ts# Hook de carga con estado loading/error y reload()
+│   ├── use-async.ts# Hook de carga con estado loading/error y reload()
+│   └── use-polling.ts# useAsync con refresco periódico (ADR-006, FNC-071)
 └── styles/         # tokens.css, global.css, components.css (portados del portal original)
 ```
 
@@ -82,6 +83,12 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 - `request` se exporta como `apiRequest`; `BACKEND_URL` por defecto `http://localhost:5001`.
 - El objeto `api` expone una función por endpoint (sesión, áreas, plataformas, usuarios, preferencias, settings, SMTP, plantillas, notificaciones, auth, respaldo como Blob/FormData, LDAP y búsqueda en directorio). Los tipos están en `src/lib/types.ts`.
 - `useAsync(load, deps)` (`src/lib/use-async.ts`) da `data`, `loading`, `error` y `reload()`.
+- `usePolling(load, { intervalSeconds, deps })` (`src/lib/use-polling.ts`, FNC-071): `useAsync` con polling según ADR-006.
+  - `intervalSeconds` = `session.preferences.refresh_interval` (acotado a 15–3600 s; sin valor, 60 s)
+  - Pestaña oculta: sin consultas; al volver, una inmediata. Una consulta a la vez
+  - Error: espera ×2 por fallo hasta 3600 s con *jitter*; éxito restablece; `401` detiene
+  - `refresh()` tras una escritura propia; `loading` es `true` en cada consulta: mostrar carga solo sin `data`
+  - `data` es el último dato válido: se conserva tras un error, junto con `error`
 
 ### Gestor de accesos (`src/lib/access/`, FNC-069)
 | Archivo | Contrato | Objeto |
@@ -129,6 +136,7 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 - Requiere Node 20.19+ o 22.13+ (por Vitest y jsdom).
 - Las pruebas viven en `frontend/tests/`; configuración en `vitest.config.ts`.
 - `tests/lib/api.test.ts`: cliente de la API con `fetch` simulado (éxito, error HTTP, 401).
+- `tests/lib/use-polling.test.ts`: `usePolling` con temporizadores simulados (intervalo, pausa, *backoff*, sin solape, 401, desmontaje).
 - `tests/components/audit-log.test.tsx`: `AuditLog` con la API simulada (datos, filtro, vacío, error).
 - `tests/components/navegacion-por-rol.test.tsx`: entradas del menú por rol y `RequireRole` (sin permiso no monta ni llama a la API).
 - `tests/accesibilidad/contraste.test.ts`: contraste WCAG de los tokens en los 7 temas (4.5:1 texto, 3:1 bordes).

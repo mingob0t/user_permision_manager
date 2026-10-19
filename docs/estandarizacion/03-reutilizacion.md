@@ -11,6 +11,7 @@
 | `Modal` | Componente | `frontend/src/components/form.tsx:96` | Diálogo con bloqueo de scroll y footer | areas-list, users-list, platform-admin |
 | `ConfirmDialog` | Componente | `frontend/src/components/form.tsx:162` | Confirmación de acciones destructivas | areas, users, platform-admin, notifications |
 | `useAsync` | Hook | `frontend/src/lib/use-async.ts:17` | Carga con `loading/error/data/reload` | Todas las listas |
+| `usePolling`, `normalizarIntervalo`, `esperaPolling` | Hook y funciones | `frontend/src/lib/use-polling.ts:69` | `useAsync` con refresco periódico (ADR-006): intervalo del usuario, pausa en segundo plano, *backoff*, `refresh()` | DIS-014, DIS-015, DIS-018, DIS-022, DIS-024 (pendientes) |
 | `api`, `ApiError` | Cliente HTTP | `frontend/src/lib/api.ts` | Único punto de `fetch` a `/api/v1` (salvo backup, ver duplicado D-07) | Todo el frontend |
 | `apiRequest`, `ApiError.code/fields/correlationId` | Cliente HTTP | `frontend/src/lib/api.ts` | `request()` exportado; error estándar del contrato (`code`, `fields` aplanados con punto) | `lib/access/`, pantallas DIS-013 a DIS-024 |
 | `accessRequest`, `withQuery`, `jsonBody` | Cliente HTTP | `frontend/src/lib/access/client.ts`, `query.ts` | Petición del gestor con datos simulados tras `NEXT_PUBLIC_ACCESS_MOCKS`; consulta sin vacíos; cuerpo JSON | `lib/access/*.ts` |
