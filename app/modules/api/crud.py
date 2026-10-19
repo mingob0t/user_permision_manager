@@ -16,11 +16,12 @@ from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
                                      ROL_RESERVADO, error_response,
                                      is_id_list, json_object)
 from app.modules.audit.services import add_audit_log
+from app.modules.auth.acceso_local import (contrasena_local_permitida,
+                                           origen_de_alta)
 from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
-from app.modules.users.roles import (ORIGEN_LOCAL, cambiar_rol,
-                                     campos_no_permitidos, es_el_mismo_rol,
-                                     rol_asignable)
+from app.modules.users.roles import (cambiar_rol, campos_no_permitidos,
+                                     es_el_mismo_rol, rol_asignable)
 from app.utils.naming import sanitize_display_name
 
 crud_bp = Blueprint('api_crud', __name__, url_prefix='/api/v1')
@@ -91,6 +92,10 @@ def create_user():
         return _error('El correo ya está registrado.', 409)
     if campos_no_permitidos(data):
         return _error(*CAMPO_NO_PERMITIDO)
+    # Sin contraseña local: la cuenta nace sin clave (FNC-077, SEG-02); solo
+    # se acepta en desarrollo con LOGIN_LOCAL_TODAS_LAS_CUENTAS.
+    if data.get('password') and not contrasena_local_permitida():
+        return _error(*CAMPO_NO_PERMITIDO)
 
     # Solo el superadmin crea admins de área; nadie crea superadmins (RF-04).
     role = data.get('role') or 'usuario'
@@ -105,10 +110,12 @@ def create_user():
         email=email,
         nombre=sanitize_display_name(data.get('name'), fallback=email),
         role=role,
-        auth_source=ORIGEN_LOCAL,
+        # Cuenta de directorio salvo en desarrollo con la bandera (FNC-077).
+        auth_source=origen_de_alta(),
         is_active=data.get('is_active', True),
     )
-    user.set_password(data.get('password') or 'nexus123')
+    if data.get('password'):
+        user.set_password(data['password'])
     # Un admin_area nace sin áreas administradas: se asignan aparte con
     # `PUT /users/<id>/managed-areas` (solo superadmin).
     user.areas = Area.query.filter(Area.id.in_(area_ids)).all()
@@ -142,11 +149,11 @@ def update_user(user_id):
         if not rol_asignable(new_role):
             return _error(*ROL_RESERVADO)
 
-    # Contraseña: superadmin, o admin de área sobre cuentas `usuario` de sus
-    # áreas (ya filtrado por can_manage_user; decisión del dueño 2026-10-15).
-    # Nunca de cuentas del directorio o del SSO (SEG-05, P8).
-    if data.get('password') and (
-            (target.auth_source or ORIGEN_LOCAL) != ORIGEN_LOCAL):
+    # Contraseña: solo la cuenta de emergencia (superadmin local) o, en
+    # desarrollo con LOGIN_LOCAL_TODAS_LAS_CUENTAS, una cuenta local del
+    # alcance (can_manage_user). Nunca del directorio o del SSO (SEG-05, P8,
+    # FNC-077).
+    if data.get('password') and not contrasena_local_permitida(target):
         return _error(*CAMPO_NO_PERMITIDO)
 
     if change_role:

@@ -82,11 +82,20 @@ Qué variables cambian por entorno. El valor de cada una está en `docs/configur
 | `BASE_URL` | URL local | `https://<dominio del entorno>` |
 | `BACKEND_URL` (frontend) | backend local | no se usa (enruta nginx) |
 | `AUTHELIA_ENABLED` | normalmente `false` | `true` al conectar Authelia |
+| `APP_ENV` (FNC-077) | `development` | `staging` / `production` (o vacía) |
+| `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (FNC-077) | `false`; `true` solo para la PoC sin Authelia | `false` (se ignora: `APP_ENV` no es `development`) |
 | `DB_*`, `SECRET_KEY`, `SMTP_*` | `.env` local | `.env` del servidor con secretos de Vaultwarden |
 | `LDAP_*` (FNC-040) | `.env` local; vacío = directorio inactivo | `.env` del servidor; `LDAP_BIND_PASSWORD` de Vaultwarden. Con CA interna: copiar su PEM al servidor y apuntar `LDAP_CA_CERT_FILE` (si no, la app no conecta: el certificado se valida) |
 | `REDIS_PASS` (FNC-049) | `.env` local; obligatoria para el worker (Redis local con `requirepass`) | Vaultwarden `pokemon/<entorno>/REDIS_PASS`; Redis con `requirepass` y solo en loopback o red interna |
 | `PROVISIONING_*` (FNC-049) | por defecto (o valores cortos para probar reintentos) | por defecto; ajustar solo con motivo en `HISTORIAL.md` |
 | `LDAP_USER_OBJECT_CLASSES`, `LDAP_GROUP_PLACEHOLDER_MEMBER` (FNC-041) | `.env` local; vacías = `inetOrgPerson` / sin relleno | `.env` del servidor. El relleno es una entrada sin login ni contraseña, fuera de `LDAP_USERS_BASE_DN` (si no, la app no arranca) |
+
+## Entrar en local sin Authelia (FNC-077)
+- El login local solo admite la **cuenta de emergencia**: superadmin (`administrador`) con `auth_source=local`. En una BD local nueva es el usuario semilla `admin` (FNC-003 lo reemplazará por un comando explícito).
+- Pantalla de login → acceso local → `admin` y su contraseña. Sin variables extra.
+- Para entrar con **otras cuentas locales** (PoC): en el `.env` local `APP_ENV=development` y `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true`, y reiniciar el backend. Así también se aceptan contraseñas en el alta y la edición de usuarios.
+- Cualquier otro valor de `APP_ENV` (o vacío) ignora la bandera: en staging y producción solo entra la cuenta de emergencia.
+- Las cuentas creadas sin contraseña (ya no reciben `nexus123`) no entran por login local: se les fija una con la bandera activa.
 
 ## ACL de OpenLDAP para la cuenta de servicio (FNC-041, SEC-LDAP-03)
 

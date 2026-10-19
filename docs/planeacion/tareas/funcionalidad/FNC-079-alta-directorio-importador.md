@@ -29,3 +29,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-15 | Creada como Propuesta (revisión de FNC-044) |
+| 2026-10-19 | FNC-077 (En revisión): fuera de desarrollo `POST /users` ya crea `auth_source=ldap` sin contraseña, que se vincula al entrar por directorio/SSO; el alta del importador puede apoyarse en esto (falta comprobar que la cuenta existe en el directorio) |

@@ -1,103 +1,33 @@
 'use client';
 
-/** Áreas: consulta y, para el superadmin, administración. */
+/**
+ * Áreas: consulta y administración. El superadmin gestiona todas y asigna sus
+ * administradores; el admin de área da de alta áreas y gestiona las suyas
+ * (DIS-016). Formulario y panel de administradores viven en `areas/`.
+ */
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
-import type { Area, AreaInput } from '@/lib/types';
-import { Button, Checkbox, ConfirmDialog, Field, Modal, TextArea, TextInput } from './form';
+import type { Area } from '@/lib/types';
+import { AreaAdminsPanel } from './areas/area-admins-panel';
+import { mensajeDeError } from './areas/area-errors';
+import { AreaForm } from './areas/area-form';
+import { Button, ConfirmDialog } from './form';
+import { RequireRole, meetsRequirement } from './require-role';
 import { useSession } from './session-provider';
 import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
 
-function AreaForm({
-  area,
-  onClose,
-  onSaved,
-}: {
-  area: Area | null;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [form, setForm] = useState<AreaInput>(
-    area
-      ? {
-          name: area.name,
-          description: area.description ?? '',
-          color: area.color,
-          status: area.status,
-        }
-      : { name: '', description: '', color: '#6366f1', status: 'Activo' },
-  );
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function save() {
-    if (!form.name?.trim()) {
-      setError('El nombre es obligatorio.');
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      if (area) await api.updateArea(area.id, form);
-      else await api.createArea(form);
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo guardar');
-    } finally {
-      setSaving(false);
-    }
-  }
-
+/** Sin rol de administración muestra el estado "sin permiso" y no llama a la API. */
+export function AreasList() {
   return (
-    <Modal
-      title={area ? `Editar ${area.name}` : 'Nueva área'}
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save} disabled={saving}>
-            {saving ? 'Guardando…' : 'Guardar'}
-          </Button>
-        </>
-      }
-    >
-      {error ? <ErrorNote message={error} /> : null}
-
-      <Field label="Nombre">
-        <TextInput
-          value={form.name ?? ''}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
-      </Field>
-
-      <Field label="Descripción">
-        <TextArea
-          rows={2}
-          value={form.description ?? ''}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
-      </Field>
-
-      <Field label="Color">
-        <TextInput
-          type="color" className="h-10 p-1"
-          value={form.color ?? '#6366f1'}
-          onChange={(e) => setForm({ ...form, color: e.target.value })}
-        />
-      </Field>
-
-      <Checkbox
-        label="Activa"
-        checked={form.status === 'Activo'}
-        onChange={(e) => setForm({ ...form, status: e.target.checked ? 'Activo' : 'Inactivo' })}
-      />
-    </Modal>
+    <RequireRole requires="any_admin">
+      <AreasScreen />
+    </RequireRole>
   );
 }
 
-export function AreasList() {
+function AreasScreen() {
   const { session } = useSession();
   const { data, loading, error, reload } = useAsync(() => api.areas(), []);
   const [creating, setCreating] = useState(false);
@@ -105,9 +35,19 @@ export function AreasList() {
   const [removing, setRemoving] = useState<Area | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [assigning, setAssigning] = useState<Area | null>(null);
+  // `/me` se pide una vez: las áreas creadas en esta visita aún no están en
+  // `session.managed_areas`, pero el admin de área ya las administra.
+  const [created, setCreated] = useState<number[]>([]);
 
   const isAdmin = session?.permissions.is_admin ?? false;
-  const managedIds = new Set((session?.managed_areas ?? []).map((a) => a.id));
+  // `can_manage_areas` de `/me` sigue siendo solo del superadmin (FNC-045);
+  // el alta se decide por rol: superadmin o admin de área.
+  const canCreate = session ? meetsRequirement('any_admin', session.permissions) : false;
+  const managedIds = new Set([
+    ...(session?.managed_areas ?? []).map((a) => a.id),
+    ...created,
+  ]);
 
   async function remove() {
     if (!removing) return;
@@ -118,7 +58,8 @@ export function AreasList() {
       setRemoving(null);
       reload();
     } catch (err) {
-      setProblem(err instanceof Error ? err.message : 'No se pudo eliminar');
+      setRemoving(null);
+      setProblem(mensajeDeError(err, 'No se pudo eliminar'));
     } finally {
       setBusy(false);
     }
@@ -133,8 +74,7 @@ export function AreasList() {
             {isAdmin ? 'Todas las áreas del sistema.' : 'Áreas que administras.'}
           </p>
         </div>
-        {/* Crear un área es crear un tenant: solo el superadmin. */}
-        {isAdmin ? <Button onClick={() => setCreating(true)}>Nueva área</Button> : null}
+        {canCreate ? <Button onClick={() => setCreating(true)}>Nueva área</Button> : null}
       </div>
 
       {problem ? <ErrorNote message={problem} /> : null}
@@ -189,6 +129,7 @@ export function AreasList() {
                       <button
                         type="button"
                         onClick={() => setEditing(area)}
+                        aria-label={`Editar ${area.name}`}
                         className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
                       >
                         Editar
@@ -196,12 +137,21 @@ export function AreasList() {
                       {isAdmin ? (
                         <button
                           type="button"
-                          onClick={() => setRemoving(area)}
-                          className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-500/10 dark:text-red-300"
+                          onClick={() => setAssigning(area)}
+                          aria-label={`Administradores de ${area.name}`}
+                          className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
                         >
-                          Eliminar
+                          Administradores
                         </button>
                       ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setRemoving(area)}
+                        aria-label={`Eliminar ${area.name}`}
+                        className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-500/10 dark:text-red-300"
+                      >
+                        Eliminar
+                      </button>
                     </div>
                   ) : null}
                 </Card>
@@ -215,7 +165,11 @@ export function AreasList() {
         <AreaForm
           area={null}
           onClose={() => setCreating(false)}
-          onSaved={() => { setCreating(false); reload(); }}
+          onSaved={(area) => {
+            setCreating(false);
+            if (!isAdmin) setCreated((ids) => [...ids, area.id]);
+            reload();
+          }}
         />
       ) : null}
 
@@ -225,6 +179,10 @@ export function AreasList() {
           onClose={() => setEditing(null)}
           onSaved={() => { setEditing(null); reload(); }}
         />
+      ) : null}
+
+      {assigning ? (
+        <AreaAdminsPanel area={assigning} onClose={() => setAssigning(null)} />
       ) : null}
 
       {removing ? (

@@ -19,7 +19,8 @@ dotenv.load_dotenv = lambda *args, **kwargs: False
 PREFIJOS_EXTERNOS = ('DB_', 'REDIS_', 'SMTP_', 'AUTHELIA_', 'LDAP_', 'NOTIFY_',
                      'DEBUG_')
 VARIABLES_EXTERNAS = ('TRUSTED_PROXIES', 'FRONTEND_URL', 'BASE_URL',
-                      'ENABLE_NOTIFICATIONS')
+                      'ENABLE_NOTIFICATIONS', 'APP_ENV',
+                      'LOGIN_LOCAL_TODAS_LAS_CUENTAS')
 
 # Valores ficticios de prueba (no son secretos).
 VARIABLES_PRUEBA = {

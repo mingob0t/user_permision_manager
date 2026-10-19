@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | FNC-001 | Incorporar el proyecto al método | infra | 0 | global | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (634e9f1) | |
 | FNC-002 | Login de directorio seguro: sin purga de cuentas, filtro LDAP escapado y mensajes genéricos | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — | Absorbida por FNC-042 (En revisión) |
-| FNC-003 | Eliminar credenciales por defecto y crear el primer superadmin con un comando explícito | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — |  |
+| FNC-003 | Eliminar credenciales por defecto y crear el primer superadmin con un comando explícito | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — | SEG-02 cerrado por FNC-077 (En revisión); queda SEG-03 |
 | FNC-004 | nginx: limpiar cabeceras Remote-* en todas las location, bloquear /api y /auth sin distinguir mayúsculas, TLS y cabeceras de seguridad | infra | 5 | deploy | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-005 y FNC-006 cierra SEG-04 |
 | FNC-005 | Next.js: rewrites hacia la API solo en desarrollo y sin IP por defecto en BACKEND_URL | web | 5 | config | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-004 y FNC-006 |
 | FNC-006 | SSO: autenticar al proxy con un secreto compartido además de la IP | backend | 5 | auth | Alta | Propuesta | 2026-10-13 | | | — | Junto con FNC-004 y FNC-005 |
@@ -18,7 +18,7 @@
 | FNC-014 | Límite de intentos en el login | backend | 5 | auth | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-015 | Auditoría filtrada por área e IP real del cliente | backend | 5 | audit | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-016 | Dependencias: npm audit y pip-audit, fijar versiones y quitar las que no se usan | infra | 5 | dependencias | Media | Propuesta | 2026-10-13 | | | — |  |
-| FNC-017 | Higiene de seguridad: errores genéricos, escape en correos, validación de URLs, IP y hosts fuera del código, límites de carga | backend | 5 | global | Baja | Propuesta | 2026-10-13 | | | — | SEG-23 cerrado por FNC-048; SEG-21 de LDAP por FNC-043 (En revisión); SEG-24 backend por FNC-046 (En revisión) |
+| FNC-017 | Higiene de seguridad: errores genéricos, escape en correos, validación de URLs, IP y hosts fuera del código, límites de carga | backend | 5 | global | Baja | Propuesta | 2026-10-13 | | | — | SEG-23 cerrado por FNC-048; SEG-21 de LDAP por FNC-043 (En revisión); SEG-24 backend por FNC-046 (En revisión); SEG-24 frontend por DIS-017 (En revisión) |
 | FNC-018 | Retención de datos personales y seudonimización | infra | 5 | operacion | Baja | Propuesta | 2026-10-13 | | | — |  |
 | FNC-019 | Suite base de pruebas del backend (pytest, fixtures, cliente por rol, excluir utils/test_*) | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-019-suite-base-pruebas-backend` (commit local, sin push) |  |
 | FNC-020 | Pruebas de protección por rol de todos los endpoints /api/v1 con guardia de rutas sin clasificar | backend | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | `fnc/FNC-020-pruebas-proteccion-por-rol` (commit local, sin push) | Depende de FNC-019; 2 xfail hasta FNC-007 |
@@ -55,9 +55,10 @@
 | FNC-074 | Unificar el LDAP simulado de las pruebas | backend | 4 | pruebas | Baja | Propuesta | 2026-10-13 | | | — | Origen: revisión de FNC-022 |
 | FNC-075 | Permisos de BD solo INSERT/SELECT sobre audit_logs | infra | 3 | auditoria | Media | Propuesta | 2026-10-14 | | | — | Origen: revisión de FNC-047; pendiente del dueño |
 | FNC-076 | Mover _trusted_proxy de api/auth.py a app/utils/ | backend | 4 | utils | Baja | Propuesta | 2026-10-14 | | | — | Origen: revisión de FNC-047 |
-| FNC-077 | Deshabilitar el login local (solo Authelia/directorio), salvo acceso de emergencia del superadmin | backend | 3 | auth | Alta | Propuesta | 2026-10-15 | | | — | Origen: decisión del dueño en la revisión de FNC-044 |
+| FNC-077 | Deshabilitar el login local (solo Authelia/directorio), salvo acceso de emergencia del superadmin | backend | 3 | auth | Alta | Hecha | 2026-10-15 | 2026-10-19 | 2026-10-19 | `fnc/FNC-077-deshabilitar-login-local` (commit local, sin push) | Origen: decisión del dueño en la revisión de FNC-044; cierra SEG-02 de FNC-003; contrato areas-y-roles v2; impacto en cliente para DIS-018/DIS-019 y FNC-079 |
 | FNC-078 | Lista blanca completa de campos en POST/PUT /users (SEC-AUTHZ-09) e is_active | backend | 3 | usuarios-roles | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044 |
-| FNC-079 | Alta de cuentas de directorio en el servidor (auth_source=ldap, sin contraseña) para el importador | backend | 3 | usuarios | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044; vincula FNC-064, FNC-069, DIS-018, DIS-019 |
+| FNC-079 | Alta de cuentas de directorio en el servidor (auth_source=ldap, sin contraseña) para el importador | backend | 3 | usuarios | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044; vincula FNC-064, FNC-069, DIS-018, DIS-019; FNC-077 ya crea `ldap` en `POST /users` |
+| FNC-081 | Purgar hashes de contraseña heredados de cuentas locales no administrador y política mínima de la contraseña de emergencia | backend | 5 | auth | Baja | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-077 |
 | FNC-037 | Planeación de la fase 3: gestor de accesos | backend | 3 | planeacion | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-14 | Merge local a develop | Plan de la fase 3; genera FNC-038 a FNC-071 y DIS-013 a DIS-024 |
 | FNC-038 | Contratos v1 backend↔web del gestor de accesos | backend | 3 | contratos | Alta | Hecha | 2026-10-13 | 2026-10-14 | 2026-10-14 | Merge local a develop (434a51c) | Depende de P1, P14, FNC-037, ADR-006 |
 | FNC-039 | Migraciones versionadas de MySQL para la fase 3 (según ADR-002) | backend | 3 | bd | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-039-migraciones-alembic` (commit local, sin push) | Depende de ADR-002; Alembic 1.20.0, línea base `0001`; pendiente prueba del dueño en MySQL |
@@ -96,8 +97,8 @@
 | DIS-013 | Catálogo: solicitar acceso con nivel y justificación | web | 3 | catalogo | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-056 |
 | DIS-014 | Mis solicitudes y mis accesos | web | 3 | solicitudes | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-071, FNC-056, FNC-058, DIS-013 |
 | DIS-015 | Bandeja de aprobaciones con rechazo motivado | web | 3 | aprobaciones | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-071, FNC-057 |
-| DIS-016 | Áreas: alta por el admin y asignación de admins por el superadmin | web | 3 | areas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-044, FNC-045 |
-| DIS-017 | Plataformas: tipo de integración y grupos por nivel | web | 3 | plataformas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-046 |
+| DIS-016 | Áreas: alta por el admin y asignación de admins por el superadmin | web | 3 | areas | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `dis/DIS-016-pantalla-areas` (commit local, sin push) | Depende de FNC-069, FNC-044, FNC-045; decisiones del orquestador en la ficha; revisión (accesibilidad, revisor) corregida; visual pendiente |
+| DIS-017 | Plataformas: tipo de integración y grupos por nivel | web | 3 | plataformas | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `dis/DIS-017-pantalla-plataformas` (commit local, sin push) | Depende de FNC-069, FNC-046; cierra SEG-24 del frontend (FNC-017); edición completa depende de FNC-063; decisiones del orquestador en la ficha; auditor-seguridad Aprobado, accesibilidad y revisor corregidos |
 | DIS-018 | Usuarios y accesos: accesos de un usuario y revocación | web | 3 | usuarios | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-071, FNC-058, DIS-013 |
 | DIS-019 | Usuarios: alta en el directorio y elevación a admin | web | 3 | usuarios | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-064, FNC-044, DIS-018 |
 | DIS-020 | Auditoría: filtros e historial por usuario y por plataforma | web | 3 | auditoria | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-060 |

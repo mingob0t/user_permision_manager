@@ -12,8 +12,8 @@ import pytest
 
 from app.authz import ROLE_ADMIN, ROLE_AREA_ADMIN, ROLE_USER
 from tests.matriz_proteccion import (ANONIMO, CASOS, CASOS_400,
-                                     CONTRASENA_FICTICIA, ROLES_MATRIZ,
-                                     crear_actor, crear_escenario)
+                                     ROLES_MATRIZ, crear_actor,
+                                     crear_escenario)
 
 CODIGOS_DENEGADOS = (401, 403)
 
@@ -88,7 +88,7 @@ def test_solo_el_superadmin_crea_o_eleva_admins(app, cliente_como, rol, metodo,
     if metodo == 'POST':
         respuesta = cliente.post('/api/v1/users', json={
             'email': 'elevado@pruebas.local', 'role': rol_pedido,
-            'area_ids': [esc.area_id], 'password': CONTRASENA_FICTICIA})
+            'area_ids': [esc.area_id]})
     else:
         respuesta = cliente.put(f'/api/v1/users/{esc.objetivo_id}',
                                 json={'role': rol_pedido})

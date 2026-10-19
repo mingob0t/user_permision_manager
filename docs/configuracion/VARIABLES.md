@@ -34,6 +34,8 @@
 | `AUTHELIA_SLO_URL` | URL de cierre de sesión de Authelia | URL | ninguna | `https://<host de authelia>/logout` | Sí si SSO | No | Sí | `api/auth.py` | FNC-001, 2026-10-13 | Vigente |
 | `AUTHELIA_HEADER_USER` | Cabecera con el correo del usuario | nombre de cabecera | `Remote-Email` | `Remote-Email` | No | No | Sí | `api/auth.py` | FNC-001, 2026-10-13 | Vigente |
 | `AUTHELIA_HEADER_NAME` | Cabecera con el nombre visible | nombre de cabecera | `Remote-Name` | `Remote-Name` | No | No | Sí | `api/auth.py` | FNC-001, 2026-10-13 | Vigente |
+| `APP_ENV` | Entorno de la app; hoy solo decide si aplica `LOGIN_LOCAL_TODAS_LAS_CUENTAS` | `development` / `staging` / `production` | vacío (= no es desarrollo) | `development` (dev) / `production` | No | No | Sí (vacía) | `app/modules/auth/acceso_local.py` | FNC-077, 2026-10-19 | Vigente |
+| `LOGIN_LOCAL_TODAS_LAS_CUENTAS` | Solo desarrollo: login local de cualquier cuenta local y `password` en `POST/PUT /users` (prueba de concepto sin Authelia). Sin ella, solo la cuenta de emergencia. Se ignora si `APP_ENV` no es `development` | `true` / `false` | `false` | `false` | No | No (seguridad crítica: nunca `true` fuera de dev) | Sí (`false`) | `app/modules/auth/acceso_local.py` | FNC-077, 2026-10-19 | Vigente |
 | `AUTHELIA_HEADER_GROUPS` | Cabecera con los grupos | nombre de cabecera | `Remote-Groups` | `Remote-Groups` | No | No | No (retirada) | ninguno | FNC-001, 2026-10-13 | **Obsoleta** (2026-10-15, FNC-042): el rol ya no sale de `Remote-Groups` (RF-04) |
 | `AUTHELIA_GROUP_ADMIN` | Grupos (separados por coma) que daban rol `administrador` por SSO | lista CSV | — | — | No | No | No (retirada) | ninguno | FNC-001, 2026-10-13 | **Obsoleta** (2026-10-15, FNC-042): solo el superadmin eleva en el portal (RF-04, SEG-10) |
 | `TRUSTED_PROXIES` | Direcciones de origen autorizadas a inyectar cabeceras `Remote-*` y, para la auditoría, `X-Forwarded-For` (FNC-047) (se compara con `remote_addr`, por eso son direcciones y no nombres de host; excepción justificada al lineamiento "sin IPs") | lista CSV | loopback IPv4 e IPv6 | loopback | No | No (seguridad crítica) | Sí | `api/auth.py`, `audit/ip_cliente.py` | FNC-001, 2026-10-13; auditoría FNC-047, 2026-10-14 | Vigente |
@@ -104,7 +106,7 @@ Se pasan al invocar `deploy/preflight.sh` o `deploy/install.sh`; no van en `.env
 
 ## Plantilla anterior retirada
 
-La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `LOG_DIR`, `LOG_LEVEL`, `DB_PASSWORD` y `NEXT_PUBLIC_API_URL`. **Ninguna la lee el código**: la contraseña de BD se llama `DB_PASS` y el frontend no usa `NEXT_PUBLIC_API_URL`. Se dan de baja en HISTORIAL.md.
+La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `LOG_DIR`, `LOG_LEVEL`, `DB_PASSWORD` y `NEXT_PUBLIC_API_URL`. **Ninguna la lee el código**: la contraseña de BD se llama `DB_PASS` y el frontend no usa `NEXT_PUBLIC_API_URL`. Se dan de baja en HISTORIAL.md. `APP_ENV` se reactivó en FNC-077 (2026-10-19), ahora leída por `auth/acceso_local.py` (fila en la tabla de arriba).
 
 ## Constantes de configuración en el código
 

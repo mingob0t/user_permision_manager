@@ -352,8 +352,7 @@ def test_crear_usuario_no_le_da_area_ajena(alcance, cliente_como):
     esc = alcance
     respuesta = _como(cliente_como, esc, ADMIN_A).post(f'{A}/users', json={
         'email': 'nuevo@pruebas.local', 'role': ROLE_USER,
-        'area_ids': [esc.area['A'], esc.area['B']],
-        'password': CONTRASENA_FICTICIA})
+        'area_ids': [esc.area['A'], esc.area['B']]})
     if respuesta.status_code != 201:
         _assert_denegado(respuesta, (403,))
         return

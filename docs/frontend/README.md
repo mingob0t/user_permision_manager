@@ -36,8 +36,8 @@ frontend/src/
 | `/admin/connectors` | — (reservada, DIS-022) | Conectores; guarda `admin`. | `administrador` |
 | `/favorites` | `FavoritesList` | Plataformas marcadas como favoritas. | Todos |
 | `/notifications` | `NotificationsList` | Notificaciones in-app: marcar leídas y borrar. | Todos |
-| `/admin/platforms` | `PlatformAdmin` | Crear, editar y eliminar plataformas; asignar usuarios. | `administrador`, `admin_area` |
-| `/areas` | `AreasList` | Áreas visibles; el superadmin crea/edita/borra y gestiona miembros. | `administrador`, `admin_area` |
+| `/admin/platforms` | `PlatformAdmin` | Crear, editar y eliminar plataformas con tipo de integración; grupos de acceso por nivel solo para el superadmin; avisos tras guardar (DIS-017). Guarda `any_admin`. | `administrador`, `admin_area` |
+| `/areas` | `AreasList` | Áreas visibles; superadmin y admin de área crean; cada uno edita y borra las que gestiona; el superadmin asigna administradores (`areas/area-admins-panel.tsx`). Guarda `any_admin`. | `administrador`, `admin_area` |
 | `/users` | `UsersList` | Alta, edición y baja de usuarios; asignación de áreas y plataformas; búsqueda en el directorio; usuarios inactivos y purga (superadmin). | `administrador`, `admin_area` |
 | `/audit` | `AuditLog` | Registros de auditoría dentro del alcance del usuario. | Todos |
 | `/settings` | `SettingsPanel` | Pestañas: Portal, Correo (SMTP), Plantillas, Directorio (LDAP), Respaldo — solo superadmin —, y Mis preferencias para todos. | Todos |
@@ -60,7 +60,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | Conectores | No | No | Sí |
 
 - Guarda de ruta: `<RequireRole requires="…">` muestra "sin permiso" (`ErrorNote`) y no monta la pantalla, así que no llama a la API
-- Hoy la usan `/requests`, `/approvals` y `/admin/connectors`; las rutas previas no la usan
+- Hoy la usan `/requests`, `/approvals`, `/admin/connectors`, `/areas` (dentro de `AreasList`, DIS-016) y `PlatformAdmin` (`any_admin`, DIS-017); las demás rutas previas no la usan
 - Dentro de Ajustes, las pestañas de sistema solo se muestran a `administrador`. Ocultar en la interfaz no protege: el backend vuelve a validar cada endpoint.
 
 ## 4. Componentes principales
@@ -72,7 +72,9 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | `RequireRole` / `meetsRequirement` | `require-role.tsx` | Guarda de ruta y regla de visibilidad por rol (FNC-070). |
 | `Card`, `PanelHeader`, `StatTile`, `Spinner`, `ErrorNote`, `EmptyNote`, `Badge` | `ui.tsx` | Piezas base con clases del portal original (estados de carga, vacío y error). |
 | `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). |
-| `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace. |
+| `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace (solo `https://`, `enlaceSeguro`). |
+| `PlatformForm`, `PlatformIntegrationFields`, `PlatformSaveNotice`, `field-notes`, `platform-payload`, `platform-save-errors` | `platforms/` | Formulario, sección Integración, aviso con `warnings` (región `status`), errores por campo con `aria-describedby` y foco, validación y cuerpo por rol (DIS-017). |
+| `AreaForm`, `AreaAdminsPanel`, `mensajeDeError` | `areas/` | Alta/edición de área con errores por campo; administradores del área (superadmin); mensajes del contrato `areas-y-roles.md` (DIS-016). |
 | Pantallas | `dashboard.tsx`, `platform-catalog.tsx`, `favorites-list.tsx`, `notifications-list.tsx`, `platform-admin.tsx`, `areas-list.tsx`, `users-list.tsx`, `audit-log.tsx`, `settings-panel.tsx`, `login-form.tsx`, `logout-view.tsx` | Una por ruta. `settings-panel.tsx` (745 líneas) y `users-list.tsx` (581) concentran varias responsabilidades. |
 
 ## 5. Cliente de la API (`src/lib/api.ts`)
@@ -90,6 +92,11 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
   - `refresh()` tras una escritura propia; `loading` es `true` en cada consulta: mostrar carga solo sin `data`
   - `data` es el último dato válido: se conserva tras un error, junto con `error`
 
+### Formulario de plataformas (DIS-017)
+- Alta: `integration_type` obligatorio; el superadmin puede escribir los DN (vacío = convención del directorio)
+- Edición: tipo solo superadmin ("Sin cambiar" no lo envía); admin de área nunca envía tipo ni DN
+- `GET /platforms` aún no trae tipo, DN ni `active_grants` (FNC-063): la edición muestra "Sin dato" y no bloquea por accesos hasta entonces
+
 ### Gestor de accesos (`src/lib/access/`, FNC-069)
 | Archivo | Contrato | Objeto |
 |---|---|---|
@@ -106,7 +113,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 
 - Plataformas y áreas v1: `api.createPlatform`/`updatePlatform`/`createArea`… de `api.ts` (sin duplicar)
 - Simulados: `NEXT_PUBLIC_ACCESS_MOCKS=1 npm run dev`; ignorados en producción; pendientes de integración
-- Pruebas: `tests/lib/access/` (forma por endpoint, errores 401/403/409/422/500, bandera) y `tests/components/users-list.test.tsx`
+- Pruebas: `tests/lib/access/` (forma por endpoint, errores 401/403/409/422/500, bandera), `tests/components/users-list.test.tsx` y `tests/components/areas-list.test.tsx` (DIS-016)
 
 ## 6. Estilos, tokens y tema
 
@@ -138,6 +145,7 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 - `tests/lib/api.test.ts`: cliente de la API con `fetch` simulado (éxito, error HTTP, 401).
 - `tests/lib/use-polling.test.ts`: `usePolling` con temporizadores simulados (intervalo, pausa, *backoff*, sin solape, 401, desmontaje).
 - `tests/components/audit-log.test.tsx`: `AuditLog` con la API simulada (datos, filtro, vacío, error).
+- `tests/components/platform-admin.test.tsx` y `platform-card.test.tsx`: formulario de plataforma por rol, errores `403`/`404`/`409`/`422`, `warnings`, estados y SEG-24 (DIS-017).
 - `tests/components/navegacion-por-rol.test.tsx`: entradas del menú por rol y `RequireRole` (sin permiso no monta ni llama a la API).
 - `tests/accesibilidad/contraste.test.ts`: contraste WCAG de los tokens en los 7 temas (4.5:1 texto, 3:1 bordes).
 - Los pares que hoy fallan están en `fallas-contraste-conocidas.ts` con su tarea DIS y se marcan `it.fails`. Si una tarea los corrige, la prueba avisa: quita el par de la lista.
