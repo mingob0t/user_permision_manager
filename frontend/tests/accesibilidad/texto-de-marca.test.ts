@@ -7,6 +7,11 @@
  * (`src/styles`), la propiedad `color:` usa `--color-<rol>-text`; bordes,
  * fondos y tintes siguen con el relleno (el resto del CSS heredado lo depura
  * DIS-009).
+ *
+ * Regresión de DIS-002: lo mismo para los estados (success, error, warning,
+ * info): como texto se usa `text-<estado>-text`. Y no vuelven las clases de
+ * paleta fija como texto (`text-red-600`, `dark:text-emerald-300`...), que no
+ * cambian con el tema. `text-white`/`text-black` de botones los ve DIS-004.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative, resolve } from 'node:path';
@@ -18,7 +23,14 @@ const EXTENSIONES = new Set(['.ts', '.tsx']);
 
 /** `text-primary`, `hover:text-brand/80`...; no coincide con `text-primary-text`. */
 const TEXTO_DE_RELLENO =
-  /(?<![\w-])text-(?:primary|brand|accent|accent-sky|accent-violet|accent-peach|peach|sky|violet)(?:\/\d+)?(?![\w-])/g;
+  /(?<![\w-])text-(?:primary|brand|accent|accent-sky|accent-violet|accent-peach|peach|sky|violet|success|error|warning|info)(?:\/\d+)?(?![\w-])/g;
+
+/** `text-red-600`, `dark:text-emerald-300`, `hover:text-amber-400/80`... */
+const TEXTO_DE_PALETA_FIJA = new RegExp(
+  '(?<![\\w-])text-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|' +
+    'blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]{2,3}(?:/\\d+)?(?![\\w-])',
+  'g',
+);
 
 /** `color: rgb(var(--color-primary))`, `color: var(--color-accent-sky) !important`... */
 const COLOR_CSS_DE_RELLENO =
@@ -32,10 +44,18 @@ function archivos(carpeta: string, extensiones = EXTENSIONES): string[] {
   });
 }
 
-describe('texto con colores de marca', () => {
+describe('texto con colores de marca y de estado', () => {
   it('src/components y src/app usan la variante *-text, no el relleno', () => {
     const usos = CARPETAS.flatMap((carpeta) => archivos(join(RAIZ_SRC, carpeta))).flatMap((ruta) => {
       const encontrados = readFileSync(ruta, 'utf8').match(TEXTO_DE_RELLENO) ?? [];
+      return encontrados.map((clase) => `${relative(RAIZ_SRC, ruta)}: ${clase}`);
+    });
+    expect(usos).toEqual([]);
+  });
+
+  it('src/components y src/app no usan clases de paleta fija como texto (DIS-002)', () => {
+    const usos = CARPETAS.flatMap((carpeta) => archivos(join(RAIZ_SRC, carpeta))).flatMap((ruta) => {
+      const encontrados = readFileSync(ruta, 'utf8').match(TEXTO_DE_PALETA_FIJA) ?? [];
       return encontrados.map((clase) => `${relative(RAIZ_SRC, ruta)}: ${clase}`);
     });
     expect(usos).toEqual([]);

@@ -132,7 +132,7 @@ function PlatformAdminContent() {
       ) : null}
 
       {missingLink.length > 0 ? (
-        <Card className="border-amber-500/40 bg-amber-500/10">
+        <Card className="border-warning/40 bg-warning/10">
           <p className="text-sm">
             <strong>{missingLink.length}</strong>{' '}
             {missingLink.length === 1 ? 'plataforma no tiene' : 'plataformas no tienen'}{' '}
@@ -209,7 +209,7 @@ function PlatformAdminContent() {
                             type="button"
                             onClick={(e) => open(e, () => setRemoving(platform))}
                             aria-label={`Eliminar ${platform.name}`}
-                            className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-500/10 dark:text-red-300"
+                            className="rounded px-2 py-1 text-xs text-error-text hover:bg-error/10"
                           >
                             Eliminar
                           </button>
