@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | areas |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local (sin push) |
 | **Rama** | `fnc/FNC-045-areas-por-admin` (worktree `pokemon-wt-045`) |
@@ -136,3 +136,4 @@
 | 2026-10-18 | Aprobada por el dueño (modo autónomo, vía orquestador); implementada por desarrollador en `pokemon-wt-045`. En revisión (faltan `revisor` y `auditor-seguridad`) |
 | 2026-10-18 | `auditor-seguridad` Aprobado (3 Baja: 2 corregidas, tope de altas como observación); `revisor` Requiere cambios. Corregido en commit nuevo; 818 passed, 17 xfailed. Sigue En revisión |
 | 2026-10-18 | Ajuste: desligar la auditoría solo en SQLite (FNC-075 en MySQL). Sigue En revisión |
+- Cierre (2026-10-19): revisor y auditor-seguridad atendidos; merge local a `develop` (modo autónomo autorizado por el dueño).
