@@ -5,7 +5,7 @@
  * `AuditEntry`, `ManagedUser`, `Area`) siguen en `lib/types.ts`.
  */
 
-import type { AuditEntry, ManagedUser } from '../types';
+import type { AuditEntry, IntegrationType, ManagedUser } from '../types';
 
 // --- Comunes (README.md) ---
 
@@ -105,7 +105,7 @@ export interface Access {
   level: AccessLevel;
   origin: AccessOrigin;
   user: UserRef;
-  platform: Ref & { integration_type: 'ldap' | 'conector' };
+  platform: Ref & { integration_type: IntegrationType };
   area: Ref;
   request_id: number | null;
   /** null = `sistema` (origen `admin_de_area`). */
