@@ -16,6 +16,8 @@
 | `apiRequest`, `ApiError.code/fields/correlationId` | Cliente HTTP | `frontend/src/lib/api.ts` | `request()` exportado; error estándar del contrato (`code`, `fields` aplanados con punto) | `lib/access/`, pantallas DIS-013 a DIS-024 |
 | `accessRequest`, `withQuery`, `jsonBody` | Cliente HTTP | `frontend/src/lib/access/client.ts`, `query.ts` | Petición del gestor con datos simulados tras `NEXT_PUBLIC_ACCESS_MOCKS`; consulta sin vacíos; cuerpo JSON | `lib/access/*.ts` |
 | `requestsApi`, `grantsApi`, `inventoryApi`, `auditApi`, `connectorsApi`, `provisioningApi`, `usersApi`, `directoryApi`, `homeApi` | Cliente por sección | `frontend/src/lib/access/` | Una función tipada por endpoint de los contratos v1 | DIS-013 a DIS-024 |
+| `enlaceSeguro` | Utilidad | `frontend/src/lib/enlace-seguro.ts` | Enlace pintable en `href`: solo `https://` con host y sin credenciales; si no, `null` (SEG-24 frontend, DIS-017). Todo `href` con URL de datos pasa por aquí | `platform-card.tsx`, `platform-admin.tsx` |
+| `PlatformIntegrationFields`, `describeSaveError`, `PlatformSaveNotice` | Componentes y función | `frontend/src/components/platforms/` | Sección Integración del formulario de plataforma; error de `POST/PUT /platforms` a mensaje y campos; aviso de guardado con `warnings` (DIS-017) | `platform-admin.tsx` |
 | Tipos de la API | Tipos TS | `frontend/src/lib/types.ts` | Contrato de datos | Todo el frontend |
 | `SessionProvider`, `useSession` | Contexto | `frontend/src/components/session-provider.tsx:31,67` | Sesión y rol | `app-shell` y pantallas |
 | `AppShell` | Layout | `frontend/src/components/app-shell.tsx` | Cabecera, navegación y guarda de sesión | Todas las páginas |

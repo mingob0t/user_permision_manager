@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Platform } from '@/lib/types';
 import { Badge } from './ui';
 
@@ -42,7 +43,9 @@ export function PlatformCard({
     void api.registerVisit(platform.id).catch(() => undefined);
   }
 
-  const disabled = !platform.direct_link;
+  // SEG-24: solo se pinta en `href` un enlace https:// (DIS-017).
+  const link = enlaceSeguro(platform.direct_link);
+  const disabled = !link;
 
   const body = (
     <>
@@ -105,7 +108,7 @@ export function PlatformCard({
 
   return (
     <a
-      href={platform.direct_link ?? '#'}
+      href={link ?? undefined}
       target="_blank"
       rel="noopener noreferrer"
       onClick={registerVisit}
