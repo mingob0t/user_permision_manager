@@ -20,6 +20,7 @@
 | `SessionProvider`, `useSession` | Contexto | `frontend/src/components/session-provider.tsx:31,67` | Sesión y rol | `app-shell` y pantallas |
 | `AppShell` | Layout | `frontend/src/components/app-shell.tsx` | Cabecera, navegación y guarda de sesión | Todas las páginas |
 | `RequireRole`, `meetsRequirement`, `RoleRequirement` | Componente y regla | `frontend/src/components/require-role.tsx` | Guarda de ruta por rol (estado "sin permiso" sin montar la pantalla) y visibilidad del menú (FNC-070) | `app-shell` (`NAV`), `/requests`, `/approvals`, `/admin/connectors`; DIS-014 a DIS-024 |
+| `AreaForm`, `AreaAdminsPanel`, `MENSAJES_AREAS`/`mensajeDeError`/`erroresDeCampo` | Componentes y utilidades | `frontend/src/components/areas/` | Alta/edición de área con errores por campo; administradores del área (superadmin, `managed-areas`); mensajes de error del contrato `areas-y-roles.md` (DIS-016) | `areas-list.tsx` |
 | Tokens de color y temas | CSS | `frontend/src/styles/tokens.css` (claro `:51`, oscuro `:271` y `:207`) | Única fuente de colores | `tailwind.config.ts` |
 | Decoradores de permisos (`admin_required`, `any_admin_required`, `area_admin_required`, `platform_manage_required`, `platform_access_required`) | Decoradores Flask | `app/authz.py` | Reglas de acceso por rol y área | `app/modules/api/*` |
 | `scoped_areas`, `scoped_users`, `can_manage_area`, `can_manage_user`, `is_admin` | Funciones | `app/authz.py` | Alcance multitenant por área | `crud.py`, `routes.py` |

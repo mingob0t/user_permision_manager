@@ -20,7 +20,7 @@ export interface TopeLiterales {
 export const EXCEPCIONES: Record<string, TopeLiterales> = {
   'app/error.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-004 / DIS-012' },
   'app/not-found.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-004 / DIS-012' },
-  'components/areas-list.tsx': { hex: 2, funcion: 0, paleta: 3, tarea: 'DIS-002 / DIS-012' },
+  'components/areas-list.tsx': { hex: 0, funcion: 0, paleta: 3, tarea: 'DIS-002' },
   'components/dashboard.tsx': { hex: 1, funcion: 0, paleta: 0, tarea: 'DIS-003 / DIS-012' },
   'components/form.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-012' },
   'components/notifications-list.tsx': { hex: 0, funcion: 0, paleta: 9, tarea: 'DIS-002' },
