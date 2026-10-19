@@ -13,7 +13,7 @@
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-043`) |
 | **Rama** | `fnc/FNC-043-configuracion-directorio` |
-| **Commits / PR** | ver Bitácora (local, sin push ni PR) |
+| **Commits / PR** | `e8939b4` [FNC-043] (local, sin push ni PR) + commit de registro del hash |
 | **Requiere migración BD** | Sí (vaciar y marcar obsoleta `auth_config.ldap_pass`) |
 | **Requiere auditor-seguridad** | Sí (secretos) |
 
