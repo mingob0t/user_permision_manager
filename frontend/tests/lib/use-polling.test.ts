@@ -170,6 +170,60 @@ describe('usePolling', () => {
     expect(load).toHaveBeenCalledTimes(1);
   });
 
+  it('tras un fallo conserva el último dato válido y expone el error (revisión)', async () => {
+    const load = vi.fn().mockResolvedValue('ok');
+    const { result } = renderHook(() => usePolling(load, { intervalSeconds: 15 }));
+    await avanzar(0);
+    expect(result.current.data).toBe('ok');
+
+    load.mockRejectedValue(new ApiError(500, 'falla'));
+    await avanzar(15 * S);
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(result.current.error).toBe('falla');
+    expect(result.current.data).toBe('ok');
+  });
+
+  it('un error con mensaje vacío cuenta como fallo (revisión)', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const load = vi.fn().mockRejectedValue(new Error(''));
+    renderHook(() => usePolling(load, { intervalSeconds: 15 }));
+    await avanzar(0);
+    // Con backoff la siguiente es a los 30 s, no a los 15 s.
+    await avanzar(30 * S - 1);
+    expect(load).toHaveBeenCalledTimes(1);
+    await avanzar(1);
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('refresh() reanuda el polling tras un 401 (revisión)', async () => {
+    const load = vi.fn().mockRejectedValue(new ApiError(401, 'sin sesión'));
+    const { result } = renderHook(() => usePolling(load, { intervalSeconds: 15 }));
+    await avanzar(0);
+    await avanzar(60 * S);
+    expect(load).toHaveBeenCalledTimes(1);
+
+    load.mockResolvedValue('ok');
+    act(() => result.current.refresh());
+    await avanzar(0);
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(result.current.data).toBe('ok');
+    await avanzar(15 * S);
+    expect(load).toHaveBeenCalledTimes(3);
+  });
+
+  it('un 403 no detiene: sigue con backoff (revisión)', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const load = vi.fn().mockRejectedValue(new ApiError(403, 'prohibido'));
+    renderHook(() => usePolling(load, { intervalSeconds: 15 }));
+    await avanzar(0);
+    await avanzar(30 * S - 1);
+    expect(load).toHaveBeenCalledTimes(1);
+    await avanzar(1);
+    expect(load).toHaveBeenCalledTimes(2);
+    await avanzar(60 * S);
+    expect(load).toHaveBeenCalledTimes(3);
+  });
+
   it('al desmontar no hay más consultas ni temporizadores', async () => {
     const load = vi.fn().mockResolvedValue('ok');
     const { unmount } = renderHook(() => usePolling(load, { intervalSeconds: 15 }));

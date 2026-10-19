@@ -77,6 +77,7 @@ Dentro de Ajustes, las pestañas de sistema solo se muestran a `administrador`. 
   - Pestaña oculta: sin consultas; al volver, una inmediata. Una consulta a la vez
   - Error: espera ×2 por fallo hasta 3600 s con *jitter*; éxito restablece; `401` detiene
   - `refresh()` tras una escritura propia; `loading` es `true` en cada consulta: mostrar carga solo sin `data`
+  - `data` es el último dato válido: se conserva tras un error, junto con `error`
 
 ### Gestor de accesos (`src/lib/access/`, FNC-069)
 | Archivo | Contrato | Objeto |

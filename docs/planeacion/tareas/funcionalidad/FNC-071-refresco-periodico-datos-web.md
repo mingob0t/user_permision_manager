@@ -49,6 +49,7 @@
 - Sin consulta en curso se programa la siguiente; con pestaña oculta no hay temporizador; al volver, consulta inmediata
 - Error: espera = intervalo × 2^fallos hasta 3600 s, menos *jitter* de hasta 10 %; éxito restablece; `401` detiene
 - `refresh()` durante una consulta se encola y se ejecuta al terminar (sin solapar)
+- `data` = último dato válido (ref escrito solo en éxitos): tras un error se conserva junto con `error`; fallo = `error !== null`
 
 ## Decisiones del orquestador (pendientes de validar en la prueba de concepto)
 - El intervalo llega por parámetro (`session.preferences.refresh_interval`); `lib/` no importa `useSession` de `components/`
@@ -56,7 +57,7 @@
 - *Jitter* restado (0–10 %) para no superar nunca el máximo de 3600 s; solo en esperas tras error
 - La carga inicial al montar ocurre aunque la pestaña esté oculta (la hace `useAsync`); solo se pausa el polling
 - `401` detiene; `refresh()` lo reintenta; `403` y otros errores siguen con *backoff*
-- `loading` es `true` en cada consulta y `data` conserva el valor anterior; la pantalla muestra carga solo sin datos
+- `loading` es `true` en cada consulta y `data` conserva el último dato válido (también tras un error); la pantalla muestra carga solo sin datos
 - Pruebas en `frontend/tests/lib/` en lugar de `src/lib/__tests__/` (configuración vigente de Vitest)
 
 ## Verificación
@@ -65,6 +66,9 @@
 | `npm ci` | código 0 |
 | `npx vitest run tests/lib/use-polling.test.ts` | 10 passed, código 0 |
 | `npm test` | 9 archivos, 234 passed, 88 expected fail (conocidas de contraste), código 0 |
+| Correcciones de revisión: pruebas nuevas antes del arreglo | 2 failed (conserva `data` tras error; error con mensaje vacío), 12 passed |
+| Tras el arreglo: `npm test` | 9 archivos, 238 passed, 88 expected fail, código 0 |
+| Tras el arreglo: `npm run lint`, `npx eslint` (hook y prueba), `npm run typecheck`, `npm run build` | código 0 en todos |
 | `npm run lint` | sin avisos ni errores, código 0 |
 | `npx eslint tests/lib/use-polling.test.ts` | código 0 |
 | `npm run typecheck` | código 0 |
@@ -72,7 +76,11 @@
 | Mutaciones (quitar pausa, quitar *backoff*, quitar cola de `refresh`, quitar parada por 401) | cada una: 1 failed (las pruebas detectan la regresión); código restaurado |
 
 - No verificado: en navegador ni contra el backend real (ninguna pantalla usa aún el hook; lo aplican DIS-014/015/018/022/024)
-- No se lanzaron `tester` ni `revisor` (indicación del orquestador)
+- revisor (2026-10-19): **Requiere cambios** → corregidos:
+  - Media: `data` se perdía tras un error → último dato válido conservado (prueba falla primero)
+  - Baja: fallo decidido con `error !== null` (prueba de mensaje vacío falla primero)
+  - Baja: pruebas de `refresh()` tras 401 y de 403 con *backoff* (cobertura; pasan)
+  - Catálogo con número de línea
 
 ## Impacto en elementos compartidos
 Salida real de `impacto.py` (contra `develop`, 2026-10-19):
@@ -85,7 +93,7 @@ Salida real de `impacto.py` (contra `develop`, 2026-10-19):
 - Elementos compartidos reales modificados: ninguno (`useAsync` se reutiliza sin cambios; `usePolling` es nuevo y aún sin usos)
 
 ## Commits / PR
-- Commit local `[FNC-071]` en `fnc/FNC-071-refresco-periodico`; sin push, merge ni PR
+- Commit local `[FNC-071]` `690852f` (implementación) y `[FNC-071]` de correcciones de revisión en `fnc/FNC-071-refresco-periodico`; sin push, merge ni PR
 
 ## Criterios de aceptación
 - [x] Con la pestaña oculta no hay peticiones (prueba `con la pestaña oculta no consulta…`)
@@ -106,3 +114,4 @@ Salida real de `impacto.py` (contra `develop`, 2026-10-19):
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador); implementada; En revisión |
+| 2026-10-19 | revisor Requiere cambios (1 media, 2 bajas, catálogo) → corregidos con pruebas; sigue En revisión |

@@ -62,21 +62,27 @@ export interface PollingOptions {
  * - `401`: se detiene (la sesión terminó); `refresh()` lo reintenta.
  * - Al desmontar no queda ningún temporizador.
  * - `refresh()`: consulta inmediata; si hay una en curso, se hace al terminar.
- * - `loading` vale `true` en cada consulta y `data` conserva el valor anterior:
- *   la pantalla muestra el indicador de carga solo si aún no hay datos.
+ * - `data` es el último dato válido: se conserva durante cada consulta y tras
+ *   un error (junto con `error`). `loading` vale `true` en cada consulta: la
+ *   pantalla muestra el indicador de carga solo si aún no hay datos.
  */
 export function usePolling<T>(load: () => Promise<T>, options: PollingOptions = {}) {
   const intervalo = normalizarIntervalo(options.intervalSeconds);
   const ultimoError = useRef<unknown>(null);
+  const ultimoDato = useRef<T | null>(null);
   const turno = useRef(0);
 
   // Se guarda el error original (useAsync solo conserva el mensaje) para
-  // distinguir el 401. Solo cuenta la consulta más reciente.
+  // distinguir el 401, y el último dato válido (useAsync lo borra al fallar).
+  // Solo cuenta la consulta más reciente.
   const { data, loading, error, reload } = useAsync<T>(async () => {
     const mio = ++turno.current;
     try {
       const resultado = await load();
-      if (mio === turno.current) ultimoError.current = null;
+      if (mio === turno.current) {
+        ultimoError.current = null;
+        ultimoDato.current = resultado;
+      }
       return resultado;
     } catch (e) {
       if (mio === turno.current) ultimoError.current = e;
@@ -106,7 +112,7 @@ export function usePolling<T>(load: () => Promise<T>, options: PollingOptions = 
   useEffect(() => {
     cargando.current = loading;
     if (loading) return;
-    if (error) {
+    if (error !== null) {
       const e = ultimoError.current;
       if (e instanceof ApiError && e.isUnauthenticated) setDetenido(true);
       else setFallos((n) => n + 1);
@@ -146,5 +152,6 @@ export function usePolling<T>(load: () => Promise<T>, options: PollingOptions = 
     else consultar();
   }, [consultar]);
 
-  return { data, loading, error, refresh };
+  // Tras un error useAsync deja `data` en null; se devuelve el último válido.
+  return { data: error !== null ? ultimoDato.current : data, loading, error, refresh };
 }
