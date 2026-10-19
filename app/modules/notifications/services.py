@@ -1,4 +1,6 @@
+import html
 import os
+import re
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -188,6 +190,43 @@ def send_test_email(server, port, encryption, username, password, sender_name, t
     except Exception as e:
         return {"status": "error", "message": "Error al enviar correo de prueba."}
 
+# `{clave}` de una plantilla: letras, dígitos y guion bajo.
+PATRON_VARIABLE = re.compile(r'\{(\w+)\}')
+# Saltos de línea que, en una cabecera, abrirían otra (SEC-MAIL-01).
+PATRON_SALTO_DE_LINEA = re.compile(r'[\r\n]+')
+
+
+def render_template_text(text, context=None, escape_html=False):
+    """Sustituye `{clave}` por su valor en una sola pasada (SEC-MAIL-01, 02).
+
+    - Una clave sin valor queda tal cual.
+    - Con `escape_html` los valores pasan por `html.escape`: el texto del
+      usuario (justificación, motivo, nombre) no puede meter HTML ni enlaces.
+    - El valor insertado no se vuelve a sustituir: `{url}` dentro de una
+      justificación queda literal.
+    """
+    valores = context or {}
+
+    def _valor(coincidencia):
+        clave = coincidencia.group(1)
+        if clave not in valores:
+            return coincidencia.group(0)
+        texto = str(valores[clave])
+        return html.escape(texto) if escape_html else texto
+
+    return PATRON_VARIABLE.sub(_valor, text)
+
+
+def render_subject(subject, context=None):
+    """Asunto sin saltos de línea: ni los valores ni la plantilla agregan cabeceras."""
+    return PATRON_SALTO_DE_LINEA.sub(' ', render_template_text(subject, context))
+
+
+def notifications_enabled():
+    """Interruptor global `ENABLE_NOTIFICATIONS`: solo `true` activa el envío."""
+    return os.getenv('ENABLE_NOTIFICATIONS', 'true').lower() == 'true'
+
+
 def send_notification_by_slug(slug, target_email, context=None):
     """
     Sends a pre-defined notification template using the global SMTP configuration.
@@ -200,7 +239,7 @@ def send_notification_by_slug(slug, target_email, context=None):
     load_dotenv(override=True)
     
     # Global Switch Check
-    if os.getenv('ENABLE_NOTIFICATIONS', 'true').lower() != 'true':
+    if not notifications_enabled():
         print(f"🔕 Notificaciones desactivadas globalmente (.env). Omitiendo slug: {slug}")
         return {"status": "success", "message": "Notifications disabled globally"}
 
@@ -213,13 +252,9 @@ def send_notification_by_slug(slug, target_email, context=None):
         if not template:
             return {"status": "error", "message": f"Plantilla '{slug}' no encontrada"}
 
-        # Prepare content
-        body = template.body
-        subject = template.subject
-        if context:
-            for key, val in context.items():
-                body = body.replace(f"{{{key}}}", str(val))
-                subject = subject.replace(f"{{{key}}}", str(val))
+        body = render_template_text(template.body, context,
+                                    escape_html=bool(template.is_html))
+        subject = render_subject(template.subject, context)
 
         msg = MIMEMultipart()
         msg['From'] = f"{config.sender_name} <{config.sender_email}>"

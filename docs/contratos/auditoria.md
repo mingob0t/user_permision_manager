@@ -74,6 +74,7 @@ Los endpoints `/audit/users/<id>` y `/audit/platforms/<id>` son siempre paginado
 | `cuenta_directorio_creada` | admin o superadmin | usuarios-directorio.md |
 | `conector_configurado` / `conector_eliminado` / `conector_probado` | superadmin | — |
 | `ejecucion_reintentada` | superadmin | — |
+| `notificacion_fallida` | `sistema` | Un correo del gestor no se envió (SMTP caído o sin plantilla); `target` = plantilla (FNC-048) |
 
 El catálogo vive en FNC-047; agregar valores es aditivo (misma versión).
 
@@ -93,3 +94,4 @@ El catálogo vive en FNC-047; agregar valores es aditivo (misma versión).
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
+| 1 | 2026-10-15 | Aditivo: `action` `notificacion_fallida` (FNC-048) |

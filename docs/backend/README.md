@@ -35,7 +35,7 @@ app/
     ├── auth/          # Modelos User/AuthConfig y servicios LDAP; rutas heredadas (redirigen/410)
     ├── core/          # Modelos Area/Platform; rutas heredadas
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
-    ├── notifications/ # Modelos SMTP/plantillas/in-app y servicios de correo; rutas heredadas
+    ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
     ├── users/         # Solo rutas heredadas
     └── areas/         # Solo rutas heredadas
@@ -159,10 +159,23 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 ### Cliente OpenLDAP centralizado (`app/modules/directory/`, FNC-040)
 - Activo solo con `LDAP_URL`; la configuración (`LDAP_*`, ver `VARIABLES.md`) se valida en `create_app()` y, si falla, la app no arranca.
 - TLS obligatorio: `ldaps://` o `ldap://` + StartTLS antes del bind; `CERT_REQUIRED`, nombre del host verificado, CA de `LDAP_CA_CERT_FILE` o del sistema.
-- `ClienteDirectorio`: `conexion_servicio()` (solo lectura), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`, `verificar_contrasena()` (bind de la persona; vacía = `False` sin conectar; FNC-042).
+- `ClienteDirectorio`: `conexion_servicio(solo_lectura=True)` (escritura solo desde `writer.py`), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`, `verificar_contrasena()` (bind de la persona; vacía = `False` sin conectar; FNC-042).
 - Escape: `escapar_filtro` (RFC 4515) y `escapar_valor_dn` (RFC 4514).
-- Errores: `ErrorDirectorio` con mensaje genérico; detalle al log sin la contraseña de bind.
-- Llamadores: login (FNC-042). Búsqueda y prueba de conexión (FNC-043) siguen en el código heredado de abajo; escritura en FNC-041.
+- `valor_de_membresia(cfg, usuario)`: DN o identificador según `LDAP_GROUP_MEMBER_ATTR` (lo usan lectura y escritura).
+- Errores: `registrar_error` (público) devuelve `ErrorDirectorio` con mensaje genérico y `causa` (excepción de `ldap3`, solo para clasificar); detalle al log sin la contraseña de bind.
+- Llamadores: login (FNC-042). Búsqueda y prueba de conexión (FNC-043) siguen en el código heredado de abajo; escritura en `writer.py` (FNC-041).
+
+### Escritura en OpenLDAP (`app/modules/directory/writer.py`, FNC-041)
+- `EscritorDirectorio(cliente)`: `add_member(group_dn, user)`, `remove_member(group_dn, user)`, `create_user(DatosCuenta)`; sin borrado de cuentas.
+- Devuelve `ResultadoEscritura` (`errors.py`): `hecho`, `ya_estaba`, `no_existe`, `error_transitorio` (reintentable), `error_permanente`; nunca lanza por fallos del directorio.
+- Solo bajo `LDAP_GROUPS_BASE_DN` / `LDAP_USERS_BASE_DN` (RDN normalizados); fuera → `error_permanente` `fuera_de_base` sin conectar.
+- Membresía: lee el grupo y aplica un solo `MODIFY_ADD`/`MODIFY_DELETE`; DN comparados normalizados; `memberUid` usa el identificador.
+- Último miembro de `groupOfNames`/`groupOfUniqueNames`: con `LDAP_GROUP_PLACEHOLDER_MEMBER` agrega el relleno y quita al usuario en la misma operación; sin él, `error_permanente` `ultimo_miembro`. Al agregar un miembro real se quita el relleno.
+- DN comparados con `dn.py`: RDN multivaluados como conjunto; espacios escapados significativos.
+- Alta: uid `[a-z0-9._-]+` y correo válido, si no `datos_invalidos`; DN `LDAP_USER_ATTR=<uid escapado>,LDAP_USERS_BASE_DN`; clases `LDAP_USER_OBJECT_CLASSES`; `cn`, `sn`, `givenName`, `mail` (provisionales hasta cerrar ADR-004); sin `userPassword` (P8: Authelia).
+- Una sola cuenta de servicio (`LDAP_BIND_DN`) para lectura y escritura (dueño, 2026-10-15); ACL en `docs/operacion/ENTORNOS.md` (SEC-LDAP-03).
+- Log de fallos de escritura: solo tipo y código de resultado (`registrar_error(..., con_detalle=False)`), sin DN de la persona.
+- Sin llamadores hasta FNC-049 (ejecutor) y FNC-064 (alta de cuentas); que el grupo pertenezca a una plataforma lo valida el llamador.
 
 ### Login de directorio (`authenticate_user_ldap`, FNC-042)
 - Usa el cliente centralizado y `LDAP_*`; sin `LDAP_URL` el login de directorio falla siempre.
@@ -185,7 +198,18 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 
 ### SMTP y plantillas
 - `resolve_smtp_settings()`: con `SMTP_FORCE_ENV=true` manda el entorno (y si falta `SMTP_SERVER` no envía); si no, manda la BD y el entorno es respaldo.
-- `send_notification_by_slug(slug, correo, contexto)`: sustituye `{clave}` en asunto y cuerpo (no es Jinja2), envía HTML o texto según `is_html`. `ENABLE_NOTIFICATIONS=false` corta todo envío. Recarga `.env` en cada envío (`load_dotenv(override=True)`).
+- `send_notification_by_slug(slug, correo, contexto)`: sustituye `{clave}` en asunto y cuerpo en una pasada (no es Jinja2), envía HTML o texto según `is_html`. `ENABLE_NOTIFICATIONS=false` corta todo envío. Recarga `.env` en cada envío (`load_dotenv(override=True)`).
+- Escape (FNC-048, SEG-23): en plantillas HTML los valores pasan por `html.escape`; el asunto sale sin CR/LF; un valor no se vuelve a sustituir (`render_template_text`, `render_subject`).
+- Avisos del gestor (`notifications/access_notifications.py`, FNC-048): una función por evento, llamada **después del commit** y dentro de `try`; nunca lanza (datos incompletos → log y `error`); si falla queda en el log y en auditoría `notificacion_fallida` (actor `sistema`). Interruptor `NOTIFY_ACCESS_EVENTS`. Envío síncrono hasta FNC-049 (ADR-003).
+
+| Función | Plantilla | Destinatarios (activos, en un solo envío) |
+|---|---|---|
+| `notificar_solicitud_nueva(solicitante, plataforma, nivel, justificacion)` | `solicitud_nueva` | Admins (`admin_area`) del área de la plataforma con `pref_email_notifications` |
+| `notificar_solicitud_aprobada(solicitante, plataforma, nivel)` | `solicitud_aprobada` | Solicitante, si tiene `pref_email_notifications` |
+| `notificar_solicitud_rechazada(solicitante, plataforma, nivel, motivo)` | `solicitud_rechazada` | Solicitante, si tiene `pref_email_notifications` |
+| `notificar_aprovisionamiento_fallido(usuario, plataforma, nivel, operacion)` | `aprovisionamiento_fallido` | Admins del área y superadmins con `pref_email_notifications` (P10, 2026-10-15) |
+
+- Plantillas: migración `0003` (HTML, español, editables en Ajustes → Plantillas); variables en `CLAVES_POR_PLANTILLA`; enlace `{url}` = `BASE_URL`.
 - Plantilla usada por el código: `usuario_creado` (alta por LDAP o SSO, si `NOTIFY_USER_CREATED` no es `false`). Variables: `nombre`, `usuario`, `base_url`, `url`.
 - `add_in_app_notification()` existe en servicios.
 
@@ -198,7 +222,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - `before`/`after` sin contraseñas, hashes, tokens, cookies, cabeceras ni secretos (`audit/sanitizar.py`, SEC-AUD-05).
 - Inmutable (`audit/inmutabilidad.py`): el ORM rechaza `UPDATE`/`DELETE` (por objeto y masivos) con `RegistroInmutable`; sin rutas de edición ni borrado; borrar usuario, área o plataforma deja la referencia en NULL.
 - Migración `0002_auditoria_ampliada`.
-- Se audita: accesos (local, directorio, SSO, fallidos, SSO rechazado), cierre de sesión, CRUD de áreas/plataformas/usuarios, configuración, SMTP, LDAP, respaldos, purgas y altas/bajas automáticas por LDAP.
+- Se audita: accesos (local, directorio, SSO, fallidos, SSO rechazado), cierre de sesión, CRUD de áreas/plataformas/usuarios, configuración, SMTP, LDAP, respaldos, purgas, altas/bajas automáticas por LDAP y correos del gestor no enviados (`notificacion_fallida`, FNC-048).
 
 ## 6. Cómo arrancar en dev
 
