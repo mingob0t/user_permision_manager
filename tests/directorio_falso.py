@@ -1,149 +1,100 @@
-"""Directorio LDAP simulado para las pruebas de autenticación (FNC-022).
+"""Directorio OpenLDAP simulado para las pruebas de login (FNC-022, FNC-042).
 
-Sustituye a `ldap3.Server` y `ldap3.Connection` dentro de
-`app.modules.auth.services`, sin red. Guarda las personas del directorio, sus
-contraseñas y grupos, y registra los filtros de búsqueda que recibe.
+Desde FNC-042 el login usa el cliente centralizado (`app.modules.directory`).
+Este doble activa el directorio con variables `LDAP_*` ficticias y conecta el
+cliente a un servidor `ldap3` `MOCK_SYNC` (sin red), el mismo esquema que
+`tests/directory/conftest.py`. Registra los filtros de búsqueda que recibe.
 
 Uso:
     directorio = instalar_directorio(monkeypatch)
     directorio.agregar('jperez', 'clave', grupos=[DN_GRUPO])
 """
 
-import fnmatch
-import re
-
-from ldap3.core.exceptions import LDAPBindError
+import ldap3
 
 from app import db
-from app.modules.auth import services as auth_services
 from app.modules.auth.models import AuthConfig
-from tests.matriz_proteccion import CONTRASENA_FICTICIA, HOST_LDAP_FICTICIO
+from app.modules.directory import ldap_client
+from tests.directory.conftest import (CUENTA_SERVICIO, ENTORNO_VALIDO,
+                                      GRUPOS_BASE_DN, USUARIOS_BASE_DN,
+                                      dn_persona)
+from tests.matriz_proteccion import CONTRASENA_FICTICIA
 
 BASE_DN = 'dc=pruebas,dc=local'
-CUENTA_SERVICIO = f'cn=servicio,{BASE_DN}'
 DOMINIO_CORREO = 'pruebas.local'
-
-_FILTRO = re.compile(r'^\((?P<atributo>[^=()]+)=(?P<valor>.*)\)$')
-
-
-class _Valor:
-    """Imita un atributo de `ldap3`: `.value`, iterable y con valor de verdad."""
-
-    def __init__(self, valores):
-        self.values = list(valores) if isinstance(valores, (list, tuple)) \
-            else [valores]
-
-    @property
-    def value(self):
-        return self.values[0] if len(self.values) == 1 else self.values
-
-    def __iter__(self):
-        return iter(self.values)
-
-    def __bool__(self):
-        return bool(self.values)
-
-    def __str__(self):
-        return str(self.value)
-
-
-class EntradaFalsa:
-    """Imita una entrada de `conn.entries` (atributos, `in` y `entry_dn`)."""
-
-    def __init__(self, dn, atributos):
-        self.entry_dn = dn
-        self._atributos = atributos
-
-    def __contains__(self, nombre):
-        return nombre in self._atributos
-
-    def __getattr__(self, nombre):
-        if nombre.startswith('_'):
-            raise AttributeError(nombre)
-        try:
-            return _Valor(self._atributos[nombre])
-        except KeyError:
-            raise AttributeError(nombre) from None
 
 
 class DirectorioFalso:
-    """Personas del directorio y registro de lo que pidió el servicio."""
+    """Personas y grupos del directorio, y los filtros que pidió el login."""
 
-    def __init__(self):
-        self.personas = {}      # uid -> (EntradaFalsa, contraseña)
+    def __init__(self, servidor):
+        self.servidor = servidor
         self.filtros = []       # filtros de búsqueda recibidos, en orden
         self.error = None       # excepción a lanzar al conectar, si se define
+        self._carga = ldap3.Connection(servidor,
+                                       client_strategy=ldap3.MOCK_SYNC)
+        self._agregar(CUENTA_SERVICIO, objectClass='person', cn='servicio',
+                      userPassword=CONTRASENA_FICTICIA)
+        for ou in (USUARIOS_BASE_DN, GRUPOS_BASE_DN):
+            self._agregar(ou, objectClass='organizationalUnit',
+                          ou=ou.split(',')[0].split('=')[1])
+
+    def _agregar(self, dn, **atributos):
+        self._carga.strategy.add_entry(dn, atributos)
 
     def agregar(self, uid, contrasena, correo=None, nombre=None, grupos=()):
-        dn = f'uid={uid},ou=personas,{BASE_DN}'
-        atributos = {'sAMAccountName': uid, 'cn': uid,
-                     'mail': correo or f'{uid}@{DOMINIO_CORREO}',
-                     'displayName': nombre or f'Persona {uid}'}
-        if grupos:
-            atributos['memberOf'] = list(grupos)
-        entrada = EntradaFalsa(dn, atributos)
-        self.personas[uid] = (entrada, contrasena)
-        return entrada
+        """Persona `inetOrgPerson`; `grupos` son DN de `groupOfNames`.
 
-    def buscar(self, filtro):
-        self.filtros.append(filtro)
-        coincidencia = _FILTRO.match(filtro)
-        if not coincidencia:
-            return []
-        valor = coincidencia.group('valor')
-        # Como un servidor real, `*` sin escapar es comodín.
-        return [entrada for uid, (entrada, _) in self.personas.items()
-                if fnmatch.fnmatchcase(uid, valor)]
-
-    def validar_bind(self, usuario, contrasena):
-        if usuario == CUENTA_SERVICIO:
-            return
-        for entrada, clave in self.personas.values():
-            if entrada.entry_dn == usuario and clave == contrasena:
-                return
-        raise LDAPBindError('invalidCredentials')
+        `correo=None` usa `<uid>@pruebas.local`; `correo=''`, sin `mail`.
+        """
+        dn = dn_persona(uid)
+        atributos = {'objectClass': 'inetOrgPerson', 'uid': uid, 'cn': uid,
+                     'sn': uid, 'displayName': nombre or f'Persona {uid}',
+                     'userPassword': contrasena}
+        if correo != '':  # `correo=''`: persona sin `mail`
+            atributos['mail'] = correo or f'{uid}@{DOMINIO_CORREO}'
+        self._agregar(dn, **atributos)
+        for grupo in grupos:
+            self._agregar(grupo, objectClass='groupOfNames',
+                          cn=grupo.split(',')[0].split('=')[1], member=[dn])
+        return dn
 
     def conexion(self):
-        """Clase que reemplaza a `ldap3.Connection`, ligada a este directorio."""
+        """Clase que reemplaza a `ldap3.Connection` en el cliente."""
         directorio = self
 
-        class ConexionFalsa:
-            def __init__(self, servidor, user=None, password=None, **kwargs):
+        class ConexionRegistrada(ldap3.Connection):
+            def __init__(self, *args, **kwargs):
                 if directorio.error:
                     raise directorio.error
-                directorio.validar_bind(user, password)
-                self.entries = []
+                super().__init__(*args, **kwargs)
 
-            def __enter__(self):
-                return self
+            def search(self, base, filtro, *args, **kwargs):
+                directorio.filtros.append(filtro)
+                return super().search(base, filtro, *args, **kwargs)
 
-            def __exit__(self, *args):
-                return False
-
-            def search(self, base, filtro, attributes=None, **kwargs):
-                self.entries = directorio.buscar(filtro)
-                return bool(self.entries)
-
-            def unbind(self):
-                return True
-
-        return ConexionFalsa
+        return ConexionRegistrada
 
 
-def instalar_directorio(monkeypatch, **config):
-    """Configura el directorio en la BD y simula `ldap3` en el servicio.
+def instalar_directorio(monkeypatch, variables=None, **config):
+    """Activa el directorio simulado para el login.
 
-    `config` sobrescribe campos de `AuthConfig` (p. ej. `ldap_group_admin` o
-    `ldap_role_mappings`).
+    - `variables`: `LDAP_*` que sobrescriben las de prueba.
+    - `config`: si se da, crea `AuthConfig` con esos campos (p. ej.
+      `ldap_group_admin` o `ldap_role_mappings`), para probar que el login ya
+      no los usa.
     """
-    campos = {'ldap_host': HOST_LDAP_FICTICIO, 'ldap_base_dn': BASE_DN,
-              'ldap_user': CUENTA_SERVICIO, 'ldap_pass': CONTRASENA_FICTICIA,
-              'ldap_user_attr': 'sAMAccountName'}
-    campos.update(config)
-    db.session.add(AuthConfig(**campos))
-    db.session.commit()
+    for nombre, valor in {**ENTORNO_VALIDO, **(variables or {})}.items():
+        monkeypatch.setenv(nombre, valor)
+    if config:
+        db.session.add(AuthConfig(**config))
+        db.session.commit()
 
-    directorio = DirectorioFalso()
-    monkeypatch.setattr(auth_services, 'Server', lambda *args, **kwargs: None)
-    monkeypatch.setattr(auth_services, 'Connection', directorio.conexion())
+    monkeypatch.setattr(ldap_client, 'ESTRATEGIA', ldap3.MOCK_SYNC)
+    cliente = ldap_client.ClienteDirectorio(
+        ldap_client.cargar_configuracion())
+    directorio = DirectorioFalso(cliente._servidor())
+    monkeypatch.setattr(ldap_client.ClienteDirectorio, '_servidor',
+                        lambda self: directorio.servidor)
+    monkeypatch.setattr(ldap_client, 'Connection', directorio.conexion())
     return directorio

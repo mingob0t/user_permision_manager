@@ -3,7 +3,7 @@
 | ID | Tarea | Plataforma | Fase | Módulo | Prioridad | Estatus | Creada | Inicio | Finalizada | Git | Vínculos |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | FNC-001 | Incorporar el proyecto al método | infra | 0 | global | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (634e9f1) | |
-| FNC-002 | Login de directorio seguro: sin purga de cuentas, filtro LDAP escapado y mensajes genéricos | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — |  |
+| FNC-002 | Login de directorio seguro: sin purga de cuentas, filtro LDAP escapado y mensajes genéricos | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — | Absorbida por FNC-042 (En revisión) |
 | FNC-003 | Eliminar credenciales por defecto y crear el primer superadmin con un comando explícito | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — |  |
 | FNC-004 | nginx: limpiar cabeceras Remote-* en todas las location, bloquear /api y /auth sin distinguir mayúsculas, TLS y cabeceras de seguridad | infra | 5 | deploy | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-005 y FNC-006 cierra SEG-04 |
 | FNC-005 | Next.js: rewrites hacia la API solo en desarrollo y sin IP por defecto en BACKEND_URL | web | 5 | config | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-004 y FNC-006 |
@@ -14,7 +14,7 @@
 | FNC-010 | Secretos de servicio fuera de la BD; respaldo sin hashes ni roles privilegiados | backend | 5 | settings | Alta | Propuesta | 2026-10-13 | | | — |  |
 | FNC-011 | Revisar y rotar los posibles secretos del historial de git | infra | 5 | repositorio | Alta | Propuesta | 2026-10-13 | | | — |  |
 | FNC-012 | LDAP para OpenLDAP: TLS validado, conexión centralizada y atributos configurables (uid, memberOf/groupOfNames) | backend | 5 | auth | Alta | Propuesta | 2026-10-13 | | | — |  |
-| FNC-013 | Rol desde el directorio con DN exacto y un solo superadmin | backend | 5 | auth | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-012 |
+| FNC-013 | Rol desde el directorio con DN exacto y un solo superadmin | backend | 5 | auth | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-012; absorbida por FNC-042 (En revisión); un solo superadmin al asignar: FNC-044 |
 | FNC-014 | Límite de intentos en el login | backend | 5 | auth | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-015 | Auditoría filtrada por área e IP real del cliente | backend | 5 | audit | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-016 | Dependencias: npm audit y pip-audit, fijar versiones y quitar las que no se usan | infra | 5 | dependencias | Media | Propuesta | 2026-10-13 | | | — |  |
@@ -60,7 +60,7 @@
 | FNC-039 | Migraciones versionadas de MySQL para la fase 3 (según ADR-002) | backend | 3 | bd | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-039-migraciones-alembic` (commit local, sin push) | Depende de ADR-002; Alembic 1.20.0, línea base `0001`; pendiente prueba del dueño en MySQL |
 | FNC-040 | Cliente LDAP centralizado con TLS validado y esquema de OpenLDAP configurable | backend | 3 | directorio | Alta | Hecha | 2026-10-13 | 2026-10-14 | 2026-10-14 | `fnc/FNC-040-cliente-ldap` (commit local, sin push) | Depende de ADR-004; 10 variables `LDAP_*`; llamadores en FNC-042/043; falta revisor y auditor-seguridad |
 | FNC-041 | Servicio de escritura en OpenLDAP: membresía de grupos y alta de cuentas | backend | 3 | directorio | Alta | Hecha | 2026-10-13 | 2026-10-15 | 2026-10-18 | `fnc/FNC-041-escritura-ldap` (commit local, sin push) | Depende de FNC-040, ADR-004; 2 variables `LDAP_*`; llamadores en FNC-049/064; auditor-seguridad Aprobado y revisor corregido (2026-10-15) |
-| FNC-042 | Login por directorio sobre el cliente centralizado, sin purga de cuentas y sin elevar rol desde LDAP | backend | 3 | auth | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-040, FNC-047 |
+| FNC-042 | Login por directorio sobre el cliente centralizado, sin purga de cuentas y sin elevar rol desde LDAP | backend | 3 | auth | Alta | Hecha | 2026-10-13 | 2026-10-15 | 2026-10-18 | `fnc/FNC-042-login-directorio` (commit local, sin push) | Depende de FNC-040, FNC-047; absorbe FNC-002, FNC-013 y resto de FNC-012 (login); falta revisor y auditor-seguridad |
 | FNC-043 | Configuración del directorio: esquema de OpenLDAP en la API y credencial de bind fuera de la BD | backend | 3 | configuracion-directorio | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-040, FNC-039, FNC-038 |
 | FNC-044 | Roles: solo el superadmin crea o eleva admins y asigna las áreas administradas | backend | 3 | usuarios-roles | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-038, FNC-047 |
 | FNC-045 | Áreas: el admin da de alta sus áreas y queda como su administrador | backend | 3 | areas | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-044, FNC-038, FNC-047 |
