@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | tokens |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | disenador-web |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-19 |
@@ -112,3 +112,4 @@ Vistas a validar: menú lateral (entrada activa), Áreas, Usuarios (chips y Edit
 | 2026-10-19 | DIS-017 (auditor-accesibilidad): `nx-badge-warning` del aviso de guardado y "Sin enlace" en temas oscuros; `text-primary` del botón Editar en oscuro; heredado, no corregido en DIS-017 |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador; adelantada de fase 4). Implementada: tokens por tema, `text-primary-text`, pares de prueba y lista de fallas. test/lint/typecheck/build código 0; 56 celdas de contraste pasan. En revisión, sin revisores (por instrucción) |
 | 2026-10-19 | Revisiones: accesibilidad Con observaciones, revisor Requiere cambios → corregidos (CSS `color:`, selector del bloque oscuro, documentación). test/lint/typecheck/build código 0. Sigue En revisión |
+- Cierre (2026-10-19): revisor y auditor-accesibilidad atendidos; merge local a `develop` (modo autónomo; adelantada de la fase 4).
