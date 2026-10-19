@@ -5,11 +5,14 @@ Endpoints JSON que consume el frontend. La emisión y validación de la sesión
 sigue aquí, en Flask-Login: es lo que firma la cookie.
 
 Sobre el SSO: Authelia se aplica mediante cabeceras que inyecta Nginx
-(`Remote-Email`, `Remote-Name`, `Remote-Groups`). Confiar en ellas solo es
+(`Remote-Email`, `Remote-Name`). Confiar en ellas solo es
 seguro si nadie más puede ponerlas, así que este módulo únicamente las acepta
 cuando la petición llega de un proxy declarado en TRUSTED_PROXIES. Sin esa
 comprobación, cualquiera que alcance el puerto podría enviar
 `Remote-Email: admin` y suplantar a quien quisiera.
+
+El rol no sale de `Remote-Groups` ni del directorio: una cuenta nueva entra
+como `usuario` y el superadmin la eleva en el portal (RF-04, FNC-042).
 """
 
 import os
@@ -18,8 +21,11 @@ from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import db
+from app.authz import ROLE_USER
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.models import User
+from app.modules.auth.services import (MENSAJE_CREDENCIALES, avisar_bloqueo,
+                                       motivo_de_bloqueo, normalizar_correo)
 
 auth_api_bp = Blueprint('api_auth', __name__, url_prefix='/api/v1/auth')
 
@@ -38,14 +44,11 @@ def _sso_enabled():
     return os.getenv('AUTHELIA_ENABLED', 'false').lower() == 'true'
 
 
-def _role_from_groups(groups_header):
-    """Deduce el rol a partir de los grupos que envía Authelia."""
-    admin_groups = [g.strip().lower() for g in os.getenv(
-        'AUTHELIA_GROUP_ADMIN', 'administrador').split(',')]
-    if not groups_header:
-        return 'usuario'
-    groups = [g.strip().lower() for g in groups_header.split(',')]
-    return 'administrador' if any(g in groups for g in admin_groups) else 'usuario'
+def _acceso_fallido(email, motivo):
+    """Audita el motivo y responde el fallo único (401)."""
+    add_audit_log('ACCESO FALLIDO', status='error', target=email,
+                  detail=motivo[:200])
+    return jsonify({'status': 'error', 'message': MENSAJE_CREDENCIALES}), 401
 
 
 @auth_api_bp.route('/context')
@@ -81,30 +84,32 @@ def sso_login():
         return jsonify({'status': 'error',
                         'message': 'Origen no autorizado para SSO.'}), 403
 
-    email = request.headers.get(os.getenv('AUTHELIA_HEADER_USER', 'Remote-Email'))
+    email = normalizar_correo(request.headers.get(
+        os.getenv('AUTHELIA_HEADER_USER', 'Remote-Email')))
     if not email:
         return jsonify({'status': 'error', 'message': 'Sin identidad SSO.'}), 401
 
     name = request.headers.get(
         os.getenv('AUTHELIA_HEADER_NAME', 'Remote-Name'), email)
-    groups = request.headers.get(
-        os.getenv('AUTHELIA_HEADER_GROUPS', 'Remote-Groups'), '')
-    role = _role_from_groups(groups)
 
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter(db.func.lower(User.email) == email).first()
     created = user is None
     if created:
-        user = User(email=email, nombre=name, role=role, auth_source='sso')
+        # Sin rol desde Remote-Groups (SEG-10): solo el superadmin eleva.
+        user = User(email=email, nombre=name, role=ROLE_USER, auth_source='sso')
         db.session.add(user)
     else:
+        # Cuenta local o desactivada: no se toma ni se modifica.
+        motivo = motivo_de_bloqueo(user)
+        if motivo:
+            avisar_bloqueo(user, 'SSO', motivo)
+            return _acceso_fallido(email, f'SSO: {motivo}')
+        # Se conservan el rol del portal y el origen de la cuenta.
         user.nombre = name
-        # El rol lo manda el directorio, salvo que sea un admin de área local:
-        # ese nivel se gestiona en Nexus y el SSO no lo conoce.
-        if user.role != 'admin_area':
-            user.role = role
     db.session.commit()
 
-    login_user(user, remember=True)
+    if not login_user(user, remember=True):
+        return _acceso_fallido(email, 'SSO: login_user rechazó la cuenta')
     add_audit_log('ACCESO SSO', status='success', target=email,
                   detail='Sesión iniciada vía Authelia')
 
@@ -140,21 +145,20 @@ def login():
         result = authenticate_user_ldap(email, password)
         if result.get('status') == 'success':
             user = result['user']
-            login_user(user, remember=True)
+            if not login_user(user, remember=True):
+                return _acceso_fallido(
+                    email, 'Directorio: login_user rechazó la cuenta')
             add_audit_log('ACCESO DIRECTORIO', status='success', target=email,
                           detail='Autenticación corporativa')
             return jsonify({'status': 'success', 'role': user.role})
-        add_audit_log('ACCESO FALLIDO', status='error', target=email,
-                      detail=str(result.get('message'))[:200])
-        return jsonify({'status': 'error',
-                        'message': result.get('message') or 'Credenciales incorrectas.'}), 401
+        # El motivo queda en la auditoría; al cliente, la respuesta única.
+        return _acceso_fallido(email, f"Directorio: {result.get('motivo')}")
 
     user = User.query.filter_by(email=email).first()
     if user and user.password_hash and user.check_password(password):
-        if not user.is_active:
-            return jsonify({'status': 'error',
-                            'message': 'La cuenta está desactivada.'}), 403
-        login_user(user, remember=True)
+        # Desactivada: respuesta única, no confirma la contraseña (SEC-AUTH-09).
+        if not user.is_active or not login_user(user, remember=True):
+            return _acceso_fallido(email, 'Local: cuenta desactivada')
         add_audit_log('ACCESO LOCAL', status='success', target=email,
                       detail='Autenticación manual')
         return jsonify({'status': 'success', 'role': user.role})
@@ -163,7 +167,7 @@ def login():
                   detail='Credenciales locales incorrectas')
     # Mismo mensaje exista o no la cuenta, para no revelar qué correos hay.
     return jsonify({'status': 'error',
-                    'message': 'Credenciales incorrectas.'}), 401
+                    'message': MENSAJE_CREDENCIALES}), 401
 
 
 @auth_api_bp.route('/logout', methods=['POST'])

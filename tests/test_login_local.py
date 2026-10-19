@@ -56,14 +56,20 @@ def test_mensaje_uniforme_exista_o_no_la_cuenta(app, crear_usuario):
     assert all(r.get_json() == respuestas[0].get_json() for r in respuestas)
 
 
-def test_usuario_inactivo_no_obtiene_sesion(client, crear_usuario):
+def test_usuario_inactivo_no_obtiene_sesion_y_da_el_mensaje_uniforme(
+        client, crear_usuario):
+    # Regresión (FNC-042, decisión del dueño 2026-10-15, SEC-AUTH-09): con la
+    # contraseña correcta respondía 403 "La cuenta está desactivada.", lo
+    # que confirmaba la contraseña de una cuenta desactivada.
     usuario = crear_usuario(contrasena=CONTRASENA_FICTICIA, activo=False)
 
     respuesta = iniciar_sesion_api(client, usuario.email, CONTRASENA_FICTICIA)
 
-    assert respuesta.status_code == 403
-    assert respuesta.get_json()['status'] == 'error'
+    assert respuesta.status_code == 401
+    assert respuesta.get_json() == {'status': 'error',
+                                    'message': MENSAJE_CREDENCIALES}
     assert usuario_en_sesion(client) is None
+    assert hay_auditoria('ACCESO FALLIDO', 'error', target=usuario.email)
 
 
 def test_usuario_inactivo_con_contrasena_erronea_da_el_mensaje_uniforme(

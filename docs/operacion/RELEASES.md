@@ -17,6 +17,10 @@
 - [ ] Respaldo previo hecho.
 - [ ] `CHANGELOG.md` y la etiqueta actualizados.
 
+## Notas por cambio
+
+- FNC-042: revisar las cuentas `administrador` y `admin_area` heredadas antes de desplegar (el directorio y el SSO ya no asignan ni quitan roles; las elevadas antes por LDAP/SSO conservan el rol).
+
 ## Historial
 
 | Versión | Fecha | Entorno | Notas | Responsable |

@@ -16,7 +16,7 @@ cliente ──HTTPS 443──> nginx ──(auth_request)──> Authelia (exist
                          ├── /api/ y /auth/ ──> <nombre>-backend  (Gunicorn, loopback:5001)
                          └── /  y /_next/static/ ──> <nombre>-frontend (node server.js, loopback:3000)
 
-<nombre>-backend ──> MySQL (por nombre de host) · Redis opcional · OpenLDAP (solo lectura) · SMTP
+<nombre>-backend ──> MySQL (por nombre de host) · Redis opcional · OpenLDAP (lectura; escritura acotada, FNC-041) · SMTP
 ```
 
 - Ambos servicios bajo **el mismo dominio**: la cookie de sesión de Flask llega al frontend sin CORS.
@@ -82,6 +82,28 @@ Qué variables cambian por entorno. El valor de cada una está en `docs/configur
 | `AUTHELIA_ENABLED` | normalmente `false` | `true` al conectar Authelia |
 | `DB_*`, `SECRET_KEY`, `SMTP_*` | `.env` local | `.env` del servidor con secretos de Vaultwarden |
 | `LDAP_*` (FNC-040) | `.env` local; vacío = directorio inactivo | `.env` del servidor; `LDAP_BIND_PASSWORD` de Vaultwarden. Con CA interna: copiar su PEM al servidor y apuntar `LDAP_CA_CERT_FILE` (si no, la app no conecta: el certificado se valida) |
+| `LDAP_USER_OBJECT_CLASSES`, `LDAP_GROUP_PLACEHOLDER_MEMBER` (FNC-041) | `.env` local; vacías = `inetOrgPerson` / sin relleno | `.env` del servidor. El relleno es una entrada sin login ni contraseña, fuera de `LDAP_USERS_BASE_DN` (si no, la app no arranca) |
+
+## ACL de OpenLDAP para la cuenta de servicio (FNC-041, SEC-LDAP-03)
+
+Una sola cuenta (`LDAP_BIND_DN`) lee y escribe (decisión del dueño, 2026-10-15). La aplica el administrador del directorio; el portal no la crea:
+
+| Alcance | Permiso de la cuenta de servicio |
+|---|---|
+| Atributo de membresía (`LDAP_GROUP_MEMBER_ATTR`) de las entradas bajo `LDAP_GROUPS_BASE_DN` | `write` (agregar y quitar valores) |
+| Resto de atributos de los grupos | `read` |
+| Crear entradas hijas de `LDAP_USERS_BASE_DN` (`entry` + `children` de la OU) | `add` (sin `delete`) |
+| `userPassword` en cualquier entrada | sin acceso (`none`) |
+| Personas bajo `LDAP_USERS_BASE_DN` | `read` (búsqueda y perfil) |
+| Todo lo demás del directorio | sin escritura |
+
+- Ejemplo de forma (`olcAccess`; los DN reales los define el dueño): `to dn.subtree="<LDAP_GROUPS_BASE_DN>" attrs=member by dn.exact="<LDAP_BIND_DN>" write` y `to dn.base="<LDAP_USERS_BASE_DN>" attrs=children by dn.exact="<LDAP_BIND_DN>" write`.
+- Verificar tras aplicarla: la cuenta no puede cambiar `userPassword` ni escribir fuera de esas OU.
+
+## Requisitos del directorio OpenLDAP (FNC-042)
+- `mail` único en todo el directorio.
+- `mail` no editable por el propio usuario (ACL de OpenLDAP): las cuentas vinculadas del portal confían en él.
+- Authelia usa el mismo OpenLDAP: una cuenta `sso` puede entrar por directorio y una `ldap` por SSO.
 
 ## Discrepancias detectadas en `deploy/README.md`
 

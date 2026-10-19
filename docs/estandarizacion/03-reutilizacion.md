@@ -27,10 +27,15 @@
 | `limpiar_detalle` | Utilidad | `app/modules/audit/sanitizar.py` | Quita datos sensibles de antes/después (SEC-AUD-05) | `add_audit_log` |
 | `sanitize_display_name` | Función | `app/utils/naming.py` | Normalizar nombres | `crud.py` |
 | `redis_registry` | Cliente | `app/utils/redis_client.py` | Registro Redis | `app/__init__.py:93` |
-| `ClienteDirectorio`, `escapar_filtro`, `escapar_valor_dn`, `ErrorDirectorio` | Cliente | `app/modules/directory/ldap_client.py` | Única conexión a OpenLDAP (TLS validado, espera, escape); todo uso nuevo de `ldap3` pasa por aquí | (sin llamadores hasta FNC-041/042/043) |
+| `ClienteDirectorio`, `escapar_filtro`, `escapar_valor_dn`, `ErrorDirectorio`, `registrar_error` | Cliente | `app/modules/directory/ldap_client.py` | Única conexión a OpenLDAP (TLS validado, espera, escape); todo uso nuevo de `ldap3` pasa por aquí | (sin llamadores hasta FNC-041/042/043) |
+| `normalizar_dn`, `mismo_dn`, `bajo_base` | Utilidad | `app/modules/directory/dn.py` | Comparar DN normalizados (RDN multivaluados, escapes); toda comprobación de DN o de base pasa por aquí | `configuracion.py`, `writer.py` |
+| `valor_de_membresia` | Utilidad | `app/modules/directory/ldap_client.py` | Valor del usuario en el atributo de membresía (DN o identificador) | `ldap_client.py`, `writer.py` |
+| `EscritorDirectorio`, `DatosCuenta`, `ResultadoEscritura`, `Resultado`, `clasificar_error` | Servicio | `app/modules/directory/writer.py`, `errors.py` | Única escritura en OpenLDAP (membresía y alta de cuentas), idempotente y con resultado tipificado | (sin llamadores hasta FNC-049/064) |
 | `cargar_configuracion`, `validar_al_arrancar` | Configuración | `app/modules/directory/configuracion.py` | Configuración del directorio desde `LDAP_*` (ADR-004) | `app/__init__.py`, `ldap_client.py` |
 | `construir_uri_bd` | Función | `app/utils/uri_bd.py` | URI de la BD desde `DB_*` | `app/__init__.py`, `migrations/env.py` |
-| `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py:191` | Envío de correo por plantilla | auth, SSO, admin |
+| `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py` | Envío de correo por plantilla; escapa los valores en HTML y quita CR/LF del asunto (FNC-048) | auth, SSO |
+| `notificar_solicitud_nueva`, `notificar_solicitud_aprobada`, `notificar_solicitud_rechazada`, `notificar_aprovisionamiento_fallido` | Servicio | `app/modules/notifications/access_notifications.py` | Avisos del gestor de accesos con destinatarios resueltos; llamar después del commit (FNC-048) | FNC-049, FNC-056, FNC-057 (pendientes) |
+| `admins_del_area`, `superadmins` | Consulta | `app/modules/notifications/access_notifications.py` | Admins activos de un área / superadmins activos, con o sin preferencia de correo | avisos del gestor |
 | `_validate_logo`, `MAX_LOGO_BYTES` | Función/constante | `app/modules/api/admin.py:46,51` | Validar logo (data URI) | settings |
 | Fixtures de pruebas (`app`, `client`, `cliente_como`, `cliente_de_rol`, `cliente_admin`, `cliente_admin_area`, `cliente_usuario`) | Fixtures pytest | `tests/conftest.py` | App con BD temporal y clientes con sesión por rol, sin servicios externos | `tests/` |
 | `crear_area`, `crear_plataforma`, `crear_usuario`, `crear_usuario_de_rol` | Fábricas de pruebas | `tests/fabricas.py` | Datos de prueba por rol | `tests/` |

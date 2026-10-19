@@ -157,14 +157,14 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 
 | Módulo | SEG | FNC |
 |---|---|---|
-| `app/modules/auth/services.py` | 01, 12 / 13 / 10 / 21, 26 | 002 / 012 / 013 / 017 |
-| `app/modules/api/auth.py` | 01, 12 / 02 / 04 / 10 / 11 / 14 | 002 / 003 / 006 / 013 / 014 / 008 |
+| `app/modules/auth/services.py` | 13 (solo `validate_ldap_connection`) / 21, 26 (01, 10, 12 cerrados y la IP de 26 quitada por FNC-042) | 012 resto en FNC-043 / 017 |
+| `app/modules/api/auth.py` | 02 / 04 / 11 / 14 (01, 10, 12 cerrados por FNC-042) | 003 / 006 / 014 / 008 |
 | `app/__init__.py` | 03 / 06, 14 / 07 / 29 | 003 / 008 / 009 / 017 |
 | `app/authz.py` | — (05 cerrado por FNC-044) | — |
 | `app/modules/api/crud.py` | 02 / 06 / 24 (05 y 09 cerrados por FNC-044) | 003 / 008 / 017 |
 | `app/modules/api/admin.py` | 06 / 08, 17, 22 / 13 / 21, 29 | 008 / 010 / 012 / 017 |
 | `auth/models.py`, `notifications/models.py` | 08 | 010 |
-| `notifications/services.py` | 23 | 017 |
+| `notifications/services.py` | — (23 cerrado por FNC-048) | — |
 | `api/routes.py` (`/audit`), `audit/` | 16 (25 cerrado por FNC-047) | 060 (015 parcial); requisito previo de FNC-054/056 |
 | `run.py` | 18 | 009 |
 | `deploy/nginx.conf.tmpl` | 04, 15 / 29 | 004 / 017 |
@@ -172,7 +172,7 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 | `frontend/.../platform-card.tsx` | 24 | 017 |
 | `requirements.txt`, `frontend/package.json` | 19, 27 | 016 |
 | `utils/` (SQL, `emergency_reset`, `seed_users`) | 03 | 003 |
-| `.env.example` | 10 / 26 | 013 / 017 |
+| `.env.example` | 26 (10 cerrado por FNC-042) | 017 |
 | Historial de git (`24b12b5`) | 20 | 011 |
 | `RETENCION.md`, `.claude/seudonimizacion.json` | 28 | 018 |
 
