@@ -219,8 +219,10 @@ table.dataTable tbody tr {
    Filosofía: azul marino profundo, no negro plano.
    Cada nivel de superficie +8% luminosidad relativa.
 ══════════════════════════════════════════════════════════════ */
+/* DIS-001: no aplica a los temas con nombre (`theme-*`): con mayor
+   especificidad que `html.theme-*`, les imponía sus valores oscuros. */
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) {
+  :root:not(.light):not([class*="theme-"]) {
     --color-body-bg: #030712;               /* Gray-950: profundidad real */
     --color-body-text: #e2e8f0;             /* Slate-200: neutro */
 

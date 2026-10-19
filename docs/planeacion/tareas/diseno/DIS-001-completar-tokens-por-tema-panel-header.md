@@ -75,6 +75,16 @@ Todos los pares texto/fondo de DIS-001 a >= 4.5:1 en los 7 contextos de `tokens.
 - No verificado visualmente: título de modal (requiere abrirlo; medido) y los temas emerald/obsidian/rose/violet/`html.dark` (inalcanzables sin selector; medidos).
 - Grep del diff: sin `style=`, `<style`, `.style.`, IPs; colores literales nuevos solo en `tokens.css`.
 
+## Revisiones
+- Accesibilidad (auditor-accesibilidad, 2026-10-19, medición propia en 7 contextos): **Con observaciones**. Los pares declarados pasan y no se rompió ninguno de los 7 contextos; observaciones: `components.css` conserva `color: rgb(var(--color-primary))` en estados hover (líneas 91, 803, 1546...; 3.45–3.77:1 en SO oscuro, emerald, rose), y un tema claro (emerald/rose) con SO oscuro y sin `.light` recibiría insignias claras (1.3–2.3:1) por el bloque `:root:not(.light)`.
+- Revisor (2026-10-19): **Requiere cambios** (documentación: DIS-002 sin anotar, origen de `--color-header-bg`).
+- Correcciones (commit posterior a `9f662bb`):
+  - `color:` de texto con `--color-primary` → `rgb(var(--color-primary-text))` en `components.css` (9) y `global.css` (1); dos eran `var(--color-primary)` sin `rgb()` (inválido). Bordes, fondos y tintes quedan con el relleno; el resto del CSS heredado lo depura DIS-009.
+  - `texto-de-marca.test.ts` revisa también `color:` en `src/styles/*.css` (falló antes con 10 usos).
+  - Bloque oscuro: `:root:not(.light):not([class*="theme-"])`. Emerald/rose con SO oscuro ya no reciben insignias ni `panel-header-text` oscuros; aplican sus contextos medidos (insignias 4.52-8.91, título 9.13/8.63). Obsidian y violet redefinen todo lo del bloque.
+  - DIS-002 anotada (absorbe `primary`); `--color-header-bg` con origen; DIS-025 anotada (corte a 390 px).
+- Observación sin tarea: los 8 pares `--badge-*` se repiten igual en 4 bloques oscuros.
+
 ## Impacto en elementos compartidos
 `tokens.css` y `tailwind.config.ts` son compartidos por toda la UI. Salida real de `impacto.py` (contra `develop`):
 
@@ -85,6 +95,8 @@ Todos los pares texto/fondo de DIS-001 a >= 4.5:1 en los 7 contextos de `tokens.
 | `--color-accent` | token CSS | `components.css` | Homónimo: coincide por prefijo con `--color-accent-*-text`; su valor no cambió |
 | `LogoutView`, `SettingsPanel` | función | `app/logout/page.tsx`, `app/settings/page.tsx` | Solo `text-primary` → `text-primary-text` |
 | `color`, `texto`, `remove` | función | backend y otros | Homónimos: helpers locales de prueba / funciones no modificadas que caen en el hunk |
+
+Además `components.css`/`global.css` (`color:` → `primary-text`) y el selector del bloque oscuro (todas las pantallas con SO oscuro).
 
 Vistas a validar: menú lateral (entrada activa), Áreas, Usuarios (chips y Editar), Administrar plataformas (Editar), Ajustes (pestaña activa), Notificaciones (tono info), Cerrar sesión (enlace), insignias en SO oscuro.
 
@@ -99,3 +111,4 @@ Vistas a validar: menú lateral (entrada activa), Áreas, Usuarios (chips y Edit
 | 2026-10-19 | FNC-070 (auditor-accesibilidad): entrada activa del menú `text-primary` sobre `bg-primary/15` da 4.19 claro y 3.01 oscuro (< 4.5); se reutiliza en las rutas nuevas |
 | 2026-10-19 | DIS-017 (auditor-accesibilidad): `nx-badge-warning` del aviso de guardado y "Sin enlace" en temas oscuros; `text-primary` del botón Editar en oscuro; heredado, no corregido en DIS-017 |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador; adelantada de fase 4). Implementada: tokens por tema, `text-primary-text`, pares de prueba y lista de fallas. test/lint/typecheck/build código 0; 56 celdas de contraste pasan. En revisión, sin revisores (por instrucción) |
+| 2026-10-19 | Revisiones: accesibilidad Con observaciones, revisor Requiere cambios → corregidos (CSS `color:`, selector del bloque oscuro, documentación). test/lint/typecheck/build código 0. Sigue En revisión |
