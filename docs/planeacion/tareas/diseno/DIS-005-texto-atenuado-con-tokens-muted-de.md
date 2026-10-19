@@ -46,3 +46,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-19 | FNC-070 (auditor-accesibilidad): `EmptyNote` `text-label/60` (3.35 claro, 3.31 oscuro) ya cubierto aquí; lo usan también las rutas reservadas de FNC-070 |

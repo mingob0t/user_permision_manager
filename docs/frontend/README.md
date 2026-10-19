@@ -30,6 +30,10 @@ frontend/src/
 |---|---|---|---|
 | `/` | `Dashboard` | Panel: contadores (áreas, plataformas, visitas y, para administradores, usuarios), top de visitas y plataformas por área (gráfica recharts). | Todos |
 | `/platforms` | `PlatformCatalog` | Catálogo de plataformas visibles: filtro por área (servidor) y búsqueda (cliente); abre el enlace, registra visita y marca favorito. | Todos |
+| `/requests` | — (reservada, DIS-014) | Mis solicitudes; guarda `requester`. | `usuario`, `admin_area` |
+| `/approvals` | — (reservada, DIS-015) | Aprobaciones; guarda `any_admin`. | `administrador`, `admin_area` |
+| `/inventory` | — (reservada, DIS-021) | Inventario; alcance por rol en el backend. | Todos |
+| `/admin/connectors` | — (reservada, DIS-022) | Conectores; guarda `admin`. | `administrador` |
 | `/favorites` | `FavoritesList` | Plataformas marcadas como favoritas. | Todos |
 | `/notifications` | `NotificationsList` | Notificaciones in-app: marcar leídas y borrar. | Todos |
 | `/admin/platforms` | `PlatformAdmin` | Crear, editar y eliminar plataformas; asignar usuarios. | `administrador`, `admin_area` |
@@ -44,14 +48,20 @@ frontend/src/
 
 ## 3. Menú por rol
 
-Definido en `components/app-shell.tsx` (`NAV`). Cada entrada puede exigir `any_admin` (superadmin o admin de área) o `admin` (solo superadmin; hoy ninguna entrada lo usa). Los permisos salen de `GET /api/v1/me` (`permissions.is_admin`, `permissions.is_area_admin`).
+Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exigir un `RoleRequirement` de `components/require-role.tsx`; los permisos salen de `GET /api/v1/me` (`permissions.is_admin`, `permissions.is_area_admin`).
+
+- `any_admin`: superadmin o admin de área; `admin`: solo superadmin; `requester`: usuario y admin de área (el superadmin no solicita)
 
 | Entrada | `usuario` | `admin_area` | `administrador` |
 |---|---|---|---|
-| Panel, Plataformas, Favoritos, Notificaciones, Auditoría, Ajustes | Sí | Sí | Sí |
-| Administrar plataformas, Áreas, Usuarios | No | Sí | Sí |
+| Panel, Catálogo, Favoritos, Notificaciones, Inventario, Auditoría, Ajustes | Sí | Sí | Sí |
+| Mis solicitudes | Sí | Sí | No |
+| Aprobaciones, Administrar plataformas, Áreas, Usuarios | No | Sí | Sí |
+| Conectores | No | No | Sí |
 
-Dentro de Ajustes, las pestañas de sistema solo se muestran a `administrador`. Ocultar en la interfaz no protege: el backend vuelve a validar cada endpoint.
+- Guarda de ruta: `<RequireRole requires="…">` muestra "sin permiso" (`ErrorNote`) y no monta la pantalla, así que no llama a la API
+- Hoy la usan `/requests`, `/approvals` y `/admin/connectors`; las rutas previas no la usan
+- Dentro de Ajustes, las pestañas de sistema solo se muestran a `administrador`. Ocultar en la interfaz no protege: el backend vuelve a validar cada endpoint.
 
 ## 4. Componentes principales
 
@@ -59,6 +69,7 @@ Dentro de Ajustes, las pestañas de sistema solo se muestran a `administrador`. 
 |---|---|---|
 | `AppShell` | `app-shell.tsx` | Marco: barra lateral (oculta en móvil), cabecera con nombre, rol y "Salir"; estados de carga y error de sesión. |
 | `SessionProvider` / `useSession` | `session-provider.tsx` | Pide `/me` una vez; sin sesión redirige a `/login`. |
+| `RequireRole` / `meetsRequirement` | `require-role.tsx` | Guarda de ruta y regla de visibilidad por rol (FNC-070). |
 | `Card`, `PanelHeader`, `StatTile`, `Spinner`, `ErrorNote`, `EmptyNote`, `Badge` | `ui.tsx` | Piezas base con clases del portal original (estados de carga, vacío y error). |
 | `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). |
 | `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace. |
@@ -127,6 +138,7 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 - `tests/lib/api.test.ts`: cliente de la API con `fetch` simulado (éxito, error HTTP, 401).
 - `tests/lib/use-polling.test.ts`: `usePolling` con temporizadores simulados (intervalo, pausa, *backoff*, sin solape, 401, desmontaje).
 - `tests/components/audit-log.test.tsx`: `AuditLog` con la API simulada (datos, filtro, vacío, error).
+- `tests/components/navegacion-por-rol.test.tsx`: entradas del menú por rol y `RequireRole` (sin permiso no monta ni llama a la API).
 - `tests/accesibilidad/contraste.test.ts`: contraste WCAG de los tokens en los 7 temas (4.5:1 texto, 3:1 bordes).
 - Los pares que hoy fallan están en `fallas-contraste-conocidas.ts` con su tarea DIS y se marcan `it.fails`. Si una tarea los corrige, la prueba avisa: quita el par de la lista.
 - `tests/accesibilidad/colores-literales.test.ts`: falla si aparece un color literal nuevo (`#hex`, `rgb()`, clases como `text-red-600`) en `src/components` o `src/app`.

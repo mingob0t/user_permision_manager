@@ -19,6 +19,7 @@
 - El admin de área da de alta áreas (queda como su admin), edita y da de baja las suyas; `409` con plataformas o accesos; validación y auditoría del contrato (FNC-045, 2026-10-18).
 - Cliente y tipos web de los contratos v1 del gestor de accesos (`lib/access/`), errores con `code`/`fields` y datos simulados tras `NEXT_PUBLIC_ACCESS_MOCKS`; el alta de usuarios ya no envía `auth_source` ni `managed_area_ids` (FNC-069, 2026-10-19).
 - Hook web `usePolling`: refresco periódico con el intervalo del usuario, pausa con la pestaña oculta y *backoff* ante errores (ADR-006) (FNC-071, 2026-10-19).
+- Menú por rol del gestor de accesos (Mis solicitudes, Aprobaciones, Inventario, Conectores; Plataformas pasa a Catálogo), guarda `RequireRole` y rutas reservadas (FNC-070, 2026-10-19).
 - Pruebas del frontend con Vitest (`npm test`): cliente de la API, `AuditLog`, contraste WCAG de los tokens y tope de colores literales (FNC-025, 2026-10-13).
 
 ### Corregido

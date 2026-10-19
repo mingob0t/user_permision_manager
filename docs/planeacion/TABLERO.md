@@ -91,7 +91,7 @@
 | FNC-067 | Servicio del worker de aprovisionamiento en el despliegue | infra | 3 | deploy | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-049, ADR-003 |
 | FNC-068 | Credenciales de conectores y del bind LDAP desde Vaultwarden en staging y producción | infra | 3 | secretos | Alta | Propuesta | 2026-10-13 | | | — | Depende de ADR-005, FNC-050 |
 | FNC-069 | Cliente y tipos web del gestor de accesos | web | 3 | lib-api | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `fnc/FNC-069-cliente-web-gestor` (commit local, sin push) | Depende de FNC-038; absorbe FNC-005 parcial (IP en `lib/api.ts`); adapta `/users` a FNC-044; impacto para DIS-016/017/018/019/023 |
-| FNC-070 | Navegación y rutas por rol del gestor de accesos | web | 3 | navegacion | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069 |
+| FNC-070 | Navegación y rutas por rol del gestor de accesos | web | 3 | navegacion | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `fnc/FNC-070-navegacion-por-rol` (commit local, sin push) | Depende de FNC-069; genera rutas para DIS-014/015/021/022; decisiones del orquestador en la ficha |
 | FNC-071 | Refresco periódico de datos con pausa en segundo plano (según ADR-006) | web | 3 | lib-datos | Media | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `fnc/FNC-071-refresco-periodico` (commit local, sin push) | Depende de ADR-006, FNC-069; `usePolling` para DIS-014/015/018/022/024 |
 | DIS-013 | Catálogo: solicitar acceso con nivel y justificación | web | 3 | catalogo | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-056 |
 | DIS-014 | Mis solicitudes y mis accesos | web | 3 | solicitudes | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-071, FNC-056, FNC-058, DIS-013 |
@@ -105,3 +105,4 @@
 | DIS-022 | Configuración de conectores y bitácora de ejecuciones | web | 3 | configuracion-conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-071, FNC-061, FNC-062 |
 | DIS-023 | Ajustes: pestaña Directorio para OpenLDAP | web | 3 | configuracion-directorio | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-043; FNC-043 cambió la forma de `/auth-config` (ver bitácora): la pestaña actual queda rota hasta esta tarea |
 | DIS-024 | Inicio por rol | web | 3 | dashboard | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-071, FNC-066 |
+| DIS-025 | Navegación en móvil (el menú lateral está oculto bajo md) | web | 3 | navegacion | Alta | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-070 (deuda 8 del frontend) |

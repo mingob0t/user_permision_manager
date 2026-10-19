@@ -46,3 +46,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-19 | FNC-070 (auditor-accesibilidad): `ErrorNote` `text-error` en claro da 3.30 (< 4.5); lo usa también el estado "sin permiso" de `RequireRole` |
