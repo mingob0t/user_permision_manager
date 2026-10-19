@@ -8,9 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | usuarios-roles |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-15 |
+| **Finalizada** | 2026-10-18 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-044-roles-superadmin` (worktree `pokemon-wt-044`) |
 | **Requiere migración BD** | No |
@@ -162,3 +163,4 @@
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-15 | Aprobada por el dueño (comunicado por el orquestador); implementada por desarrollador en `pokemon-wt-044`; absorbe FNC-007 (SEG-05, SEG-09). Queda En revisión (falta `revisor` y `auditor-seguridad`) |
 | 2026-10-15 | `auditor-seguridad` Aprobado con hallazgos; `revisor` Requiere cambios. Corregidos en un commit nuevo; decisión del dueño sobre contraseñas; creadas FNC-077, FNC-078, FNC-079. 600 passed, 27 xfailed. Sigue En revisión |
+| 2026-10-18 | Hecha: revisor y auditor-seguridad atendidos; merge local a `develop` aprobado por el dueño |
