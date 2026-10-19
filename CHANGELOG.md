@@ -20,4 +20,5 @@
 
 ### Corregido
 - Login por directorio sobre el cliente LDAP con TLS validado: sin purga de cuentas, filtro escapado, respuesta única y sin rol desde LDAP ni `Remote-Groups` (SEG-01, 10, 12; FNC-042, 2026-10-15).
+- Solo el superadmin crea o eleva admins y asigna áreas administradas (`PUT /users/<id>/managed-areas`); un admin de área ya no gestiona otros admins ni contraseñas no locales (corrige SEG-05 y SEG-09) (FNC-044, 2026-10-15).
 - El build web ya no falla por lint: enlace de error con `Link` y avisos resueltos (FNC-072, 2026-10-13).

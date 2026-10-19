@@ -12,9 +12,12 @@ from app import db
 from app.authz import (any_admin_required, area_admin_required, can_manage_area,
                        can_manage_user, is_admin, is_area_admin, scoped_areas,
                        scoped_platforms, scoped_users)
+from app.modules.api.helpers import (CUERPO_INVALIDO, NO_ENCONTRADO,
+                                     error_response, is_id_list, json_object)
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
+from app.modules.users.serializacion import usuario_gestionado
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -168,17 +171,7 @@ def list_favorites():
 def list_users():
     """Usuarios que el solicitante puede administrar."""
     users = scoped_users().order_by(User.email).all()
-    return jsonify([{
-        'id': u.id,
-        'email': u.email,
-        'name': u.nombre or u.email,
-        'role': u.role,
-        'is_active': u.is_active,
-        'auth_source': u.auth_source,
-        'areas': [{'id': a.id, 'name': a.name} for a in (u.areas or [])],
-        'managed_areas': [{'id': a.id, 'name': a.name} for a in (u.managed_areas or [])],
-        'last_login_at': u.last_login_at.isoformat() if u.last_login_at else None,
-    } for u in users])
+    return jsonify([usuario_gestionado(u) for u in users])
 
 
 @api_bp.route('/users/<int:user_id>/areas', methods=['PUT'])
@@ -188,10 +181,12 @@ def set_user_areas(user_id):
     """Reasigna las áreas de un usuario, dentro del alcance del solicitante."""
     target = User.query.get_or_404(user_id)
     if not can_manage_user(target):
-        return jsonify({'status': 'error', 'message': 'No puedes administrar este usuario.'}), 403
+        return error_response(*NO_ENCONTRADO)
 
-    requested = request.get_json(silent=True) or {}
-    area_ids = requested.get('area_ids') or []
+    requested = json_object()
+    area_ids = (requested or {}).get('area_ids') or []
+    if requested is None or not is_id_list(area_ids):
+        return error_response(*CUERPO_INVALIDO)
 
     # Solo áreas que el solicitante administra
     allowed = {a.id for a in scoped_areas().all()}
@@ -248,7 +243,8 @@ def list_audit():
     if is_admin():
         query = AuditLog.query
     elif is_area_admin():
-        emails = [u.email for u in scoped_users().all()]
+        # Las cuentas que administra, más sus propios eventos.
+        emails = [u.email for u in scoped_users().all()] + [current_user.email]
         query = AuditLog.query.filter(AuditLog.user.in_(emails))
     else:
         query = AuditLog.query.filter_by(user=current_user.email)

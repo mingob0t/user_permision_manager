@@ -107,3 +107,5 @@
 ## Respuestas del dueño (2026-10-15)
 - P3 (último miembro de `groupOfNames`): miembro de relleno configurable (`LDAP_GROUP_PLACEHOLDER_MEMBER`, FNC-041).
 - P3 (cuenta de servicio): una sola cuenta LDAP para lectura y escritura (`LDAP_BIND_DN`); ACL acotada en `docs/operacion/ENTORNOS.md`.
+- Contraseñas (revisión de FNC-044): el admin de área sí cambia la contraseña de cuentas `local` con rol `usuario` de sus áreas, además del superadmin; nunca de cuentas `ldap`/`sso`.
+- Login local: se deshabilitará; todo irá por Authelia, salvo el acceso de emergencia del superadmin (FNC-077).

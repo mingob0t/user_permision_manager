@@ -18,7 +18,11 @@
 | Tokens de color y temas | CSS | `frontend/src/styles/tokens.css` (claro `:51`, oscuro `:271` y `:207`) | Única fuente de colores | `tailwind.config.ts` |
 | Decoradores de permisos (`admin_required`, `any_admin_required`, `area_admin_required`, `platform_manage_required`, `platform_access_required`) | Decoradores Flask | `app/authz.py` | Reglas de acceso por rol y área | `app/modules/api/*` |
 | `scoped_areas`, `scoped_users`, `can_manage_area`, `can_manage_user`, `is_admin` | Funciones | `app/authz.py` | Alcance multitenant por área | `crud.py`, `routes.py` |
-| `add_audit_log` | Servicio | `app/modules/audit/services.py` | Única forma de registrar auditoría; desde FNC-047 acepta usuario afectado, área, plataforma, antes/después y `as_system` | 33 llamadas en `app/` |
+| `add_audit_log` | Servicio | `app/modules/audit/services.py` | Única forma de registrar auditoría; desde FNC-047 acepta usuario afectado, área, plataforma, antes/después y `as_system`; `commit=False` (FNC-044) para auditar en la misma transacción | 35 llamadas: 33 en `api/admin.py`, `api/auth.py`, `api/crud.py`, `auth/services.py` y 2 en `users/roles.py`, `users/areas_administradas.py` (FNC-044) |
+| `error_response`, `validation_error`, `json_object`, `is_id_list` y constantes de error (`NO_ENCONTRADO`, `CAMPO_NO_PERMITIDO`, `CUERPO_INVALIDO`, `ROL_RESERVADO`, `OPERACION_PROPIA`, `ROL_NO_ADMIN`) | Funciones y constantes | `app/modules/api/helpers.py` | Error estándar con `code`/`fields` y cuerpo JSON validado (contratos) | `crud.py`, `routes.py`, `users/api.py` |
+| `normalized_role` | Función | `app/authz.py` | Rol en minúsculas de cualquier cuenta | `users/` |
+| `roles_asignables`, `rol_asignable`, `campos_no_permitidos`, `cambiar_rol` | Funciones | `app/modules/users/roles.py` | Reglas de rol de cuentas y degradación auditada (FNC-044) | `crud.py` |
+| `usuario_gestionado` | Serializador | `app/modules/users/serializacion.py` | Forma `ManagedUser` de los contratos | `GET /users`, `users/api.py` |
 | `Evento`, `ACTOR_SISTEMA` | Catálogo | `app/modules/audit/events.py` | Valores de `action` del gestor de accesos (contrato `auditoria.md`) | Tareas de la fase 3 |
 | `limpiar_detalle` | Utilidad | `app/modules/audit/sanitizar.py` | Quita datos sensibles de antes/después (SEC-AUD-05) | `add_audit_log` |
 | `sanitize_display_name` | Función | `app/utils/naming.py` | Normalizar nombres | `crud.py` |
@@ -50,7 +54,7 @@
 |---|---|---|---|
 | D-01 | `_moved()` (410 Gone) | `app/modules/areas/routes.py:14`, `notifications/routes.py:21`, `auth/routes.py:22`, `users/routes.py:15` | Eliminar con los blueprints heredados (ver informe H-01) |
 | D-02 | `_frontend(path)` / lectura de `FRONTEND_URL` | `settings/routes.py:16`, `notifications/routes.py:17`, `auth/routes.py:17`, `areas/routes.py:21`, `audit/routes.py:16`, `users/routes.py:22`, `core/routes.py:16`, `app/__init__.py:88` | Se elimina con D-01; si queda uno, `app/config.py` |
-| D-03 | `_payload()` y `_error()` | `app/modules/api/crud.py:23,27`; `admin.py:25,29` | `app/modules/api/helpers.py` (`json_payload`, `error_response`) |
+| D-03 | `_payload()` y `_error()` | `app/modules/api/crud.py:23,27`; `admin.py:25,29` | `app/modules/api/helpers.py` (`json_payload`, `error_response`); `error_response` creado y usado por `crud._error` (FNC-044); falta `admin.py` y `json_payload` |
 | D-04 | Aviso "usuario creado" (con `NOTIFY_USER_CREATED`/`BASE_URL`) | `app/modules/api/auth.py:111-121`; `app/modules/auth/services.py:151-158` | Función única en `notifications/services.py` |
 | D-05 | Purga de usuarios inactivos | `app/modules/auth/services.py:172` (heredada, con criterio distinto) y `app/modules/api/crud.py:415-435` | La de `crud.py` (considera nulos) movida a `app/modules/users/services.py` |
 | D-06 | Conexión LDAP (`Server`/`Connection`/`Tls`) | `app/modules/auth/services.py:42,213`; `app/modules/api/admin.py:607-614` | `app/modules/directory/ldap_client.py` (creado en FNC-040; migran los llamadores FNC-042 y FNC-043) |

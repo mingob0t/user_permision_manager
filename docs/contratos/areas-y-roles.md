@@ -64,6 +64,7 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 - Degradar `admin_area` → `usuario` borra sus áreas administradas en la misma transacción; auditoría `rol_cambiado` con antes y después.
 - Un admin de área solo gestiona cuentas `usuario` de sus áreas (SEC-AUTHZ-06); sobre otro admin o el superadmin → 404.
 - Nadie cambia su propio rol (SEC-AUTHZ-08) → 403 `operacion_propia`.
+- `password` en `PUT /users/<id>` (2026-10-15, decisión del dueño): superadmin, o admin sobre cuentas `usuario` locales de sus áreas; cuenta `ldap` o `sso` → `400 campo_no_permitido`; sin rol de admin → `403 sin_permiso`.
 
 ## Errores
 | HTTP | `code` | Mensaje |
@@ -75,6 +76,7 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | 403 | `rol_reservado` | Ese rol no se puede asignar. |
 | 400 | `campo_no_permitido` | Hay campos que no se pueden enviar. |
 | 403 | `operacion_propia` | No puedes cambiar tu propio rol. |
+| 403 | `sin_permiso` | Rol insuficiente (común, README). |
 | 422 | `validacion` | Revisa los campos marcados. |
 
 ## Refresco
@@ -89,3 +91,4 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
+| 1 | 2026-10-15 | Aditivo (FNC-044): regla de `password` en `PUT /users/<id>` con `400 campo_no_permitido` (cuenta no local) y `403 sin_permiso` |

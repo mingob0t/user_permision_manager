@@ -28,7 +28,8 @@ def _actor(as_system):
 def add_audit_log(action, status='info', detail=None, user_override=None,
                   module=None, target=None, *, target_user_id=None,
                   area_id=None, platform_id=None, before=None, after=None,
-                  request_id=None, grant_id=None, as_system=False):
+                  request_id=None, grant_id=None, as_system=False,
+                  commit=True):
     """
     Registra un evento en la tabla de auditoría.
 
@@ -39,6 +40,9 @@ def add_audit_log(action, status='info', detail=None, user_override=None,
       haya sesión; fuera de una petición o sin sesión también es "sistema".
     - `before`/`after`: estado antes y después; se quitan datos sensibles.
     - Los textos se recortan al largo de su columna (SEG-25).
+    - `commit=False` (FNC-044): solo agrega el registro a la sesión para que
+      quien llama lo guarde junto con su cambio en una sola transacción
+      (SEC-AUD-06); un error se propaga en lugar de ocultarse.
     """
     try:
         user_name, actor_id = _actor(as_system)
@@ -66,7 +70,10 @@ def add_audit_log(action, status='info', detail=None, user_override=None,
             grant_id=grant_id,
         )
         db.session.add(log)
-        db.session.commit()
+        if commit:
+            db.session.commit()
     except Exception as e:
+        if not commit:
+            raise
         print(f"❌ Error al escribir en AuditLog: {e}")
         db.session.rollback()

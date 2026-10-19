@@ -48,3 +48,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-15 | Absorbida por FNC-044 (regla de fases): SEG-05 (admin de área solo gestiona cuentas `usuario`; contraseña solo superadmin y solo `local`) y SEG-09 (solo el superadmin asigna `admin_area` y áreas administradas) corregidos con regresión; `xfail` retirados. Se cierra junto con FNC-044 |

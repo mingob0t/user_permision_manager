@@ -38,6 +38,11 @@ def _role(user):
     return (getattr(user, 'role', '') or '').lower()
 
 
+def normalized_role(user):
+    """Rol en minúsculas de cualquier cuenta (no exige sesión)."""
+    return _role(user)
+
+
 def _valid(user):
     return bool(user) and user.is_authenticated
 
@@ -120,8 +125,9 @@ def scoped_platforms(user=None):
 def scoped_users(user=None):
     """Query de los usuarios que el usuario puede administrar.
 
-    El superadmin ve a todos. Un admin de área ve a quienes pertenecen a alguna
-    de las áreas que administra. Un usuario normal, solo a sí mismo.
+    El superadmin ve a todos. Un admin de área, solo las cuentas con rol
+    `usuario` de las áreas que administra (el mismo criterio que
+    `can_manage_user`, SEC-AUTHZ-06). Un usuario normal, solo a sí mismo.
     """
     from app import db
     from app.modules.auth.models import User, user_areas
@@ -137,11 +143,11 @@ def scoped_users(user=None):
         # como única entidad y admite filter_by() encadenado por quien llama.
         member_ids = (db.session.query(user_areas.c.user_id)
                       .filter(user_areas.c.area_id.in_(ids)))
-        # Un superadmin puede pertenecer a estas áreas, pero nunca debe quedar
-        # bajo la administración de un admin de área.
+        # Otros admins y el superadmin pueden pertenecer a estas áreas, pero
+        # nunca quedan bajo la administración de un admin de área (SEG-05).
         return User.query.filter(
             User.id.in_(member_ids),
-            db.func.lower(db.func.coalesce(User.role, '')) != ROLE_ADMIN,
+            db.func.lower(db.func.coalesce(User.role, '')) == ROLE_USER,
         )
     return User.query.filter(User.id == user.id) if _valid(user) else User.query.filter(False)
 
@@ -180,8 +186,8 @@ def can_manage_platform(platform, user=None):
 def can_manage_user(target, user=None):
     """True si `user` puede administrar la cuenta `target`.
 
-    Un admin de área solo puede administrar usuarios de sus áreas, y nunca a un
-    superadmin.
+    Un admin de área solo administra cuentas con rol `usuario` de sus áreas:
+    nunca a otro admin de área ni al superadmin (SEC-AUTHZ-06, SEG-05).
     """
     if target is None:
         return False
@@ -190,7 +196,7 @@ def can_manage_user(target, user=None):
         return True
     if not is_area_admin(user):
         return False
-    if is_admin(target):
+    if _role(target) != ROLE_USER:
         return False
     managed = set(managed_area_ids(user))
     return bool(managed & {a.id for a in (target.areas or [])})
