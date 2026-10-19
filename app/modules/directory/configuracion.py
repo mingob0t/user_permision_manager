@@ -103,6 +103,15 @@ def directorio_activo(entorno=None):
     return bool(_leer(entorno, VAR_URL))
 
 
+def es_ip_literal(host):
+    """`True` si `host` es una IP (v4, v6 o formas numéricas abreviadas)."""
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        return bool(_IPV4_NUMERICA.match(host))
+
+
 def _validar_url(url):
     partes = urlsplit(url)
     esquema = partes.scheme.lower()
@@ -113,12 +122,7 @@ def _validar_url(url):
     host = partes.hostname
     if not host:
         raise ErrorConfiguracionDirectorio(f'{VAR_URL} no tiene nombre de host.')
-    try:
-        ipaddress.ip_address(host)
-        es_ip = True
-    except ValueError:
-        es_ip = bool(_IPV4_NUMERICA.match(host))
-    if es_ip:
+    if es_ip_literal(host):
         raise ErrorConfiguracionDirectorio(
             f'{VAR_URL} debe usar un nombre de host, no una dirección IP '
             '(el certificado se valida contra el nombre).')

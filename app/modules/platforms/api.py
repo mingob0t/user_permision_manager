@@ -36,7 +36,7 @@ from app.modules.platforms.tipos import (CAMPOS_DN, GRUPOS_SIN_VERIFICAR,
                                          NIVEL_ADMIN, NIVEL_USUARIO,
                                          TIPO_CONECTOR)
 from app.modules.platforms.validacion import (MENSAJE_DN_BASE,
-                                              campos_no_permitidos,
+                                              campos_fuera_de_lista,
                                               validar_campos)
 
 platforms_api_bp = Blueprint('api_platforms', __name__, url_prefix='/api/v1')
@@ -47,6 +47,8 @@ DN_SOLO_SUPERADMIN = ('Solo el superadmin define los grupos del directorio.',
                       403, 'dn_solo_superadmin')
 PLATAFORMA_CON_ACCESOS = ('No se puede cambiar el tipo, los grupos ni el área '
                           'con accesos vigentes.', 409, 'plataforma_con_accesos')
+GRUPO_EN_USO = ('El grupo ya pertenece a otra plataforma.', 409,
+                'grupo_en_uso')
 GRUPOS_IGUALES = ('Los grupos de usuario y admin deben ser distintos.', 409,
                   'grupos_iguales')
 MENSAJE_SIN_DIRECTORIO = ('El directorio no está configurado; usa conector o '
@@ -64,6 +66,9 @@ CAMPOS_SIMPLES = ('name', 'description', 'direct_link', 'logo_url', 'icon',
 # Campos que se guardan en la auditoría (antes y después).
 CAMPOS_AUDITADOS = ('name', 'area_id', 'integration_type',
                     *CAMPOS_DN.values(), 'direct_link', 'logo_url', 'status')
+# Todo lo editable: si nada cambia, el PUT no audita.
+CAMPOS_EDITABLES = tuple(dict.fromkeys((*CAMPOS_AUDITADOS, *CAMPOS_SIMPLES,
+                                        'groups_status')))
 
 
 class Rechazo(Exception):
@@ -78,7 +83,7 @@ def _leer_cuerpo():
     datos = json_object()
     if datos is None:
         raise Rechazo(error_response(*CUERPO_INVALIDO))
-    if campos_no_permitidos(datos):
+    if campos_fuera_de_lista(datos):
         raise Rechazo(error_response(*CAMPO_NO_PERMITIDO))
     if not is_admin() and any(c in datos for c in CAMPOS_DN.values()):
         raise Rechazo(error_response(*DN_SOLO_SUPERADMIN))
@@ -102,7 +107,23 @@ def _validar(datos, alta):
     return limpios
 
 
-def _resolver_grupos(tipo, dns_pedidos, nombre, area):
+def _grupo_de_otra_plataforma(dns, plataforma_id):
+    """`True` si algún DN ya es grupo de otra plataforma (RDN normalizados).
+
+    Se compara en Python con `mismo_dn` (mayúsculas, escapes, multivalor); el
+    filtro SQL solo descarta las plataformas sin grupos.
+    """
+    otras = Platform.query.filter(
+        Platform.id != plataforma_id,
+        db.or_(Platform.ldap_group_user_dn.isnot(None),
+               Platform.ldap_group_admin_dn.isnot(None)))
+    usados = [dn for p in otras for dn in (p.ldap_group_user_dn,
+                                            p.ldap_group_admin_dn) if dn]
+    return any(mismo_dn(dn, usado) for dn in dns.values() if dn
+               for usado in usados)
+
+
+def _resolver_grupos(tipo, dns_pedidos, nombre, area, plataforma_id=None):
     """DN finales por nivel: los pedidos o los derivados, validados."""
     if tipo == TIPO_CONECTOR:
         errores = {CAMPOS_DN[n]: MENSAJE_DN_CON_CONECTOR
@@ -128,6 +149,8 @@ def _resolver_grupos(tipo, dns_pedidos, nombre, area):
         raise Rechazo(validation_error(errores))
     if mismo_dn(dns[NIVEL_USUARIO], dns[NIVEL_ADMIN]):
         raise Rechazo(error_response(*GRUPOS_IGUALES))
+    if _grupo_de_otra_plataforma(dns, plataforma_id):
+        raise Rechazo(error_response(*GRUPO_EN_USO))
     return configuracion, dns
 
 
@@ -137,8 +160,12 @@ def _comprobar(configuracion, dns):
     return grupos.comprobar_grupos(configuracion, dns)
 
 
+def _valores(plataforma, campos):
+    return {campo: getattr(plataforma, campo) for campo in campos}
+
+
 def _estado_auditado(plataforma):
-    return {campo: getattr(plataforma, campo) for campo in CAMPOS_AUDITADOS}
+    return _valores(plataforma, CAMPOS_AUDITADOS)
 
 
 def _actor():
@@ -204,6 +231,9 @@ def _cambios_de_grupos(plataforma, limpios, area):
     actuales = {NIVEL_USUARIO: plataforma.ldap_group_user_dn,
                 NIVEL_ADMIN: plataforma.ldap_group_admin_dn}
     mismo_tipo = tipo == plataforma.integration_type
+    # Cambiar el tipo borra o re-deriva grupos: solo el superadmin (SEC-LDAP-05).
+    if not mismo_tipo and not is_admin():
+        raise Rechazo(error_response(*DN_SOLO_SUPERADMIN))
     # Reenviar el tipo y los grupos actuales no es un cambio.
     if mismo_tipo and all(_mismo_grupo(dn, actuales[n])
                           for n, dn in pedidos.items()):
@@ -212,7 +242,8 @@ def _cambios_de_grupos(plataforma, limpios, area):
     if mismo_tipo:
         pedidos = {**actuales, **pedidos}
     configuracion, dns = _resolver_grupos(
-        tipo, pedidos, limpios.get('name', plataforma.name), area)
+        tipo, pedidos, limpios.get('name', plataforma.name), area,
+        plataforma.id)
     return tipo, configuracion, dns
 
 
@@ -242,6 +273,7 @@ def update_platform(platform_id):
 
     avisos = []
     antes = _estado_auditado(plataforma)
+    previo = _valores(plataforma, CAMPOS_EDITABLES)
     if cambio_grupos:
         tipo, configuracion, dns = cambio_grupos
         plataforma.groups_status, avisos = _comprobar(configuracion, dns)
@@ -255,12 +287,16 @@ def update_platform(platform_id):
             setattr(plataforma, campo, limpios[campo])
 
     despues = _estado_auditado(plataforma)
-    add_audit_log(Evento.PLATAFORMA_EDITADA, status='success',
-                  module=MODULO_AUDITORIA, target=plataforma.name,
-                  platform_id=plataforma.id, area_id=plataforma.area_id,
-                  before={k: v for k, v in antes.items() if despues[k] != v},
-                  after={k: v for k, v in despues.items() if antes[k] != v},
-                  commit=False)
+    # Sin cambios guardados no hay evento (revisor de FNC-046).
+    if _valores(plataforma, CAMPOS_EDITABLES) != previo:
+        add_audit_log(Evento.PLATAFORMA_EDITADA, status='success',
+                      module=MODULO_AUDITORIA, target=plataforma.name,
+                      platform_id=plataforma.id, area_id=plataforma.area_id,
+                      before={k: v for k, v in antes.items()
+                              if despues[k] != v},
+                      after={k: v for k, v in despues.items()
+                             if antes[k] != v},
+                      commit=False)
     db.session.commit()
     return _respuesta(plataforma, avisos)
 

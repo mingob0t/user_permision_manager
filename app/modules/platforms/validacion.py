@@ -5,6 +5,7 @@ validador devuelve el valor limpio o un mensaje de error para `fields`.
 """
 from urllib.parse import urlsplit
 
+from app.modules.directory.configuracion import es_ip_literal
 from app.modules.platforms.tipos import CAMPOS_DN, LARGO_DN, TIPOS_INTEGRACION
 from app.utils.naming import sanitize_display_name
 
@@ -25,13 +26,16 @@ CAMPOS_URL = ('direct_link', 'logo_url')
 LARGO_CAMPOS_TEXTO = {'icon': 50, 'bg_color': 20, 'text_color': 20,
                       'status': 20}
 ESPACIO_O_CONTROL = 0x20
+CARACTER_DEL = 0x7f
 
 MENSAJE_OBLIGATORIO = 'Es obligatorio.'
 MENSAJE_URL = 'Usa una dirección https://.'
 MENSAJE_DN_BASE = 'El grupo debe estar en la OU de plataformas.'
 
 
-def campos_no_permitidos(datos):
+def campos_fuera_de_lista(datos):
+    """Campos fuera de la lista blanca (distinto de `users/roles.py`, que es
+    una lista negra)."""
     return sorted(set(datos) - CAMPOS_PERMITIDOS)
 
 
@@ -62,12 +66,26 @@ def validar_url(valor):
         return None, None
     if len(valor) > URL_MAX:
         return None, f'Debe tener como máximo {URL_MAX} caracteres.'
-    if any(ord(c) <= ESPACIO_O_CONTROL for c in valor) or '\\' in valor:
+    if any(ord(c) <= ESPACIO_O_CONTROL or ord(c) == CARACTER_DEL
+           for c in valor) or '\\' in valor:
         return None, MENSAJE_URL
     partes = urlsplit(valor)
-    if partes.scheme.lower() not in ESQUEMAS_URL or not partes.hostname:
+    try:
+        partes.port  # un puerto inválido lanza ValueError
+    except ValueError:
+        return None, MENSAJE_URL
+    if (partes.scheme.lower() not in ESQUEMAS_URL or not partes.hostname
+            or partes.username is not None or partes.password is not None
+            or es_ip_literal(partes.hostname)):
         return None, MENSAJE_URL
     return valor, None
+
+
+def url_segura(valor):
+    """La URL guardada si cumple `validar_url`; si no, `None` (las guardadas
+    antes de FNC-046 pueden traer `javascript:` o `http:`)."""
+    limpio, error = validar_url(valor)
+    return None if error else limpio
 
 
 def validar_area_id(valor):

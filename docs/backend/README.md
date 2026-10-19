@@ -135,13 +135,14 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
-| `POST /platforms` | `any_admin_required`; área inexistente o ajena → `404` | Alta con lista blanca (`400 campo_no_permitido`); `name`, `description`, `area_id`, `integration_type` obligatorios (`422 validacion`). URL solo `https://`. `ldap`: DN bajo `LDAP_GROUPS_BASE_DN` o derivados de `LDAP_PLATFORM_GROUP_TEMPLATE`; sin directorio o sin DN → `422`; iguales → `409 grupos_iguales`. Audita `plataforma_creada` ("admin X dio de alta la plataforma Y") en la misma transacción. |
-| `PUT /platforms/<id>` | `any_admin_required` + `can_manage_platform` (ajena → `404`) | Mismas reglas, campos parciales. DN solo superadmin (`403 dn_solo_superadmin`). Cambiar tipo, grupos o área con `accesos_vigentes > 0` → `409 plataforma_con_accesos`. Pasar a `conector` borra los DN. Audita `plataforma_editada` con antes/después de lo que cambió. |
+| `POST /platforms` | `any_admin_required`; área inexistente o ajena → `404` | Alta con lista blanca (`400 campo_no_permitido`); `name`, `description`, `area_id`, `integration_type` obligatorios (`422 validacion`). URL solo `https://`. `ldap`: DN bajo `LDAP_GROUPS_BASE_DN` o derivados de `LDAP_PLATFORM_GROUP_TEMPLATE`; sin directorio o sin DN → `422`; iguales → `409 grupos_iguales`; DN de otra plataforma → `409 grupo_en_uso`. Audita `plataforma_creada` ("admin X dio de alta la plataforma Y") en la misma transacción. |
+| `PUT /platforms/<id>` | `any_admin_required` + `can_manage_platform` (ajena → `404`) | Mismas reglas, campos parciales. DN solo superadmin (`403 dn_solo_superadmin`). Cambiar tipo, grupos o área con `accesos_vigentes > 0` → `409 plataforma_con_accesos`. Cambiar `integration_type` solo superadmin. Pasar a `conector` borra los DN. Audita `plataforma_editada` con antes/después solo si algo cambió. |
 | `DELETE /platforms/<id>` | `platform_manage_required` | Borra plataforma (movida de `crud.py` sin cambios). |
 | `PUT /platforms/<id>/users` | `platform_manage_required` | Define `user_platforms` (movida sin cambios; se retira en FNC-065). |
 
 - Grupos: existencia con `ClienteDirectorio.existe_dn`; no existe → aviso `grupo_no_existe` y `groups_status: no_existe`; directorio sin respuesta → `directorio_no_disponible` y `sin_verificar`. Nunca es error.
-- `Platform.to_dict` agrega `integration_type`, los DN, `groups_status`, `has_connector` y `active_grants`; ya no expone `user_ids`. `GET /platforms` (`routes.py`) no cambia (FNC-063).
+- `Platform.to_dict` agrega `integration_type`, los DN, `groups_status`, `has_connector` y `active_grants`; ya no expone `user_ids`. `GET /platforms` solo cambia en que las URL guardadas que no cumplen `validar_url` salen `null` (`url_segura`); el resto queda para FNC-063.
+- `validar_url`: solo `https://` con nombre de host; sin credenciales, IP literal, espacios, control ni DEL.
 - Puntos de extensión en `platforms/estado.py`: `accesos_vigentes` (FNC-054) y `tiene_conector` (FNC-050), hoy `0`/`False`.
 
 ### 4.3.1 Cuentas — `app/modules/users/api.py` (`/api/v1`, FNC-044)

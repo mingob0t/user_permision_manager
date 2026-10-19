@@ -1,5 +1,6 @@
 from app import db
 from app.modules.platforms.estado import accesos_vigentes, tiene_conector
+from app.modules.platforms.validacion import url_segura
 from app.modules.platforms.tipos import (GRUPOS_SIN_VERIFICAR, LARGO_DN,
                                          LARGO_ESTADO_GRUPOS, LARGO_TIPO,
                                          TIPO_LDAP)
@@ -73,8 +74,8 @@ class Platform(db.Model):
             'description': self.description,
             'area_id': self.area_id,
             'icon': self.icon,
-            'direct_link': self.direct_link,
-            'logo_url': self.logo_url,
+            'direct_link': url_segura(self.direct_link),
+            'logo_url': url_segura(self.logo_url),
             'bg_color': self.bg_color,
             'text_color': self.text_color,
             'status': self.status,
