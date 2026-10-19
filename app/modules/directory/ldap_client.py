@@ -213,11 +213,7 @@ class ClienteDirectorio:
         if not entradas:
             return None
         entrada = entradas[0]
-        return UsuarioDirectorio(
-            dn=entrada.entry_dn,
-            identificador=_texto(entrada, cfg.atributo_usuario) or str(identificador),
-            atributos={nombre: _texto(entrada, nombre)
-                       for nombre in ATRIBUTOS_PERFIL})
+        return self._a_usuario(entrada, respaldo=str(identificador))
 
     def buscar_personas(self, texto, limite=LIMITE_BUSQUEDA_PERSONAS):
         """Personas cuyo `LDAP_USER_ATTR`, `mail`, `cn` o `displayName`
@@ -241,12 +237,17 @@ class ClienteDirectorio:
             except LDAPException as exc:
                 raise self.registrar_error('búsqueda de personas', exc) from None
             entradas = list(conexion.entries)[:limite]
-        return [UsuarioDirectorio(
+        return [self._a_usuario(entrada) for entrada in entradas]
+
+    def _a_usuario(self, entrada, respaldo=''):
+        """`UsuarioDirectorio` de una entrada; `respaldo` si no trae el
+        atributo de identificador."""
+        return UsuarioDirectorio(
             dn=entrada.entry_dn,
-            identificador=_texto(entrada, cfg.atributo_usuario),
+            identificador=(_texto(entrada, self.configuracion.atributo_usuario)
+                           or respaldo),
             atributos={nombre: _texto(entrada, nombre)
                        for nombre in ATRIBUTOS_PERFIL})
-            for entrada in entradas]
 
     def grupos_de_usuario(self, usuario):
         """DN de los grupos (`LDAP_GROUP_OBJECT_CLASS`) de los que es miembro.

@@ -71,4 +71,4 @@ Solo superadmin (resto: 401/403). Fuente única: variables `LDAP_*` (ADR-004); s
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
-| 1 | 2026-10-18 | Sección "Configuración del directorio" agregada (FNC-043): documenta endpoints que no tenían contrato; decisión del orquestador (pendiente de validar en la prueba de concepto) |
+| 1 | 2026-10-18 | Sección "Configuración del directorio" agregada (FNC-043): documenta endpoints que no tenían contrato. **Aditivo** para el contrato (sigue v1): no cambia ningún endpoint ya contratado. Sí cambia la forma heredada de NEXUS que lee `settings-panel.tsx`; la adapta DIS-023. Decisión del orquestador (pendiente de validar en la prueba de concepto) |

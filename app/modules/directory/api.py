@@ -17,7 +17,6 @@ import logging
 from flask import Blueprint, jsonify, request
 from flask_login import login_required
 
-from app import db
 from app.authz import admin_required
 from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
                                      error_response, json_object)
@@ -26,6 +25,7 @@ from app.modules.directory.configuracion import (ErrorConfiguracionDirectorio,
                                                  directorio_activo)
 from app.modules.directory.ldap_client import ClienteDirectorio, ErrorDirectorio
 from app.modules.directory.resumen import configuracion_publica
+from app.modules.users.correos import correos_registrados
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +117,7 @@ def directory_search():
             logger.error('Directorio: configuración inválida: %s', exc)
         return error_response(*NO_DISPONIBLE)
 
-    existentes = _correos_registrados(
+    existentes = correos_registrados(
         {(p.atributos.get('mail') or '').lower() for p in personas} - {''})
     resultados = [{
         'name': p.atributos.get('displayName') or p.atributos.get('cn') or '',
@@ -127,12 +127,3 @@ def directory_search():
     } for p in personas]
     return jsonify({'count': len(resultados), 'users': resultados})
 
-
-def _correos_registrados(correos):
-    """Los de `correos` que ya tienen cuenta en el portal (en minúsculas)."""
-    if not correos:
-        return set()
-    from app.modules.auth.models import User
-    correo = db.func.lower(User.email)
-    return {valor for (valor,) in
-            db.session.query(correo).filter(correo.in_(correos))}

@@ -73,14 +73,12 @@
 | `app/__init__.py` | Arranque | Toda la app (una línea de import y el blueprint en la tupla) | Suite completa |
 | `tests/conftest.py`, `tests/matriz_proteccion.py` | Base de pruebas | Toda la suite | Suite completa |
 
-### Salida real de `impacto.py` (2026-10-18)
-- 9 nombres; reales y homónimos:
-  - `/auth-config`, `/auth-config/test`, `/directory/search`: reales; se movieron a `directory/api.py` (misma ruta). Consumidores: `frontend/src/lib/api.ts` (DIS-023) y los `_moved(...)` de `auth/routes.py`, `settings/routes.py`, `users/routes.py` (solo texto, sin cambio)
-  - `AuthConfig`: real; consumidores arriba. `frontend` y `tests/audit/test_registro_ampliado.py` son homónimos (tipo TS / diccionario de prueba)
-  - `validate_ldap_connection`: real; solo `utils/` (ver Decisiones)
-  - `purge_inactive_users`: sin cambios; aparece por el contexto del diff en `auth/services.py`
-  - `__init__`, `search`: métodos de `_ConexionLdapFalsa` retirada de `matriz_proteccion.py`; homónimos en el resto
-  - `configuracion`: fixture de `test_respaldo.py`; homónimo del módulo `directory/configuracion.py`
+### Salida real de `impacto.py` (2026-10-18, tras las correcciones del revisor)
+- 14 nombres (el revisor contó 13; `buscar_usuario` se suma por `_a_usuario`):
+  - Reales: `/auth-config`, `/auth-config/test`, `/directory/search` (movidas a `directory/api.py`; consumidor `frontend/src/lib/api.ts` → DIS-023; los `_moved(...)` heredados solo citan la ruta), `AuthConfig` (obsoleto; respaldo, dobles de prueba y `utils/`), `validate_ldap_connection` (retirada; solo `utils/`, FNC-028)
+  - `buscar_usuario`: misma firma y resultado; ahora arma la persona con `_a_usuario` (`test_ldap_client.py`, `test_tls.py` pasan)
+  - `purge_inactive_users`: sin cambios; contexto del diff
+  - Homónimos: `_codigo` (helper de `test_api.py` / `test_roles_y_areas_administradas.py`), `directorio` (fixture de `test_api.py` / palabra y fixtures en el resto), `upgrade`/`downgrade` (funciones de cada migración de Alembic), `__init__`/`search` (doble `_ConexionLdapFalsa` retirado y wrapper de `test_api.py`), `configuracion` (fixture de `test_respaldo.py` / módulo `directory/configuracion.py`)
 
 ## Variables y configuración
 - Las de FNC-040 pasan a ser la fuente; `auth_config.ldap_pass` marcada obsoleta en `VARIABLES.md` (configuración en BD) con motivo.
@@ -105,6 +103,7 @@
 | `venv/bin/python -m pytest -q` (antes, `develop` 636d145) | 771 passed, 17 xfailed, código 0 |
 | 8 regresiones contra el código anterior (`git stash -u` de `app/` y `migrations/`) | 8 failed: PUT guarda la clave, prueba con host del cuerpo, `str(exc)` en prueba y búsqueda, `ldap3` y `CERT_NONE` fuera del paquete, migración 0004 ×2 |
 | `venv/bin/python -m pytest -q` (después) | 805 passed, 17 xfailed, código 0 (+34 pruebas) |
+| `venv/bin/python -m pytest -q` (tras el revisor) | 805 passed, 17 xfailed, código 0 |
 - Sin `xfail` que quitar: ninguno cubría SEG-08/13/21/22
 - No verificado: OpenLDAP real (sin servidor ni valores, ADR-004); el `MOCK_SYNC` no compara valores escapados ni devuelve entradas con `sizeLimitExceeded` (se prueban el filtro y el límite enviados)
 
@@ -124,9 +123,12 @@
 ## Riesgos y reversión
 - Entornos que dependían de la configuración por interfaz deben cargar las variables antes de desplegar (RELEASES).
 - Reversión: la migración conserva la columna (solo la vacía); bajar restaura la lectura previa sin el valor.
+- **No promover a staging sin DIS-023**: la pestaña Directorio actual lee la forma heredada y su prueba envía campos (→ 400).
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-18 | Aprobada (modo autónomo, vía orquestador); implementada en `fnc/FNC-043-configuracion-directorio`; 805 passed, 17 xfailed, código 0; En revisión (falta revisor y auditor-seguridad) |
+- auditor-seguridad (modo cambio, 2026-10-18): **Aprobado**; cierra SEG-08, 13, 21 y 22 en la parte LDAP; SMTP y respaldo siguen en FNC-010/016.
+- revisor (2026-10-18): **Requiere cambios** → corregidos: bitácora y fila de DIS-023, riesgo de staging, `impacto.py` actual, `correos_registrados` a `app/modules/users/correos.py`, `_a_usuario` en `ldap_client.py`, contrato aclarado (aditivo). Sigue En revisión.

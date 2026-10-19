@@ -39,7 +39,7 @@ app/
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
-    ├── users/         # api.py (managed-areas), roles.py, areas_administradas.py, serializacion.py (FNC-044); routes.py heredadas
+    ├── users/         # api.py (managed-areas), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
     └── areas/         # Solo rutas heredadas
 alembic.ini            # Configuración de Alembic (sin URL ni secretos)
 migrations/
