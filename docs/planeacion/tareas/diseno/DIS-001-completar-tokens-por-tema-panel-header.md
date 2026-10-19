@@ -15,7 +15,7 @@
 | **Finalizada** | |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `dis/DIS-001-tokens-por-tema` (worktree `pokemon-wt-d001`) |
-| **Commits / PR** | |
+| **Commits / PR** | `a46ee94` (local, sin push ni PR) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
