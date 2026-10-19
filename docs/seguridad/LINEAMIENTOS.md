@@ -161,7 +161,7 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 | `app/modules/api/auth.py` | 04 / 11 / 14 (01, 10, 12 cerrados por FNC-042; 02 de login local cerrado por FNC-077: solo cuenta de emergencia y `auth_source=local`) | 006 / 014 / 008 |
 | `app/__init__.py` | 03 / 06, 14 / 07 / 29 | 003 / 008 / 009 / 017 |
 | `app/authz.py` | — (05 cerrado por FNC-044) | — |
-| `app/modules/api/crud.py` | 06 / 24 (05 y 09 cerrados por FNC-044; 02 cerrado por FNC-077: sin `nexus123` ni contraseñas locales salvo la de emergencia) | 008 / 017 |
+| `app/modules/api/crud.py` | 06 (05 y 09 cerrados por FNC-044; 24 cerrado por FNC-046: las rutas de plataformas pasaron a `platforms/api.py`; 02 cerrado por FNC-077: sin `nexus123` ni contraseñas locales salvo la de emergencia) | 008 |
 | `app/modules/api/admin.py` | 06 / 08 (SMTP), 17 / 21, 29 (FNC-043 movió LDAP a `directory/api.py` y cerró 08 de LDAP, 13, 22 y 21 de LDAP) | 008 / 010 / 017 |
 | `notifications/models.py` (`auth/models.py`: 08 cerrado por FNC-043) | 08 | 010 |
 | `notifications/services.py` | — (23 cerrado por FNC-048) | — |

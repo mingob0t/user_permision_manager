@@ -17,6 +17,7 @@ from app.modules.api.helpers import (CUERPO_INVALIDO, NO_ENCONTRADO,
 from app.modules.audit.models import AuditLog
 from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
+from app.modules.platforms.validacion import url_segura
 from app.modules.users.serializacion import usuario_gestionado
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
@@ -95,9 +96,10 @@ def _platform_payload(p, favorite_ids):
         'area_name': p.area.name if p.area else None,
         'area_color': p.area.color if p.area else '#6366f1',
         'area_icon': p.area.icon if p.area else 'box',
-        'direct_link': p.direct_link,
+        # FNC-046: una URL guardada que no es https sale como null.
+        'direct_link': url_segura(p.direct_link),
         'icon': p.icon,
-        'logo_url': p.logo_url,
+        'logo_url': url_segura(p.logo_url),
         'bg_color': p.bg_color,
         'text_color': p.text_color,
         'status': p.status,
