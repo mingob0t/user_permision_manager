@@ -107,8 +107,11 @@ def crear_actor(rol, esc):
     if rol == ROLE_ADMIN:
         return fabricas.crear_usuario(ROLE_ADMIN)
     if rol == ROLE_AREA_ADMIN:
+        # También administra el área vacía: destino de `DELETE /areas/<id>`
+        # (FNC-045, P11: el admin da de baja sus áreas).
+        area_vacia = db.session.get(Area, esc.area_vacia_id)
         return fabricas.crear_usuario(ROLE_AREA_ADMIN,
-                                      areas_administradas=[area])
+                                      areas_administradas=[area, area_vacia])
     return fabricas.crear_usuario(ROLE_USER, areas=[area])
 
 
@@ -232,13 +235,17 @@ CASOS = (
     Caso('GET', f'{A}/stats', _fija(f'{A}/stats'), con_sesion()),
     Caso('GET', f'{A}/audit', _fija(f'{A}/audit'), con_sesion()),
 
-    # ---- Escritura (crud.py) ----
-    Caso('POST', f'{A}/areas', _fija(f'{A}/areas'), solo_superadmin(201),
-         _json({'name': 'Área nueva de prueba'})),
+    # ---- Áreas (areas/api.py) ----
+    Caso('POST', f'{A}/areas', _fija(f'{A}/areas'), administradores(201),
+         _json({'name': 'Área nueva de prueba'}),
+         nota='FNC-045: el admin de área da de alta áreas'),
     Caso('PUT', f'{A}/areas/<int:area_id>', _area(), administradores(),
          _json({'description': 'Descripción editada'})),
     Caso('DELETE', f'{A}/areas/<int:area_id>',
-         lambda esc: f'{A}/areas/{esc.area_vacia_id}', solo_superadmin()),
+         lambda esc: f'{A}/areas/{esc.area_vacia_id}', administradores(),
+         nota='FNC-045 (P11): el admin da de baja sus áreas'),
+
+    # ---- Escritura (crud.py) ----
     Caso('PUT', f'{A}/areas/<int:area_id>/users', _area('/users'),
          administradores(),
          lambda esc: {'json': {'user_ids': [esc.objetivo_id]}}),
@@ -309,8 +316,8 @@ CASOS = (
 # responde 400 con el formato estándar de error.
 CASOS_400 = (
     ('POST', f'{A}/auth/login', _json({})),
-    ('POST', f'{A}/areas', _json({'name': ''})),
-    ('PUT', f'{A}/areas/{{area_id}}', _json({'name': ''})),
+    # POST y PUT /areas con datos inválidos: 422 `validacion` (FNC-045,
+    # tests/areas/).
     ('POST', f'{A}/platforms', _json({'name': ''})),
     ('POST', f'{A}/users', _json({'email': ''})),
     ('PUT', f'{A}/me/preferences', _json({'refresh_interval': 'no-numero'})),

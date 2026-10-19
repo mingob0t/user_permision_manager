@@ -34,9 +34,9 @@ def datos(app):
 # (método, ruta, cuerpo, acción esperada, módulo, objetivo esperado)
 ACCIONES = [
     ('POST', '/areas', {'name': 'Área nueva'},
-     'CREAR ÁREA: Área nueva', 'Áreas', 'Área nueva'),
+     'area_creada', 'Áreas', 'Área nueva'),
     ('PUT', '/areas/{area}', {'description': 'Editada'},
-     'EDITAR ÁREA: Área auditada', 'Áreas', 'Área auditada'),
+     'area_editada', 'Áreas', 'Área auditada'),
     ('PUT', '/areas/{area}/users', {'user_ids': []},
      'ACTUALIZAR USUARIOS DE ÁREA: Área auditada', 'Áreas', 'Área auditada'),
     ('POST', '/platforms', {'name': 'Plataforma nueva', 'area_id': '{area}'},
@@ -97,7 +97,7 @@ def test_borrar_area_registra_evento(app, cliente_admin):
     respuesta = cliente_admin.delete(f'{A}/areas/{area.id}')
 
     assert respuesta.status_code == 200
-    registro = AuditLog.query.filter_by(action='ELIMINAR ÁREA: Área a borrar').one()
+    registro = AuditLog.query.filter_by(action='area_eliminada').one()
     assert (registro.module, registro.target, registro.status) == \
         ('Áreas', 'Área a borrar', 'warning')
 
@@ -112,7 +112,7 @@ def test_el_actor_es_el_admin_de_area_que_actua(app, cliente_como):
                                  json={'description': 'Editada'})
 
     registro = AuditLog.query.filter_by(
-        action='EDITAR ÁREA: Área del admin').one()
+        action='area_editada').one()
     assert registro.user == 'admin-area@pruebas.local'
 
 
