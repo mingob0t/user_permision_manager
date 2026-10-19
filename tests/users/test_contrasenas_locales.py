@@ -5,6 +5,8 @@
 - En desarrollo, con `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true` y
   `APP_ENV=development`, se aceptan para cuentas locales del alcance.
 - Sin contraseña, la cuenta nace sin clave (ya no `nexus123`).
+- Fuera de desarrollo, `POST /users` crea una cuenta de directorio (`ldap`)
+  que se vincula al entrar por directorio con ese correo; con la bandera, local.
 """
 
 import pytest
@@ -13,6 +15,7 @@ from app import db
 from app.authz import ROLE_ADMIN, ROLE_AREA_ADMIN, ROLE_USER
 from app.modules.auth.models import User
 from tests import fabricas
+from tests.directorio_falso import DOMINIO_CORREO, instalar_directorio
 from tests.matriz_proteccion import CONTRASENA_FICTICIA
 from tests.peticiones_auth import (activar_login_local_de_todas,
                                    iniciar_sesion_api)
@@ -63,14 +66,40 @@ def _alta(cliente, escena, **extra):
 # --------------------------------------------------------------------------- #
 
 @pytest.mark.parametrize('cuerpo', [{}, {'password': ''}])
-def test_alta_sin_contrasena_nace_sin_clave_local(escena, como, cuerpo):
-    """Regresión SEG-02: sin contraseña se fijaba `nexus123`."""
+def test_alta_sin_contrasena_nace_de_directorio_sin_clave(escena, como,
+                                                          cuerpo):
+    """Regresión SEG-02 (se fijaba `nexus123`) y FNC-077 (nacía `local`)."""
     respuesta = _alta(como(escena['super']), escena, **cuerpo)
 
     assert respuesta.status_code == 201, respuesta.get_data(as_text=True)
     cuenta = _cuenta(respuesta.get_json()['id'])
-    assert cuenta.auth_source == 'local'
+    assert cuenta.auth_source == 'ldap'
     assert cuenta.password_hash is None
+
+
+def test_alta_fuera_de_desarrollo_se_vincula_al_entrar_por_directorio(
+        app, escena, como, monkeypatch):
+    """Regresión FNC-077: la cuenta nacía `local` y el directorio la
+    bloqueaba (`cuenta_local_en_conflicto`)."""
+    uid = 'nueva.persona'
+    correo = f'{uid}@{DOMINIO_CORREO}'
+    alta = como(escena['admin_a']).post(f'{A}/users', json={
+        'email': correo, 'area_ids': [escena['A']]})
+    assert alta.status_code == 201, alta.get_data(as_text=True)
+    directorio = instalar_directorio(monkeypatch)
+    directorio.agregar(uid, CONTRASENA_FICTICIA)
+
+    respuesta = iniciar_sesion_api(app.test_client(), uid, CONTRASENA_FICTICIA,
+                                   metodo='directory')
+
+    assert respuesta.status_code == 200, respuesta.get_data(as_text=True)
+    assert respuesta.get_json()['role'] == ROLE_USER
+    assert User.query.filter(db.func.lower(User.email) == correo).count() == 1
+    cuenta = _cuenta(alta.get_json()['id'])
+    assert cuenta.auth_source == 'ldap'
+    assert cuenta.password_hash is None
+    assert cuenta.last_login_at is not None
+    assert [a.id for a in cuenta.areas] == [escena['A']]
 
 
 def test_la_contrasena_fija_anterior_no_abre_sesion(app, escena, como,
@@ -111,8 +140,9 @@ def test_alta_con_contrasena_y_bandera_en_desarrollo(app, escena, como,
                       password=CONTRASENA_FICTICIA)
 
     assert respuesta.status_code == 201, respuesta.get_data(as_text=True)
-    assert _cuenta(respuesta.get_json()['id']).check_password(
-        CONTRASENA_FICTICIA)
+    cuenta = _cuenta(respuesta.get_json()['id'])
+    assert cuenta.auth_source == 'local'
+    assert cuenta.check_password(CONTRASENA_FICTICIA)
     assert iniciar_sesion_api(app.test_client(), CORREO_NUEVO,
                               CONTRASENA_FICTICIA).status_code == 200
 

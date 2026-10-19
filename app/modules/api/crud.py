@@ -17,12 +17,12 @@ from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
                                      ROL_RESERVADO, error_response,
                                      is_id_list, json_object)
 from app.modules.audit.services import add_audit_log
-from app.modules.auth.acceso_local import contrasena_local_permitida
+from app.modules.auth.acceso_local import (contrasena_local_permitida,
+                                           origen_de_alta)
 from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
-from app.modules.users.roles import (ORIGEN_LOCAL, cambiar_rol,
-                                     campos_no_permitidos, es_el_mismo_rol,
-                                     rol_asignable)
+from app.modules.users.roles import (cambiar_rol, campos_no_permitidos,
+                                     es_el_mismo_rol, rol_asignable)
 from app.utils.naming import sanitize_display_name
 
 crud_bp = Blueprint('api_crud', __name__, url_prefix='/api/v1')
@@ -207,7 +207,8 @@ def create_user():
         email=email,
         nombre=sanitize_display_name(data.get('name'), fallback=email),
         role=role,
-        auth_source=ORIGEN_LOCAL,
+        # Cuenta de directorio salvo en desarrollo con la bandera (FNC-077).
+        auth_source=origen_de_alta(),
         is_active=data.get('is_active', True),
     )
     if data.get('password'):

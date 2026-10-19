@@ -96,11 +96,12 @@ def test_crear_con_campo_no_permitido_da_400(escena, como, actor, campo,
     assert User.query.filter_by(email='nuevo@pruebas.local').first() is None
 
 
-def test_el_servidor_fija_el_origen_local(escena, como):
+def test_el_servidor_fija_el_origen(escena, como):
+    """Fuera de desarrollo, `ldap` (FNC-077); antes `local`."""
     respuesta = como(escena['admin_a']).post(f'{A}/users', json={
         'email': 'nuevo@pruebas.local', 'area_ids': [escena['A']]})
     assert respuesta.status_code == 201
-    assert _cuenta(respuesta.get_json()['id']).auth_source == 'local'
+    assert _cuenta(respuesta.get_json()['id']).auth_source == 'ldap'
 
 
 @pytest.mark.parametrize('actor,rol', [

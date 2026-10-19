@@ -99,7 +99,7 @@ Se pasan al invocar `deploy/preflight.sh` o `deploy/install.sh`; no van en `.env
 
 ## Plantilla anterior retirada
 
-La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `LOG_DIR`, `LOG_LEVEL`, `DB_PASSWORD` y `NEXT_PUBLIC_API_URL`. **Ninguna la lee el código**: la contraseña de BD se llama `DB_PASS` y el frontend no usa `NEXT_PUBLIC_API_URL`. Se dan de baja en HISTORIAL.md.
+La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `LOG_DIR`, `LOG_LEVEL`, `DB_PASSWORD` y `NEXT_PUBLIC_API_URL`. **Ninguna la lee el código**: la contraseña de BD se llama `DB_PASS` y el frontend no usa `NEXT_PUBLIC_API_URL`. Se dan de baja en HISTORIAL.md. `APP_ENV` se reactivó en FNC-077 (2026-10-19), ahora leída por `auth/acceso_local.py` (fila en la tabla de arriba).
 
 ## Constantes de configuración en el código
 

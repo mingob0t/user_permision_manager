@@ -9,12 +9,13 @@ permite el login local de cualquier cuenta local, pero **solo** si
 `APP_ENV=development`; en cualquier otro entorno (o sin `APP_ENV`) se ignora.
 
 Las mismas reglas deciden si el portal fija una contraseña local en
-`POST /users` y `PUT /users/<id>`.
+`POST /users` y `PUT /users/<id>`, y el origen de las cuentas de `POST /users`.
 """
 
 import os
 
 from app.authz import ROLE_ADMIN, normalized_role
+from app.modules.auth.services import ORIGEN_DIRECTORIO
 from app.modules.users.roles import ORIGEN_LOCAL
 
 VAR_LOGIN_LOCAL_TODAS = 'LOGIN_LOCAL_TODAS_LAS_CUENTAS'
@@ -55,6 +56,16 @@ def motivo_rechazo_login_local(cuenta):
     if es_cuenta_de_emergencia(cuenta) or login_local_de_todas_habilitado():
         return None
     return MOTIVO_SOLO_EMERGENCIA
+
+
+def origen_de_alta():
+    """Origen de una cuenta de `POST /users`.
+
+    Fuera de desarrollo, `ldap` sin contraseña: la persona se vincula al
+    entrar por directorio o SSO con ese correo (`motivo_de_bloqueo`). Con la
+    bandera de desarrollo, `local` (alta con contraseña para la PoC).
+    """
+    return ORIGEN_LOCAL if login_local_de_todas_habilitado() else ORIGEN_DIRECTORIO
 
 
 def contrasena_local_permitida(cuenta=None):
