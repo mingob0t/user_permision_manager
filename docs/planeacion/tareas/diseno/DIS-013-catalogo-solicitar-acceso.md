@@ -65,3 +65,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-19 | FNC-070: el menú ya dice "Catálogo" pero el título de la pantalla (`platform-catalog.tsx`) sigue diciendo "Plataformas"; alinearlo aquí |

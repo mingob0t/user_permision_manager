@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { usersApi } from '@/lib/access/users';
 import { useAsync } from '@/lib/use-async';
 import type {
   Area, DirectoryUser, InactiveUser, ManagedUser, Platform, Role, UserInput,
@@ -11,6 +12,10 @@ import type {
 import { Button, Checkbox, ConfirmDialog, Field, Modal, Select, TextInput } from './form';
 import { useSession } from './session-provider';
 import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
+
+/** El alta de cuentas que ya existen en el directorio llega con FNC-079. */
+const DIRECTORY_IMPORT_PENDING =
+  'El alta de cuentas del directorio aún no está disponible en el portal.';
 
 const ROLE_LABELS: Record<string, string> = {
   administrador: 'Admin global',
@@ -87,8 +92,7 @@ function UserForm({
           role: 'usuario',
           is_active: true,
           password: '',
-          // Quien viene del directorio se autentica contra él, no localmente.
-          auth_source: prefill ? 'ldap' : 'local',
+          // `auth_source` lo fija el servidor (FNC-044): no se envía.
         },
   );
   const [areaIds, setAreaIds] = useState<number[]>(
@@ -106,22 +110,28 @@ function UserForm({
       setError('El correo es obligatorio.');
       return;
     }
+    // `POST /users` solo crea cuentas locales: dar de alta a alguien del
+    // directorio así le daría una contraseña local. Espera a FNC-079.
+    if (!user && prefill) {
+      setError(DIRECTORY_IMPORT_PENDING);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       if (user) {
-        await api.updateUser(user.id, {
-          ...form,
-          ...(form.role === 'admin_area' ? { managed_area_ids: managedIds } : {}),
-        });
+        await api.updateUser(user.id, form);
+        if (isAdmin && form.role === 'admin_area') {
+          await usersApi.setManagedAreas(user.id, managedIds);
+        }
         await api.setUserAreas(user.id, areaIds);
         if (platformIds.length > 0) {
           await api.setUserPlatforms(user.id, platformIds);
         }
       } else {
         const created = await api.createUser({ ...form, area_ids: areaIds });
-        if (form.role === 'admin_area' && managedIds.length > 0) {
-          await api.updateUser(created.id, { managed_area_ids: managedIds });
+        if (isAdmin && form.role === 'admin_area' && managedIds.length > 0) {
+          await usersApi.setManagedAreas(created.id, managedIds);
         }
       }
       onSaved();
@@ -197,7 +207,8 @@ function UserForm({
         />
       </Field>
 
-      {form.role === 'admin_area' ? (
+      {/* Solo el superadmin asigna áreas administradas (FNC-044). */}
+      {isAdmin && form.role === 'admin_area' ? (
         <Field label="Áreas que administra" hint="Solo entre las de tu alcance.">
           <TagPicker
             options={areas} selected={managedIds} onChange={setManagedIds}

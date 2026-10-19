@@ -74,12 +74,13 @@
 
 | Variable | Propósito | Tipo | Por defecto en código | Ejemplo | Obligatoria | Sensible | En `.env.example` | Dónde se usa | Alta | Estado |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `BACKEND_URL` | URL del backend para los `rewrites` de dev y las llamadas desde el servidor (SSR) | URL | backend local en el puerto 5001, escrito como IP de loopback (deuda) | `http://localhost:5001` | No | No | **No (faltante)** | `frontend/next.config.ts`, `frontend/src/lib/api.ts` | FNC-001, 2026-10-13 | Vigente |
+| `BACKEND_URL` | URL del backend para los `rewrites` de dev y las llamadas desde el servidor (SSR) | URL | `lib/api.ts`: `http://localhost:5001` (constante `BACKEND_URL_POR_DEFECTO`, FNC-069); `next.config.ts`: IP de loopback (deuda, FNC-005) | `http://localhost:5001` | No | No | Sí | `frontend/next.config.ts`, `frontend/src/lib/api.ts` | FNC-001, 2026-10-13 | Vigente |
+| `NEXT_PUBLIC_ACCESS_MOCKS` | `1` = el cliente del gestor de accesos (`lib/access/`) devuelve los datos simulados de los contratos; se ignora con `NODE_ENV=production` | `1` o vacío | vacío (apagado) | `1` | No | No | Sí | `frontend/src/lib/access/client.ts` | FNC-069, 2026-10-19 | Vigente (temporal: se retira al integrar el backend) |
 | `NODE_ENV` | Modo de ejecución | `production` | — | `production` | Sí (prod) | No | No (lo fija la unidad systemd) | `deploy/frontend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | `PORT` | Puerto de `server.js` | entero | 3000 | `3000` | Sí (prod) | No | No (unidad systemd) | `deploy/frontend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | `HOSTNAME` | Interfaz de escucha de `server.js` (solo loopback) | dirección de loopback | — | loopback | Sí (prod) | No | No (unidad systemd) | `deploy/frontend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 
-No hay variables `NEXT_PUBLIC_*`: el navegador usa rutas relativas.
+Única `NEXT_PUBLIC_*`: `NEXT_PUBLIC_ACCESS_MOCKS` (no es secreta; se incrusta en el build). El navegador usa rutas relativas.
 
 ## Variables de los scripts de despliegue
 
@@ -114,6 +115,8 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `PURGE_MIN_DAYS` | Mínimo de días de inactividad para purgar | 7 | días | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
 | `ASSIGNABLE_ROLES` / `RESERVED_NAMES` | Roles asignables por admin de área / identificadores reservados | `usuario`, `admin_area` / `admin` | — | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
 | Intervalo de refresco | Límites de `pref_refresh_interval` | 15–3600 | s | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
+| `INTERVALO_POLLING_MIN_S` / `INTERVALO_POLLING_MAX_S` / `INTERVALO_POLLING_POR_DEFECTO_S` | Límites y valor por defecto del polling web (espejo de `pref_refresh_interval`; el máximo es también el tope del *backoff*) | 15 / 3600 / 60 | s | `frontend/src/lib/use-polling.ts` | FNC-071, 2026-10-19 | Vigente |
+| `JITTER_POLLING` | Fracción máxima restada a la espera tras un error | 0.1 | fracción | `frontend/src/lib/use-polling.ts` | FNC-071, 2026-10-19 | Vigente |
 | `MAX_LENGTH` | Longitud máxima de nombres visibles | 100 | caracteres | `app/utils/naming.py` | FNC-001, 2026-10-13 | Vigente |
 | `ACTOR_SISTEMA` | Valor de `AuditLog.user` cuando actúa el sistema | `sistema` | — | `app/modules/audit/events.py` | FNC-001 (`SYSTEM`), 2026-10-13; constante con nombre FNC-047 | Vigente |
 | `IP_INTERNA` | IP de auditoría fuera de una petición | `INTERNAL` | — | `app/modules/audit/services.py` | FNC-001, 2026-10-13; constante con nombre FNC-047 | Vigente |

@@ -29,7 +29,7 @@ app/
 └── modules/
     ├── api/           # API v1 que consume el frontend
     │   ├── routes.py  # Lectura: me, áreas, plataformas, favoritos, usuarios, stats, auditoría
-    │   ├── crud.py    # Escritura: áreas, usuarios, preferencias, purga
+    │   ├── crud.py    # Escritura: miembros de área, usuarios, preferencias, purga
     │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, respaldo; notificaciones in-app
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
     │   └── helpers.py # error_response(), validation_error(), json_object(), is_id_list() y errores del contrato (FNC-044)
@@ -41,7 +41,7 @@ app/
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
     ├── users/         # api.py (managed-areas), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
-    └── areas/         # Solo rutas heredadas
+    └── areas/         # api.py, validacion.py, baja.py (FNC-045); routes.py heredadas
 alembic.ini            # Configuración de Alembic (sin URL ni secretos)
 migrations/
 ├── env.py             # URL de construir_uri_bd(); importa app/modules/*/models.py
@@ -117,9 +117,6 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
-| `POST /areas` | `admin_required` | Crea área. |
-| `PUT /areas/<id>` | `area_admin_required` | Edita área. |
-| `DELETE /areas/<id>` | `admin_required` | Borra área; `409` si tiene plataformas. |
 | `PUT /areas/<id>/users` | `area_admin_required` | Define los miembros del área dentro del alcance. |
 | `POST /users` | `any_admin_required` | Alta de cuenta local (`auth_source` lo fija el servidor). Rol fuera de lo asignable → `403 rol_reservado`; `managed_area_ids`, `auth_source`, `password_hash` → `400 campo_no_permitido`. `admin` es identificador reservado. Si no llega contraseña, se asigna una por defecto (ver deuda). Un `admin_area` nace sin áreas administradas. |
 | `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: superadmin o admin de área (cuentas `usuario` de sus áreas), solo cuentas `local` (si no, `400 campo_no_permitido`). |
@@ -150,6 +147,19 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
 | `PUT /users/<id>/managed-areas` | `admin_required` | Reemplaza `area_admins` de un `admin_area` con `{"area_ids": [...]}` (0–50, existentes, sin repetidos; si no → `422 validacion`). Destino sin rol `admin_area` → `409 rol_no_admin`. Audita `admin_asignado`/`admin_retirado` por área en la misma transacción. Responde `{"status": "success", "user": ManagedUser}`. |
+
+### 4.3.2 Áreas — `app/modules/areas/api.py` (`/api/v1`, FNC-045)
+
+| Método y ruta | Protección | Qué hace |
+|---|---|---|
+| `POST /areas` | `any_admin_required` | Crea área; un `admin_area` queda en `area_admins` en la misma transacción. Audita `area_creada`. |
+| `PUT /areas/<id>` | `any_admin_required` + `can_manage_area` (ajena o inexistente → `404`) | Edita área; el valor reenviado sin cambio se ignora. Audita `area_editada` con antes/después. |
+| `DELETE /areas/<id>` | `any_admin_required` + `can_manage_area` (ajena o inexistente → `404`) | Baja (P11). `409 area_con_otros_admins` (admin de área con otros admins en el área), `409 area_con_plataformas` o `409 area_con_accesos` (miembros en `user_areas`). En SQLite pone `area_id` en NULL en la auditoría del área antes de borrarla; en MySQL lo hace la FK (`ON DELETE SET NULL`). Audita `area_eliminada` (sin `area_id`; nombre en `target`, estado en `before`). |
+
+- Entrada (`areas/validacion.py`): lista blanca `name`, `description`, `icon`, `color`, `status`; otro campo → `400 campo_no_permitido`; cuerpo no objeto → `400 cuerpo_invalido`.
+- Reglas: `name` 2–100 (obligatorio en alta), `description` ≤ 500, `icon` ≤ 50 (`[A-Za-z0-9_-]`), `color` `#rrggbb`, `status` `Activo`/`Inactivo`; si no → `422 validacion` con `fields`.
+- Nombre único sin distinguir mayúsculas ni acentos en mayúscula (`casefold`) → `409 area_duplicada` (también si la restricción única falla por carrera: `IntegrityError` → rollback).
+- Condiciones de baja: `areas/baja.py` (`conflicto_de_baja`).
 
 ### 4.4 Sistema y notificaciones — `app/modules/api/admin.py` (`/api/v1`)
 
@@ -280,6 +290,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/test_proteccion_por_rol.py`: matriz ruta × rol (401/403/2xx), entradas inválidas (400) y RF-04 (sin `xfail` desde FNC-044).
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (SEG-05 y SEG-09 sin `xfail` desde FNC-044; queda el de FNC-015).
   - Roles y áreas administradas (FNC-044): `tests/users/test_roles_y_areas_administradas.py`.
+  - Alta, edición y baja de áreas por el admin (FNC-045): `tests/areas/test_alta_y_baja_por_admin.py`.
   - Plataformas (FNC-046): `tests/platforms/` (tipo, DN, derivación, avisos, 409, auditoría; regresión SEG-24).
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 4 `xfail` con su tarea (FNC-003, 006, 014); los 9 de FNC-002 y FNC-013 pasaron a pruebas normales en FNC-042.
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, variables=None, **config)` activa `LDAP_*` ficticias y conecta el cliente centralizado a `MOCK_SYNC` (personas, grupos, filtros recibidos); `config` crea `auth_config` (FNC-042).
