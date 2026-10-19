@@ -39,6 +39,10 @@
 ## Reutilización
 - Modelos y cola de FNC-049
 
+## Nota de FNC-049 (2026-10-19)
+- Reintento manual con `app.modules.provisioning.ejecucion.reabrir(trabajo, cfg)`: solo desde `fallido` (si no, `EstadoInvalido` → `409 estado_invalido`), conserva la bitácora y sube `max_attempts` en `PROVISIONING_MAX_ATTEMPTS`; no reinicia el contador. Un otorgar con una revocación posterior de su terna no se reabre (`EstadoInvalido` → 409; re-auditoría de FNC-049). Decisión del orquestador (pendiente de validar en la prueba de concepto). Commit y auditoría `ejecucion_reintentada` los hace FNC-062
+- `status` incluye `cancelado` (otorgar dejado sin efecto por una revocación)
+
 ## Criterios de aceptación
 - [ ] Matriz de permisos por rol (pruebas)
 - [ ] Reintentar un trabajo no fallido responde 409 (prueba)
