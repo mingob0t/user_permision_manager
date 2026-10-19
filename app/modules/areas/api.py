@@ -14,6 +14,7 @@ Separado de `api/crud.py` para no hacer crecer ese archivo.
 
 from flask import Blueprint, jsonify
 from flask_login import current_user, login_required
+from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.authz import any_admin_required, can_manage_area, is_area_admin
@@ -22,7 +23,7 @@ from app.modules.api.helpers import (AREA_DUPLICADA, CAMPO_NO_PERMITIDO,
                                      error_response, json_object,
                                      validation_error)
 from app.modules.areas import validacion
-from app.modules.areas.baja import conflicto_de_baja
+from app.modules.areas.baja import conflicto_de_baja, desligar_auditoria
 from app.modules.audit.events import Evento
 from app.modules.audit.services import add_audit_log
 from app.modules.core.models import Area
@@ -61,6 +62,20 @@ def _area_gestionable(area_id):
     return area
 
 
+def _guardar():
+    """Confirma la transacción; None si se guardó o la respuesta de error.
+
+    Si otra petición ganó la carrera por el mismo nombre, la restricción
+    única de `areas.name` falla: se deshace todo y se responde 409.
+    """
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return error_response(*AREA_DUPLICADA)
+    return None
+
+
 def _auditar(evento, area, status='success', area_id=None, antes=None,
              despues=None):
     add_audit_log(evento, status=status, module=MODULO_AUDITORIA,
@@ -87,10 +102,16 @@ def create_area():
     db.session.add(area)
     if is_area_admin():
         current_user.managed_areas.append(area)
-    db.session.flush()
+    try:
+        db.session.flush()
+    except IntegrityError:
+        db.session.rollback()
+        return error_response(*AREA_DUPLICADA)
     _auditar(Evento.AREA_CREADA, area, area_id=area.id,
              despues=area.to_dict())
-    db.session.commit()
+    error = _guardar()
+    if error:
+        return error
     return jsonify({'status': 'success', 'area': area.to_dict()}), 201
 
 
@@ -112,7 +133,9 @@ def update_area(area_id):
         setattr(area, campo, valor)
     _auditar(Evento.AREA_EDITADA, area, area_id=area.id, antes=antes,
              despues=area.to_dict())
-    db.session.commit()
+    error = _guardar()
+    if error:
+        return error
     return jsonify({'status': 'success', 'area': area.to_dict()})
 
 
@@ -124,7 +147,7 @@ def delete_area(area_id):
     area = _area_gestionable(area_id)
     if area is None:
         return error_response(*NO_ENCONTRADO)
-    conflicto = conflicto_de_baja(area)
+    conflicto = conflicto_de_baja(area, current_user)
     if conflicto:
         return error_response(*conflicto)
 
@@ -132,6 +155,7 @@ def delete_area(area_id):
     # NULL; el nombre y el estado previo quedan en `target` y `before`.
     _auditar(Evento.AREA_ELIMINADA, area, status='warning',
              antes=area.to_dict())
+    desligar_auditoria(area)
     db.session.delete(area)
     db.session.commit()
     return jsonify({'status': 'success'})

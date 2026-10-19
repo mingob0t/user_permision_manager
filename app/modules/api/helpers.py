@@ -23,6 +23,9 @@ AREA_CON_PLATAFORMAS = ('El área tiene plataformas; muévelas o elimínalas '
                         'antes.', 409, 'area_con_plataformas')
 AREA_CON_ACCESOS = ('El área tiene accesos vigentes.', 409,
                     'area_con_accesos')
+AREA_CON_OTROS_ADMINS = ('El área tiene otros administradores; solo el '
+                         'superadmin puede darla de baja.', 409,
+                         'area_con_otros_admins')
 MENSAJE_VALIDACION = 'Revisa los campos marcados.'
 
 

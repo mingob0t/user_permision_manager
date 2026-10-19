@@ -53,6 +53,7 @@
 - `PUT`: un campo reenviado con su valor actual se ignora (áreas heredadas con color fuera de formato siguen editables)
 - `area_eliminada` sin `area_id` (la fila se borra y la FK quedaría en NULL); nombre en `target`, estado en `before`
 - Nombre único comparado con `casefold` en Python (`lower()` de SQLite no baja "Á")
+- (Revisión) Un admin de área no da de baja un área con otros `area_admins` → `409 area_con_otros_admins`; el superadmin sí. Aditivo en el contrato (Historial)
 
 ## Reutilización
 - `any_admin_required`, `area_admin_required`, `can_manage_area` de `app/authz.py`
@@ -110,16 +111,24 @@
 | `tests/areas`, `test_proteccion_por_rol.py`, `test_auditoria_crud.py` con `app/` de `develop` (stash) | 44 failed, 241 passed, código 1 (regresión que primero falla) |
 | `venv/bin/pytest -q tests/areas` (con el cambio) | 43 passed, código 0 |
 | `venv/bin/pytest -q -p no:warnings` (completo) | 812 passed, 17 xfailed, código 0; 0 XPASS |
+| Revisión: `venv/bin/pytest -q -p no:warnings tests/areas` antes de corregir | 4 failed, 45 passed, código 1 |
+| Revisión: `venv/bin/pytest -q -p no:warnings` (completo) | 818 passed, 17 xfailed, código 0 |
 
 - Criterios: alta por `admin_area` con área en sus administradas, usuario 403, duplicado 409 (también sin distinguir mayúsculas), comunes backend: probados
 - Matriz: `POST /areas` y `DELETE /areas/<id>` del admin de área pasan de 403 a 201/200
-- No verificado: MySQL real (sin migración); pantalla `/areas` (DIS-016); `revisor` y `auditor-seguridad` pendientes (no lanzados por indicación del orquestador)
+- No verificado: MySQL real (sin migración); pantalla `/areas` (DIS-016)
+
+## Revisión (2026-10-18)
+- `auditor-seguridad`: **Aprobado** con 3 Baja. 1) Auditoría ligada a un id de área reutilizado (SQLite sin FK): corregido, `desligar_auditoria` pone `area_id` en NULL en la misma transacción. 2) Carrera de nombre duplicado (500): corregido, `IntegrityError` → rollback y `409 area_duplicada`. 3) Sin tope de altas por admin: queda como observación
+- `revisor`: **Requiere cambios** (faltaba seguridad). Atendido: 409 con otros admins, prueba de rollback de PUT
+- Regresiones nuevas: 4 fallaban antes de corregir (otros admins, id reutilizado, carrera en POST y PUT); la de rollback de PUT ya pasaba (cobertura)
 
 ## Commits / PR
-- Rama `fnc/FNC-045-areas-por-admin`; un commit local `[FNC-045]`. Sin push ni PR
+- Rama `fnc/FNC-045-areas-por-admin`; commit local `0bd558d` (implementación) + commit `[FNC-045]` de correcciones de la revisión. Sin push ni PR
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-18 | Aprobada por el dueño (modo autónomo, vía orquestador); implementada por desarrollador en `pokemon-wt-045`. En revisión (faltan `revisor` y `auditor-seguridad`) |
+| 2026-10-18 | `auditor-seguridad` Aprobado (3 Baja: 2 corregidas, tope de altas como observación); `revisor` Requiere cambios. Corregido en commit nuevo; 818 passed, 17 xfailed. Sigue En revisión |

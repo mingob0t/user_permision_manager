@@ -331,3 +331,77 @@ def test_si_falla_la_auditoria_no_se_da_de_baja(sin_miembros, como,
 
     db.session.rollback()
     assert _area(sin_miembros['A']) is not None
+
+
+# --------------------------------------------------------------------------- #
+# Correcciones de la revisión (2026-10-18)
+# --------------------------------------------------------------------------- #
+
+def test_admin_no_da_de_baja_un_area_con_otros_admins(sin_miembros, como):
+    """Decisión del orquestador: solo el superadmin borra un área compartida."""
+    fabricas.crear_usuario(ROLE_AREA_ADMIN,
+                           areas_administradas=[_area(sin_miembros['A'])])
+
+    respuesta = como('admin_a').delete(f"{A}/areas/{sin_miembros['A']}")
+
+    _codigo(respuesta, 409, 'area_con_otros_admins')
+    assert _area(sin_miembros['A']) is not None
+    assert _eventos('area_eliminada') == []
+
+
+def test_superadmin_da_de_baja_un_area_con_varios_admins(sin_miembros, como):
+    fabricas.crear_usuario(ROLE_AREA_ADMIN,
+                           areas_administradas=[_area(sin_miembros['A'])])
+
+    respuesta = como('super').delete(f"{A}/areas/{sin_miembros['A']}")
+
+    assert respuesta.status_code == 200, respuesta.get_json()
+    assert _area(sin_miembros['A']) is None
+
+
+def test_la_auditoria_vieja_no_queda_ligada_a_un_area_que_reusa_el_id(
+        escena, como):
+    """Seguridad (Baja): `area_id` se pone en NULL antes de borrar el área."""
+    cliente = como('super')
+    area_id = cliente.post(f'{A}/areas',
+                           json={'name': 'Efímera'}).get_json()['area']['id']
+    assert cliente.delete(f'{A}/areas/{area_id}').status_code == 200
+
+    nueva_id = cliente.post(f'{A}/areas',
+                            json={'name': 'Heredera'}).get_json()['area']['id']
+
+    assert nueva_id == area_id  # SQLite reutiliza el id: el caso que importa
+    db.session.expire_all()
+    vieja, = _eventos('area_creada')[:1]
+    assert vieja.target == 'Efímera'
+    assert vieja.area_id is None
+
+
+@pytest.mark.parametrize('metodo,ruta', [('POST', '/areas'),
+                                         ('PUT', '/areas/{A}')])
+def test_carrera_de_nombre_duplicado_da_409(escena, como, monkeypatch, metodo,
+                                            ruta):
+    """Si otra petición gana la carrera, la restricción única responde 409."""
+    from app.modules.areas import validacion
+    monkeypatch.setattr(validacion, 'nombre_duplicado', lambda *a, **k: False)
+
+    respuesta = como('super').open(f"{A}{ruta.format(A=escena['A'])}",
+                                   method=metodo, json={'name': 'Área B'})
+
+    _codigo(respuesta, 409, 'area_duplicada')
+    assert Area.query.filter_by(name='Área B').count() == 1
+    assert _area(escena['A']).name == 'Área A'
+
+
+def test_si_falla_la_auditoria_no_se_guarda_la_edicion(escena, como,
+                                                       monkeypatch):
+    def _falla(*args, **kwargs):
+        raise RuntimeError('auditoría caída (simulada)')
+    monkeypatch.setattr(auditoria, 'limpiar_detalle', _falla)
+
+    with pytest.raises(RuntimeError):
+        como('admin_a').put(f"{A}/areas/{escena['A']}",
+                            json={'description': 'No guardada'})
+
+    db.session.rollback()
+    assert _area(escena['A']).description != 'No guardada'

@@ -36,6 +36,7 @@ Entrada (lista blanca):
 
 ### `DELETE /areas/<id>` (P11, 2026-10-14)
 - Admin (sus áreas) o superadmin; `409` si tiene plataformas o accesos vigentes.
+- Admin de área sobre un área con otros admins → `409 area_con_otros_admins`; el superadmin sí puede (FNC-045, decisión del orquestador pendiente de validar en la prueba de concepto).
 - Respuesta: `{"status": "success"}`; auditoría `area_eliminada`.
 
 ### `PUT /users/<id>/managed-areas`
@@ -72,6 +73,7 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | 409 | `area_duplicada` | Ya existe un área con ese nombre. |
 | 409 | `area_con_plataformas` | El área tiene plataformas; muévelas o elimínalas antes. |
 | 409 | `area_con_accesos` | El área tiene accesos vigentes. |
+| 409 | `area_con_otros_admins` | El área tiene otros administradores; solo el superadmin puede darla de baja. |
 | 409 | `rol_no_admin` | El usuario no es administrador de área. |
 | 403 | `rol_reservado` | Ese rol no se puede asignar. |
 | 400 | `campo_no_permitido` | Hay campos que no se pueden enviar. |
@@ -92,3 +94,4 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
 | 1 | 2026-10-15 | Aditivo (FNC-044): regla de `password` en `PUT /users/<id>` con `400 campo_no_permitido` (cuenta no local) y `403 sin_permiso` |
+| 1 | 2026-10-18 | Aditivo (FNC-045): `409 area_con_otros_admins` en `DELETE /areas/<id>` para el admin de área (decisión del orquestador, pendiente de validar en la PoC) |

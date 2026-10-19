@@ -140,11 +140,11 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 |---|---|---|
 | `POST /areas` | `any_admin_required` | Crea área; un `admin_area` queda en `area_admins` en la misma transacción. Audita `area_creada`. |
 | `PUT /areas/<id>` | `any_admin_required` + `can_manage_area` (ajena o inexistente → `404`) | Edita área; el valor reenviado sin cambio se ignora. Audita `area_editada` con antes/después. |
-| `DELETE /areas/<id>` | `any_admin_required` + `can_manage_area` (ajena o inexistente → `404`) | Baja (P11). `409 area_con_plataformas` o `409 area_con_accesos` (miembros en `user_areas`). Audita `area_eliminada` (sin `area_id`; nombre en `target`, estado en `before`). |
+| `DELETE /areas/<id>` | `any_admin_required` + `can_manage_area` (ajena o inexistente → `404`) | Baja (P11). `409 area_con_otros_admins` (admin de área con otros admins en el área), `409 area_con_plataformas` o `409 area_con_accesos` (miembros en `user_areas`). Pone `area_id` en NULL en la auditoría del área antes de borrarla. Audita `area_eliminada` (sin `area_id`; nombre en `target`, estado en `before`). |
 
 - Entrada (`areas/validacion.py`): lista blanca `name`, `description`, `icon`, `color`, `status`; otro campo → `400 campo_no_permitido`; cuerpo no objeto → `400 cuerpo_invalido`.
 - Reglas: `name` 2–100 (obligatorio en alta), `description` ≤ 500, `icon` ≤ 50 (`[A-Za-z0-9_-]`), `color` `#rrggbb`, `status` `Activo`/`Inactivo`; si no → `422 validacion` con `fields`.
-- Nombre único sin distinguir mayúsculas ni acentos en mayúscula (`casefold`) → `409 area_duplicada`.
+- Nombre único sin distinguir mayúsculas ni acentos en mayúscula (`casefold`) → `409 area_duplicada` (también si la restricción única falla por carrera: `IntegrityError` → rollback).
 - Condiciones de baja: `areas/baja.py` (`conflicto_de_baja`).
 
 ### 4.4 Sistema y notificaciones — `app/modules/api/admin.py` (`/api/v1`)
