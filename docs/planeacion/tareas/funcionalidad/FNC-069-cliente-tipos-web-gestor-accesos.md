@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | lib-api |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Inicio** | 2026-10-19 |
@@ -140,3 +140,4 @@ Salida real de `impacto.py` (contra `develop`, 2026-10-19, tras correcciones de 
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador); implementada; En revisión |
 | 2026-10-19 | revisor Aprobado (4 observaciones corregidas) y auditor-accesibilidad Aprobado; sigue En revisión |
+- Cierre (2026-10-19): revisor y auditor-accesibilidad Aprobado; merge local a `develop` (modo autónomo autorizado por el dueño).
