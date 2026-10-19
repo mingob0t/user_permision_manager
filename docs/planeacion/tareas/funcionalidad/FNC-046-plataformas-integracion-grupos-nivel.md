@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | plataformas |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Inicio** | 2026-10-19 |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-046`) |
@@ -168,3 +168,5 @@ Lectura:
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador); implementada en `fnc/FNC-046-plataformas-integracion`; absorbe SEG-24 (backend) de FNC-017. En revisión |
 | 2026-10-19 | auditor-seguridad Aprobado (1 Media, 2 Baja) y revisor Requiere cambios: todo corregido con regresiones; sigue En revisión |
+- Re-auditoría de seguridad (2026-10-19): Aprobado; la carrera de altas concurrentes queda en FNC-080 (Propuesta, Baja).
+- Cierre (2026-10-19): merge local a `develop` (modo autónomo).
