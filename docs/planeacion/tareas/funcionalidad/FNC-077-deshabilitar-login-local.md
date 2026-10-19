@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | auth |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-15 |
 | **Inicio** | 2026-10-19 |
 | **Finalizada** | |
@@ -101,3 +101,4 @@ Salida real de `impacto.py` (contra `develop`, 7 elementos):
 | 2026-10-15 | Creada como Propuesta (decisión del dueño en la revisión de FNC-044) |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador). Implementada en `pokemon-wt-077`; regresiones fallan sin el cambio; contrato v2; En revisión |
 | 2026-10-19 | Revisiones: auditor-seguridad Aprobado; revisor Requiere cambios → corregidos (alta `ldap` fuera de dev, FNC-081, nota SEG-17 en FNC-010, impacto, VARIABLES.md). Sigue En revisión |
+- Cierre (2026-10-19): revisor y auditor-seguridad atendidos; merge local a `develop` (modo autónomo).
