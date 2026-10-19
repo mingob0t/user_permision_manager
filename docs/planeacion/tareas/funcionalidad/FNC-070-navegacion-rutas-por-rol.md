@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | navegacion |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | `fnc/FNC-070-navegacion-por-rol` (commit local, sin push) |
 | **Rama** | `fnc/FNC-070-navegacion-por-rol` |
@@ -111,3 +111,4 @@ Salida real de `impacto.py` (contra `develop`):
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-19 | Aprobada por el dueño (modo autónomo); implementada: `RequireRole`, `NAV` por rol y 4 rutas; pasa a En revisión |
 | 2026-10-19 | Correcciones de revisión (prueba estable, `NAV` sin export, notas en DIS-001/002/005/013, DIS-025); sigue En revisión |
+- Cierre (2026-10-19): revisor y auditor-accesibilidad atendidos (contrastes heredados en DIS-001/002/005; móvil en DIS-025); merge local a `develop` (modo autónomo).
