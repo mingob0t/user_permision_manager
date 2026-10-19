@@ -39,76 +39,7 @@ def _error(message, status=400, code=None):
 # Áreas
 # --------------------------------------------------------------------------- #
 
-@crud_bp.route('/areas', methods=['POST'])
-@login_required
-@admin_required
-def create_area():
-    """Crear un área es crear un tenant: solo el superadmin."""
-    data = _payload()
-    name = sanitize_display_name(data.get('name'), fallback='')
-    if not name:
-        return _error('El nombre es obligatorio.')
-    if Area.query.filter_by(name=name).first():
-        return _error('Ya existe un área con ese nombre.', 409)
-
-    area = Area(
-        name=name,
-        description=data.get('description'),
-        icon=data.get('icon') or 'box',
-        color=data.get('color') or '#6366f1',
-        status=data.get('status') or 'Activo',
-    )
-    db.session.add(area)
-    db.session.commit()
-    add_audit_log(f"CREAR ÁREA: {name}", module='Áreas', target=name,
-                  status='success')
-    return jsonify({'status': 'success', 'area': area.to_dict()}), 201
-
-
-@crud_bp.route('/areas/<int:area_id>', methods=['PUT'])
-@login_required
-@area_admin_required('area_id')
-def update_area(area_id):
-    area = Area.query.get_or_404(area_id)
-    data = _payload()
-
-    if 'name' in data:
-        name = sanitize_display_name(data.get('name'), fallback='')
-        if not name:
-            return _error('El nombre es obligatorio.')
-        clash = Area.query.filter(Area.name == name, Area.id != area_id).first()
-        if clash:
-            return _error('Ya existe un área con ese nombre.', 409)
-        area.name = name
-
-    for field in ('description', 'icon', 'color', 'status'):
-        if field in data:
-            setattr(area, field, data[field])
-
-    db.session.commit()
-    add_audit_log(f"EDITAR ÁREA: {area.name}", module='Áreas',
-                  target=area.name, status='success')
-    return jsonify({'status': 'success', 'area': area.to_dict()})
-
-
-@crud_bp.route('/areas/<int:area_id>', methods=['DELETE'])
-@login_required
-@admin_required
-def delete_area(area_id):
-    """Borrar un área elimina un tenant: solo el superadmin."""
-    area = Area.query.get_or_404(area_id)
-    if area.platforms:
-        return _error(
-            f'El área tiene {len(area.platforms)} plataforma(s). '
-            'Reasígnalas o elimínalas primero.', 409)
-
-    name = area.name
-    db.session.delete(area)
-    db.session.commit()
-    add_audit_log(f"ELIMINAR ÁREA: {name}", module='Áreas', target=name,
-                  status='warning')
-    return jsonify({'status': 'success'})
-
+# Alta, edición y baja: `app/modules/areas/api.py` (FNC-045).
 
 @crud_bp.route('/areas/<int:area_id>/users', methods=['PUT'])
 @login_required

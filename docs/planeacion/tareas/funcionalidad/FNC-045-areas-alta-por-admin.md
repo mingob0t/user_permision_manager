@@ -8,10 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | areas |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | En revisión |
 | **Creada** | 2026-10-13 |
-| **Estatus Git** | — |
-| **Rama** | `fnc/FNC-045-areas-alta-por-admin` |
+| **Estatus Git** | Commit local (sin push) |
+| **Rama** | `fnc/FNC-045-areas-por-admin` (worktree `pokemon-wt-045`) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí (autorización) |
 
@@ -38,6 +38,22 @@
 - `app/modules/api/crud.py` (solo `create_area` y `delete_area`)
 - `tests/areas/`
 
+## Archivos tocados
+- Nuevos: `app/modules/areas/api.py` (rutas POST/PUT/DELETE), `validacion.py` (entrada), `baja.py` (409); `tests/areas/test_alta_y_baja_por_admin.py`
+- `app/modules/api/crud.py`: salen `create_area`, `update_area`, `delete_area` (no crece)
+- `app/modules/api/helpers.py`: constantes `AREA_DUPLICADA`, `AREA_CON_PLATAFORMAS`, `AREA_CON_ACCESOS` (aditivo)
+- `app/__init__.py`: registra `areas_api_bp`
+- `tests/matriz_proteccion.py`, `tests/test_auditoria_crud.py`: casos ajustados al contrato
+
+## Decisiones del orquestador (pendientes de validar en la prueba de concepto)
+- "Accesos vigentes" = miembros en `user_areas` mientras no existan los accesos de FNC-054/056 (valor más seguro: bloquea la baja); los `area_admins` no cuentan. FNC-054/056 deben ampliar `areas/baja.py`
+- `icon`: solo `[A-Za-z0-9_-]`, ≤ 50 (evita marcado en un campo que se pinta)
+- `PUT /areas/<id>` también responde 404 en área ajena (contrato y SEC-AUTHZ-04); antes 403
+- Validación de POST/PUT pasa de `400` a `422 validacion` con `fields` (contrato)
+- `PUT`: un campo reenviado con su valor actual se ignora (áreas heredadas con color fuera de formato siguen editables)
+- `area_eliminada` sin `area_id` (la fila se borra y la FK quedaría en NULL); nombre en `target`, estado en `before`
+- Nombre único comparado con `casefold` en Python (`lower()` de SQLite no baja "Á")
+
 ## Reutilización
 - `any_admin_required`, `area_admin_required`, `can_manage_area` de `app/authz.py`
 - `sanitize_display_name`
@@ -46,12 +62,36 @@
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
 | `POST/DELETE /api/v1/areas` | Endpoint | Pantalla `/areas` (`areas-list.tsx`) | Pendiente |
+| `PUT /api/v1/areas/<id>` | Endpoint | `areas-list.tsx` (ajena 404, inválido 422) | Pendiente |
+| Constantes de error de `helpers.py` | Constantes | `areas/api.py`, `areas/baja.py` (aditivo) | Sí (pytest) |
+| `crear_actor` (matriz) | Función de prueba | `test_proteccion_por_rol.py` | Sí (pytest) |
+
+### Salida real de `impacto.py`
+```
+| `/areas` | endpoint | `app/modules/api/crud.py` | `app/modules/api/routes.py`, `app/modules/areas/routes.py`, `app/modules/users/api.py`, `app/modules/users/areas_administradas.py`, `app/modules/users/roles.py`, `app/modules/users/routes.py`, `frontend/src/app/areas/page.tsx`, `frontend/src/components/app-shell.tsx` (+6) | app/modules, frontend/src, frontend/tests, tests, tests/users | ☐ |
+| `/areas/<int:area_id>` | endpoint | `app/modules/api/crud.py` | `app/modules/api/routes.py` | app/modules | ☐ |
+| `_error` | función | `app/modules/api/crud.py` | `app/modules/api/admin.py`, `tests/directory/test_writer.py` | app/modules, tests/directory | ☐ |
+| `crear_actor` | función | `tests/matriz_proteccion.py` | `tests/test_proteccion_por_rol.py` | tests | ☐ |
+| `datos` | función | `tests/test_auditoria_crud.py` | `app/authz.py`, ... (+31) | app, app/modules, ... | ☐ |
+| `delete_area` | función | `app/modules/api/crud.py` | `app/modules/areas/routes.py` | app/modules | ☐ |
+```
+- `/areas`: real solo para POST (frontend `api.createArea`); `routes.py` (GET), `users/*` (`/users/<id>/areas`, `managed-areas`) y `areas/routes.py` (heredada 410) son homónimos por texto
+- `/areas/<int:area_id>`: PUT/DELETE reales (frontend `updateArea`/`deleteArea`); `routes.py` es el GET, sin cambio
+- `_error`: homónimo; el de `crud.py` no cambió (solo aparece en el contexto del diff) y `admin.py` tiene el suyo
+- `crear_actor`: real; el admin de área de la matriz también administra el área vacía (destino de DELETE)
+- `datos`: homónimo (variable común); la fixture no cambió
+- `delete_area`: real, se movió a `areas/api.py`; el de `areas/routes.py` es la ruta heredada 410 (homónimo)
+
+### Impacto para DIS-016 (sin tocar el frontend)
+- `GET /me` sigue con `can_manage_areas = is_admin()`: la pantalla no muestra "Nueva área" al admin de área; ajustar en FNC-069/DIS-016 (usar `is_area_admin` o un permiso nuevo)
+- Errores nuevos a mostrar: `422 validacion` con `fields`, `409 area_duplicada`, `409 area_con_plataformas`, `409 area_con_accesos`
+- El formulario manda `color` de `<input type="color">` (`#rrggbb`), compatible
 
 ## Criterios de aceptación
-- [ ] Un `admin_area` crea un área y aparece en sus áreas administradas (prueba)
-- [ ] Un `usuario` recibe 403 (prueba)
-- [ ] Nombre duplicado responde 409 (prueba)
-- [ ] Criterios comunes backend (FNC-037)
+- [x] Un `admin_area` crea un área y aparece en sus áreas administradas (prueba)
+- [x] Un `usuario` recibe 403 (prueba)
+- [x] Nombre duplicado responde 409 (prueba)
+- [x] Criterios comunes backend (FNC-037)
 
 ## Impacto cruzado
 - Genera → DIS-016
@@ -63,7 +103,23 @@
 ## Riesgos y reversión
 - Proliferación de áreas: queda auditada. Reversión: revertir la rama.
 
+## Verificación
+| Comando | Resultado real |
+|---|---|
+| `venv/bin/pytest -q tests/areas` (antes de implementar) | 38 failed, 5 passed, código 1 |
+| `tests/areas`, `test_proteccion_por_rol.py`, `test_auditoria_crud.py` con `app/` de `develop` (stash) | 44 failed, 241 passed, código 1 (regresión que primero falla) |
+| `venv/bin/pytest -q tests/areas` (con el cambio) | 43 passed, código 0 |
+| `venv/bin/pytest -q -p no:warnings` (completo) | 812 passed, 17 xfailed, código 0; 0 XPASS |
+
+- Criterios: alta por `admin_area` con área en sus administradas, usuario 403, duplicado 409 (también sin distinguir mayúsculas), comunes backend: probados
+- Matriz: `POST /areas` y `DELETE /areas/<id>` del admin de área pasan de 403 a 201/200
+- No verificado: MySQL real (sin migración); pantalla `/areas` (DIS-016); `revisor` y `auditor-seguridad` pendientes (no lanzados por indicación del orquestador)
+
+## Commits / PR
+- Rama `fnc/FNC-045-areas-por-admin`; un commit local `[FNC-045]`. Sin push ni PR
+
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-18 | Aprobada por el dueño (modo autónomo, vía orquestador); implementada por desarrollador en `pokemon-wt-045`. En revisión (faltan `revisor` y `auditor-seguridad`) |
