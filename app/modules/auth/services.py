@@ -1,8 +1,5 @@
-import ssl
 import os
 import logging
-from ldap3 import Server, Connection, ALL, Tls
-from ldap3.utils.log import set_library_log_detail_level, EXTENDED
 from datetime import datetime
 from app.authz import ROLE_USER
 from app.modules.directory.configuracion import (ErrorConfiguracionDirectorio,
@@ -11,17 +8,6 @@ from app.modules.directory.ldap_client import ClienteDirectorio, ErrorDirectorio
 from app.modules.notifications.services import send_notification_by_slug
 
 logger = logging.getLogger(__name__)
-
-if os.getenv('DEBUG_LDAP') == 'true':
-    set_library_log_detail_level(EXTENDED)
-    ldap3_logger = logging.getLogger('ldap3')
-    ldap3_logger.setLevel(logging.DEBUG)
-    if not ldap3_logger.handlers:
-        os.makedirs(os.path.join(os.getcwd(), 'logs'), exist_ok=True)
-        fh = logging.FileHandler(os.path.join(os.getcwd(), 'logs', 'ldap_debug.log'))
-        fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-        ldap3_logger.addHandler(fh)
-        ldap3_logger.addHandler(logging.StreamHandler())
 
 # Respuesta única de login fallido (directorio y cuenta local): no distingue
 # usuario inexistente, contraseña incorrecta ni fallo del directorio (SEG-12).
@@ -193,34 +179,3 @@ def purge_inactive_users(days=30):
     except Exception as e:
         db.session.rollback()
         return {"status": "error", "message": "Error al conectar con LDAP."}
-
-def validate_ldap_connection(host, port, use_ssl=False, bind_dn=None, bind_pass=None):
-    """
-    Realiza una prueba de conexión y bind contra un servidor LDAP.
-    """
-    try:
-        tls_config = None
-        if use_ssl:
-            tls_config = Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2)
-
-        server = Server(
-            host, 
-            port=int(port), 
-            use_ssl=use_ssl, 
-            tls=tls_config, 
-            get_info=ALL,
-            connect_timeout=5
-        )
-
-        with Connection(server, user=bind_dn, password=bind_pass, auto_bind=True, auto_referrals=False) as conn:
-            return {
-                "status": "success",
-                "message": "Conexión establecida correctamente",
-                "info": str(server.info) if server.info else "Anonimo"
-            }
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Fallo de conexión: {str(e)}"
-        }

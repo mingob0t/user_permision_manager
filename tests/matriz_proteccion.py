@@ -16,7 +16,6 @@ from typing import Callable, Optional
 
 from app import db
 from app.authz import ROLE_ADMIN, ROLE_AREA_ADMIN, ROLE_USER
-from app.modules.auth.models import AuthConfig
 from app.modules.notifications.models import SMTPConfig
 from tests import fabricas
 
@@ -129,37 +128,11 @@ def _con_smtp_configurado(esc, monkeypatch):
                         lambda **kwargs: {'status': 'success'})
 
 
-def _con_ldap_simulado(esc, monkeypatch):
-    from app.modules.auth import services
-    monkeypatch.setattr(services, 'validate_ldap_connection',
-                        lambda **kwargs: {'status': 'success',
-                                          'message': 'Conexión simulada'})
-
-
-class _ConexionLdapFalsa:
-    """Sustituye a `ldap3.Connection`: búsqueda sin resultados, sin red."""
-    entries = []
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        return False
-
-    def search(self, *args, **kwargs):
-        return True
-
-
 def _con_directorio_simulado(esc, monkeypatch):
-    import ldap3
-    db.session.add(AuthConfig(ldap_host=HOST_LDAP_FICTICIO,
-                              ldap_base_dn='dc=pruebas,dc=local'))
-    db.session.commit()
-    monkeypatch.setattr(ldap3, 'Server', lambda *args, **kwargs: None)
-    monkeypatch.setattr(ldap3, 'Connection', _ConexionLdapFalsa)
+    """Directorio activo (`LDAP_*` ficticias) sobre `ldap3` `MOCK_SYNC`."""
+    # Import diferido: `directorio_falso` importa constantes de este módulo.
+    from tests.directorio_falso import instalar_directorio
+    instalar_directorio(monkeypatch)
 
 
 def _con_sso_activo(esc, monkeypatch):
@@ -327,10 +300,11 @@ CASOS = (
     Caso('GET', f'{A}/auth-config', _fija(f'{A}/auth-config'),
          solo_superadmin()),
     Caso('PUT', f'{A}/auth-config', _fija(f'{A}/auth-config'),
-         solo_superadmin(), _json({'ldap_host': HOST_LDAP_FICTICIO})),
+         solo_superadmin(), _json({}),
+         nota='FNC-043: sin campos editables (ADR-004); `{}` no cambia nada'),
     Caso('POST', f'{A}/auth-config/test', _fija(f'{A}/auth-config/test'),
-         solo_superadmin(), _json({'ldap_host': HOST_LDAP_FICTICIO}),
-         _con_ldap_simulado),
+         solo_superadmin(), preparar=_con_directorio_simulado,
+         nota='FNC-043: solo la configuración efectiva, sin cuerpo'),
     Caso('GET', f'{A}/backup', _fija(f'{A}/backup'), solo_superadmin()),
     Caso('POST', f'{A}/backup', _fija(f'{A}/backup'), solo_superadmin(),
          _zip_respaldo),
@@ -353,7 +327,7 @@ CASOS_400 = (
     ('POST', f'{A}/smtp/test', _json({'email': 'sin-arroba'})),
     ('PUT', f'{A}/templates/nueva', _json({'name': ''})),
     ('PUT', f'{A}/auth-config', _json({'ldap_port': 'no-numero'})),
-    ('POST', f'{A}/auth-config/test', _sin_cuerpo),
+    ('POST', f'{A}/auth-config/test', _json({'ldap_host': HOST_LDAP_FICTICIO})),
     ('POST', f'{A}/backup', _sin_cuerpo),
     ('GET', f'{A}/directory/search?q=a', _sin_cuerpo),
 )

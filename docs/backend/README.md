@@ -30,15 +30,16 @@ app/
     ├── api/           # API v1 que consume el frontend
     │   ├── routes.py  # Lectura: me, áreas, plataformas, favoritos, usuarios, stats, auditoría
     │   ├── crud.py    # Escritura: miembros de área, plataformas, usuarios, preferencias, purga
-    │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, LDAP, respaldo, directorio; notificaciones in-app
+    │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, respaldo; notificaciones in-app
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
     │   └── helpers.py # error_response(), validation_error(), json_object(), is_id_list() y errores del contrato (FNC-044)
-    ├── auth/          # Modelos User/AuthConfig y servicios LDAP; rutas heredadas (redirigen/410)
+    ├── auth/          # Modelos User/AuthConfig (obsoleto) y login; rutas heredadas (redirigen/410)
+    ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
-    ├── users/         # api.py (managed-areas), roles.py, areas_administradas.py, serializacion.py (FNC-044); routes.py heredadas
+    ├── users/         # api.py (managed-areas), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
     └── areas/         # api.py, validacion.py, baja.py (FNC-045); routes.py heredadas
 alembic.ini            # Configuración de Alembic (sin URL ni secretos)
 migrations/
@@ -76,7 +77,7 @@ Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue a
 | `user_platforms` | tabla de relación | `user_id`, `platform_id`: acceso explícito a plataforma (se edita, pero `scoped_platforms` **no** lo usa para filtrar) |
 | `user_favorites` | tabla de relación | `user_id`, `platform_id` |
 | `audit_logs` | `audit.models.AuditLog` | `timestamp`, `user` (correo o `sistema`, 255), `action` (150), `module`, `target` (255), `detail`, `ip_address`, `status` (`success`/`error`/`warning`/`info`); FNC-047: `actor_id`, `target_user_id`, `area_id`, `platform_id` (FK `SET NULL`), `before_state`/`after_state` (JSON), `request_id`, `grant_id`; índices por fecha, actor, usuario afectado, área y plataforma. Inmutable desde el ORM |
-| `auth_config` | `auth.models.AuthConfig` | `ldap_host`, `ldap_port`, `ldap_ssl`, `ldap_base_dn`, `ldap_user` (bind DN), `ldap_pass` (en claro), `ldap_user_attr` (por defecto `sAMAccountName`), `ldap_group_admin`, `ldap_group_user`, `ldap_role_mappings` (JSON `[{group, role}]`) |
+| `auth_config` | `auth.models.AuthConfig` | **Obsoleta** (FNC-043): nada la lee; solo viaja en el respaldo. `ldap_pass` vacía (migración 0004) y el modelo rechaza escribirla. Resto: `ldap_host`, `ldap_port`, `ldap_ssl`, `ldap_base_dn`, `ldap_user`, `ldap_user_attr`, `ldap_group_admin`, `ldap_group_user`, `ldap_role_mappings` |
 | `smtp_config` | `notifications.models.SMTPConfig` | `server`, `port`, `encryption` (`starttls`/`ssl`/`none`), `auth_enabled`, `username`, `password` (en claro), `sender_name` |
 | `notification_templates` | `NotificationTemplate` | `slug` (único), `name`, `subject`, `body`, `is_html` |
 | `in_app_notifications` | `InAppNotification` | `user_id` (nulo = global), `type`, `title`, `message`, `is_read`, `created_at` |
@@ -161,12 +162,17 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `GET /notifications` | Sesión | Últimas 50 notificaciones in-app propias y globales (vacío si el usuario las desactivó). |
 | `POST /notifications/read` | Sesión | Marca como leídas (todas o `ids`). Afecta también a las globales para todos (ver deuda). |
 | `DELETE /notifications` | Sesión | Borra las propias. |
-| `GET /auth-config` | `admin_required` | Configuración LDAP sin contraseña. |
-| `PUT /auth-config` | `admin_required` | Guarda configuración LDAP y mapeos de roles. |
-| `POST /auth-config/test` | `admin_required` | Prueba de bind LDAP. |
 | `GET /backup` | `admin_required` | Descarga ZIP `nexus_config.json` con portal, LDAP, SMTP (sin contraseñas), plantillas y usuarios locales con su hash. |
 | `POST /backup` | `admin_required` | Restaura desde ese ZIP; solo agrega usuarios que no existan. |
-| `GET /directory/search?q=` | `admin_required` | Busca en el directorio (mín. 2 caracteres, máx. 50 resultados, filtro escapado RFC 4515) y marca quién ya existe. |
+
+### 4.4.1 Directorio — `app/modules/directory/api.py` (`/api/v1`, FNC-043)
+
+| Método y ruta | Protección | Qué hace |
+|---|---|---|
+| `GET /auth-config` | `admin_required` | Configuración efectiva de `LDAP_*`: `active`, `editable: false`, `config` (sin contraseña ni ruta de CA), `origins` (`env`/`default`) y `variables`; `error: configuracion_invalida` si no carga. No conecta. |
+| `PUT /auth-config` | `admin_required` | Sin campos editables (ADR-004): cualquier campo → `400 campo_no_permitido`; `{}` → 200 con la configuración. |
+| `POST /auth-config/test` | `admin_required` | Bind de la cuenta de servicio con la configuración efectiva; cuerpo con campos → `400`; inactivo → `409 directorio_no_configurado`; fallo → `503 directorio_no_disponible` genérico. Audita `PRUEBA LDAP`. |
+| `GET /directory/search?q=` | `admin_required` | `buscar_personas` (atributo `LDAP_USER_ATTR`, `mail`, `cn`, `displayName`; filtro escapado); `q` de 2–64 caracteres (`400 parametro_invalido`); máx. 50; marca `exists`. `409`/`503` como la prueba. |
 
 ### 4.5 Rutas heredadas
 
@@ -177,7 +183,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 ### Cliente OpenLDAP centralizado (`app/modules/directory/`, FNC-040)
 - Activo solo con `LDAP_URL`; la configuración (`LDAP_*`, ver `VARIABLES.md`) se valida en `create_app()` y, si falla, la app no arranca.
 - TLS obligatorio: `ldaps://` o `ldap://` + StartTLS antes del bind; `CERT_REQUIRED`, nombre del host verificado, CA de `LDAP_CA_CERT_FILE` o del sistema.
-- `ClienteDirectorio`: `conexion_servicio(solo_lectura=True)` (escritura solo desde `writer.py`), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`, `verificar_contrasena()` (bind de la persona; vacía = `False` sin conectar; FNC-042).
+- `ClienteDirectorio`: `conexion_servicio(solo_lectura=True)` (escritura solo desde `writer.py`), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`, `verificar_contrasena()` (bind de la persona; vacía = `False` sin conectar; FNC-042), `buscar_personas(texto, limite)` (FNC-043).
 - Escape: `escapar_filtro` (RFC 4515) y `escapar_valor_dn` (RFC 4514).
 - `valor_de_membresia(cfg, usuario)`: DN o identificador según `LDAP_GROUP_MEMBER_ATTR` (lo usan lectura y escritura).
 - Errores: `registrar_error` (público) devuelve `ErrorDirectorio` con mensaje genérico y `causa` (excepción de `ldap3`, solo para clasificar); detalle al log sin la contraseña de bind.
@@ -206,8 +212,9 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - Nunca borra cuentas; todo fallo devuelve `MENSAJE_CREDENCIALES` y el motivo va a la auditoría.
 
 ### LDAP heredado (`auth_config`)
-- Tabla `auth_config` editable en Ajustes → Directorio; el login ya no la usa (FNC-042).
-- `validate_ldap_connection` (prueba de conexión) sigue con `CERT_NONE` hasta FNC-043.
+- Obsoleta desde FNC-043: la API ya no la edita y nada la lee; `ldap_pass` vacía (migración 0004).
+- `validate_ldap_connection` retirada (FNC-043); `DEBUG_LDAP` pasó a `directory/depuracion.py`.
+- `utils/test_ldap.py` y `utils/nexus_health.py` aún la importan (ya fallaban: la llamaban sin argumentos); limpieza en FNC-028.
 
 ### Authelia (SSO por cabeceras)
 - Nginx consulta Authelia (`auth_request`, comentado en la plantilla) y reinyecta `Remote-Email`, `Remote-Name`, `Remote-Groups`; antes borra esas cabeceras si vienen del cliente.
@@ -273,6 +280,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - Alta, edición y baja de áreas por el admin (FNC-045): `tests/areas/test_alta_y_baja_por_admin.py`.
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 4 `xfail` con su tarea (FNC-003, 006, 014); los 9 de FNC-002 y FNC-013 pasaron a pruebas normales en FNC-042.
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, variables=None, **config)` activa `LDAP_*` ficticias y conecta el cliente centralizado a `MOCK_SYNC` (personas, grupos, filtros recibidos); `config` crea `auth_config` (FNC-042).
+  - Directorio (FNC-043): `tests/directory/test_api.py` (configuración, prueba, búsqueda y escape, modelo sin clave), `tests/directory/test_aislamiento.py` (SEC-LDAP-01/02), `tests/test_migracion_0004.py`. El `MOCK_SYNC` no compara valores escapados ni devuelve entradas con `sizeLimitExceeded`: esas pruebas revisan el filtro y el límite pedidos.
   - `tests/directory/conftest.py`: `directorio` / `crear_directorio(**LDAP_*)` usan `ldap3` `MOCK_SYNC` con el cliente centralizado; `tests/directory/test_tls.py` abre TLS real solo hacia `localhost`.
   - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` (con `target=` para el correo).
   - Auditoría (FNC-047): `tests/audit/` (registro ampliado, inmutabilidad y regresión de SEG-25).
@@ -343,8 +351,8 @@ Quedan como referencia; la línea base `0001` ya refleja su resultado. FNC-028 d
 | 3 | Contraseña por defecto fija cuando el alta de usuario no la incluye. | `api/crud.py` `create_user` |
 | 4 | ~~IP literal como valor por defecto de `BASE_URL` en el correo de bienvenida LDAP~~ Resuelta en FNC-042 (vacío = enlace relativo). | `auth/services.py` |
 | 5 | CSRF exento en todos los blueprints; la API depende solo de la cookie de sesión (SameSite por defecto del navegador). | `app/__init__.py` |
-| 6 | Contraseñas de LDAP y SMTP guardadas en claro en BD. | `auth_config`, `smtp_config` |
-| 7 | LDAP con TLS sin validar certificado (`CERT_NONE`) en la prueba de conexión y la búsqueda heredadas; el login ya usa el cliente validado (FNC-042); falta FNC-043. | `auth/services.py` (`validate_ldap_connection`), `api/admin.py` |
+| 6 | Contraseña de SMTP guardada en claro en BD (la de LDAP se vació y quedó obsoleta en FNC-043). | `smtp_config` |
+| 7 | ~~LDAP con TLS sin validar certificado (`CERT_NONE`)~~ Resuelta: login (FNC-042), prueba y búsqueda (FNC-043) usan el cliente validado. | — |
 | 8 | ~~Borrado automático de la cuenta local si no aparece en el directorio~~ Resuelta en FNC-042. | `auth/services.py` |
 | 9 | `run.py` usa `debug=True` y escucha en todas las interfaces; `PORT_APP` no se lee. | `run.py` |
 | 10 | `DB_ENGINE` distinto de `mysql` cae a SQLite (no hay rama PostgreSQL aunque `psycopg2-binary` está en dependencias). | `app/__init__.py` |

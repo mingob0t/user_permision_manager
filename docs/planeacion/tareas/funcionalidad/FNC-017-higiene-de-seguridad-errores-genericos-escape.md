@@ -50,3 +50,4 @@ _Se completa al aprobar la tarea._
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-15 | SEG-23 (escape en correos) cerrado por FNC-048: `html.escape` en HTML, asunto sin CR/LF, sustitución de una pasada; regresiones en `tests/test_notificaciones.py` (sin `xfail`). Quedan SEG-21, 24, 26, 29 |
+| 2026-10-18 | SEG-21 de LDAP (`str(exc)` en prueba y búsqueda, antes `admin.py:404` y `:637`) cerrado por FNC-043 (En revisión): `503 directorio_no_disponible` genérico, detalle al log. Quedan SEG-21 del resto, 24, 26, 29 |

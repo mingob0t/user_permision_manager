@@ -48,3 +48,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-18 | SEG-08 (bind LDAP) y SEG-22 (prueba LDAP) cerrados por FNC-043 (En revisión): `ldap_pass` vaciada (migración 0004) y rechazada por el modelo; la prueba usa solo la configuración `LDAP_*`. Quedan SMTP y SEG-17 |

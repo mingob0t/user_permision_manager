@@ -27,11 +27,13 @@
 | `limpiar_detalle` | Utilidad | `app/modules/audit/sanitizar.py` | Quita datos sensibles de antes/después (SEC-AUD-05) | `add_audit_log` |
 | `sanitize_display_name` | Función | `app/utils/naming.py` | Normalizar nombres | `crud.py` |
 | `redis_registry` | Cliente | `app/utils/redis_client.py` | Registro Redis | `app/__init__.py:93` |
-| `ClienteDirectorio`, `escapar_filtro`, `escapar_valor_dn`, `ErrorDirectorio`, `registrar_error` | Cliente | `app/modules/directory/ldap_client.py` | Única conexión a OpenLDAP (TLS validado, espera, escape); todo uso nuevo de `ldap3` pasa por aquí | (sin llamadores hasta FNC-041/042/043) |
+| `ClienteDirectorio`, `escapar_filtro`, `escapar_valor_dn`, `ErrorDirectorio`, `registrar_error` | Cliente | `app/modules/directory/ldap_client.py` | Única conexión a OpenLDAP (TLS validado, espera, escape); todo uso nuevo de `ldap3` pasa por aquí | `auth/services.py` (login, FNC-042), `directory/api.py` (`buscar_personas`, prueba de conexión; FNC-043) |
 | `normalizar_dn`, `mismo_dn`, `bajo_base` | Utilidad | `app/modules/directory/dn.py` | Comparar DN normalizados (RDN multivaluados, escapes); toda comprobación de DN o de base pasa por aquí | `configuracion.py`, `writer.py` |
 | `valor_de_membresia` | Utilidad | `app/modules/directory/ldap_client.py` | Valor del usuario en el atributo de membresía (DN o identificador) | `ldap_client.py`, `writer.py` |
 | `EscritorDirectorio`, `DatosCuenta`, `ResultadoEscritura`, `Resultado`, `clasificar_error` | Servicio | `app/modules/directory/writer.py`, `errors.py` | Única escritura en OpenLDAP (membresía y alta de cuentas), idempotente y con resultado tipificado | (sin llamadores hasta FNC-049/064) |
 | `cargar_configuracion`, `validar_al_arrancar` | Configuración | `app/modules/directory/configuracion.py` | Configuración del directorio desde `LDAP_*` (ADR-004) | `app/__init__.py`, `ldap_client.py` |
+| `correos_registrados` | Consulta | `app/modules/users/correos.py` | Qué correos (minúsculas) ya tienen cuenta en el portal (FNC-043) | `directory/api.py` |
+| `configuracion_publica` | Serialización | `app/modules/directory/resumen.py` | Vista sin secretos de la configuración `LDAP_*` con su origen (FNC-043) | `directory/api.py` |
 | `construir_uri_bd` | Función | `app/utils/uri_bd.py` | URI de la BD desde `DB_*` | `app/__init__.py`, `migrations/env.py` |
 | `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py` | Envío de correo por plantilla; escapa los valores en HTML y quita CR/LF del asunto (FNC-048) | auth, SSO |
 | `notificar_solicitud_nueva`, `notificar_solicitud_aprobada`, `notificar_solicitud_rechazada`, `notificar_aprovisionamiento_fallido` | Servicio | `app/modules/notifications/access_notifications.py` | Avisos del gestor de accesos con destinatarios resueltos; llamar después del commit (FNC-048) | FNC-049, FNC-056, FNC-057 (pendientes) |
@@ -57,7 +59,7 @@
 | D-03 | `_payload()` y `_error()` | `app/modules/api/crud.py:23,27`; `admin.py:25,29` | `app/modules/api/helpers.py` (`json_payload`, `error_response`); `error_response` creado y usado por `crud._error` (FNC-044); falta `admin.py` y `json_payload` |
 | D-04 | Aviso "usuario creado" (con `NOTIFY_USER_CREATED`/`BASE_URL`) | `app/modules/api/auth.py:111-121`; `app/modules/auth/services.py:151-158` | Función única en `notifications/services.py` |
 | D-05 | Purga de usuarios inactivos | `app/modules/auth/services.py:172` (heredada, con criterio distinto) y `app/modules/api/crud.py:415-435` | La de `crud.py` (considera nulos) movida a `app/modules/users/services.py` |
-| D-06 | Conexión LDAP (`Server`/`Connection`/`Tls`) | `app/modules/auth/services.py:42,213`; `app/modules/api/admin.py:607-614` | `app/modules/directory/ldap_client.py` (creado en FNC-040; migran los llamadores FNC-042 y FNC-043) |
+| D-06 | Conexión LDAP (`Server`/`Connection`/`Tls`) | `app/modules/auth/services.py:42,213`; `app/modules/api/admin.py:607-614` | Resuelto: login (FNC-042), prueba y búsqueda (FNC-043) usan `ldap_client.py`; `ldap3` solo en `app/modules/directory/` |
 | D-07 | `fetch` directo en `api.ts` | `frontend/src/lib/api.ts:41,199,212` | Un solo `request()` con soporte de blobs |
 | D-08 | Botón "Eliminar" en línea (`rounded px-2 py-1 text-xs text-red-600 hover:bg-red-500/10 dark:text-red-300`) | `areas-list.tsx:200`, `platform-admin.tsx:277`, `users-list.tsx:526` | Variante `danger` de `Button` o clase `nx-btn-danger` |
 | D-09 | Clase de entrada de texto/selector | `audit-log.tsx:47`, `platform-catalog.tsx:50,58` (y `TextInput` en `form.tsx` ya existe) | Reutilizar `TextInput`/`Select` |

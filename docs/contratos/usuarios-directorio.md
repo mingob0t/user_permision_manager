@@ -52,7 +52,23 @@ Convenciones comunes: [README.md](README.md). P2: superadmin y admins (para sus 
   "last_login_at": null } }
 ```
 
+## Configuración del directorio (FNC-043; consumidor DIS-023)
+Solo superadmin (resto: 401/403). Fuente única: variables `LDAP_*` (ADR-004); sin edición desde la interfaz.
+
+| Método y ruta | Respuesta |
+|---|---|
+| `GET /auth-config` | `200` `{active, source: "env", editable: false, config, origins, variables, error}` |
+| `PUT /auth-config` | `{}` → `200 {"status": "success", "config": <igual que GET>}`; cualquier campo → `400 campo_no_permitido` |
+| `POST /auth-config/test` | Sin cuerpo. `200 {"status": "success", "message"}`; campos → `400 campo_no_permitido`; inactivo → `409 directorio_no_configurado`; fallo → `503 directorio_no_disponible` |
+| `GET /directory/search?q=` | `q` 2–64 → `200 {count, users: [{name, email, account, exists}]}` (máx. 50); fuera de rango → `400 parametro_invalido`; `409`/`503` como la prueba |
+
+- `config` (o `null` si inactivo o inválido): `url`, `host`, `port`, `tls` (`ldaps`/`starttls`), `ca_cert` (`custom`/`system`), `bind_dn`, `users_base_dn`, `groups_base_dn`, `user_attr`, `group_object_class`, `group_member_attr`, `timeout_seconds`, `user_object_classes[]`, `placeholder_member`.
+- `origins`: por campo, `env` o `default`; `variables`: campo → nombre de la variable `LDAP_*`.
+- `error`: `null` o `configuracion_invalida` (el detalle va al log).
+- Nunca incluye la contraseña de bind ni la ruta de la CA (SEC-LDAP-11).
+
 ## Historial
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
+| 1 | 2026-10-18 | Sección "Configuración del directorio" agregada (FNC-043): documenta endpoints que no tenían contrato. **Aditivo** para el contrato (sigue v1): no cambia ningún endpoint ya contratado. Sí cambia la forma heredada de NEXUS que lee `settings-panel.tsx`; la adapta DIS-023. Decisión del orquestador (pendiente de validar en la prueba de concepto) |
