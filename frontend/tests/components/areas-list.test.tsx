@@ -247,3 +247,41 @@ describe('Estados de la lista', () => {
     expect(await screen.findByText('Servicio no disponible')).toBeTruthy();
   });
 });
+
+describe('Accesibilidad (auditor-accesibilidad)', () => {
+  it('acciones de tarjeta con el nombre del área en su nombre accesible', async () => {
+    render(<AreasList />);
+    await screen.findByText('Finanzas');
+    expect(screen.getByRole('button', { name: 'Editar Finanzas' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Administradores de Finanzas' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Eliminar Finanzas' })).toBeTruthy();
+  });
+
+  it('nombre vacío: error ligado al campo y foco en él', async () => {
+    render(<AreasList />);
+    fireEvent.click(await screen.findByText('Nueva área'));
+    fireEvent.click(dialogo().getByText('Guardar'));
+
+    const nombre = dialogo().getByLabelText('Nombre');
+    expect(nombre.getAttribute('aria-invalid')).toBe('true');
+    expect(nombre.getAttribute('aria-describedby')).toBe('area-name-error');
+    expect(document.getElementById('area-name-error')?.textContent).toBe('El nombre es obligatorio.');
+    expect(document.activeElement).toBe(nombre);
+    expect(api.createArea).not.toHaveBeenCalled();
+  });
+
+  it('panel: la región de estado existe antes de guardar y solo cambia su texto', async () => {
+    render(<AreasList />);
+    await screen.findByText('Finanzas');
+    fireEvent.click(tarjeta('Finanzas').getByText('Administradores'));
+    await dialogo().findByLabelText('Eva · eva@ejemplo.local');
+    const estado = dialogo().getByTestId('estado-guardado');
+    expect(estado.getAttribute('role')).toBe('status');
+    expect(estado.textContent).toBe('');
+
+    fireEvent.click(dialogo().getByLabelText('Eva · eva@ejemplo.local'));
+    fireEvent.click(dialogo().getByText('Guardar'));
+    await waitFor(() => expect(estado.textContent).toBe('Cambios guardados'));
+    expect(dialogo().getByTestId('estado-guardado')).toBe(estado);
+  });
+});

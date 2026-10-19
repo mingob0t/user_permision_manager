@@ -27,6 +27,13 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
+/** Id del campo Nombre: recibe el foco cuando es inválido (`TextInput` no acepta `ref`). */
+const NAME_ID = 'area-name';
+
+function enfocarNombre() {
+  document.getElementById(NAME_ID)?.focus();
+}
+
 /** Atributos de accesibilidad de un control con posible error. */
 function invalido(id: string, message?: string) {
   return message ? { 'aria-invalid': true, 'aria-describedby': id } : {};
@@ -58,8 +65,9 @@ export function AreaForm({
 
   async function save() {
     if (!form.name?.trim()) {
-      setFields({});
-      setError('El nombre es obligatorio.');
+      setError(null);
+      setFields({ name: 'El nombre es obligatorio.' });
+      enfocarNombre();
       return;
     }
     setSaving(true);
@@ -70,7 +78,9 @@ export function AreaForm({
       onSaved(result.area);
     } catch (err) {
       setError(mensajeDeError(err, 'No se pudo guardar'));
-      setFields(erroresDeCampo(err));
+      const errores = erroresDeCampo(err);
+      setFields(errores);
+      if (errores.name) enfocarNombre();
     } finally {
       setSaving(false);
     }
@@ -94,6 +104,7 @@ export function AreaForm({
       <div>
         <Field label="Nombre">
           <TextInput
+            id={NAME_ID}
             value={form.name ?? ''}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             {...invalido('area-name-error', fields.name)}

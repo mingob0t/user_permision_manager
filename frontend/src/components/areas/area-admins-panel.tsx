@@ -100,9 +100,10 @@ export function AreaAdminsPanel({ area, onClose }: { area: Area; onClose: () => 
       }
     >
       {problem ? <ErrorNote message={problem} /> : null}
-      {saved ? (
-        <div role="status"><Badge tone="success">Cambios guardados</Badge></div>
-      ) : null}
+      {/* Región siempre montada: los lectores de pantalla anuncian el cambio de texto. */}
+      <div role="status" data-testid="estado-guardado">
+        {saved ? <Badge tone="success">Cambios guardados</Badge> : null}
+      </div>
 
       <p className="text-sm font-bold text-label">
         Solo aparecen las cuentas con rol de administrador de área; el rol se asigna en Usuarios.
