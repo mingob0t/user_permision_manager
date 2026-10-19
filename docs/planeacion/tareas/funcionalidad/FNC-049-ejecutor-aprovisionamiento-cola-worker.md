@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | aprovisionamiento |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Inicio** | 2026-10-19 |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-049`) |
@@ -192,3 +192,4 @@ Todas: **decisión del orquestador (pendiente de validar en la prueba de concept
 | 2026-10-19 | Re-auditoría de seguridad: Aprobado con 1 Media y 1 Baja, corregidas en un commit nuevo; sigue En revisión |
 | 2026-10-19 | Correcciones de auditor-seguridad (Bloqueante) y revisor en un commit nuevo; sigue En revisión |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador); implementada en `fnc/FNC-049-ejecutor-aprovisionamiento` (worktree `pokemon-wt-049`): módulo `provisioning`, migración 0006, `rq==2.12.0`, 6 variables `PROVISIONING_*`, `REDIS_PASS` obligatoria para el worker. Sin revisores (por instrucción): queda En revisión; pendiente `revisor` y `auditor-seguridad` |
+- Cierre (2026-10-19): revisor, auditor-seguridad y re-auditoría atendidos; merge local a `develop` (modo autónomo).
