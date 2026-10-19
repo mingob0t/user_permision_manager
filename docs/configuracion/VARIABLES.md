@@ -17,9 +17,15 @@
 | `DB_NAME` | Nombre de la BD | texto | — | `pokemon_dev` | Sí con mysql | No | Sí (`admin_test`) | `app/utils/uri_bd.py` (app y Alembic, FNC-039), `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
 | `DB_USER` | Usuario de la BD | texto | — | `nexus` | Sí con mysql | No | Sí | `app/utils/uri_bd.py` (app y Alembic, FNC-039) | FNC-001, 2026-10-13 | Vigente |
 | `DB_PASS` | Contraseña de la BD | texto | — | — | Sí con mysql | **Sí** | Sí (vacía) | `app/utils/uri_bd.py` (app y Alembic, FNC-039) | FNC-001, 2026-10-13 | Vigente |
-| `REDIS_HOST` | Host de Redis | nombre de host | `localhost` | `localhost` | No (Redis sin uso funcional) | No | Sí | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
-| `REDIS_PORT` | Puerto de Redis | entero | `6379` | `6379` | No | No | Sí | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
-| `REDIS_PASS` | Contraseña de Redis | texto | ninguna | — | No | **Sí** | **No (faltante)** | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
+| `REDIS_HOST` | Host de Redis (cola de aprovisionamiento, ADR-003) | nombre de host (IP → el worker no arranca) | `localhost` | `localhost` | Sí para el worker (FNC-049) | No | Sí | `app/__init__.py`, `deploy/preflight.sh`, `app/modules/provisioning/config.py` | FNC-001, 2026-10-13 | Vigente |
+| `REDIS_PORT` | Puerto de Redis | entero | `6379` | `6379` | No | No | Sí | `app/__init__.py`, `deploy/preflight.sh`, `app/modules/provisioning/config.py` | FNC-001, 2026-10-13 | Vigente |
+| `REDIS_PASS` | Contraseña de Redis. Fuente: `.env` en dev; Vaultwarden `pokemon/<entorno>/REDIS_PASS` en staging/prod | texto | ninguna | — | **Sí para el worker y para despertarlo** (FNC-049, SEG-29); sin ella la API arranca y los trabajos esperan | **Sí** | Sí (vacía, FNC-049) | `app/__init__.py`, `app/modules/provisioning/config.py` | FNC-001, 2026-10-13 | Vigente |
+| `PROVISIONING_QUEUE_NAME` | Nombre de la cola RQ del ejecutor | `[a-z0-9_-]{1,50}` | `aprovisionamiento` | `aprovisionamiento` | No | No | Sí | `app/modules/provisioning/config.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_MAX_ATTEMPTS` | Intentos máximos de un trabajo (se fija al encolar) | entero 1–20 | `5` | `5` | No | No | Sí | `app/modules/provisioning/config.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_BACKOFF_BASE_SECONDS` | Primer escalón del *backoff* exponencial | entero 1–3600 (s) | `60` | `60` | No | No | Sí | `app/modules/provisioning/config.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_BACKOFF_MAX_SECONDS` | Tope del *backoff* (≥ base) | entero 1–86400 (s) | `900` | `900` | No | No | Sí | `app/modules/provisioning/config.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS` | Tiempo de espera de un intento (`job_timeout` de RQ); la reserva vence 30 s después | entero 5–600 (s) | `60` | `60` | No | No | Sí | `app/modules/provisioning/config.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_POLL_INTERVAL_SECONDS` | Ocio del worker antes de barrer la BD (reintentos vencidos, avisos perdidos, reservas vencidas) | entero 5–3600 (s) | `30` | `30` | No | No | Sí | `app/modules/provisioning/config.py` | FNC-049, 2026-10-19 | Vigente |
 | `TZ_APP` | Zona horaria del proceso (fija `TZ`) | zona IANA | `TZ` o `America/Mexico_City` | `America/Mexico_City` | No | No | Sí | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `TZ` | Respaldo de `TZ_APP` | zona IANA | `America/Mexico_City` | — | No | No | No (estándar del sistema) | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `BASE_URL` | URL pública de la app para enlaces en correos y el retorno del cierre SSO | URL con dominio | En `api/auth.py`: la del host de la petición. En `auth/services.py`: vacío (enlace relativo; antes una IP literal, quitada en FNC-042) | `http://localhost:5001` (dev) / `https://<dominio>` | Sí en prod | No | Sí | `api/auth.py`, `auth/services.py` | FNC-001, 2026-10-13 | Vigente |
@@ -144,6 +150,14 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `NOMBRE_MIN/MAX`, `DESCRIPCION_MIN/MAX` | Largo del nombre y la descripción de una plataforma | 2–100 / 1–1000 | caracteres | `app/modules/platforms/validacion.py` | FNC-046, 2026-10-19 | Vigente |
 | `TIPOS_INTEGRACION` / `LARGO_DN` | Tipos de integración / largo de los DN de grupo | `ldap`, `conector` / 512 | — / caracteres | `app/modules/platforms/tipos.py` | FNC-046, 2026-10-19 | Vigente |
 | `MARCADORES_PLANTILLA_GRUPO` / `MARCADORES_OBLIGATORIOS_GRUPO` | Marcadores de `LDAP_PLATFORM_GROUP_TEMPLATE` | `plataforma`, `area`, `nivel` / `plataforma`, `nivel` | — | `app/modules/directory/configuracion.py` | FNC-046, 2026-10-19 | Vigente |
+| `MARGEN_RESERVA_SEGUNDOS` | Margen sobre el tiempo de espera del intento para dar por vencida una reserva | 30 | s | `app/modules/provisioning/config.py` | FNC-049, 2026-10-19 | Vigente |
+| `MAX_INTENTOS`, `BACKOFF_BASE_SEGUNDOS`, `BACKOFF_MAX_SEGUNDOS`, `TIEMPO_INTENTO_SEGUNDOS`, `INTERVALO_BARRIDO_SEGUNDOS` | (por defecto, mínimo, máximo) de las `PROVISIONING_*` | ver la fila de cada variable | — | `app/modules/provisioning/config.py` | FNC-049, 2026-10-19 | Vigente |
+| `FACTOR_BACKOFF` | Base del crecimiento exponencial (*equal jitter*) | 2 | — | `app/modules/provisioning/reintentos.py` | FNC-049, 2026-10-19 | Vigente |
+| `LOTE_BARRIDO` | Trabajos enviados a la cola por barrido | 100 | trabajos | `app/modules/provisioning/worker.py` | FNC-049, 2026-10-19 | Vigente |
+| `TIEMPO_ESPERA_REDIS_SEGUNDOS` | Conexión y lectura de Redis al despertar al worker (RQ la sube en el worker) | 5 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
+| `TTL_RESULTADO_RQ` | RQ no guarda resultados (el estado vive en la BD) | 0 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
+| `LARGO_ERROR`, `LARGO_CLAVE_IDEMPOTENCIA` | Error de la bitácora truncado / largo de la clave | 500 / 100 | caracteres | `app/modules/provisioning/tipos.py` | FNC-049, 2026-10-19 | Vigente |
+| `VARIABLES_SECRETAS`, `LARGO_MINIMO_SECRETO`, `MENSAJES` | Valores que se borran del error, largo mínimo buscado y catálogo de mensajes de la bitácora (SEC-CON-10) | `LDAP_BIND_PASSWORD`, `REDIS_PASS`, `DB_PASS`, `SMTP_PASSWORD`, `SECRET_KEY` / 4 / ver el código | — | `app/modules/provisioning/saneo.py` | FNC-049, 2026-10-19 | Vigente |
 | Gunicorn | Workers / timeout / puerto | 4 / 120 s / 5001 | — | `deploy/backend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | Puerto del backend en dev | Puerto de `run.py` | 5001 | — | `run.py` | FNC-001, 2026-10-13 | Vigente |
 | `client_max_body_size` | Tamaño máximo de petición en nginx | 64 | MB | `deploy/nginx.conf.tmpl` | FNC-001, 2026-10-13 | Vigente |

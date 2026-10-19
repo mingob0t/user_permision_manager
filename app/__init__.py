@@ -67,6 +67,10 @@ def create_app(config_overrides=None):
     # directorio la app no arranca (FNC-040, SEC-LDAP-02).
     from app.modules.directory.configuracion import validar_al_arrancar
     validar_al_arrancar()
+    # Variables PROVISIONING_* inválidas detienen el arranque (FNC-049).
+    from app.modules.provisioning.config import (
+        validar_al_arrancar as validar_aprovisionamiento)
+    validar_aprovisionamiento()
 
 
 
@@ -151,6 +155,10 @@ def create_app(config_overrides=None):
                areas_api_bp, directory_api_bp, platforms_api_bp):
         csrf.exempt(bp)
         app.register_blueprint(bp)
+
+    # Worker de aprovisionamiento: `flask provisioning worker` (FNC-049).
+    from app.modules.provisioning.cli import provisioning_cli
+    app.cli.add_command(provisioning_cli)
 
     # Los blueprints heredados ya no procesan datos: solo redirigen o devuelven
     # 410. Sin exentarlos, el CSRF los intercepta antes y responde un 400 en

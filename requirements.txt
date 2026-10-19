@@ -13,6 +13,7 @@ openpyxl
 xlrd
 pandas
 redis
+rq==2.12.0
 gunicorn
 Flask-WTF==1.2.1
 alembic==1.20.0

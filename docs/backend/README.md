@@ -36,6 +36,7 @@ app/
     ├── auth/          # Modelos User/AuthConfig (obsoleto) y login; rutas heredadas (redirigen/410)
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
+    ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
@@ -212,7 +213,23 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - Alta: uid `[a-z0-9._-]+` y correo válido, si no `datos_invalidos`; DN `LDAP_USER_ATTR=<uid escapado>,LDAP_USERS_BASE_DN`; clases `LDAP_USER_OBJECT_CLASSES`; `cn`, `sn`, `givenName`, `mail` (provisionales hasta cerrar ADR-004); sin `userPassword` (P8: Authelia).
 - Una sola cuenta de servicio (`LDAP_BIND_DN`) para lectura y escritura (dueño, 2026-10-15); ACL en `docs/operacion/ENTORNOS.md` (SEC-LDAP-03).
 - Log de fallos de escritura: solo tipo y código de resultado (`registrar_error(..., con_detalle=False)`), sin DN de la persona.
-- Sin llamadores hasta FNC-049 (ejecutor) y FNC-064 (alta de cuentas); que el grupo pertenezca a una plataforma lo valida el llamador.
+- Llamadores: `provisioning/ldap_provider.py` (FNC-049, membresía; valida que el grupo sea el de la plataforma) y FNC-064 (alta de cuentas, pendiente).
+
+### Ejecutor de aprovisionamiento (`app/modules/provisioning/`, FNC-049)
+- Cola: Redis + RQ (ADR-003, dueño). La BD es la cola persistente (*outbox*); Redis solo despierta al worker.
+- `queue.encolar(operacion, usuario_id, plataforma, nivel, clave_idempotencia, access_id=None)`: agrega el trabajo **sin commit** (va en la transacción del llamador); tras el commit despierta al worker. Sin Redis, espera al barrido. Clave repetida → mismo trabajo.
+- `provider` = `integration_type` de la plataforma al encolar; `max_attempts` = `PROVISIONING_MAX_ATTEMPTS` al encolar.
+- Estados: `pendiente` → `en_ejecucion` → `exitoso` \| `reintentando` \| `fallido`. Intentos en `provisioning_job_attempts` (`exitoso`, `sin_cambios`, `error_transitorio`, `error_permanente`).
+- Reserva atómica (`UPDATE … WHERE`): un solo worker por trabajo; vence a `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS` + 30 s y otro worker lo retoma (intento abierto → `interrumpido`).
+- Transitorio: *backoff* `min(max, base·2^(n-1))` con *equal jitter*; permanente: sin reintentos. Excepción del proveedor o tiempo de espera de RQ → transitorio, sin guardar su texto.
+- Error de la bitácora: mensaje del catálogo (`saneo.py`) + detalle saneado (sin secretos del despliegue, `clave=valor` sensibles, `Bearer` ni credenciales en URL), ≤ 500 (SEC-CON-10).
+- Resultado final, en la misma transacción: auditoría con actor `sistema` (`acceso_activo`, `acceso_fallido`, `acceso_revocado`, `revocacion_fallida`; `grant_id` = `access_id`) y `manejadores` (`registrar_manejador(on_success, on_failure)`, para FNC-054; sin commit).
+- `fallido`: después del commit y en `try`, `notificar_aprovisionamiento_fallido` (FNC-048).
+- Proveedores (`providers.py`): `Provisioner` con `otorgar`/`revocar`/`consultar(Operacion)` → `ResultadoProveedor` (SEC-CON-01); `registrar_proveedor(tipo, fabrica)`. `ldap` registrado; `conector` sin proveedor hasta FNC-050 → `conector_no_disponible` (permanente).
+- `ProveedorLdap`: grupo del nivel de la plataforma, bajo `LDAP_GROUPS_BASE_DN` (SEC-LDAP-04); persona por coincidencia exacta del `mail` con el correo de la cuenta (como el login); usa `EscritorDirectorio`.
+- Worker: `flask provisioning worker` (§6). `SimpleWorker` de RQ sin *fork*; cada vuelta barre la BD (vencidos y reservas vencidas) y trabaja hasta quedar ocioso `PROVISIONING_POLL_INTERVAL_SECONDS`. `SIGTERM`/`SIGINT`: termina el intento y sale.
+- Exige `REDIS_PASS` y `REDIS_HOST` como nombre de host; variables `PROVISIONING_*` validadas en `create_app()`.
+- API de ejecuciones y reintento manual: FNC-062. Unidad systemd: FNC-067.
 
 ### Login de directorio (`authenticate_user_ldap`, FNC-042)
 - Usa el cliente centralizado y `LDAP_*`; sin `LDAP_URL` el login de directorio falla siempre.
@@ -274,7 +291,14 @@ venv/bin/python run.py        # API en el puerto 5001
 ```
 
 - Con `DB_ENGINE=mysql` usa MySQL/MariaDB vía PyMySQL; con cualquier otro valor (o sin definir) usa **SQLite** en `nexus.db`.
-- Redis es opcional: si no responde, la app arranca igual.
+- Redis es opcional para la API: si no responde, la app arranca igual y los trabajos de aprovisionamiento esperan al worker.
+- **Worker de aprovisionamiento** (FNC-049), en otra terminal, con Redis local con contraseña:
+  ```bash
+  redis-server --requirepass "$REDIS_PASS"   # o el Redis del sistema con requirepass
+  # REDIS_HOST, REDIS_PORT y REDIS_PASS en el .env (REDIS_HOST: nombre de host, no IP)
+  FLASK_APP=run.py venv/bin/flask provisioning worker   # Ctrl+C: termina el intento y sale
+  ```
+  Sin `REDIS_PASS` o sin Redis, el comando sale con código 1 y el motivo.
 - El frontend se arranca aparte (ver `docs/frontend/README.md`); su `rewrite` reenvía `/api/*` y `/auth/*` a este backend.
 - Utilidades de mantenimiento en `utils/` (usan `create_app()`): `check_db.py`, `db_check.py`, `db_inspector.py`, `db_migrate.py`, `reset_admin.py`, `emergency_reset.py`, `seed_users.py`, `test_ldap.py`, `test_smtp.py`, `nexus_health.py`, `toggle_authelia.py` (edita el `.env` y la config de nginx).
 - **Pruebas** (FNC-019): suite pytest en `tests/`, sin `.env` ni servicios externos.
@@ -291,6 +315,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (SEG-05 y SEG-09 sin `xfail` desde FNC-044; queda el de FNC-015).
   - Roles y áreas administradas (FNC-044): `tests/users/test_roles_y_areas_administradas.py`.
   - Alta, edición y baja de áreas por el admin (FNC-045): `tests/areas/test_alta_y_baja_por_admin.py`.
+  - Ejecutor de aprovisionamiento (FNC-049): `tests/provisioning/` (encolado, reintentos, permanentes, reserva, idempotencia, saneo, proveedor LDAP sobre `MOCK_SYNC`, worker y comando). `conftest.py`: `cola_falsa` (cola RQ en el mismo proceso, como `is_async=False`, sin Redis), `proveedor_simulado`, `avisos`.
   - Plataformas (FNC-046): `tests/platforms/` (tipo, DN, derivación, avisos, 409, auditoría; regresión SEG-24).
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 4 `xfail` con su tarea (FNC-003, 006, 014); los 9 de FNC-002 y FNC-013 pasaron a pruebas normales en FNC-042.
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, variables=None, **config)` activa `LDAP_*` ficticias y conecta el cliente centralizado a `MOCK_SYNC` (personas, grupos, filtros recibidos); `config` crea `auth_config` (FNC-042).
@@ -341,7 +366,7 @@ Alembic 1.20.0 directo (ADR-002, FNC-039). Sin Flask-Migrate: `migrations/env.py
 
 ### Reglas para nuevas migraciones
 - Una migración por tarea, en su rama; `alembic check` vacío antes del commit.
-- Tablas nuevas de la fase 3 con prefijo `platform_access_*`; nunca `access_requests` (la borra 004).
+- Tablas nuevas de la fase 3 con prefijo `platform_access_*`; nunca `access_requests` (la borra 004). Excepción: `provisioning_jobs` y `provisioning_job_attempts` (0006, nombres de la ficha FNC-049).
 - Cada migración con `downgrade()` real; si es irreversible, se dice en su docstring.
 - Dos ramas con migraciones en paralelo: el integrador fusiona cabezas (`alembic merge heads`); la prueba `test_hay_una_sola_cabeza` lo exige.
 - Pruebas: `tests/test_migraciones.py` (upgrade sobre SQLite vacío = modelos, autogenerate vacío, downgrade a `base`, una sola cabeza).
