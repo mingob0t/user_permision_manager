@@ -105,3 +105,4 @@
 | DIS-022 | Configuración de conectores y bitácora de ejecuciones | web | 3 | configuracion-conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-071, FNC-061, FNC-062 |
 | DIS-023 | Ajustes: pestaña Directorio para OpenLDAP | web | 3 | configuracion-directorio | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-043; FNC-043 cambió la forma de `/auth-config` (ver bitácora): la pestaña actual queda rota hasta esta tarea |
 | DIS-024 | Inicio por rol | web | 3 | dashboard | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-071, FNC-066 |
+| DIS-025 | Navegación en móvil (el menú lateral está oculto bajo md) | web | 3 | navegacion | Alta | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-070 (deuda 8 del frontend) |

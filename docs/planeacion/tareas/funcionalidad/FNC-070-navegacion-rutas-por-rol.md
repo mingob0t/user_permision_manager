@@ -82,10 +82,20 @@ Salida real de `impacto.py` (contra `develop`):
 | `npm run build` | código 0; 18 páginas, incluye `/requests`, `/approvals`, `/inventory`, `/admin/connectors` |
 
 - No verificado: vista en navegador (tema claro/oscuro, móvil/escritorio) ni `auditor-accesibilidad`; solo se usan clases ya existentes (`text-2xl font-semibold`, `text-label`, `EmptyNote`, `ErrorNote`)
+- `auditor-accesibilidad` (modo cambio): Con observaciones. Estructura OK (un h1, aria-current, alert/status, sin inline ni literales); contraste falla en EmptyNote `text-label/60` (3.35 claro, 3.31 oscuro), ErrorNote `text-error` en claro (3.30) y entrada activa del menú `text-primary` sobre `bg-primary/15` (4.19 claro, 3.01 oscuro). Los tres son tokens/componentes preexistentes, no nuevos de FNC-070
 - Prueba de colores literales en verde: sin literales nuevos
 
+## Revisiones
+- `auditor-accesibilidad`: Con observaciones heredadas (3 fallas de contraste de componentes previos, anotadas en DIS-005, DIS-002 y DIS-001)
+- `revisor`: Requiere cambios, corregido:
+  - prueba intermitente: el caso permitido espera con `findByText` y `waitFor`; `npm test` 10/10 en serie y 4/4 en paralelo, código 0
+  - `NAV` ya no se exporta (nada lo importaba)
+  - DIS-013: anotado que el título del catálogo dice "Plataformas" y el menú "Catálogo"
+  - navegación en móvil registrada como DIS-025 (Propuesta)
+- Tras las correcciones: `npm test` (241 pasan, 88 fallas esperadas), `lint`, `typecheck` y `build`: código 0
+
 ## Commits / PR
-- Commit local `[FNC-070]` en `fnc/FNC-070-navegacion-por-rol`; sin push ni PR
+- `b608396` [FNC-070] implementación; segundo commit [FNC-070] con las correcciones de revisión; sin push ni PR
 
 ## Impacto cruzado
 - Genera → DIS-013 a DIS-024
@@ -100,3 +110,4 @@ Salida real de `impacto.py` (contra `develop`):
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-19 | Aprobada por el dueño (modo autónomo); implementada: `RequireRole`, `NAV` por rol y 4 rutas; pasa a En revisión |
+| 2026-10-19 | Correcciones de revisión (prueba estable, `NAV` sin export, notas en DIS-001/002/005/013, DIS-025); sigue En revisión |

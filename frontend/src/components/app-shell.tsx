@@ -16,7 +16,7 @@ interface NavItem {
 }
 
 /** Entradas por rol según la tabla de pantallas (REQUERIMIENTOS §4, FNC-070). */
-export const NAV: NavItem[] = [
+const NAV: NavItem[] = [
   { href: '/', label: 'Panel' },
   { href: '/platforms', label: 'Catálogo' },
   { href: '/requests', label: 'Mis solicitudes', requires: 'requester' },

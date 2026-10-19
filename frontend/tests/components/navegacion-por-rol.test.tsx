@@ -1,7 +1,7 @@
 /**
  * FNC-070: menú y guarda de ruta por rol (tabla de pantallas, REQUERIMIENTOS §4).
  */
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Session } from '@/lib/types';
@@ -101,8 +101,8 @@ describe('RequireRole', () => {
     await screen.findByRole('navigation', { name: 'Principal' });
 
     if (permitido) {
-      expect(screen.getByText('pantalla protegida')).toBeTruthy();
-      expect(llamadaApi).toHaveBeenCalledTimes(1);
+      expect(await screen.findByText('pantalla protegida')).toBeTruthy();
+      await waitFor(() => expect(llamadaApi).toHaveBeenCalledTimes(1));
     } else {
       expect(screen.getByRole('alert').textContent).toBe(FORBIDDEN_MESSAGE);
       expect(screen.queryByText('pantalla protegida')).toBeNull();

@@ -46,3 +46,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-19 | FNC-070 (auditor-accesibilidad): entrada activa del menú `text-primary` sobre `bg-primary/15` da 4.19 claro y 3.01 oscuro (< 4.5); se reutiliza en las rutas nuevas |
