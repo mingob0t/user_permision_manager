@@ -43,9 +43,10 @@
 | `identificador`, `derivar_dn`, `dn_en_base`, `comprobar_grupos` | Utilidad | `app/modules/platforms/grupos.py` | Grupos de plataforma: identificador ASCII, convención `LDAP_PLATFORM_GROUP_TEMPLATE`, base y existencia (FNC-046) | `platforms/api.py` |
 | `accesos_vigentes`, `tiene_conector` | Puntos de extensión | `app/modules/platforms/estado.py` | Hoy `0`/`False`; los implementan FNC-054 y FNC-050 | `core/models.py`, `platforms/api.py` |
 | `valor_de_membresia` | Utilidad | `app/modules/directory/ldap_client.py` | Valor del usuario en el atributo de membresía (DN o identificador) | `ldap_client.py`, `writer.py` |
-| `EscritorDirectorio`, `DatosCuenta`, `ResultadoEscritura`, `Resultado`, `clasificar_error` | Servicio | `app/modules/directory/writer.py`, `errors.py` | Única escritura en OpenLDAP (membresía y alta de cuentas), idempotente y con resultado tipificado | (sin llamadores hasta FNC-049/064) |
+| `EscritorDirectorio`, `DatosCuenta`, `ResultadoEscritura`, `Resultado`, `clasificar_error` | Servicio | `app/modules/directory/writer.py`, `errors.py` | Única escritura en OpenLDAP (membresía y alta de cuentas), idempotente y con resultado tipificado | `users/directory_accounts.py` (`create_user`; FNC-064) |
 | `cargar_configuracion`, `validar_al_arrancar` | Configuración | `app/modules/directory/configuracion.py` | Configuración del directorio desde `LDAP_*` (ADR-004) | `app/__init__.py`, `ldap_client.py` |
-| `correos_registrados` | Consulta | `app/modules/users/correos.py` | Qué correos (minúsculas) ya tienen cuenta en el portal (FNC-043) | `directory/api.py` |
+| `correo_en_directorio` | Consulta | `app/modules/directory/busqueda_correo.py` | Si un `mail` ya existe en la OU de personas (filtro escapado, sin datos en el log) (FNC-064) | `users/directory_accounts.py` |
+| `correos_registrados` | Consulta | `app/modules/users/correos.py` | Qué correos (minúsculas) ya tienen cuenta en el portal (FNC-043) | `directory/api.py`, `users/directory_accounts.py` (FNC-064) |
 | `configuracion_publica` | Serialización | `app/modules/directory/resumen.py` | Vista sin secretos de la configuración `LDAP_*` con su origen (FNC-043) | `directory/api.py` |
 | `construir_uri_bd` | Función | `app/utils/uri_bd.py` | URI de la BD desde `DB_*` | `app/__init__.py`, `migrations/env.py` |
 | `send_notification_by_slug` | Servicio | `app/modules/notifications/services.py` | Envío de correo por plantilla; escapa los valores en HTML y quita CR/LF del asunto (FNC-048) | auth, SSO |

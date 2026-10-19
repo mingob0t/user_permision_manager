@@ -177,6 +177,12 @@ def _nuevo_usuario(esc):
                      'area_ids': [esc.area_id]}}
 
 
+def _nueva_cuenta_directorio(esc):
+    return {'json': {'uid': 'ana.ruiz', 'email': 'ana.ruiz@pruebas.local',
+                     'given_name': 'Ana', 'surname': 'Ruiz',
+                     'area_ids': [esc.area_id]}}
+
+
 @dataclass(frozen=True)
 class Caso:
     metodo: str
@@ -278,6 +284,11 @@ CASOS = (
          solo_superadmin(),
          lambda esc: {'json': {'area_ids': [esc.area_id]}},
          nota='FNC-044: solo el superadmin asigna áreas administradas'),
+    Caso('POST', f'{A}/users/directory', _fija(f'{A}/users/directory'),
+         administradores(201), _nueva_cuenta_directorio,
+         _con_directorio_simulado,
+         nota='FNC-064 (P2): superadmin y admins (sus áreas) crean cuentas '
+              'en OpenLDAP'),
     Caso('PUT', f'{A}/me/preferences', _fija(f'{A}/me/preferences'),
          con_sesion(), _json({'tour_enabled': False})),
     Caso('GET', f'{A}/users/inactive', _fija(f'{A}/users/inactive'),
@@ -328,6 +339,7 @@ CASOS_400 = (
     ('POST', f'{A}/platforms', _json({'user_ids': []})),
     ('PUT', f'{A}/platforms/{{plataforma_id}}', _json({'visits': 0})),
     ('POST', f'{A}/users', _json({'email': ''})),
+    ('POST', f'{A}/users/directory', _json({'password': 'x'})),
     ('PUT', f'{A}/me/preferences', _json({'refresh_interval': 'no-numero'})),
     ('POST', f'{A}/users/purge', _json({'days': 'no-numero'})),
     ('PUT', f'{A}/settings', _json({'portal_identity_type': 'otro'})),

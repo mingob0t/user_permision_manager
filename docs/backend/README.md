@@ -34,13 +34,13 @@ app/
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
     │   └── helpers.py # error_response(), validation_error(), json_object(), is_id_list() y errores del contrato (FNC-044)
     ├── auth/          # Modelos User/AuthConfig (obsoleto) y login; rutas heredadas (redirigen/410)
-    ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
+    ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, busqueda_correo.py (FNC-064), api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
-    ├── users/         # api.py (managed-areas), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
+    ├── users/         # api.py (managed-areas, alta en directorio), directory_accounts.py (FNC-064), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
     └── areas/         # api.py, validacion.py, baja.py (FNC-045); routes.py heredadas
 alembic.ini            # Configuración de Alembic (sin URL ni secretos)
 migrations/
@@ -147,6 +147,7 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
 | `PUT /users/<id>/managed-areas` | `admin_required` | Reemplaza `area_admins` de un `admin_area` con `{"area_ids": [...]}` (0–50, existentes, sin repetidos; si no → `422 validacion`). Destino sin rol `admin_area` → `409 rol_no_admin`. Audita `admin_asignado`/`admin_retirado` por área en la misma transacción. Responde `{"status": "success", "user": ManagedUser}`. |
+| `POST /users/directory` | `any_admin_required`; admin solo sus áreas | FNC-064, contrato `usuarios-directorio.md`. Lista blanca `uid`, `email`, `given_name`, `surname`, `area_ids` (otro, incluido `password` o `role` → `400 campo_no_permitido`). Admin: `area_ids` 1–50 de sus áreas (ajena o inexistente → `404`); superadmin: cualquiera o vacío. `422 validacion` por campo (correo ≤ 120, la columna). Duplicados: uid en el directorio, reservado o cuenta heredada → `409 uid_duplicado`; correo en el portal o en el directorio → `409 correo_duplicado`. Crea la entrada sin contraseña (`EscritorDirectorio.create_user`) y después la cuenta `usuario` `auth_source=ldap` sin `password_hash`; fallo del directorio (o sin configurar) → `503 directorio_no_disponible` sin tocar la BD; fallo parcial (BD) → `500 error_interno`, rollback y la persona se registra en su primer acceso. Audita `cuenta_directorio_creada` (éxito en la misma transacción; fallos `error`/`warning`). Responde `201 {"status": "success", "user": ManagedUser}`. |
 
 ### 4.3.2 Áreas — `app/modules/areas/api.py` (`/api/v1`, FNC-045)
 
@@ -291,6 +292,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/test_proteccion_por_rol.py`: matriz ruta × rol (401/403/2xx), entradas inválidas (400) y RF-04 (sin `xfail` desde FNC-044).
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (SEG-05 y SEG-09 sin `xfail` desde FNC-044; queda el de FNC-015).
   - Roles y áreas administradas (FNC-044): `tests/users/test_roles_y_areas_administradas.py`.
+  - Alta de cuentas en OpenLDAP (FNC-064): `tests/users/test_alta_directorio.py` (directorio simulado de `tests/directorio_falso.py`).
   - Contraseñas locales y cuenta de emergencia (FNC-077): `tests/users/test_contrasenas_locales.py`; `peticiones_auth.activar_login_local_de_todas(monkeypatch, entorno)`.
   - Alta, edición y baja de áreas por el admin (FNC-045): `tests/areas/test_alta_y_baja_por_admin.py`.
   - Plataformas (FNC-046): `tests/platforms/` (tipo, DN, derivación, avisos, 409, auditoría; regresión SEG-24).
