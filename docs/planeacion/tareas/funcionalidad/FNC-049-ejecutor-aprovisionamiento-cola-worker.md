@@ -13,7 +13,7 @@
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push (worktree `pokemon-wt-049`) |
 | **Rama** | `fnc/FNC-049-ejecutor-aprovisionamiento` |
-| **Commits / PR** | `7709a09` [FNC-049] (local, sin push ni PR) + commit de registro del hash |
+| **Commits / PR** | `7709a09`, `305e028` y `69dafb5` (correcciones de la revisión) [FNC-049], locales, sin push ni PR |
 | **Requiere migración BD** | Sí (tablas de ejecuciones e intentos) |
 | **Requiere auditor-seguridad** | Sí (ejecución privilegiada en segundo plano) |
 
@@ -138,7 +138,7 @@
 | `venv/bin/python -m pytest -q -p no:cacheprovider` (completo, commit `7709a09`) | 1019 passed, 17 xfailed, código 0 (795 s) |
 | Regresiones de la revisión **antes** de corregir | `test_versionado.py` 1 failed (`config.py` ignorado); `test_mensajes_rq.py` 9 failed, 1 passed; `test_orden_y_reserva.py` 5 failed, 1 passed (el que pasa es de no regresión); exactitud por `mail` 3 failed; tiempo corto de despertar 1 failed |
 | `venv/bin/python -m pytest tests/provisioning -q` (tras corregir) | 96 passed |
-| `git ls-files app/modules/provisioning` | los 15 `.py` del módulo, incluido `configuracion.py` |
+| `git ls-files app/modules/provisioning` | los 14 `.py` del módulo (todos los del disco), incluido `configuracion.py` |
 | `venv/bin/python -m pytest -q -p no:cacheprovider` (completo, tras la revisión) | 1040 passed, 17 xfailed, código 0 (449 s; una corrida previa dio 1 failed en `test_el_catalogo_coincide_con_el_contrato` por editar `auditoria.md` durante la corrida: 10 passed al repetirla) |
 - Implementación inicial sin regresiones (código nuevo); cada defecto de la revisión tiene su regresión, que falló antes de corregir (fila de arriba)
 - No verificado: Redis real y un worker RQ real (las pruebas usan la cola en el mismo proceso, sin servicios); el `job_timeout` de RQ por señal (se probó la excepción `JobTimeoutException`, no la alarma); OpenLDAP real (solo `ldap3` `MOCK_SYNC`); MySQL real para 0006 (solo SQLite); `SIGTERM` real durante un intento
