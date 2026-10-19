@@ -22,6 +22,7 @@
 - Menú por rol del gestor de accesos (Mis solicitudes, Aprobaciones, Inventario, Conectores; Plataformas pasa a Catálogo), guarda `RequireRole` y rutas reservadas (FNC-070, 2026-10-19).
 - Pruebas del frontend con Vitest (`npm test`): cliente de la API, `AuditLog`, contraste WCAG de los tokens y tope de colores literales (FNC-025, 2026-10-13).
 - Plataformas con tipo de integración (`ldap`/`conector`) y grupos del directorio por nivel validados bajo `LDAP_GROUPS_BASE_DN`; URLs solo `https://` (corrige SEG-24 en el backend); migración `0005` (FNC-046, 2026-10-19).
+- Pantalla de áreas: el admin de área da de alta y gestiona las suyas; el superadmin asigna sus administradores; errores por campo y mensajes de los `409` (DIS-016, 2026-10-19).
 - Formulario de plataformas con tipo de integración y grupos de acceso por nivel (solo superadmin), avisos tras guardar, errores por campo y de los `403`/`409`; la tarjeta y la tabla solo enlazan `https://` (corrige SEG-24 en el frontend) (DIS-017, 2026-10-19).
 
 ### Corregido

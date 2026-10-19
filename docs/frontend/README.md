@@ -37,7 +37,7 @@ frontend/src/
 | `/favorites` | `FavoritesList` | Plataformas marcadas como favoritas. | Todos |
 | `/notifications` | `NotificationsList` | Notificaciones in-app: marcar leídas y borrar. | Todos |
 | `/admin/platforms` | `PlatformAdmin` | Crear, editar y eliminar plataformas con tipo de integración; grupos de acceso por nivel solo para el superadmin; avisos tras guardar (DIS-017). Guarda `any_admin`. | `administrador`, `admin_area` |
-| `/areas` | `AreasList` | Áreas visibles; el superadmin crea/edita/borra y gestiona miembros. | `administrador`, `admin_area` |
+| `/areas` | `AreasList` | Áreas visibles; superadmin y admin de área crean; cada uno edita y borra las que gestiona; el superadmin asigna administradores (`areas/area-admins-panel.tsx`). Guarda `any_admin`. | `administrador`, `admin_area` |
 | `/users` | `UsersList` | Alta, edición y baja de usuarios; asignación de áreas y plataformas; búsqueda en el directorio; usuarios inactivos y purga (superadmin). | `administrador`, `admin_area` |
 | `/audit` | `AuditLog` | Registros de auditoría dentro del alcance del usuario. | Todos |
 | `/settings` | `SettingsPanel` | Pestañas: Portal, Correo (SMTP), Plantillas, Directorio (LDAP), Respaldo — solo superadmin —, y Mis preferencias para todos. | Todos |
@@ -60,7 +60,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | Conectores | No | No | Sí |
 
 - Guarda de ruta: `<RequireRole requires="…">` muestra "sin permiso" (`ErrorNote`) y no monta la pantalla, así que no llama a la API
-- Hoy la usan `/requests`, `/approvals`, `/admin/connectors` y `PlatformAdmin` (`any_admin`, DIS-017); las demás rutas previas no la usan
+- Hoy la usan `/requests`, `/approvals`, `/admin/connectors`, `/areas` (dentro de `AreasList`, DIS-016) y `PlatformAdmin` (`any_admin`, DIS-017); las demás rutas previas no la usan
 - Dentro de Ajustes, las pestañas de sistema solo se muestran a `administrador`. Ocultar en la interfaz no protege: el backend vuelve a validar cada endpoint.
 
 ## 4. Componentes principales
@@ -74,6 +74,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). |
 | `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace (solo `https://`, `enlaceSeguro`). |
 | `PlatformForm`, `PlatformIntegrationFields`, `PlatformSaveNotice`, `field-notes`, `platform-payload`, `platform-save-errors` | `platforms/` | Formulario, sección Integración, aviso con `warnings` (región `status`), errores por campo con `aria-describedby` y foco, validación y cuerpo por rol (DIS-017). |
+| `AreaForm`, `AreaAdminsPanel`, `mensajeDeError` | `areas/` | Alta/edición de área con errores por campo; administradores del área (superadmin); mensajes del contrato `areas-y-roles.md` (DIS-016). |
 | Pantallas | `dashboard.tsx`, `platform-catalog.tsx`, `favorites-list.tsx`, `notifications-list.tsx`, `platform-admin.tsx`, `areas-list.tsx`, `users-list.tsx`, `audit-log.tsx`, `settings-panel.tsx`, `login-form.tsx`, `logout-view.tsx` | Una por ruta. `settings-panel.tsx` (745 líneas) y `users-list.tsx` (581) concentran varias responsabilidades. |
 
 ## 5. Cliente de la API (`src/lib/api.ts`)
@@ -112,7 +113,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 
 - Plataformas y áreas v1: `api.createPlatform`/`updatePlatform`/`createArea`… de `api.ts` (sin duplicar)
 - Simulados: `NEXT_PUBLIC_ACCESS_MOCKS=1 npm run dev`; ignorados en producción; pendientes de integración
-- Pruebas: `tests/lib/access/` (forma por endpoint, errores 401/403/409/422/500, bandera) y `tests/components/users-list.test.tsx`
+- Pruebas: `tests/lib/access/` (forma por endpoint, errores 401/403/409/422/500, bandera), `tests/components/users-list.test.tsx` y `tests/components/areas-list.test.tsx` (DIS-016)
 
 ## 6. Estilos, tokens y tema
 
