@@ -73,7 +73,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | `Card`, `PanelHeader`, `StatTile`, `Spinner`, `ErrorNote`, `EmptyNote`, `Badge` | `ui.tsx` | Piezas base con clases del portal original (estados de carga, vacío y error). |
 | `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). |
 | `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace (solo `https://`, `enlaceSeguro`). |
-| `PlatformIntegrationFields`, `PlatformSaveNotice`, `describeSaveError` | `platforms/` | Sección Integración, aviso de guardado con `warnings` y errores de `POST/PUT /platforms` (DIS-017). |
+| `PlatformForm`, `PlatformIntegrationFields`, `PlatformSaveNotice`, `field-notes`, `platform-payload`, `platform-save-errors` | `platforms/` | Formulario, sección Integración, aviso con `warnings` (región `status`), errores por campo con `aria-describedby` y foco, validación y cuerpo por rol (DIS-017). |
 | Pantallas | `dashboard.tsx`, `platform-catalog.tsx`, `favorites-list.tsx`, `notifications-list.tsx`, `platform-admin.tsx`, `areas-list.tsx`, `users-list.tsx`, `audit-log.tsx`, `settings-panel.tsx`, `login-form.tsx`, `logout-view.tsx` | Una por ruta. `settings-panel.tsx` (745 líneas) y `users-list.tsx` (581) concentran varias responsabilidades. |
 
 ## 5. Cliente de la API (`src/lib/api.ts`)

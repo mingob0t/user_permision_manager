@@ -62,3 +62,16 @@ export function describeSaveError(err: unknown): SaveErrorView {
   }
   return { message: err.message || MENSAJE_GENERICO, fields: {} };
 }
+
+/** Mensajes fijos de `DELETE /platforms/<id>` por estado (sin detalles del servidor). */
+const MENSAJES_BAJA: Record<number, string> = {
+  403: 'No tienes permiso para eliminar esta plataforma.',
+  404: 'La plataforma ya no existe o no está en tu alcance. Recarga la lista.',
+  409: 'No se puede eliminar una plataforma con accesos vigentes.',
+};
+const MENSAJE_BAJA_GENERICO = 'No se pudo eliminar la plataforma.';
+
+export function describeDeleteError(err: unknown): string {
+  if (err instanceof ApiError) return MENSAJES_BAJA[err.status] ?? MENSAJE_BAJA_GENERICO;
+  return MENSAJE_BAJA_GENERICO;
+}

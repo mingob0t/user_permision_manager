@@ -13,7 +13,7 @@
 import Link from 'next/link';
 import type { IntegrationType } from '@/lib/types';
 import { Field, Select, TextInput } from '../form';
-import { ErrorNote } from '../ui';
+import { describedBy, FieldErrorNote, FieldHint } from './field-notes';
 
 /** Valores de la sección; `''` = sin elegir (alta) o sin cambiar (edición). */
 export interface IntegrationValue {
@@ -33,12 +33,17 @@ const RUTA_CONECTORES = '/admin/connectors';
 /** Largo máximo de un DN (columna del backend, `LARGO_DN`). */
 const LARGO_DN = 512;
 
+/** Ids de los controles (un solo formulario montado a la vez). */
+export const INTEGRATION_IDS = {
+  integration_type: 'platform-integration-type',
+  ldap_group_user_dn: 'platform-dn-user',
+  ldap_group_admin_dn: 'platform-dn-admin',
+} as const;
+/** Nota "con accesos vigentes": también la describe el campo Área. */
+export const LOCKED_NOTE_ID = 'platform-locked-note';
+
 export function etiquetaTipo(tipo: IntegrationType | '' | undefined | null): string {
   return TIPOS_INTEGRACION.find((t) => t.value === tipo)?.label ?? 'Sin dato';
-}
-
-function FieldErrorNote({ message }: { message?: string }) {
-  return message ? <ErrorNote message={message} /> : null;
 }
 
 export function PlatformIntegrationFields({
@@ -66,6 +71,8 @@ export function PlatformIntegrationFields({
   const vacioDn = isEdit
     ? 'Vacío: se conserva el grupo actual.'
     : 'Vacío: se genera con la convención del directorio.';
+  const ids = INTEGRATION_IDS;
+  const nota: [string, unknown] = [LOCKED_NOTE_ID, locked];
 
   return (
     <section aria-labelledby="integracion-titulo" className="space-y-5 border-t border-panel-border pt-5">
@@ -77,35 +84,40 @@ export function PlatformIntegrationFields({
       </h3>
 
       {locked ? (
-        <p className="text-sm font-bold text-label" role="note">
+        <p id={LOCKED_NOTE_ID} className="text-sm font-bold text-label">
           Tiene {activeGrants} {activeGrants === 1 ? 'acceso vigente' : 'accesos vigentes'}: no se
           puede cambiar el tipo, los grupos ni el área.
         </p>
       ) : null}
 
       {canChooseType ? (
-        <Field
-          label="Tipo de integración"
-          hint="Cómo se da el acceso: con grupos del directorio (quien está en el grupo entra) o con un conector que crea la cuenta en la plataforma."
-        >
-          <Select
-            value={value.integration_type}
-            disabled={locked}
-            aria-invalid={errors.integration_type ? true : undefined}
-            onChange={(e) =>
-              onChange({ integration_type: e.target.value as IntegrationType | '' })}
-          >
-            <option value="">
-              {isEdit ? `Sin cambiar (${etiquetaTipo(currentType)})` : 'Selecciona un tipo'}
-            </option>
-            {TIPOS_INTEGRACION.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
+        <div>
+          <Field label="Tipo de integración">
+            <Select
+              id={ids.integration_type}
+              value={value.integration_type}
+              disabled={locked}
+              {...describedBy([`${ids.integration_type}-error`, errors.integration_type],
+                [`${ids.integration_type}-hint`, true], nota)}
+              onChange={(e) =>
+                onChange({ integration_type: e.target.value as IntegrationType | '' })}
+            >
+              <option value="">
+                {isEdit ? `Sin cambiar (${etiquetaTipo(currentType)})` : 'Selecciona un tipo'}
               </option>
-            ))}
-          </Select>
-          <FieldErrorNote message={errors.integration_type} />
-        </Field>
+              {TIPOS_INTEGRACION.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <FieldHint id={`${ids.integration_type}-hint`}>
+            Cómo se da el acceso: con grupos del directorio (quien está en el grupo entra) o con un
+            conector que crea la cuenta en la plataforma.
+          </FieldHint>
+          <FieldErrorNote id={`${ids.integration_type}-error`} message={errors.integration_type} />
+        </div>
       ) : (
         <div>
           <p className="text-sm font-bold text-body-text">
@@ -119,38 +131,48 @@ export function PlatformIntegrationFields({
 
       {tipo === 'ldap' && isSuperadmin ? (
         <>
-          <Field
-            label="Grupo de acceso: nivel usuario"
-            hint={`Quien esté en este grupo del directorio entra con nivel usuario. Escribe su DN, por ejemplo ${EJEMPLO_DN}. ${vacioDn}`}
-          >
-            <TextInput
-              value={value.ldap_group_user_dn}
-              disabled={locked}
-              maxLength={LARGO_DN}
-              autoComplete="off"
-              spellCheck={false}
-              aria-invalid={errors.ldap_group_user_dn ? true : undefined}
-              onChange={(e) => onChange({ ldap_group_user_dn: e.target.value })}
-              placeholder="cn=…,ou=plataformas,dc=…"
-            />
-            <FieldErrorNote message={errors.ldap_group_user_dn} />
-          </Field>
-          <Field
-            label="Grupo de acceso: nivel admin"
-            hint={`Quien esté en este grupo entra con nivel admin. Debe ser distinto del de nivel usuario. ${vacioDn}`}
-          >
-            <TextInput
-              value={value.ldap_group_admin_dn}
-              disabled={locked}
-              maxLength={LARGO_DN}
-              autoComplete="off"
-              spellCheck={false}
-              aria-invalid={errors.ldap_group_admin_dn ? true : undefined}
-              onChange={(e) => onChange({ ldap_group_admin_dn: e.target.value })}
-              placeholder="cn=…,ou=plataformas,dc=…"
-            />
-            <FieldErrorNote message={errors.ldap_group_admin_dn} />
-          </Field>
+          <div>
+            <Field label="Grupo de acceso: nivel usuario">
+              <TextInput
+                id={ids.ldap_group_user_dn}
+                value={value.ldap_group_user_dn}
+                disabled={locked}
+                maxLength={LARGO_DN}
+                autoComplete="off"
+                spellCheck={false}
+                {...describedBy([`${ids.ldap_group_user_dn}-error`, errors.ldap_group_user_dn],
+                  [`${ids.ldap_group_user_dn}-hint`, true], nota)}
+                onChange={(e) => onChange({ ldap_group_user_dn: e.target.value })}
+                placeholder="cn=…,ou=plataformas,dc=…"
+              />
+            </Field>
+            <FieldHint id={`${ids.ldap_group_user_dn}-hint`}>
+              Quien esté en este grupo del directorio entra con nivel usuario. Escribe su DN, por
+              ejemplo {EJEMPLO_DN}. {vacioDn}
+            </FieldHint>
+            <FieldErrorNote id={`${ids.ldap_group_user_dn}-error`} message={errors.ldap_group_user_dn} />
+          </div>
+          <div>
+            <Field label="Grupo de acceso: nivel admin">
+              <TextInput
+                id={ids.ldap_group_admin_dn}
+                value={value.ldap_group_admin_dn}
+                disabled={locked}
+                maxLength={LARGO_DN}
+                autoComplete="off"
+                spellCheck={false}
+                {...describedBy([`${ids.ldap_group_admin_dn}-error`, errors.ldap_group_admin_dn],
+                  [`${ids.ldap_group_admin_dn}-hint`, true], nota)}
+                onChange={(e) => onChange({ ldap_group_admin_dn: e.target.value })}
+                placeholder="cn=…,ou=plataformas,dc=…"
+              />
+            </Field>
+            <FieldHint id={`${ids.ldap_group_admin_dn}-hint`}>
+              Quien esté en este grupo entra con nivel admin. Debe ser distinto del de nivel
+              usuario. {vacioDn}
+            </FieldHint>
+            <FieldErrorNote id={`${ids.ldap_group_admin_dn}-error`} message={errors.ldap_group_admin_dn} />
+          </div>
         </>
       ) : null}
 

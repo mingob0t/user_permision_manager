@@ -8,7 +8,7 @@
 
 const ESQUEMA_PERMITIDO = 'https:';
 
-/** El enlace si es `https://` válido; si no, `null`. */
+/** El enlace normalizado (`URL.href`) si es `https://` válido; si no, `null`. */
 export function enlaceSeguro(url: string | null | undefined): string | null {
   if (!url) return null;
   const valor = url.trim();
@@ -17,7 +17,7 @@ export function enlaceSeguro(url: string | null | undefined): string | null {
     const partes = new URL(valor);
     if (partes.protocol !== ESQUEMA_PERMITIDO || !partes.hostname) return null;
     if (partes.username || partes.password) return null;
-    return valor;
+    return partes.href;
   } catch {
     return null;
   }

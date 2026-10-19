@@ -47,3 +47,4 @@ _Se completa al aprobar la tarea._
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-19 | FNC-070 (auditor-accesibilidad): entrada activa del menú `text-primary` sobre `bg-primary/15` da 4.19 claro y 3.01 oscuro (< 4.5); se reutiliza en las rutas nuevas |
+| 2026-10-19 | DIS-017 (auditor-accesibilidad): `nx-badge-warning` del aviso de guardado y "Sin enlace" en temas oscuros; `text-primary` del botón Editar en oscuro; heredado, no corregido en DIS-017 |

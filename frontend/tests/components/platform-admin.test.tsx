@@ -91,6 +91,9 @@ describe('PlatformAdmin: alta por rol', () => {
     expect(enviado).toMatchObject({ name: 'Nueva', description: 'Descripción', area_id: 3, integration_type: 'ldap' });
     expect(enviado).not.toHaveProperty('ldap_group_user_dn');
     expect(enviado).not.toHaveProperty('ldap_group_admin_dn');
+    // Sin color elegido no se envía: el servidor aplica el suyo por omisión.
+    expect(enviado).not.toHaveProperty('bg_color');
+    expect(enviado).not.toHaveProperty('text_color');
   });
 
   it('superadmin: ve los grupos por nivel y los envía', async () => {
@@ -266,3 +269,93 @@ describe('PlatformAdmin: avisos y estados', () => {
     expect(api.platforms).not.toHaveBeenCalled();
   });
 });
+
+describe('PlatformAdmin: accesibilidad (revisión de DIS-017)', () => {
+  function descripcionDe(control: HTMLElement) {
+    return (control.getAttribute('aria-describedby') ?? '').split(' ')
+      .map((id) => document.getElementById(id)?.textContent ?? '').join(' ');
+  }
+
+  it('errores por campo y pistas ligados al control con aria-describedby', async () => {
+    comoSuperadmin();
+    const modal = await abrirAlta();
+    fireEvent.change(modal.getByLabelText(/^Nombre/), { target: { value: '' } });
+    fireEvent.change(modal.getByLabelText(/^Tipo de integración/), { target: { value: 'ldap' } });
+    fireEvent.change(modal.getByLabelText(/^Enlace/), { target: { value: 'http://x.ejemplo.local' } });
+    fireEvent.click(modal.getByText('Guardar'));
+    const nombre = await modal.findByLabelText(/^Nombre/);
+    expect(descripcionDe(nombre)).toContain('El nombre debe tener entre 2 y 100 caracteres.');
+    const enlace = modal.getByLabelText(/^Enlace/);
+    expect(descripcionDe(enlace)).toContain('Usa una dirección https://.');
+    expect(descripcionDe(enlace)).toContain('Dirección https://');
+    expect(descripcionDe(modal.getByLabelText(/^Tipo de integración/))).toContain('Cómo se da el acceso');
+    expect(descripcionDe(modal.getByLabelText(/^Grupo de acceso: nivel usuario/))).toContain('nivel usuario');
+  });
+
+  it('nota de campos deshabilitados por aria-describedby', async () => {
+    comoSuperadmin();
+    vi.mocked(api.platforms).mockResolvedValue([{ ...PLATAFORMA, integration_type: 'ldap', active_grants: 2 }]);
+    render(<PlatformAdmin />);
+    fireEvent.click(await screen.findByText('Editar'));
+    const modal = dialogo();
+    expect(descripcionDe(modal.getByLabelText(/^Tipo de integración/))).toMatch(/accesos vigentes/);
+    expect(descripcionDe(modal.getByLabelText(/^Área/))).toMatch(/accesos vigentes/);
+  });
+
+  it('la región de estado está montada antes de guardar', async () => {
+    render(<PlatformAdmin />);
+    await screen.findByText('Contabilidad');
+    const region = screen.getByRole('status');
+    expect(region.textContent).toBe('');
+    fireEvent.click(screen.getByText('Nueva plataforma'));
+    const modal = dialogo();
+    fireEvent.change(modal.getByLabelText(/^Nombre/), { target: { value: 'Nueva' } });
+    fireEvent.change(modal.getByLabelText(/^Descripción/), { target: { value: 'D' } });
+    fireEvent.change(modal.getByLabelText(/^Tipo de integración/), { target: { value: 'conector' } });
+    fireEvent.click(modal.getByText('Guardar'));
+    await waitFor(() => expect(region.textContent).toContain('Se guardó'));
+  });
+
+  it('foco: al primer campo con error, al disparador al cancelar y al aviso al guardar', async () => {
+    render(<PlatformAdmin />);
+    await screen.findByText('Contabilidad');
+    const nueva = screen.getByText('Nueva plataforma');
+    nueva.focus();
+    fireEvent.click(nueva);
+    fireEvent.click(dialogo().getByText('Guardar'));
+    await waitFor(() => expect(document.activeElement).toBe(dialogo().getByLabelText(/^Nombre/)));
+    fireEvent.click(dialogo().getByText('Cancelar'));
+    await waitFor(() => expect(document.activeElement).toBe(nueva));
+
+    const modal = await abrirAltaSinRender();
+    fireEvent.change(modal.getByLabelText(/^Tipo de integración/), { target: { value: 'conector' } });
+    fireEvent.click(modal.getByText('Guardar'));
+    const aviso = await screen.findByText(/Se guardó/);
+    await waitFor(() => expect(aviso.closest('[tabindex="-1"]')).toBe(document.activeElement));
+  });
+
+  it('Editar y Eliminar con el nombre de la plataforma', async () => {
+    render(<PlatformAdmin />);
+    expect(await screen.findByRole('button', { name: 'Editar Contabilidad' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Eliminar Contabilidad' })).toBeTruthy();
+  });
+
+  it.each([
+    [404, 'La plataforma ya no existe o no está en tu alcance. Recarga la lista.'],
+    [409, 'No se puede eliminar una plataforma con accesos vigentes.'],
+  ])('error %s al eliminar: mensaje fijo', async (status, mensaje) => {
+    vi.mocked(api.deletePlatform).mockRejectedValue(new ApiError(status, 'detalle interno', { code: 'x' }));
+    render(<PlatformAdmin />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Eliminar Contabilidad' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByText('Eliminar'));
+    expect(await screen.findByText(mensaje)).toBeTruthy();
+  });
+});
+
+async function abrirAltaSinRender() {
+  fireEvent.click(screen.getByText('Nueva plataforma'));
+  const modal = within(screen.getByRole('dialog'));
+  fireEvent.change(modal.getByLabelText(/^Nombre/), { target: { value: 'Nueva' } });
+  fireEvent.change(modal.getByLabelText(/^Descripción/), { target: { value: 'Descripción' } });
+  return modal;
+}

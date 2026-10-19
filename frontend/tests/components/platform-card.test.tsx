@@ -21,7 +21,7 @@ afterEach(() => cleanup());
 describe('PlatformCard: SEG-24', () => {
   it('https: es un enlace', () => {
     render(<PlatformCard platform={{ ...BASE, direct_link: 'https://wiki.ejemplo.local' }} />);
-    expect(screen.getByRole('link').getAttribute('href')).toBe('https://wiki.ejemplo.local');
+    expect(screen.getByRole('link').getAttribute('href')).toBe('https://wiki.ejemplo.local/');
   });
 
   it.each(['javascript:alert(1)', 'http://wiki.ejemplo.local', 'data:text/html,x'])(
@@ -35,7 +35,7 @@ describe('PlatformCard: SEG-24', () => {
 describe('enlaceSeguro', () => {
   it.each([
     ['https://a.ejemplo.local/x', 'https://a.ejemplo.local/x'],
-    ['  https://a.ejemplo.local  ', 'https://a.ejemplo.local'],
+    ['  https://a.ejemplo.local  ', 'https://a.ejemplo.local/'],
     ['https://user:pw@a.ejemplo.local', null],
     ['HTTP://a.ejemplo.local', null],
     ['https:// a.ejemplo.local', null],
@@ -43,5 +43,11 @@ describe('enlaceSeguro', () => {
     [null, null],
   ])('%s → %s', (entrada, esperado) => {
     expect(enlaceSeguro(entrada)).toBe(esperado);
+  });
+});
+
+describe('enlaceSeguro: normalizado (auditor-seguridad)', () => {
+  it('devuelve el href normalizado, no el texto crudo', () => {
+    expect(enlaceSeguro('https://A.Ejemplo.LOCAL')).toBe('https://a.ejemplo.local/');
   });
 });
