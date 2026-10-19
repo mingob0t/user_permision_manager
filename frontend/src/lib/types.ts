@@ -56,6 +56,25 @@ export interface Platform {
   status: string;
   visits: number;
   is_favorite: boolean;
+  // Campos del contrato v1 (plataformas-integracion.md, FNC-046).
+  integration_type: IntegrationType;
+  /** Grupo del nivel `usuario`; null solo si `conector`. */
+  ldap_group_user_dn: string | null;
+  /** Grupo del nivel `admin`; null solo si `conector`. */
+  ldap_group_admin_dn: string | null;
+  groups_status: 'ok' | 'no_existe' | 'sin_verificar';
+  has_connector: boolean;
+  /** Accesos vigentes (accesos.md). */
+  active_grants: number;
+}
+
+/** Cómo se aprovisiona el acceso a una plataforma (contrato v1). */
+export type IntegrationType = 'ldap' | 'conector';
+
+/** Aviso no bloqueante de una escritura de plataforma (`warnings`). */
+export interface PlatformWarning {
+  code: string;
+  message: string;
 }
 
 export interface ManagedUser {
@@ -167,18 +186,27 @@ export interface PlatformInput {
   bg_color?: string;
   text_color?: string;
   status?: string;
+  /** Obligatorio en `POST /platforms`, igual que `name`, `description` y `area_id`. */
+  integration_type?: IntegrationType;
+  /** Solo superadmin (`403 dn_solo_superadmin` para un admin de área). */
+  ldap_group_user_dn?: string;
+  /** Solo superadmin. */
+  ldap_group_admin_dn?: string;
 }
 
-/** Campos editables de un usuario. */
+/**
+ * Campos editables de un usuario (`POST /users`, `PUT /users/<id>`).
+ * Sin `auth_source` ni `managed_area_ids`: el backend responde
+ * `400 campo_no_permitido` (FNC-044). Las áreas administradas van por
+ * `setManagedAreas` (`lib/access/users.ts`).
+ */
 export interface UserInput {
   email?: string;
   name?: string;
   role?: Role;
   password?: string;
   is_active?: boolean;
-  auth_source?: string;
   area_ids?: number[];
-  managed_area_ids?: number[];
 }
 
 export interface AuthContext {
