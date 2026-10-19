@@ -113,6 +113,8 @@
 | `venv/bin/pytest -q -p no:warnings` (completo) | 812 passed, 17 xfailed, código 0; 0 XPASS |
 | Revisión: `venv/bin/pytest -q -p no:warnings tests/areas` antes de corregir | 4 failed, 45 passed, código 1 |
 | Revisión: `venv/bin/pytest -q -p no:warnings` (completo) | 818 passed, 17 xfailed, código 0 |
+| Ajuste dialecto: prueba `desligar` antes de corregir | 1 failed (`mysql`), 1 passed, código 1 |
+| Ajuste dialecto: `venv/bin/pytest -q -p no:warnings` (completo) | 820 passed, 17 xfailed, código 0 |
 
 - Criterios: alta por `admin_area` con área en sus administradas, usuario 403, duplicado 409 (también sin distinguir mayúsculas), comunes backend: probados
 - Matriz: `POST /areas` y `DELETE /areas/<id>` del admin de área pasan de 403 a 201/200
@@ -121,10 +123,11 @@
 ## Revisión (2026-10-18)
 - `auditor-seguridad`: **Aprobado** con 3 Baja. 1) Auditoría ligada a un id de área reutilizado (SQLite sin FK): corregido, `desligar_auditoria` pone `area_id` en NULL en la misma transacción. 2) Carrera de nombre duplicado (500): corregido, `IntegrityError` → rollback y `409 area_duplicada`. 3) Sin tope de altas por admin: queda como observación
 - `revisor`: **Requiere cambios** (faltaba seguridad). Atendido: 409 con otros admins, prueba de rollback de PUT
+- Ajuste del orquestador: `desligar_auditoria` solo corre en SQLite; en MySQL confía en la FK `ON DELETE SET NULL` porque con FNC-075 la app solo tendrá INSERT/SELECT en `audit_logs` y el UPDATE fallaría. Prueba con conexión doble (`mysql` → 0 UPDATE, `sqlite` → 1)
 - Regresiones nuevas: 4 fallaban antes de corregir (otros admins, id reutilizado, carrera en POST y PUT); la de rollback de PUT ya pasaba (cobertura)
 
 ## Commits / PR
-- Rama `fnc/FNC-045-areas-por-admin`; commit local `0bd558d` (implementación) + commit `[FNC-045]` de correcciones de la revisión. Sin push ni PR
+- Rama `fnc/FNC-045-areas-por-admin`; commit local `0bd558d` (implementación) + commits `[FNC-045]` de correcciones de la revisión y del ajuste por dialecto. Sin push ni PR
 
 ## Bitácora
 | Fecha | Nota |
@@ -132,3 +135,4 @@
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-18 | Aprobada por el dueño (modo autónomo, vía orquestador); implementada por desarrollador en `pokemon-wt-045`. En revisión (faltan `revisor` y `auditor-seguridad`) |
 | 2026-10-18 | `auditor-seguridad` Aprobado (3 Baja: 2 corregidas, tope de altas como observación); `revisor` Requiere cambios. Corregido en commit nuevo; 818 passed, 17 xfailed. Sigue En revisión |
+| 2026-10-18 | Ajuste: desligar la auditoría solo en SQLite (FNC-075 en MySQL). Sigue En revisión |

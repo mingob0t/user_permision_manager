@@ -10,6 +10,9 @@ from app.modules.api.helpers import (AREA_CON_ACCESOS, AREA_CON_OTROS_ADMINS,
                                      AREA_CON_PLATAFORMAS)
 from app.modules.audit.models import AuditLog
 
+# Dialecto donde la FK `ON DELETE SET NULL` de `audit_logs` no se aplica.
+DIALECTO_SIN_FK = 'sqlite'
+
 
 def tiene_accesos_vigentes(area):
     """True si alguna cuenta alcanza el área.
@@ -52,6 +55,10 @@ def desligar_auditoria(area):
     rechaza `UPDATE` en la auditoría (`inmutabilidad.py`); solo cambia la
     referencia, no el contenido del registro.
     """
+    conexion = db.session.connection()
+    # Solo SQLite: en MySQL la FK ya hace SET NULL y la app no tiene UPDATE en audit_logs (FNC-075).
+    if conexion.dialect.name != DIALECTO_SIN_FK:
+        return
     tabla = AuditLog.__table__
-    db.session.connection().execute(
+    conexion.execute(
         tabla.update().where(tabla.c.area_id == area.id).values(area_id=None))

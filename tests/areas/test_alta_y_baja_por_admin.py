@@ -405,3 +405,28 @@ def test_si_falla_la_auditoria_no_se_guarda_la_edicion(escena, como,
 
     db.session.rollback()
     assert _area(escena['A']).description != 'No guardada'
+
+
+class _ConexionDoble:
+    """Conexión con dialecto fijo que registra lo que se ejecuta."""
+
+    def __init__(self, dialecto):
+        self.dialect = type('Dialecto', (), {'name': dialecto})()
+        self.ejecutado = []
+
+    def execute(self, sentencia, *args, **kwargs):
+        self.ejecutado.append(sentencia)
+
+
+@pytest.mark.parametrize('dialecto,updates', [('mysql', 0), ('sqlite', 1)])
+def test_desligar_auditoria_solo_en_sqlite(escena, monkeypatch, dialecto,
+                                           updates):
+    """En MySQL la FK hace `ON DELETE SET NULL` y la app no tiene UPDATE en
+    `audit_logs` (FNC-075): no se emite el UPDATE."""
+    from app.modules.areas import baja
+    doble = _ConexionDoble(dialecto)
+    monkeypatch.setattr(db.session, 'connection', lambda *a, **k: doble)
+
+    baja.desligar_auditoria(_area(escena['A']))
+
+    assert len(doble.ejecutado) == updates
