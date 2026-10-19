@@ -15,7 +15,7 @@
 | **Finalizada** | |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `dis/DIS-002-tokens-semanticos-texto` (worktree `pokemon-wt-d002`) |
-| **Commits / PR** | ver bitácora (commit local `[DIS-002]`, sin push ni PR) |
+| **Commits / PR** | `6df30b6` (local, sin push ni PR) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
