@@ -84,6 +84,21 @@ table.dataTable tbody tr {
   /* Acento general (violeta) */
   --color-accent: 124 58 237;          /* #7c3aed — Violet-600 */
 
+  /* DIS-001 — Variantes de TEXTO de los colores de marca (>= 4.5:1 sobre
+     panel en cada tema). Los tokens de arriba son rellenos; como texto se
+     usan estos (`text-primary-text`...). Cada tema los redefine. */
+  --color-primary-text: 29 78 216;     /* Blue-700 */
+  --color-brand-text: 67 56 202;       /* Indigo-700 */
+  --color-accent-text: 124 58 237;     /* Violet-600 */
+  --color-accent-sky-text: 14 116 144; /* Cyan-700 */
+  --color-accent-peach-text: 180 83 9; /* Amber-700 */
+
+  /* DIS-001 — Relleno de marca que lleva texto encima (pestaña activa) y
+     el texto sobre él (>= 4.5:1). En temas donde primary no alcanza con
+     su texto, el relleno es un tono más oscuro del mismo color. */
+  --color-primary-solid: var(--color-primary);
+  --color-on-primary: 255 255 255;
+
 
   /* ─────────────────────────────────────────────
      MODO CLARO — Superficie y tipografía
@@ -133,8 +148,8 @@ table.dataTable tbody tr {
      TABS
   ───────────────────────────────────────────── */
   --color-tab-bar-bg: 226 232 240;     /* Slate-200: cohesión neutra */
-  --color-tab-active-bg: var(--color-primary);
-  --color-tab-active-text: 255 255 255;
+  --color-tab-active-bg: var(--color-primary-solid);
+  --color-tab-active-text: var(--color-on-primary);
   --color-tab-inactive-bg: 203 213 225;        /* Slate-300: menos saturado */
   --color-tab-inactive-text: 30 64 175;        /* Blue-800: contraste WCAG AA */
 
@@ -204,8 +219,10 @@ table.dataTable tbody tr {
    Filosofía: azul marino profundo, no negro plano.
    Cada nivel de superficie +8% luminosidad relativa.
 ══════════════════════════════════════════════════════════════ */
+/* DIS-001: no aplica a los temas con nombre (`theme-*`): con mayor
+   especificidad que `html.theme-*`, les imponía sus valores oscuros. */
 @media (prefers-color-scheme: dark) {
-  :root:not(.light) {
+  :root:not(.light):not([class*="theme-"]) {
     --color-body-bg: #030712;               /* Gray-950: profundidad real */
     --color-body-text: #e2e8f0;             /* Slate-200: neutro */
 
@@ -213,6 +230,21 @@ table.dataTable tbody tr {
     --color-header-text: #e2e8f0;
     --color-panel-header-bg: 37 99 235 / 0.15;
     --color-panel-header-text: 96 165 250; /* Blue-400: Brillo neón en modo oscuro */
+
+    /* DIS-001: variantes de texto e insignias (mismos valores que html.dark) */
+    --color-primary-text: 96 165 250;       /* Blue-400 */
+    --color-brand-text: 129 140 248;        /* Indigo-400 */
+    --color-accent-text: 167 139 250;       /* Violet-400 */
+    --color-accent-sky-text: 6 182 212;     /* Cyan-500 */
+    --color-accent-peach-text: 245 158 11;  /* Amber-500 */
+    --badge-primary-bg: 37 99 235 / 0.15;  --badge-primary-text: 96 165 250;
+    --badge-success-bg: 16 185 129 / 0.15; --badge-success-text: 52 211 153;
+    --badge-error-bg: 244 63 94 / 0.15;    --badge-error-text: 251 113 133;
+    --badge-warning-bg: 245 158 11 / 0.15; --badge-warning-text: 251 191 36;
+    --badge-violet-bg: 139 92 246 / 0.15;  --badge-violet-text: 167 139 250;
+    --badge-sky-bg: 56 189 248 / 0.15;     --badge-sky-text: 125 211 252;
+    --badge-slate-bg: 148 163 184 / 0.15;  --badge-slate-text: 203 213 225;
+    --badge-cyan-bg: 34 211 238 / 0.15;    --badge-cyan-text: 103 232 249;
 
     --color-panel-fill: 15 23 42;           /* Slate-900: estándar industry */
     --color-panel-border: 51 65 85;         /* Slate-600: sólido y legible */
@@ -284,6 +316,14 @@ html.dark {
   --color-header-bg: #1e3a8a;
   --color-header-text: #e2e8f0;
   --color-panel-header-bg: 37 99 235 / 0.15;
+  --color-panel-header-text: 96 165 250;  /* DIS-001: Blue-400 (heredaba Blue-900) */
+
+  /* DIS-001: variantes de texto de marca */
+  --color-primary-text: 96 165 250;       /* Blue-400 */
+  --color-brand-text: 129 140 248;        /* Indigo-400 */
+  --color-accent-text: 167 139 250;       /* Violet-400 */
+  --color-accent-sky-text: 6 182 212;     /* Cyan-500 */
+  --color-accent-peach-text: 245 158 11;  /* Amber-500 */
 
   --color-panel-fill: 15 23 42;           /* Slate-900 */
   --color-panel-border: 51 65 85;         /* Slate-600: sólido */
@@ -338,9 +378,18 @@ html.theme-emerald-light {
   --color-secondary: 120 113 108;       /* Stone-500 */
   --color-accent: 13 148 136;
 
+  /* DIS-001: texto de marca y relleno con texto encima (>= 4.5:1) */
+  --color-primary-text: 4 120 87;       /* Emerald-700 */
+  --color-brand-text: 4 120 87;         /* Emerald-700 */
+  --color-accent-text: 15 118 110;      /* Teal-700 */
+  --color-accent-sky-text: 15 118 110;  /* Teal-700 */
+  --color-accent-peach-text: 180 83 9;  /* Amber-700 */
+  --color-primary-solid: 4 120 87;      /* Emerald-700: blanco 5.48:1 */
+  --color-on-primary: 255 255 255;
+
   --color-body-bg: #fafaf9;             /* Stone-50 */
   --color-body-text: #1c1917;           /* Stone-900 */
-  --color-header-bg: #059669;           /* Emerald-600 */
+  --color-header-bg: #047857;           /* Emerald-700 (DIS-001: era Emerald-600, 3.77:1) */
   --color-header-text: #ffffff;
   --color-panel-header-bg: 209 250 229; /* Emerald-100 */
 
@@ -360,8 +409,8 @@ html.theme-emerald-light {
   --color-button-disabled-text: 168 162 158;
 
   --color-tab-bar-bg: 231 229 228;
-  --color-tab-active-bg: var(--color-primary);
-  --color-tab-active-text: 255 255 255;
+  --color-tab-active-bg: var(--color-primary-solid);
+  --color-tab-active-text: var(--color-on-primary);
   --color-tab-inactive-bg: 214 211 209;
   --color-tab-inactive-text: 41 37 36;
 
@@ -407,11 +456,30 @@ html.theme-obsidian-dark {
   --color-secondary: 113 113 122;
   --color-accent: 250 204 21;
 
+  /* DIS-001: texto de marca y relleno con texto encima (>= 4.5:1) */
+  --color-primary-text: 161 161 170;    /* Zinc-400 */
+  --color-brand-text: 161 161 170;      /* Zinc-400 (brand Zinc-500 da 3.67:1) */
+  --color-accent-text: 250 204 21;      /* Yellow-400 */
+  --color-accent-sky-text: 161 161 170; /* Zinc-400 */
+  --color-accent-peach-text: 250 204 21; /* Yellow-400 */
+  --color-primary-solid: var(--color-primary);
+  --color-on-primary: 9 9 11;           /* Zinc-950 sobre Zinc-400 */
+
   --color-body-bg: #09090b;             /* Zinc-950 */
   --color-body-text: #e4e4e7;           /* Zinc-200 */
   --color-header-bg: #18181b;           /* Zinc-900 */
   --color-header-text: #e4e4e7;
   --color-panel-header-bg: 39 39 42;    /* Zinc-800 */
+  --color-panel-header-text: 212 212 216; /* DIS-001: Zinc-300 (heredaba Blue-900) */
+  /* DIS-001: insignias (no las definía; heredaba las del tema claro) */
+  --badge-primary-bg: 37 99 235 / 0.15;  --badge-primary-text: 96 165 250;
+  --badge-success-bg: 16 185 129 / 0.15; --badge-success-text: 52 211 153;
+  --badge-error-bg: 244 63 94 / 0.15;    --badge-error-text: 251 113 133;
+  --badge-warning-bg: 245 158 11 / 0.15; --badge-warning-text: 251 191 36;
+  --badge-violet-bg: 139 92 246 / 0.15;  --badge-violet-text: 167 139 250;
+  --badge-sky-bg: 56 189 248 / 0.15;     --badge-sky-text: 125 211 252;
+  --badge-slate-bg: 148 163 184 / 0.15;  --badge-slate-text: 203 213 225;
+  --badge-cyan-bg: 34 211 238 / 0.15;    --badge-cyan-text: 103 232 249;
 
   --color-panel-fill: 24 24 27;         /* Zinc-900 */
   --color-panel-border: 63 63 70;       /* Zinc-700 */
@@ -429,8 +497,8 @@ html.theme-obsidian-dark {
   --color-button-disabled-text: 82 82 91;
 
   --color-tab-bar-bg: 24 24 27;
-  --color-tab-active-bg: var(--color-primary);
-  --color-tab-active-text: 9 9 11;
+  --color-tab-active-bg: var(--color-primary-solid);
+  --color-tab-active-text: var(--color-on-primary);
   --color-tab-inactive-bg: 39 39 42;
   --color-tab-inactive-text: 161 161 170;
 
@@ -475,9 +543,18 @@ html.theme-rose-light {
   --color-secondary: 120 113 108;
   --color-accent: 244 63 94;
 
+  /* DIS-001: texto de marca y relleno con texto encima (>= 4.5:1) */
+  --color-primary-text: 190 18 60;      /* Rose-700 */
+  --color-brand-text: 190 18 60;        /* Rose-700 */
+  --color-accent-text: 190 18 60;       /* Rose-700 */
+  --color-accent-sky-text: 190 18 60;   /* Rose-700 */
+  --color-accent-peach-text: 194 65 12; /* Orange-700 */
+  --color-primary-solid: 225 29 72;     /* Rose-600: blanco 4.70:1 */
+  --color-on-primary: 255 255 255;
+
   --color-body-bg: #fff1f2;             /* Rose-50 */
   --color-body-text: #1c1917;           /* Stone-900 */
-  --color-header-bg: #f43f5e;           /* Rose-500 */
+  --color-header-bg: #e11d48;           /* Rose-600 (DIS-001: era Rose-500, 3.67:1) */
   --color-header-text: #ffffff;
   --color-panel-header-bg: 255 228 230; /* Rose-100 */
 
@@ -497,8 +574,8 @@ html.theme-rose-light {
   --color-button-disabled-text: 168 162 158;
 
   --color-tab-bar-bg: 254 205 211;
-  --color-tab-active-bg: var(--color-primary);
-  --color-tab-active-text: 255 255 255;
+  --color-tab-active-bg: var(--color-primary-solid);
+  --color-tab-active-text: var(--color-on-primary);
   --color-tab-inactive-bg: 254 226 230;
   --color-tab-inactive-text: 159 18 57;
 
@@ -544,11 +621,30 @@ html.theme-violet-dark {
   --color-secondary: 148 163 184;
   --color-accent: 139 92 246;
 
+  /* DIS-001: texto de marca y relleno con texto encima (>= 4.5:1) */
+  --color-primary-text: 167 139 250;    /* Violet-400 */
+  --color-brand-text: 167 139 250;      /* Violet-400 (brand Violet-600 da 3.30:1) */
+  --color-accent-text: 167 139 250;     /* Violet-400 */
+  --color-accent-sky-text: 167 139 250; /* Violet-400 */
+  --color-accent-peach-text: 251 146 60; /* Orange-400 */
+  --color-primary-solid: 124 58 237;    /* Violet-600: blanco 5.70:1 */
+  --color-on-primary: 255 255 255;
+
   --color-body-bg: #0c0a1d;             /* Custom deep violet */
   --color-body-text: #e2e0f0;           /* Lavender light */
   --color-header-bg: #2e1065;           /* Violet-950 */
   --color-header-text: #e2e0f0;
   --color-panel-header-bg: 139 92 246 / 0.12;
+  --color-panel-header-text: 167 139 250; /* DIS-001: Violet-400 (heredaba Blue-900) */
+  /* DIS-001: insignias (no las definía; heredaba las del tema claro) */
+  --badge-primary-bg: 37 99 235 / 0.15;  --badge-primary-text: 96 165 250;
+  --badge-success-bg: 16 185 129 / 0.15; --badge-success-text: 52 211 153;
+  --badge-error-bg: 244 63 94 / 0.15;    --badge-error-text: 251 113 133;
+  --badge-warning-bg: 245 158 11 / 0.15; --badge-warning-text: 251 191 36;
+  --badge-violet-bg: 139 92 246 / 0.15;  --badge-violet-text: 167 139 250;
+  --badge-sky-bg: 56 189 248 / 0.15;     --badge-sky-text: 125 211 252;
+  --badge-slate-bg: 148 163 184 / 0.15;  --badge-slate-text: 203 213 225;
+  --badge-cyan-bg: 34 211 238 / 0.15;    --badge-cyan-text: 103 232 249;
 
   --color-panel-fill: 17 12 46;         /* Deep violet surface */
   --color-panel-border: 76 59 130;      /* Violet-tinted border */
@@ -566,8 +662,8 @@ html.theme-violet-dark {
   --color-button-disabled-text: 76 59 130;
 
   --color-tab-bar-bg: 17 12 46;
-  --color-tab-active-bg: var(--color-primary);
-  --color-tab-active-text: 255 255 255;
+  --color-tab-active-bg: var(--color-primary-solid);
+  --color-tab-active-text: var(--color-on-primary);
   --color-tab-inactive-bg: 30 24 64;
   --color-tab-inactive-text: 167 139 250;
 

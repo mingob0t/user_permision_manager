@@ -8,7 +8,7 @@
  * (ver `fallas-contraste-conocidas.ts`).
  */
 import { describe, expect, it } from 'vitest';
-import { cargarContextos, type NombreContexto } from '../utils/tokens-css';
+import { CONTEXTOS, cargarContextos, type NombreContexto } from '../utils/tokens-css';
 import { MIN_TEXTO, parseColor, razonContraste } from '../utils/wcag';
 import { FALLAS_CONOCIDAS, tareaPendiente } from './fallas-contraste-conocidas';
 import { medir } from './medir';
@@ -28,6 +28,14 @@ describe('cálculo WCAG', () => {
   it('gris 118 sobre blanco queda justo en 4.5:1', () => {
     const gris = parseColor('118 118 118');
     expect(razonContraste(gris, parseColor('255 255 255'))).toBeGreaterThanOrEqual(MIN_TEXTO);
+  });
+});
+
+describe('bloque de SO oscuro', () => {
+  it('no aplica a los temas con nombre (DIS-001)', () => {
+    // `:root:not(.light)` (0,2,0) gana a `html.theme-*` (0,1,1): sin la exclusión,
+    // un tema claro con el SO en oscuro recibía insignias y títulos oscuros.
+    expect(CONTEXTOS['so-oscuro']).toContain(':not([class*="theme-"])');
   });
 });
 

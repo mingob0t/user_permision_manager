@@ -130,7 +130,7 @@ function AreasScreen() {
                         type="button"
                         onClick={() => setEditing(area)}
                         aria-label={`Editar ${area.name}`}
-                        className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
+                        className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
                       >
                         Editar
                       </button>
@@ -139,7 +139,7 @@ function AreasScreen() {
                           type="button"
                           onClick={() => setAssigning(area)}
                           aria-label={`Administradores de ${area.name}`}
-                          className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
+                          className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
                         >
                           Administradores
                         </button>

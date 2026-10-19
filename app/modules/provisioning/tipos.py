@@ -1,0 +1,48 @@
+"""Valores enumerados del ejecutor (contrato `conectores-y-ejecuciones.md`)."""
+
+# Operación del trabajo.
+OPERACION_OTORGAR = 'otorgar'
+OPERACION_REVOCAR = 'revocar'
+OPERACIONES = (OPERACION_OTORGAR, OPERACION_REVOCAR)
+
+# Proveedor: el `integration_type` de la plataforma al encolar.
+PROVEEDOR_LDAP = 'ldap'
+PROVEEDOR_CONECTOR = 'conector'
+PROVEEDORES = (PROVEEDOR_LDAP, PROVEEDOR_CONECTOR)
+
+# Estado del trabajo.
+ESTADO_PENDIENTE = 'pendiente'
+ESTADO_EN_EJECUCION = 'en_ejecucion'
+ESTADO_REINTENTANDO = 'reintentando'
+ESTADO_EXITOSO = 'exitoso'
+ESTADO_FALLIDO = 'fallido'
+# Otorgar en espera que una revocación posterior de la misma terna dejó sin
+# efecto (auditor-seguridad, FNC-049). Final.
+ESTADO_CANCELADO = 'cancelado'
+ESTADOS = (ESTADO_PENDIENTE, ESTADO_EN_EJECUCION, ESTADO_REINTENTANDO,
+           ESTADO_EXITOSO, ESTADO_FALLIDO, ESTADO_CANCELADO)
+ESTADOS_EN_ESPERA = (ESTADO_PENDIENTE, ESTADO_REINTENTANDO)
+# Sin terminar: bloquean a los trabajos posteriores de la misma terna
+# (usuario, plataforma, nivel), que corren en orden de creación.
+ESTADOS_SIN_TERMINAR = (ESTADO_PENDIENTE, ESTADO_EN_EJECUCION,
+                        ESTADO_REINTENTANDO)
+
+# Resultado de un intento (`attempts[].result`).
+RESULTADO_EXITOSO = 'exitoso'
+RESULTADO_SIN_CAMBIOS = 'sin_cambios'
+RESULTADO_ERROR_TRANSITORIO = 'error_transitorio'
+RESULTADO_ERROR_PERMANENTE = 'error_permanente'
+RESULTADOS = (RESULTADO_EXITOSO, RESULTADO_SIN_CAMBIOS,
+              RESULTADO_ERROR_TRANSITORIO, RESULTADO_ERROR_PERMANENTE)
+RESULTADOS_EXITO = (RESULTADO_EXITOSO, RESULTADO_SIN_CAMBIOS)
+
+# Largos de columna.
+LARGO_OPERACION = 10
+LARGO_PROVEEDOR = 20
+LARGO_NIVEL = 10
+LARGO_ESTADO = 20
+LARGO_RESULTADO = 20
+LARGO_CLAVE_IDEMPOTENCIA = 100
+LARGO_RESERVADO_POR = 100
+# Error guardado: saneado y truncado (SEC-CON-10).
+LARGO_ERROR = 500

@@ -3,7 +3,9 @@
  *
  * Salen de la auditoría de accesibilidad inicial
  * (docs/estandarizacion/auditorias/2026-10-13-accesibilidad-inicial.md, sección 1).
- * `sobre` indica la superficie donde se compone un fondo con alpha.
+ * `sobre` indica la superficie donde se compone un fondo con alpha y
+ * `alfaFondo` la opacidad que el marcado aplica al fondo (`bg-primary/15`).
+ * DIS-001: el color de marca como texto se mide con su variante `*-text`.
  */
 import { MIN_NO_TEXTO, MIN_TEXTO } from '../utils/wcag';
 
@@ -12,6 +14,7 @@ export interface ParContraste {
   texto: string;
   fondo: string;
   sobre?: string;
+  alfaFondo?: number;
   minimo: number;
 }
 
@@ -34,13 +37,17 @@ export const PARES: ParContraste[] = [
   texto('bi-text-muted/panel', '--color-bi-text-muted', '--color-panel-fill'),
   texto('bi-text-muted/surface-container', '--color-bi-text-muted', '--color-surface-container-bg'),
   texto('secondary/panel', '--color-secondary', '--color-panel-fill'),
-  texto('primary/body-bg', '--color-primary', '--color-body-bg'),
-  texto('primary/panel', '--color-primary', '--color-panel-fill'),
+  texto('primary-text/body-bg', '--color-primary-text', '--color-body-bg'),
+  texto('primary-text/panel', '--color-primary-text', '--color-panel-fill'),
+  // Entrada activa del menú, chips y pestañas: texto sobre `bg-primary/15` y `/10`.
+  { ...texto('primary-text/primary-15', '--color-primary-text', '--color-primary', '--color-panel-fill'), alfaFondo: 0.15 },
+  { ...texto('primary-text/primary-10', '--color-primary-text', '--color-primary', '--color-panel-fill'), alfaFondo: 0.1 },
+  texto('on-primary/primary-solid', '--color-on-primary', '--color-primary-solid'),
   texto('success/panel', '--color-success', '--color-panel-fill'),
-  texto('accent-peach/panel', '--color-accent-peach', '--color-panel-fill'),
-  texto('accent/panel', '--color-accent', '--color-panel-fill'),
-  texto('accent-sky/panel', '--color-accent-sky', '--color-panel-fill'),
-  texto('brand/panel', '--color-brand', '--color-panel-fill'),
+  texto('accent-peach-text/panel', '--color-accent-peach-text', '--color-panel-fill'),
+  texto('accent-text/panel', '--color-accent-text', '--color-panel-fill'),
+  texto('accent-sky-text/panel', '--color-accent-sky-text', '--color-panel-fill'),
+  texto('brand-text/panel', '--color-brand-text', '--color-panel-fill'),
   texto('ntf-text-subject/ntf-card', '--color-ntf-text-subject', '--color-ntf-card-bg', '--color-ntf-panel-bg'),
   texto('status-active/panel', '--color-status-active', '--color-panel-fill'),
   ...TONOS_BADGE.map((tono) =>

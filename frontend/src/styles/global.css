@@ -456,7 +456,7 @@ html:not(.dark) .modal-footer {
 .chip-premium:hover {
     background: rgba(99, 102, 241, 0.12);
     border-color: rgba(99, 102, 241, 0.3);
-    color: rgb(var(--color-primary));
+    color: rgb(var(--color-primary-text));
     opacity: 1;
     transform: translateY(-1.5px);
     box-shadow: 0 4px 12px rgba(var(--color-primary), 0.1);

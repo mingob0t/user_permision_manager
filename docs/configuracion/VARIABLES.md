@@ -17,9 +17,15 @@
 | `DB_NAME` | Nombre de la BD | texto | — | `pokemon_dev` | Sí con mysql | No | Sí (`admin_test`) | `app/utils/uri_bd.py` (app y Alembic, FNC-039), `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
 | `DB_USER` | Usuario de la BD | texto | — | `nexus` | Sí con mysql | No | Sí | `app/utils/uri_bd.py` (app y Alembic, FNC-039) | FNC-001, 2026-10-13 | Vigente |
 | `DB_PASS` | Contraseña de la BD | texto | — | — | Sí con mysql | **Sí** | Sí (vacía) | `app/utils/uri_bd.py` (app y Alembic, FNC-039) | FNC-001, 2026-10-13 | Vigente |
-| `REDIS_HOST` | Host de Redis | nombre de host | `localhost` | `localhost` | No (Redis sin uso funcional) | No | Sí | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
-| `REDIS_PORT` | Puerto de Redis | entero | `6379` | `6379` | No | No | Sí | `app/__init__.py`, `deploy/preflight.sh` | FNC-001, 2026-10-13 | Vigente |
-| `REDIS_PASS` | Contraseña de Redis | texto | ninguna | — | No | **Sí** | **No (faltante)** | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
+| `REDIS_HOST` | Host de Redis (cola de aprovisionamiento, ADR-003) | nombre de host (IP → el worker no arranca) | `localhost` | `localhost` | Sí para el worker (FNC-049) | No | Sí | `app/__init__.py`, `deploy/preflight.sh`, `app/modules/provisioning/configuracion.py` | FNC-001, 2026-10-13 | Vigente |
+| `REDIS_PORT` | Puerto de Redis | entero | `6379` | `6379` | No | No | Sí | `app/__init__.py`, `deploy/preflight.sh`, `app/modules/provisioning/configuracion.py` | FNC-001, 2026-10-13 | Vigente |
+| `REDIS_PASS` | Contraseña de Redis. Fuente: `.env` en dev; Vaultwarden `pokemon/<entorno>/REDIS_PASS` en staging/prod | texto | ninguna | — | **Sí para el worker y para despertarlo** (FNC-049, SEG-29); sin ella la API arranca y los trabajos esperan | **Sí** | Sí (vacía, FNC-049) | `app/__init__.py`, `app/modules/provisioning/configuracion.py` | FNC-001, 2026-10-13 | Vigente |
+| `PROVISIONING_QUEUE_NAME` | Nombre de la cola RQ del ejecutor | `[a-z0-9_-]{1,50}` | `aprovisionamiento` | `aprovisionamiento` | No | No | Sí | `app/modules/provisioning/configuracion.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_MAX_ATTEMPTS` | Intentos máximos de un trabajo (se fija al encolar) | entero 1–20 | `5` | `5` | No | No | Sí | `app/modules/provisioning/configuracion.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_BACKOFF_BASE_SECONDS` | Primer escalón del *backoff* exponencial | entero 1–3600 (s) | `60` | `60` | No | No | Sí | `app/modules/provisioning/configuracion.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_BACKOFF_MAX_SECONDS` | Tope del *backoff* (≥ base) | entero 1–86400 (s) | `900` | `900` | No | No | Sí | `app/modules/provisioning/configuracion.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS` | Tiempo de espera de un intento (`job_timeout` de RQ); la reserva vence 30 s después | entero 5–600 (s) | `60` | `60` | No | No | Sí | `app/modules/provisioning/configuracion.py` | FNC-049, 2026-10-19 | Vigente |
+| `PROVISIONING_POLL_INTERVAL_SECONDS` | Ocio del worker antes de barrer la BD (reintentos vencidos, avisos perdidos, reservas vencidas) | entero 5–3600 (s) | `30` | `30` | No | No | Sí | `app/modules/provisioning/configuracion.py` | FNC-049, 2026-10-19 | Vigente |
 | `TZ_APP` | Zona horaria del proceso (fija `TZ`) | zona IANA | `TZ` o `America/Mexico_City` | `America/Mexico_City` | No | No | Sí | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `TZ` | Respaldo de `TZ_APP` | zona IANA | `America/Mexico_City` | — | No | No | No (estándar del sistema) | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `BASE_URL` | URL pública de la app para enlaces en correos y el retorno del cierre SSO | URL con dominio | En `api/auth.py`: la del host de la petición. En `auth/services.py`: vacío (enlace relativo; antes una IP literal, quitada en FNC-042) | `http://localhost:5001` (dev) / `https://<dominio>` | Sí en prod | No | Sí | `api/auth.py`, `auth/services.py` | FNC-001, 2026-10-13 | Vigente |
@@ -146,6 +152,17 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `NOMBRE_MIN/MAX`, `DESCRIPCION_MIN/MAX` | Largo del nombre y la descripción de una plataforma | 2–100 / 1–1000 | caracteres | `app/modules/platforms/validacion.py` | FNC-046, 2026-10-19 | Vigente |
 | `TIPOS_INTEGRACION` / `LARGO_DN` | Tipos de integración / largo de los DN de grupo | `ldap`, `conector` / 512 | — / caracteres | `app/modules/platforms/tipos.py` | FNC-046, 2026-10-19 | Vigente |
 | `MARCADORES_PLANTILLA_GRUPO` / `MARCADORES_OBLIGATORIOS_GRUPO` | Marcadores de `LDAP_PLATFORM_GROUP_TEMPLATE` | `plataforma`, `area`, `nivel` / `plataforma`, `nivel` | — | `app/modules/directory/configuracion.py` | FNC-046, 2026-10-19 | Vigente |
+| `MARGEN_RESERVA_SEGUNDOS` | Margen sobre el tiempo de espera del intento para dar por vencida una reserva | 30 | s | `app/modules/provisioning/configuracion.py` | FNC-049, 2026-10-19 | Vigente |
+| `MAX_INTENTOS`, `BACKOFF_BASE_SEGUNDOS`, `BACKOFF_MAX_SEGUNDOS`, `TIEMPO_INTENTO_SEGUNDOS`, `INTERVALO_BARRIDO_SEGUNDOS` | (por defecto, mínimo, máximo) de las `PROVISIONING_*` | ver la fila de cada variable | — | `app/modules/provisioning/configuracion.py` | FNC-049, 2026-10-19 | Vigente |
+| `FACTOR_BACKOFF` | Base del crecimiento exponencial (*equal jitter*) | 2 | — | `app/modules/provisioning/reintentos.py` | FNC-049, 2026-10-19 | Vigente |
+| `LOTE_BARRIDO` | Trabajos enviados a la cola por barrido | 100 | trabajos | `app/modules/provisioning/worker.py` | FNC-049, 2026-10-19 | Vigente |
+| `TIEMPO_ESPERA_REDIS_SEGUNDOS` | Conexión y lectura de Redis del worker (RQ sube la lectura para su espera) | 5 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
+| `TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS` | Conexión y envío a Redis al despertar al worker desde la app web (dentro del commit) | 0,5 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
+| `ATRIBUTOS_CALLBACK` | *Callbacks* de RQ que hacen rechazar un mensaje | `_success_callback_name`, `_failure_callback_name`, `_stopped_callback_name` | — | `app/modules/provisioning/worker.py` | FNC-049, 2026-10-19 | Vigente |
+| `SERIALIZADOR_RQ` | Mensajes RQ en JSON (sin pickle) en la cola y el worker | `JSONSerializer` | — | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
+| `TTL_RESULTADO_RQ` | RQ no guarda resultados (el estado vive en la BD) | 0 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
+| `LARGO_ERROR`, `LARGO_CLAVE_IDEMPOTENCIA` | Error de la bitácora truncado / largo de la clave | 500 / 100 | caracteres | `app/modules/provisioning/tipos.py` | FNC-049, 2026-10-19 | Vigente |
+| `VARIABLES_SECRETAS`, `LARGO_MINIMO_SECRETO`, `MENSAJES` | Valores que se borran del error, largo mínimo buscado y catálogo de mensajes de la bitácora (SEC-CON-10) | `LDAP_BIND_PASSWORD`, `REDIS_PASS`, `DB_PASS`, `SMTP_PASSWORD`, `SECRET_KEY` / 4 / ver el código | — | `app/modules/provisioning/saneo.py` | FNC-049, 2026-10-19 | Vigente |
 | Gunicorn | Workers / timeout / puerto | 4 / 120 s / 5001 | — | `deploy/backend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | Puerto del backend en dev | Puerto de `run.py` | 5001 | — | `run.py` | FNC-001, 2026-10-13 | Vigente |
 | `client_max_body_size` | Tamaño máximo de petición en nginx | 64 | MB | `deploy/nginx.conf.tmpl` | FNC-001, 2026-10-13 | Vigente |
@@ -164,3 +181,14 @@ Definidos en `frontend/src/styles/tokens.css` (tema claro en `:root, html.light`
 
 | Token | Rol | Valor tema claro | Valor tema oscuro | Archivo | Alta (tarea, fecha) | Estado |
 |---|---|---|---|---|---|---|
+| `--color-primary-text` | Texto de marca (enlaces, menú activo, pestaña de Ajustes) | `29 78 216`; emerald `4 120 87`; rose `190 18 60` | `96 165 250` (SO y `html.dark`); obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente |
+| `--color-brand-text` | Texto en color brand | `67 56 202`; emerald `4 120 87`; rose `190 18 60` | `129 140 248`; obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-accent-text` | Texto en color accent | `124 58 237`; emerald `15 118 110`; rose `190 18 60` | `167 139 250`; obsidian `250 204 21`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-accent-sky-text` | Texto en color sky | `14 116 144`; emerald `15 118 110`; rose `190 18 60` | `6 182 212`; obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-accent-peach-text` | Texto en color peach/KPI | `180 83 9`; emerald `180 83 9`; rose `194 65 12` | `245 158 11`; obsidian `250 204 21`; violet `251 146 60` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-primary-solid` | Relleno de marca con texto encima (pestaña activa) | `var(--color-primary)`; emerald `4 120 87`; rose `225 29 72` | `var(--color-primary)`; violet `124 58 237` | `tokens.css` | DIS-001, 2026-10-19 | Vigente |
+| `--color-on-primary` | Texto sobre `--color-primary-solid` | `255 255 255` | `255 255 255`; obsidian `9 9 11` | `tokens.css` | DIS-001, 2026-10-19 | Vigente |
+| `--color-panel-header-text` | Título de modales y cabeceras de tabla | `30 58 138` | `96 165 250` (SO, `html.dark`); obsidian `212 212 216`; violet `167 139 250` | `tokens.css` | FNC-001 (heredado); por tema DIS-001 | Vigente |
+| `--badge-<tono>-bg` / `-text` (8 tonos) | Insignias `.nx-badge-*` | tinte 0.1 + tono 700 | tinte 0.15 + tono 300-400 (ahora también SO oscuro, obsidian, violet; mismos valores repetidos en 4 bloques: observación, sin tarea) | `tokens.css` | FNC-001 (heredado); por tema DIS-001 | Vigente |
+| `--color-header-bg` | Fondo del header | `#2563eb`; emerald `#047857`; rose `#e11d48` | `#1e3a8a`; obsidian `#18181b`; violet `#2e1065` | `tokens.css` | FNC-001; valores emerald/rose DIS-001 | Vigente |
+| `--color-tab-active-bg` / `-text` | Pestaña activa | `var(--color-primary-solid)` / `var(--color-on-primary)` | ídem | `tokens.css` | FNC-001 (heredado); DIS-001 | Vigente |
