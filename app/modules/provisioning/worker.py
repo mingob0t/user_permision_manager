@@ -18,11 +18,13 @@ import threading
 from datetime import timedelta
 
 from rq import SimpleWorker
+from rq.worker import WorkerStatus
 from sqlalchemy import and_, or_
 
 from app import db
 from app.modules.provisioning.models import ProvisioningJob
-from app.modules.provisioning.queue import enviar
+from app.modules.provisioning.queue import (FUNCION_TRABAJO,
+                                            SERIALIZADOR_RQ, enviar)
 from app.modules.provisioning.reloj import ahora
 from app.modules.provisioning.tipos import (ESTADO_EN_EJECUCION,
                                             ESTADOS_EN_ESPERA)
@@ -51,8 +53,38 @@ class ControlApagado:
         self._evento.wait(segundos)
 
 
+def mensaje_valido(job):
+    """`True` solo si el mensaje pide `ejecutar_trabajo(<id entero>)`."""
+    try:
+        args, kwargs = tuple(job.args or ()), job.kwargs or {}
+        return (job.func_name == FUNCION_TRABAJO and not kwargs
+                and len(args) == 1 and type(args[0]) is int)
+    except Exception:  # datos ilegibles o con otra forma
+        return False
+
+
 class WorkerAprovisionamiento(SimpleWorker):
-    """Worker RQ que también avisa el apagado al bucle del barrido."""
+    """Worker RQ que también avisa el apagado al bucle del barrido.
+
+    Rechaza sin ejecutar todo mensaje que no sea `ejecutar_trabajo(<int>)`
+    (Redis no es de confianza: auditor-seguridad, FNC-049).
+    """
+
+    def execute_job(self, job, queue):
+        if mensaje_valido(job):
+            return super().execute_job(job, queue)
+        logger.warning('Aprovisionamiento: mensaje RQ rechazado sin ejecutar '
+                       '(id %s).', getattr(job, 'id', '?'))
+        try:
+            job.delete()
+        except Exception as exc:
+            logger.warning('Aprovisionamiento: no se borró el mensaje '
+                           'rechazado (%s).', type(exc).__name__)
+        try:
+            self.set_state(WorkerStatus.IDLE)
+        except Exception:
+            pass
+        return None
 
     def __init__(self, *args, control=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -110,7 +142,7 @@ def ejecutar(cola_rq, cfg, control=None, clase_worker=WorkerAprovisionamiento):
             if control.detener:
                 break
             worker = clase_worker([cola_rq], connection=cola_rq.connection,
-                                  control=control)
+                                  serializer=SERIALIZADOR_RQ, control=control)
             worker.work(max_idle_time=cfg.intervalo_barrido,
                         with_scheduler=False)
         except Exception as exc:  # Redis o BD caídos: esperar y reintentar

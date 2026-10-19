@@ -58,7 +58,7 @@ Conectores: solo superadmin (SEC-CON-11).
 ## `GET /provisioning/jobs`
 | Parámetro | Tipo |
 |---|---|
-| `status` | `pendiente` \| `en_ejecucion` \| `reintentando` \| `exitoso` \| `fallido` |
+| `status` | `pendiente` \| `en_ejecucion` \| `reintentando` \| `exitoso` \| `fallido` \| `cancelado` |
 | `operation` | `otorgar` \| `revocar` |
 | `provider` | `ldap` \| `conector` |
 | `area_id`, `platform_id`, `user_id`, `access_id` | int |
@@ -114,4 +114,5 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
+| 1 | 2026-10-19 | Aditivo (FNC-049): `status` `cancelado` (un otorgar en espera que una revocación posterior de la misma terna dejó sin efecto; final, no se reintenta) |
 | 1 | 2026-10-15 | Redacción: P10 resuelto, el aviso de fallo respeta `pref_email_notifications` (FNC-048) |

@@ -9,7 +9,7 @@ import logging
 import click
 from flask.cli import AppGroup
 
-from app.modules.provisioning.config import (
+from app.modules.provisioning.configuracion import (
     ErrorConfiguracionAprovisionamiento, cargar_configuracion)
 from app.modules.provisioning.queue import cola, conexion_redis
 from app.modules.provisioning.worker import ejecutar

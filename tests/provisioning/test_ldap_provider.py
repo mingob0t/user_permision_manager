@@ -180,3 +180,57 @@ def test_de_punta_a_punta_encolar_commit_worker_y_ldap(app, monkeypatch,
     assert cola_falsa.procesar() == ['exitoso']
     entrada = directorio_falso.servidor.dit[grupo]
     assert dn_ana.encode() in entrada['member']
+
+
+# --- Regresiones de auditor-seguridad (Baja): búsqueda exacta por `mail` ---
+
+def test_persona_se_encuentra_aunque_haya_mas_de_50_parecidas(escenario,
+                                                             directorio):
+    """Sin comodines ni el límite de 50 de `buscar_personas`."""
+    proveedor, plataforma, usuario, grupo, dn_ana = escenario
+    for n in range(60):
+        directorio.persona(f'p{n}', correo=f'x{n}ana@pruebas.local')
+
+    resultado = proveedor.otorgar(operacion(plataforma, usuario))
+
+    assert resultado.resultado == RESULTADO_EXITOSO
+    assert dn_ana in miembros(directorio, grupo)
+
+
+def test_mail_multivalor(app, directorio):
+    dn = 'uid=multi,ou=personas,dc=pruebas,dc=local'
+    directorio.agregar(dn, objectClass='inetOrgPerson', uid='multi', cn='m',
+                       sn='m', mail=['otra@pruebas.local', 'multi@pruebas.local'])
+    grupo = directorio.grupo('wiki-usuario', [OTRO])
+    area = fabricas.crear_area()
+    plataforma = fabricas.crear_plataforma(area, ldap_group_user_dn=grupo)
+    usuario = fabricas.crear_usuario(email='multi@pruebas.local')
+
+    resultado = ProveedorLdap(cliente=directorio.cliente).otorgar(
+        operacion(plataforma, usuario))
+
+    assert resultado.resultado == RESULTADO_EXITOSO
+    assert dn in miembros(directorio, grupo)
+
+
+def test_el_filtro_de_correo_es_exacto_y_escapado(app, directorio,
+                                                  monkeypatch):
+    filtros = []
+    original = directorio.cliente.conexion_servicio
+
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _registrada(*args, **kwargs):
+        with original(*args, **kwargs) as conexion:
+            buscar = conexion.search
+
+            def _search(base, filtro, *a, **k):
+                filtros.append((filtro, k.get('size_limit')))
+                return buscar(base, filtro, *a, **k)
+            conexion.search = _search
+            yield conexion
+    monkeypatch.setattr(directorio.cliente, 'conexion_servicio', _registrada)
+
+    assert directorio.cliente.buscar_por_correo('a*)(uid=*@x.local') is None
+    assert filtros == [(r'(mail=a\2a\29\28uid=\2a@x.local)', 2)]

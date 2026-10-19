@@ -68,7 +68,7 @@ def test_misma_clave_dos_veces_se_ejecuta_una_vez(nuevo_trabajo, cola_falsa,
 
 
 def test_sin_redis_el_commit_sigue_y_el_trabajo_espera(datos, monkeypatch):
-    def _sin_redis(conexion=None):
+    def _sin_redis(conexion=None, **_):
         raise ConnectionError('redis caído')
     monkeypatch.setattr(queue, 'cola', _sin_redis)
     _, plataforma, usuario = datos
@@ -113,3 +113,23 @@ def test_datos_invalidos_se_rechazan(datos, operacion, nivel, clave):
 def test_la_funcion_del_mensaje_es_la_del_ejecutor():
     from rq.utils import import_attribute
     assert import_attribute(FUNCION_TRABAJO) is ejecutar_trabajo
+
+
+def test_despertar_desde_la_web_usa_un_tiempo_de_espera_corto(monkeypatch):
+    """Regresión (revisor, Baja): Redis caído no frena el commit 5 s."""
+    from app.modules.provisioning.queue import TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS
+    monkeypatch.setenv('REDIS_PASS', 'Ficticia-Redis-1')
+    original = queue.cola
+    usadas = []
+
+    def _cola(conexion=None, **opciones):
+        cola_real = original(conexion, **opciones)
+        usadas.append(cola_real.connection.connection_pool.connection_kwargs)
+        raise ConnectionError('sin redis')
+    monkeypatch.setattr(queue, 'cola', _cola)
+
+    queue.despertar([1])
+
+    assert usadas[0]['socket_timeout'] == TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS
+    assert usadas[0]['socket_connect_timeout'] == TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS
+    assert TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS <= 1

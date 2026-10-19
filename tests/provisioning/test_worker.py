@@ -5,8 +5,8 @@ from datetime import timedelta
 
 from app import db
 from app.modules.provisioning import cli, worker
-from app.modules.provisioning.config import cargar_configuracion
-from app.modules.provisioning.ejecucion import reservar
+from app.modules.provisioning.configuracion import cargar_configuracion
+from app.modules.provisioning.ejecucion import sentencia_reserva
 from app.modules.provisioning.models import ProvisioningJob
 from app.modules.provisioning.reloj import ahora
 from app.modules.provisioning.tipos import ESTADO_EXITOSO, ESTADO_REINTENTANDO
@@ -28,9 +28,13 @@ def test_barrido_envia_solo_lo_vencido(nuevo_trabajo, cola_falsa):
     jobs[en_espera].next_attempt_at = ahora() + timedelta(minutes=5)
     jobs[terminado].status = ESTADO_EXITOSO
     db.session.commit()
-    reservar(reservado, 'w1', cfg)
-    reservar(abandonado, 'w0', cfg,
-             momento=ahora() - timedelta(seconds=cfg.vencimiento_reserva + 1))
+    # Misma terna: se reservan a mano (la reserva real exige orden).
+    for trabajo_id, worker_id, momento in (
+            (reservado, 'w1', ahora()),
+            (abandonado, 'w0',
+             ahora() - timedelta(seconds=cfg.vencimiento_reserva + 1))):
+        db.session.execute(sentencia_reserva(trabajo_id, worker_id, cfg,
+                                             momento))
     db.session.commit()
     cola_falsa.mensajes.clear()
 
@@ -41,7 +45,7 @@ def test_barrido_envia_solo_lo_vencido(nuevo_trabajo, cola_falsa):
 class WorkerFalso:
     creados = []
 
-    def __init__(self, colas, connection=None, control=None):
+    def __init__(self, colas, connection=None, control=None, **opciones):
         self.control = control
         WorkerFalso.creados.append(self)
 

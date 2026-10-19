@@ -49,7 +49,7 @@ class ColaFalsa:
 @pytest.fixture
 def cola_falsa(monkeypatch):
     falsa = ColaFalsa()
-    monkeypatch.setattr(queue, 'cola', lambda conexion=None: falsa)
+    monkeypatch.setattr(queue, 'cola', lambda conexion=None, **_: falsa)
     return falsa
 
 
@@ -64,6 +64,8 @@ class ProveedorSimulado(Provisioner):
                      else ResultadoProveedor(RESULTADO_EXITOSO))
         if isinstance(siguiente, BaseException):
             raise siguiente
+        if callable(siguiente):  # efecto durante la llamada (concurrencia)
+            return siguiente()
         return siguiente
 
     def otorgar(self, operacion):

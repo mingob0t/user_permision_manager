@@ -197,7 +197,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 ### Cliente OpenLDAP centralizado (`app/modules/directory/`, FNC-040)
 - Activo solo con `LDAP_URL`; la configuración (`LDAP_*`, ver `VARIABLES.md`) se valida en `create_app()` y, si falla, la app no arranca.
 - TLS obligatorio: `ldaps://` o `ldap://` + StartTLS antes del bind; `CERT_REQUIRED`, nombre del host verificado, CA de `LDAP_CA_CERT_FILE` o del sistema.
-- `ClienteDirectorio`: `conexion_servicio(solo_lectura=True)` (escritura solo desde `writer.py`), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`, `verificar_contrasena()` (bind de la persona; vacía = `False` sin conectar; FNC-042), `buscar_personas(texto, limite)` (FNC-043).
+- `ClienteDirectorio`: `conexion_servicio(solo_lectura=True)` (escritura solo desde `writer.py`), `buscar_usuario()`, `grupos_de_usuario()` (búsqueda bajo `LDAP_GROUPS_BASE_DN`, sin overlay `memberOf`), `existe_dn()`, `verificar_contrasena()` (bind de la persona; vacía = `False` sin conectar; FNC-042), `buscar_personas(texto, limite)` (FNC-043), `buscar_por_correo(correo)` (filtro exacto; `PersonaAmbigua` si hay varias; FNC-049).
 - Escape: `escapar_filtro` (RFC 4515) y `escapar_valor_dn` (RFC 4514).
 - `valor_de_membresia(cfg, usuario)`: DN o identificador según `LDAP_GROUP_MEMBER_ATTR` (lo usan lectura y escritura).
 - Errores: `registrar_error` (público) devuelve `ErrorDirectorio` con mensaje genérico y `causa` (excepción de `ldap3`, solo para clasificar); detalle al log sin la contraseña de bind.
@@ -220,13 +220,16 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - `queue.encolar(operacion, usuario_id, plataforma, nivel, clave_idempotencia, access_id=None)`: agrega el trabajo **sin commit** (va en la transacción del llamador); tras el commit despierta al worker. Sin Redis, espera al barrido. Clave repetida → mismo trabajo.
 - `provider` = `integration_type` de la plataforma al encolar; `max_attempts` = `PROVISIONING_MAX_ATTEMPTS` al encolar.
 - Estados: `pendiente` → `en_ejecucion` → `exitoso` \| `reintentando` \| `fallido`. Intentos en `provisioning_job_attempts` (`exitoso`, `sin_cambios`, `error_transitorio`, `error_permanente`).
-- Reserva atómica (`UPDATE … WHERE`): un solo worker por trabajo; vence a `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS` + 30 s y otro worker lo retoma (intento abierto → `interrumpido`).
+- Orden por terna (usuario, plataforma, nivel): un trabajo no se reserva si hay uno anterior de la terna sin terminar. `encolar` de una revocación cancela los otorgar en espera de su terna (`cancelado`, auditoría `ejecucion_cancelada`).
+- Reserva atómica (`UPDATE … WHERE`): un solo worker por trabajo; el cierre vuelve a comprobar `locked_by` (si otro la retomó, no pisa nada); vence a `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS` + 30 s y otro worker lo retoma (intento abierto → `interrumpido`).
 - Transitorio: *backoff* `min(max, base·2^(n-1))` con *equal jitter*; permanente: sin reintentos. Excepción del proveedor o tiempo de espera de RQ → transitorio, sin guardar su texto.
 - Error de la bitácora: mensaje del catálogo (`saneo.py`) + detalle saneado (sin secretos del despliegue, `clave=valor` sensibles, `Bearer` ni credenciales en URL), ≤ 500 (SEC-CON-10).
 - Resultado final, en la misma transacción: auditoría con actor `sistema` (`acceso_activo`, `acceso_fallido`, `acceso_revocado`, `revocacion_fallida`; `grant_id` = `access_id`) y `manejadores` (`registrar_manejador(on_success, on_failure)`, para FNC-054; sin commit).
 - `fallido`: después del commit y en `try`, `notificar_aprovisionamiento_fallido` (FNC-048).
 - Proveedores (`providers.py`): `Provisioner` con `otorgar`/`revocar`/`consultar(Operacion)` → `ResultadoProveedor` (SEC-CON-01); `registrar_proveedor(tipo, fabrica)`. `ldap` registrado; `conector` sin proveedor hasta FNC-050 → `conector_no_disponible` (permanente).
-- `ProveedorLdap`: grupo del nivel de la plataforma, bajo `LDAP_GROUPS_BASE_DN` (SEC-LDAP-04); persona por coincidencia exacta del `mail` con el correo de la cuenta (como el login); usa `EscritorDirectorio`.
+- `ProveedorLdap`: grupo del nivel de la plataforma, bajo `LDAP_GROUPS_BASE_DN` (SEC-LDAP-04); persona con `ClienteDirectorio.buscar_por_correo` (filtro exacto `(mail=…)`, cualquier valor; varias → `persona_ambigua`); usa `EscritorDirectorio`.
+- Mensajes RQ en JSON (`SERIALIZADOR_RQ`); el worker descarta sin ejecutar todo mensaje que no sea `ejecutar_trabajo(<int>)`. Despertar desde la web: tiempo de espera de 0,5 s.
+- Reintento manual (FNC-062): `ejecucion.reabrir(trabajo, cfg)` sube `max_attempts`.
 - Worker: `flask provisioning worker` (§6). `SimpleWorker` de RQ sin *fork*; cada vuelta barre la BD (vencidos y reservas vencidas) y trabaja hasta quedar ocioso `PROVISIONING_POLL_INTERVAL_SECONDS`. `SIGTERM`/`SIGINT`: termina el intento y sale.
 - Exige `REDIS_PASS` y `REDIS_HOST` como nombre de host; variables `PROVISIONING_*` validadas en `create_app()`.
 - API de ejecuciones y reintento manual: FNC-062. Unidad systemd: FNC-067.

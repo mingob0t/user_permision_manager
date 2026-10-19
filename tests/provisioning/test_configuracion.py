@@ -2,7 +2,7 @@
 import pytest
 
 from app import create_app
-from app.modules.provisioning.config import (
+from app.modules.provisioning.configuracion import (
     ErrorConfiguracionAprovisionamiento, cargar_configuracion,
     configuracion_redis)
 

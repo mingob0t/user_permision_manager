@@ -68,7 +68,7 @@ def create_app(config_overrides=None):
     from app.modules.directory.configuracion import validar_al_arrancar
     validar_al_arrancar()
     # Variables PROVISIONING_* inválidas detienen el arranque (FNC-049).
-    from app.modules.provisioning.config import (
+    from app.modules.provisioning.configuracion import (
         validar_al_arrancar as validar_aprovisionamiento)
     validar_aprovisionamiento()
 

@@ -14,25 +14,40 @@ import logging
 
 import redis
 from rq import Queue
+from rq.serializers import JSONSerializer
 from sqlalchemy import event
 
 from app import db
+from app.modules.audit.events import Evento
+from app.modules.audit.services import add_audit_log
 from app.modules.platforms.tipos import CAMPOS_DN
-from app.modules.provisioning.config import (
+from app.modules.provisioning.configuracion import (
     ErrorConfiguracionAprovisionamiento, cargar_configuracion,
     configuracion_redis)
 from app.modules.provisioning.models import ProvisioningJob
 from app.modules.provisioning.reloj import ahora
-from app.modules.provisioning.tipos import (ESTADO_PENDIENTE,
+from app.modules.provisioning.tipos import (ESTADO_CANCELADO,
+                                            ESTADO_PENDIENTE,
+                                            ESTADOS_EN_ESPERA,
                                             LARGO_CLAVE_IDEMPOTENCIA,
-                                            OPERACIONES, PROVEEDORES)
+                                            OPERACION_OTORGAR,
+                                            OPERACION_REVOCAR, OPERACIONES,
+                                            PROVEEDORES)
 
 logger = logging.getLogger(__name__)
 
 # Función que ejecuta el worker (por nombre: el mensaje no lleva código).
 FUNCION_TRABAJO = 'app.modules.provisioning.ejecucion.ejecutar_trabajo'
-# Tiempo de espera de la conexión a Redis al despertar desde la app web.
+# Tiempo de espera de la conexión a Redis del worker (RQ lo sube para su
+# espera bloqueada en la cola).
 TIEMPO_ESPERA_REDIS_SEGUNDOS = 5
+# Al despertar desde la app web (dentro de `after_commit` de la petición): con
+# Redis caído, cada commit que encola tarda como mucho esto en conectar y otro
+# tanto en enviar; luego el trabajo espera al barrido (revisor, FNC-049).
+TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS = 0.5
+# Mensajes en JSON, nunca pickle: un mensaje no puede traer código
+# (auditor-seguridad, FNC-049). El worker usa el mismo.
+SERIALIZADOR_RQ = JSONSerializer
 # RQ no guarda el resultado: el estado vive en la BD.
 TTL_RESULTADO_RQ = 0
 CLAVE_SESION = 'provisioning_por_despertar'
@@ -46,7 +61,7 @@ class DatosDeTrabajoInvalidos(ValueError):
 # Redis y RQ
 # --------------------------------------------------------------------------- #
 
-def conexion_redis():
+def conexion_redis(tiempo_espera=TIEMPO_ESPERA_REDIS_SEGUNDOS):
     """Conexión nueva a Redis (bytes, como pide RQ); exige `REDIS_PASS`.
 
     En el worker, RQ sube el `socket_timeout` por encima de su espera
@@ -54,15 +69,16 @@ def conexion_redis():
     """
     cfg = configuracion_redis()
     return redis.Redis(host=cfg.host, port=cfg.puerto, password=cfg.contrasena,
-                       socket_connect_timeout=TIEMPO_ESPERA_REDIS_SEGUNDOS,
-                       socket_timeout=TIEMPO_ESPERA_REDIS_SEGUNDOS)
+                       socket_connect_timeout=tiempo_espera,
+                       socket_timeout=tiempo_espera)
 
 
-def cola(conexion=None):
+def cola(conexion=None, tiempo_espera=TIEMPO_ESPERA_REDIS_SEGUNDOS):
     """Cola RQ del ejecutor (`PROVISIONING_QUEUE_NAME`)."""
     cfg = cargar_configuracion()
-    return Queue(cfg.cola, connection=conexion or conexion_redis(),
-                 default_timeout=cfg.tiempo_intento)
+    return Queue(cfg.cola, connection=conexion or conexion_redis(tiempo_espera),
+                 default_timeout=cfg.tiempo_intento,
+                 serializer=SERIALIZADOR_RQ)
 
 
 def enviar(cola_rq, trabajo_id):
@@ -78,7 +94,7 @@ def despertar(ids):
     if not ids:
         return
     try:
-        cola_rq = cola()
+        cola_rq = cola(tiempo_espera=TIEMPO_ESPERA_REDIS_WEB_SEGUNDOS)
         for trabajo_id in ids:
             enviar(cola_rq, trabajo_id)
     except ErrorConfiguracionAprovisionamiento as exc:
@@ -129,6 +145,39 @@ def _validar_clave(clave):
     return clave
 
 
+MODULO_AUDITORIA = 'Aprovisionamiento'
+
+
+def cancelar_otorgar_en_espera(usuario_id, plataforma, nivel, momento):
+    """Una revocación deja sin efecto los otorgar en espera de su terna.
+
+    Sin esto, el reintento de un otorgar fallido podría volver a meter a la
+    persona después de revocarla (auditor-seguridad, FNC-049). Un otorgar ya
+    en ejecución no se cancela: la revocación espera a que termine (orden por
+    terna en `ejecucion.reservar`). Auditado en la misma transacción.
+    """
+    en_espera = ProvisioningJob.query.filter(
+        ProvisioningJob.operation == OPERACION_OTORGAR,
+        ProvisioningJob.user_id == usuario_id,
+        ProvisioningJob.platform_id == plataforma.id,
+        ProvisioningJob.level == nivel,
+        ProvisioningJob.status.in_(ESTADOS_EN_ESPERA)).all()
+    for trabajo in en_espera:
+        trabajo.status = ESTADO_CANCELADO
+        trabajo.finished_at = trabajo.updated_at = momento
+        trabajo.next_attempt_at = None
+        add_audit_log(
+            Evento.EJECUCION_CANCELADA, status='info',
+            detail=(f'Otorgar nivel {nivel} cancelado por una revocación '
+                    f'(trabajo {trabajo.id}).'),
+            module=MODULO_AUDITORIA, target_user_id=usuario_id,
+            area_id=trabajo.area_id, platform_id=plataforma.id,
+            grant_id=trabajo.access_id,
+            after={'job_id': trabajo.id, 'status': ESTADO_CANCELADO},
+            commit=False)
+    return en_espera
+
+
 def encolar(operacion, usuario_id, plataforma, nivel, clave_idempotencia,
             access_id=None):
     """Agrega un trabajo a la transacción actual y lo devuelve.
@@ -151,6 +200,8 @@ def encolar(operacion, usuario_id, plataforma, nivel, clave_idempotencia,
         raise DatosDeTrabajoInvalidos('Falta el usuario.')
 
     momento = ahora()
+    if operacion == OPERACION_REVOCAR:
+        cancelar_otorgar_en_espera(usuario_id, plataforma, nivel, momento)
     trabajo = ProvisioningJob(
         operation=operacion, provider=plataforma.integration_type,
         level=nivel, status=ESTADO_PENDIENTE, user_id=usuario_id,

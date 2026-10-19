@@ -38,7 +38,8 @@ activar_si_se_pide()
 ESTRATEGIA = SYNC
 
 # Atributos de perfil de una persona (inetOrgPerson) que se leen al buscarla.
-ATRIBUTOS_PERFIL = ('mail', 'cn', 'displayName')
+ATRIBUTO_CORREO = 'mail'
+ATRIBUTOS_PERFIL = (ATRIBUTO_CORREO, 'cn', 'displayName')
 
 # Atributos de membresía cuyo valor es el identificador del usuario y no su DN
 # (posixGroup). El resto (`member`, `uniqueMember`) guarda el DN.
@@ -65,6 +66,10 @@ class ErrorDirectorio(Exception):
     def __init__(self, mensaje, causa=None):
         super().__init__(mensaje)
         self.causa = causa
+
+
+class PersonaAmbigua(ErrorDirectorio):
+    """La búsqueda exacta devolvió más de una persona (FNC-049)."""
 
 
 @dataclass(frozen=True)
@@ -214,6 +219,33 @@ class ClienteDirectorio:
             return None
         entrada = entradas[0]
         return self._a_usuario(entrada, respaldo=str(identificador))
+
+    def buscar_por_correo(self, correo):
+        """Persona cuyo `mail` (cualquiera de sus valores) es `correo`.
+
+        Filtro exacto `(mail=<escapado>)`, sin comodines (FNC-049). `None` si
+        no hay; `PersonaAmbigua` si hay más de una.
+        """
+        cfg = self.configuracion
+        filtro = f'({ATRIBUTO_CORREO}={escapar_filtro(correo)})'
+        atributos = [cfg.atributo_usuario, *ATRIBUTOS_PERFIL]
+        with self.conexion_servicio() as conexion:
+            try:
+                conexion.search(cfg.usuarios_base_dn, filtro, SUBTREE,
+                                attributes=atributos,
+                                size_limit=LIMITE_BUSQUEDA_USUARIO)
+            except LDAPSizeLimitExceededResult:
+                entradas, ambiguo = [], True
+            except LDAPException as exc:
+                raise self.registrar_error('búsqueda por correo', exc) from None
+            else:
+                entradas = list(conexion.entries)
+                ambiguo = len(entradas) > 1
+        if ambiguo:
+            logger.error('Directorio: el correo buscado corresponde a más de '
+                         'una entrada bajo %s', cfg.usuarios_base_dn)
+            raise PersonaAmbigua(MENSAJE_AMBIGUO)
+        return self._a_usuario(entradas[0]) if entradas else None
 
     def buscar_personas(self, texto, limite=LIMITE_BUSQUEDA_PERSONAS):
         """Personas cuyo `LDAP_USER_ATTR`, `mail`, `cn` o `displayName`

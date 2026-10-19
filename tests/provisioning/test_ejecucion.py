@@ -9,7 +9,7 @@ from app import db
 from app.modules.audit.events import ACTOR_SISTEMA
 from app.modules.audit.models import AuditLog
 from app.modules.provisioning import ejecucion, manejadores
-from app.modules.provisioning.config import cargar_configuracion
+from app.modules.provisioning.configuracion import cargar_configuracion
 from app.modules.provisioning.ejecucion import (ejecutar_trabajo, reservar,
                                                 sentencia_reserva)
 from app.modules.provisioning.models import ProvisioningJob

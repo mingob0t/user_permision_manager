@@ -30,7 +30,7 @@ from app.modules.auth.models import User
 from app.modules.core.models import Platform
 from app.modules.notifications.access_notifications import \
     notificar_aprovisionamiento_fallido
-from app.modules.provisioning.config import cargar_configuracion
+from app.modules.provisioning.configuracion import cargar_configuracion
 from app.modules.provisioning.manejadores import avisar_resultado
 from app.modules.provisioning.models import (ProvisioningJob,
                                              ProvisioningJobAttempt)
@@ -45,8 +45,10 @@ from app.modules.provisioning.saneo import (MOTIVO_CONECTOR_NO_DISPONIBLE,
                                             mensaje_de_error)
 from app.modules.provisioning.tipos import (ESTADO_EN_EJECUCION,
                                             ESTADO_EXITOSO, ESTADO_FALLIDO,
+                                            ESTADO_PENDIENTE,
                                             ESTADO_REINTENTANDO,
                                             ESTADOS_EN_ESPERA,
+                                            ESTADOS_SIN_TERMINAR,
                                             LARGO_RESERVADO_POR,
                                             OPERACION_OTORGAR,
                                             OPERACION_REVOCAR,
@@ -89,8 +91,36 @@ def sentencia_reserva(trabajo_id, worker, cfg, momento):
         .execution_options(synchronize_session=False))
 
 
+def bloqueado_por_anterior(trabajo_id):
+    """`True` si un trabajo anterior de la misma terna no terminó.
+
+    Los trabajos de una terna (usuario, plataforma, nivel) corren en orden de
+    creación (auditor-seguridad, FNC-049). Consulta previa y no subconsulta
+    del `UPDATE` (MySQL no la permite sobre la misma tabla): sin carrera, un
+    anterior solo puede pasar a terminado y los ids nuevos son mayores.
+    """
+    actual = (ProvisioningJob.query
+              .with_entities(ProvisioningJob.user_id,
+                             ProvisioningJob.platform_id,
+                             ProvisioningJob.level)
+              .filter(ProvisioningJob.id == trabajo_id).first())
+    if actual is None:
+        return True
+    return db.session.query(
+        ProvisioningJob.query.filter(
+            ProvisioningJob.id < trabajo_id,
+            ProvisioningJob.user_id == actual.user_id,
+            ProvisioningJob.platform_id == actual.platform_id,
+            ProvisioningJob.level == actual.level,
+            ProvisioningJob.status.in_(ESTADOS_SIN_TERMINAR)).exists()
+    ).scalar()
+
+
 def reservar(trabajo_id, worker, cfg, momento=None):
     """Reserva el trabajo para `worker`; `True` si la ganó."""
+    if bloqueado_por_anterior(trabajo_id):
+        db.session.rollback()
+        return False
     sentencia = sentencia_reserva(trabajo_id, worker, cfg, momento or ahora())
     ganada = db.session.execute(sentencia).rowcount == 1
     if not ganada:
@@ -98,14 +128,57 @@ def reservar(trabajo_id, worker, cfg, momento=None):
     return ganada
 
 
+def confirmar_reserva(trabajo_id, worker):
+    """`True` si la reserva sigue siendo de `worker` (y la bloquea hasta el
+    commit). Si otro worker la retomó al vencer, este no cierra nada
+    (auditor-seguridad, FNC-049)."""
+    sentencia = (
+        update(ProvisioningJob)
+        .where(ProvisioningJob.id == trabajo_id,
+               ProvisioningJob.status == ESTADO_EN_EJECUCION,
+               ProvisioningJob.locked_by == worker[:LARGO_RESERVADO_POR])
+        .values(updated_at=ahora())
+        .execution_options(synchronize_session=False))
+    return db.session.execute(sentencia).rowcount == 1
+
+
+def reabrir(trabajo, cfg):
+    """Vuelve a `pendiente` un trabajo `fallido` (reintento manual, FNC-062).
+
+    Decisión del orquestador (pendiente de validar en la prueba de concepto):
+    se conserva la bitácora y se dan `PROVISIONING_MAX_ATTEMPTS` intentos más
+    (`max_attempts` sube); no se reinicia el contador. Sin commit ni
+    auditoría: los hace FNC-062 (`ejecucion_reintentada`).
+    """
+    if trabajo.status != ESTADO_FALLIDO:
+        raise EstadoInvalido('Solo se reabre un trabajo fallido.')
+    momento = ahora()
+    trabajo.status = ESTADO_PENDIENTE
+    trabajo.max_attempts = trabajo.attempts_count + cfg.max_intentos
+    trabajo.next_attempt_at = trabajo.finished_at = None
+    trabajo.locked_at = trabajo.locked_by = None
+    trabajo.updated_at = momento
+    return trabajo
+
+
+class EstadoInvalido(ValueError):
+    """El trabajo no está en el estado que pide la operación."""
+
+
 def _cerrar_interrumpidos(trabajo, momento):
-    """Intentos abiertos de una reserva vencida: transitorio interrumpido."""
+    """Intentos abiertos de una reserva vencida: transitorio interrumpido.
+
+    Devuelve `True` si había alguno (la reserva se retomó).
+    """
+    retomada = False
     for intento in trabajo.attempts:
         if intento.finished_at is None:
+            retomada = True
             intento.finished_at = momento
             intento.result = RESULTADO_ERROR_TRANSITORIO
             intento.error = mensaje_de_error(RESULTADO_ERROR_TRANSITORIO,
                                              MOTIVO_INTERRUMPIDO)
+    return retomada
 
 
 def _abrir_intento(trabajo, momento):
@@ -238,8 +311,8 @@ def ejecutar_trabajo(trabajo_id, worker=None):
         momento = ahora()
         trabajo = db.session.get(ProvisioningJob, trabajo_id,
                                  populate_existing=True)
-        _cerrar_interrumpidos(trabajo, momento)
-        if trabajo.attempts_count >= trabajo.max_attempts:
+        retomada = _cerrar_interrumpidos(trabajo, momento)
+        if retomada and trabajo.attempts_count >= trabajo.max_attempts:
             # Reserva vencida en el último intento: no queda otro.
             trabajo.locked_at = trabajo.locked_by = None
             trabajo.updated_at = momento
@@ -252,6 +325,11 @@ def ejecutar_trabajo(trabajo_id, worker=None):
 
         resultado = llamar_proveedor(trabajo)
 
+        if not confirmar_reserva(trabajo_id, worker):
+            db.session.rollback()
+            logger.warning('Aprovisionamiento: la reserva del trabajo %s ya '
+                           'no es de este worker; no se cierra.', trabajo_id)
+            return None
         cerrar_intento(trabajo, intento, resultado, cfg)
         estado = trabajo.status
         db.session.commit()

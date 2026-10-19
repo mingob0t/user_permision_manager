@@ -16,9 +16,16 @@ ESTADO_EN_EJECUCION = 'en_ejecucion'
 ESTADO_REINTENTANDO = 'reintentando'
 ESTADO_EXITOSO = 'exitoso'
 ESTADO_FALLIDO = 'fallido'
+# Otorgar en espera que una revocación posterior de la misma terna dejó sin
+# efecto (auditor-seguridad, FNC-049). Final.
+ESTADO_CANCELADO = 'cancelado'
 ESTADOS = (ESTADO_PENDIENTE, ESTADO_EN_EJECUCION, ESTADO_REINTENTANDO,
-           ESTADO_EXITOSO, ESTADO_FALLIDO)
+           ESTADO_EXITOSO, ESTADO_FALLIDO, ESTADO_CANCELADO)
 ESTADOS_EN_ESPERA = (ESTADO_PENDIENTE, ESTADO_REINTENTANDO)
+# Sin terminar: bloquean a los trabajos posteriores de la misma terna
+# (usuario, plataforma, nivel), que corren en orden de creación.
+ESTADOS_SIN_TERMINAR = (ESTADO_PENDIENTE, ESTADO_EN_EJECUCION,
+                        ESTADO_REINTENTANDO)
 
 # Resultado de un intento (`attempts[].result`).
 RESULTADO_EXITOSO = 'exitoso'

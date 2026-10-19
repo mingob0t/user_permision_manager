@@ -5,8 +5,9 @@
   plataforma y debajo de `LDAP_GROUPS_BASE_DN` (SEC-LDAP-04; el escritor
   vuelve a validar la base).
 - La persona se identifica por el correo de su cuenta del portal, igual que el
-  login de directorio (FNC-042): búsqueda con el cliente único y coincidencia
-  **exacta** de `mail`. Ninguna o más de una → error permanente.
+  login de directorio (FNC-042): filtro exacto `(mail=…)` del cliente único
+  (`buscar_por_correo`; cualquier valor de un `mail` multivalor). Ninguna o
+  más de una → error permanente.
 - Traduce `ResultadoEscritura`: `hecho` → `exitoso`, `ya_estaba` →
   `sin_cambios`, `error_transitorio` se reintenta, `no_existe` y
   `error_permanente` no.
@@ -22,7 +23,8 @@ from app.modules.directory.errors import (MOTIVO_DIRECTORIO,
                                           MOTIVO_FUERA_DE_BASE,
                                           MOTIVO_USUARIO_INEXISTENTE,
                                           Resultado, clasificar_error)
-from app.modules.directory.ldap_client import ClienteDirectorio, ErrorDirectorio
+from app.modules.directory.ldap_client import (ClienteDirectorio,
+                                               ErrorDirectorio, PersonaAmbigua)
 from app.modules.directory.writer import EscritorDirectorio
 from app.modules.platforms.grupos import dn_en_base
 from app.modules.platforms.tipos import CAMPOS_DN, TIPO_LDAP
@@ -38,8 +40,6 @@ from app.modules.provisioning.tipos import (RESULTADO_ERROR_PERMANENTE,
                                             RESULTADO_ERROR_TRANSITORIO,
                                             RESULTADO_EXITOSO,
                                             RESULTADO_SIN_CAMBIOS)
-
-ATRIBUTO_CORREO = 'mail'
 
 _RESULTADOS = {
     Resultado.HECHO: RESULTADO_EXITOSO,
@@ -112,16 +112,14 @@ class ProveedorLdap(Provisioner):
         if not correo:
             raise _Fallo(permanente(MOTIVO_DATOS_INCOMPLETOS))
         try:
-            candidatas = cliente.buscar_personas(correo)
+            persona = cliente.buscar_por_correo(correo)
+        except PersonaAmbigua:
+            raise _Fallo(permanente(MOTIVO_PERSONA_AMBIGUA)) from None
         except ErrorDirectorio as exc:
             raise _Fallo(_error_directorio(exc)) from None
-        exactas = [p for p in candidatas
-                   if _normalizar(p.atributos.get(ATRIBUTO_CORREO)) == correo]
-        if not exactas:
+        if persona is None:
             raise _Fallo(permanente(MOTIVO_USUARIO_INEXISTENTE))
-        if len(exactas) > 1:
-            raise _Fallo(permanente(MOTIVO_PERSONA_AMBIGUA))
-        return exactas[0]
+        return persona
 
     def _preparar(self, operacion):
         cliente, escritor = self._cliente_y_escritor()
