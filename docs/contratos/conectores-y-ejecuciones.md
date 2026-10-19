@@ -86,7 +86,7 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 - Respuesta: `{"status": "success", "job": Job}`. Auditoría `ejecucion_reintentada`.
 
 ## Aviso de fallo (P10, 2026-10-14)
-- Al agotar reintentos: correo `aprovisionamiento_fallido` a los admins del área y al superadmin (no depender de `pref_email_notifications`: *Por confirmar*); auditoría `acceso_fallido` o `revocacion_fallida`.
+- Al agotar reintentos: correo `aprovisionamiento_fallido` a los admins del área y al superadmin (respeta `pref_email_notifications`: respuesta del dueño 2026-10-15); auditoría `acceso_fallido` o `revocacion_fallida`.
 
 ## Errores
 | HTTP | `code` | Mensaje |
@@ -114,3 +114,4 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
+| 1 | 2026-10-15 | Redacción: P10 resuelto, el aviso de fallo respeta `pref_email_notifications` (FNC-048) |
