@@ -1,4 +1,8 @@
 from app import db
+from app.modules.platforms.estado import accesos_vigentes, tiene_conector
+from app.modules.platforms.tipos import (GRUPOS_SIN_VERIFICAR, LARGO_DN,
+                                         LARGO_ESTADO_GRUPOS, LARGO_TIPO,
+                                         TIPO_LDAP)
 
 class Area(db.Model):
     __tablename__ = 'areas'
@@ -49,6 +53,15 @@ class Platform(db.Model):
     status = db.Column(db.String(20), default='Activo')
     visits = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=db.func.now())
+    # Integración y grupos por nivel (FNC-046, migración 0005). Las plataformas
+    # anteriores quedan `ldap` sin grupos hasta que el superadmin los complete.
+    integration_type = db.Column(db.String(LARGO_TIPO), nullable=False,
+                                 default=TIPO_LDAP, server_default=TIPO_LDAP)
+    ldap_group_user_dn = db.Column(db.String(LARGO_DN), nullable=True)
+    ldap_group_admin_dn = db.Column(db.String(LARGO_DN), nullable=True)
+    groups_status = db.Column(db.String(LARGO_ESTADO_GRUPOS), nullable=False,
+                              default=GRUPOS_SIN_VERIFICAR,
+                              server_default=GRUPOS_SIN_VERIFICAR)
 
     # Relationships
     area = db.relationship('Area', backref=db.backref('platforms', lazy=True))
@@ -68,5 +81,11 @@ class Platform(db.Model):
             'area_name': self.area.name if self.area else 'Sin Área',
             'area_color': self.area.color if self.area else '#6366f1',
             'area_icon': self.area.icon if self.area else 'box',
-            'user_ids': [u.id for u in self.platform_users.all()] if hasattr(self, 'platform_users') else []
+            'integration_type': self.integration_type,
+            'ldap_group_user_dn': self.ldap_group_user_dn,
+            'ldap_group_admin_dn': self.ldap_group_admin_dn,
+            'groups_status': self.groups_status,
+            'has_connector': tiene_conector(self),
+            'active_grants': accesos_vigentes(self),
+            # `user_ids` ya no se expone (contrato plataformas-integracion v1).
         }

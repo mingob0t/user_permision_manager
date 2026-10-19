@@ -29,13 +29,14 @@ app/
 └── modules/
     ├── api/           # API v1 que consume el frontend
     │   ├── routes.py  # Lectura: me, áreas, plataformas, favoritos, usuarios, stats, auditoría
-    │   ├── crud.py    # Escritura: áreas, plataformas, usuarios, preferencias, purga
+    │   ├── crud.py    # Escritura: áreas, usuarios, preferencias, purga
     │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, respaldo; notificaciones in-app
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
     │   └── helpers.py # error_response(), validation_error(), json_object(), is_id_list() y errores del contrato (FNC-044)
     ├── auth/          # Modelos User/AuthConfig (obsoleto) y login; rutas heredadas (redirigen/410)
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
+    ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
@@ -71,7 +72,7 @@ Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue a
 |---|---|---|
 | `users` | `auth.models.User` | `id`, `email` (único; también guarda identificadores sin `@`, p. ej. el admin inicial), `nombre`, `password_hash` (nulo en LDAP), `role`, `auth_source` (`local` / `ldap` / `sso`), `is_active`, `created_at`, `last_login_at`, preferencias `pref_notifications`, `pref_email_notifications`, `pref_refresh_interval` (15–3600 s), `pref_tour_enabled` |
 | `areas` | `core.models.Area` | `id`, `name` (único), `description`, `icon`, `color` (hex), `status` (`Activo` / otro) |
-| `platforms` | `core.models.Platform` | `id`, `name`, `description` (obligatoria), `area_id` (FK obligatoria), `direct_link`, `icon`, `logo_url`, `bg_color`, `text_color`, `status`, `visits`, `created_at` |
+| `platforms` | `core.models.Platform` | `id`, `name`, `description` (obligatoria), `area_id` (FK obligatoria), `direct_link`, `icon`, `logo_url`, `bg_color`, `text_color`, `status`, `visits`, `created_at`; FNC-046 (0005): `integration_type` (`ldap`/`conector`), `ldap_group_user_dn`, `ldap_group_admin_dn` (512), `groups_status` (`ok`/`no_existe`/`sin_verificar`) |
 | `user_areas` | tabla de relación | `user_id`, `area_id`: pertenencia de un usuario a un área |
 | `area_admins` | tabla de relación | `user_id`, `area_id`: áreas que administra un `admin_area` |
 | `user_platforms` | tabla de relación | `user_id`, `platform_id`: acceso explícito a plataforma (se edita, pero `scoped_platforms` **no** lo usa para filtrar) |
@@ -120,10 +121,6 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `PUT /areas/<id>` | `area_admin_required` | Edita área. |
 | `DELETE /areas/<id>` | `admin_required` | Borra área; `409` si tiene plataformas. |
 | `PUT /areas/<id>/users` | `area_admin_required` | Define los miembros del área dentro del alcance. |
-| `POST /platforms` | `any_admin_required` (área en alcance) | Crea plataforma. |
-| `PUT /platforms/<id>` | `platform_manage_required` | Edita plataforma. |
-| `DELETE /platforms/<id>` | `platform_manage_required` | Borra plataforma. |
-| `PUT /platforms/<id>/users` | `platform_manage_required` | Define `user_platforms`. |
 | `POST /users` | `any_admin_required` | Alta de cuenta local (`auth_source` lo fija el servidor). Rol fuera de lo asignable → `403 rol_reservado`; `managed_area_ids`, `auth_source`, `password_hash` → `400 campo_no_permitido`. `admin` es identificador reservado. Si no llega contraseña, se asigna una por defecto (ver deuda). Un `admin_area` nace sin áreas administradas. |
 | `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: superadmin o admin de área (cuentas `usuario` de sus áreas), solo cuentas `local` (si no, `400 campo_no_permitido`). |
 | `DELETE /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Borra usuario; no permite borrarse a sí mismo ni la cuenta maestra `admin`. |
@@ -131,6 +128,21 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `PUT /me/preferences` | Sesión | Guarda preferencias propias. |
 | `GET /users/inactive?days=` | `admin_required` | Usuarios sin acceso en N días (mínimo `PURGE_MIN_DAYS` = 7), excluye superadmins. |
 | `POST /users/purge` | `admin_required` | Elimina esos usuarios y audita. |
+
+### 4.3.0 Plataformas — `app/modules/platforms/api.py` (`/api/v1`, FNC-046)
+
+Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`: `{"status", "platform", "warnings": []}`.
+
+| Método y ruta | Protección | Qué hace |
+|---|---|---|
+| `POST /platforms` | `any_admin_required`; área inexistente o ajena → `404` | Alta con lista blanca (`400 campo_no_permitido`); `name`, `description`, `area_id`, `integration_type` obligatorios (`422 validacion`). URL solo `https://`. `ldap`: DN bajo `LDAP_GROUPS_BASE_DN` o derivados de `LDAP_PLATFORM_GROUP_TEMPLATE`; sin directorio o sin DN → `422`; iguales → `409 grupos_iguales`. Audita `plataforma_creada` ("admin X dio de alta la plataforma Y") en la misma transacción. |
+| `PUT /platforms/<id>` | `any_admin_required` + `can_manage_platform` (ajena → `404`) | Mismas reglas, campos parciales. DN solo superadmin (`403 dn_solo_superadmin`). Cambiar tipo, grupos o área con `accesos_vigentes > 0` → `409 plataforma_con_accesos`. Pasar a `conector` borra los DN. Audita `plataforma_editada` con antes/después de lo que cambió. |
+| `DELETE /platforms/<id>` | `platform_manage_required` | Borra plataforma (movida de `crud.py` sin cambios). |
+| `PUT /platforms/<id>/users` | `platform_manage_required` | Define `user_platforms` (movida sin cambios; se retira en FNC-065). |
+
+- Grupos: existencia con `ClienteDirectorio.existe_dn`; no existe → aviso `grupo_no_existe` y `groups_status: no_existe`; directorio sin respuesta → `directorio_no_disponible` y `sin_verificar`. Nunca es error.
+- `Platform.to_dict` agrega `integration_type`, los DN, `groups_status`, `has_connector` y `active_grants`; ya no expone `user_ids`. `GET /platforms` (`routes.py`) no cambia (FNC-063).
+- Puntos de extensión en `platforms/estado.py`: `accesos_vigentes` (FNC-054) y `tiene_conector` (FNC-050), hoy `0`/`False`.
 
 ### 4.3.1 Cuentas — `app/modules/users/api.py` (`/api/v1`, FNC-044)
 
@@ -267,6 +279,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/test_proteccion_por_rol.py`: matriz ruta × rol (401/403/2xx), entradas inválidas (400) y RF-04 (sin `xfail` desde FNC-044).
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (SEG-05 y SEG-09 sin `xfail` desde FNC-044; queda el de FNC-015).
   - Roles y áreas administradas (FNC-044): `tests/users/test_roles_y_areas_administradas.py`.
+  - Plataformas (FNC-046): `tests/platforms/` (tipo, DN, derivación, avisos, 409, auditoría; regresión SEG-24).
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 4 `xfail` con su tarea (FNC-003, 006, 014); los 9 de FNC-002 y FNC-013 pasaron a pruebas normales en FNC-042.
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, variables=None, **config)` activa `LDAP_*` ficticias y conecta el cliente centralizado a `MOCK_SYNC` (personas, grupos, filtros recibidos); `config` crea `auth_config` (FNC-042).
   - Directorio (FNC-043): `tests/directory/test_api.py` (configuración, prueba, búsqueda y escape, modelo sin clave), `tests/directory/test_aislamiento.py` (SEC-LDAP-01/02), `tests/test_migracion_0004.py`. El `MOCK_SYNC` no compara valores escapados ni devuelve entradas con `sizeLimitExceeded`: esas pruebas revisan el filtro y el límite pedidos.

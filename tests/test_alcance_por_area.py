@@ -237,7 +237,8 @@ def test_admin_area_no_crea_plataforma_en_area_ajena(alcance, cliente_como):
     esc = alcance
     respuesta = _como(cliente_como, esc, ADMIN_A).post(
         f'{A}/platforms', json={'name': 'Intrusa', 'area_id': esc.area['B']})
-    _assert_denegado(respuesta, (403,))
+    # FNC-046: área ajena = inexistente → 404 (contrato plataformas-integracion).
+    _assert_denegado(respuesta, (404,))
     assert Platform.query.filter_by(name='Intrusa').first() is None
 
 
@@ -245,7 +246,7 @@ def test_admin_area_no_mueve_plataforma_a_area_ajena(alcance, cliente_como):
     esc = alcance
     respuesta = _como(cliente_como, esc, ADMIN_A).put(
         f"{A}/platforms/{esc.plataforma['A']}", json={'area_id': esc.area['B']})
-    _assert_denegado(respuesta, (403,))
+    _assert_denegado(respuesta, (404,))
     db.session.expire_all()
     assert db.session.get(Platform, esc.plataforma['A']).area_id == \
         esc.area['A']

@@ -12,6 +12,7 @@ import ipaddress
 import os
 import re
 from dataclasses import dataclass, field
+from string import Formatter
 from urllib.parse import urlsplit
 
 from ldap3.core.exceptions import LDAPInvalidDnError
@@ -32,6 +33,7 @@ VAR_ATRIBUTO_MIEMBRO = 'LDAP_GROUP_MEMBER_ATTR'
 VAR_TIEMPO_ESPERA = 'LDAP_TIMEOUT_SECONDS'
 VAR_CLASES_USUARIO = 'LDAP_USER_OBJECT_CLASSES'
 VAR_MIEMBRO_RELLENO = 'LDAP_GROUP_PLACEHOLDER_MEMBER'
+VAR_PLANTILLA_GRUPO = 'LDAP_PLATFORM_GROUP_TEMPLATE'
 
 # Valores por defecto: esquema estándar de OpenLDAP (inetOrgPerson y
 # groupOfNames), no datos de un directorio real.
@@ -54,6 +56,13 @@ _IPV4_NUMERICA = re.compile(r'^(?:0x[0-9a-f]+|\d+)(?:\.(?:0x[0-9a-f]+|\d+))*\.?$
                             re.IGNORECASE)
 
 _NOMBRE_ATRIBUTO = re.compile(r'^(?:[A-Za-z][A-Za-z0-9-]*|\d+(?:\.\d+)+)$')
+
+# Plantilla del DN de grupo de una plataforma, relativa a LDAP_GROUPS_BASE_DN
+# (FNC-046, ADR-004 P3): marcadores permitidos y obligatorios. `{nivel}` hace
+# distintos los grupos de usuario y admin.
+MARCADORES_PLANTILLA_GRUPO = frozenset({'plataforma', 'area', 'nivel'})
+MARCADORES_OBLIGATORIOS_GRUPO = frozenset({'plataforma', 'nivel'})
+VALOR_MUESTRA_PLANTILLA = 'muestra'
 
 
 class ErrorConfiguracionDirectorio(RuntimeError):
@@ -80,6 +89,8 @@ class ConfiguracionDirectorio:
     clases_usuario: tuple = CLASES_USUARIO_POR_DEFECTO
     # Miembro que ocupa un grupo que exige al menos uno (FNC-041); None = sin él.
     miembro_relleno: str | None = None
+    # Plantilla del DN de grupo de plataforma (FNC-046); None = no se deriva.
+    plantilla_grupo: str | None = None
 
 
 def _leer(entorno, nombre):
@@ -188,6 +199,36 @@ def _miembro_relleno(entorno, usuarios_base_dn):
     return relleno
 
 
+def _plantilla_grupo(entorno):
+    """Plantilla de RDN como `cn={plataforma}-{nivel},ou={area}`; None si vacía."""
+    plantilla = _leer(entorno, VAR_PLANTILLA_GRUPO)
+    if not plantilla:
+        return None
+    error = ErrorConfiguracionDirectorio(
+        f'{VAR_PLANTILLA_GRUPO} debe ser un DN relativo con {{plataforma}} y '
+        '{nivel} (y opcionalmente {area}), sin otros marcadores.')
+    try:
+        partes = list(Formatter().parse(plantilla))
+    except ValueError:
+        raise error from None
+    marcadores = set()
+    for _, campo, formato, conversion in partes:
+        if campo is None:
+            continue
+        if formato or conversion or campo not in MARCADORES_PLANTILLA_GRUPO:
+            raise error
+        marcadores.add(campo)
+    if not MARCADORES_OBLIGATORIOS_GRUPO <= marcadores:
+        raise error
+    muestra = plantilla.format(**{m: VALOR_MUESTRA_PLANTILLA
+                                  for m in MARCADORES_PLANTILLA_GRUPO})
+    try:
+        parse_dn(muestra)
+    except LDAPInvalidDnError:
+        raise error from None
+    return plantilla
+
+
 def _ca_cert_file(entorno):
     ruta = _leer(entorno, VAR_CA_CERT_FILE)
     if not ruta:
@@ -223,6 +264,7 @@ def cargar_configuracion(entorno=None):
         tiempo_espera=_tiempo_espera(entorno),
         clases_usuario=_clases_usuario(entorno),
         miembro_relleno=_miembro_relleno(entorno, usuarios_base_dn),
+        plantilla_grupo=_plantilla_grupo(entorno),
     )
 
 
