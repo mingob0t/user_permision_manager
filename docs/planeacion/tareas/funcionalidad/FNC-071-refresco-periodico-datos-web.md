@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | lib-datos |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-071-refresco-periodico` (worktree `pokemon-wt-071`) |
@@ -115,3 +115,4 @@ Salida real de `impacto.py` (contra `develop`, 2026-10-19):
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador); implementada; En revisión |
 | 2026-10-19 | revisor Requiere cambios (1 media, 2 bajas, catálogo) → corregidos con pruebas; sigue En revisión |
+- Cierre (2026-10-19): revisor atendido; merge local a `develop` (modo autónomo autorizado por el dueño).
