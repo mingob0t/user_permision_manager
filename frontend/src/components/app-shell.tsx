@@ -52,7 +52,7 @@ function Nav() {
             aria-current={active ? 'page' : undefined}
             className={`rounded-lg px-3 py-2 text-sm transition-colors ${
               active
-                ? 'bg-primary/15 font-medium text-primary'
+                ? 'bg-primary/15 font-medium text-primary-text'
                 : 'text-label hover:bg-surface-container hover:text-body-text'
             }`}
           >

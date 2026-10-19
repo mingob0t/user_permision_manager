@@ -26,6 +26,16 @@ export default {
         sky: 'rgb(var(--color-accent-sky) / <alpha-value>)',
         brand: 'rgb(var(--color-brand) / <alpha-value>)',
 
+        // Texto de marca por tema (DIS-001): los de arriba son rellenos.
+        'primary-text': 'rgb(var(--color-primary-text) / <alpha-value>)',
+        'brand-text': 'rgb(var(--color-brand-text) / <alpha-value>)',
+        'accent-text': 'rgb(var(--color-accent-text) / <alpha-value>)',
+        'accent-sky-text': 'rgb(var(--color-accent-sky-text) / <alpha-value>)',
+        'accent-peach-text': 'rgb(var(--color-accent-peach-text) / <alpha-value>)',
+        // Relleno de marca con texto encima y su texto (DIS-001).
+        'primary-solid': 'rgb(var(--color-primary-solid) / <alpha-value>)',
+        'on-primary': 'rgb(var(--color-on-primary) / <alpha-value>)',
+
         // Surfaces & Backgrounds
         'body-bg': 'var(--color-body-bg)',
         'body-text': 'var(--color-body-text)',

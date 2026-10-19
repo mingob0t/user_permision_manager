@@ -727,7 +727,7 @@ export function SettingsPanel() {
             onClick={() => setTab(item.id)}
             className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
               tab === item.id
-                ? 'border-primary font-medium text-primary'
+                ? 'border-primary font-medium text-primary-text'
                 : 'border-transparent text-label hover:text-body-text'
             }`}
           >
