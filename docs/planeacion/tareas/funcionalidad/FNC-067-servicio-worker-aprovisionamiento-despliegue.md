@@ -48,7 +48,8 @@
 |---|---|
 | `deploy/worker.service.tmpl` | Nueva unidad `<nombre>-worker` |
 | `deploy/install.sh` | `WORKER_UNIT`; render, chequeo de marcadores, `reset-failed`, `enable --now` y `is-active` del worker; resumen |
-| `deploy/preflight.sh` | Redis bloqueante, `REDIS_HOST` sin IP, `REDIS_PASS` con valor; unidad `-worker` en el nombre del despliegue |
+| `tests/deploy/preflight_inyeccion.sh` | Prueba de regresión de la inyección y de `REDIS_PASS` vacía |
+| `deploy/preflight.sh` | Host y puerto con lista blanca y argumentos posicionales; Redis bloqueante, `REDIS_HOST` sin IP, `REDIS_PASS` con valor; unidad `-worker` en el nombre del despliegue |
 | `README.md` | Terminal 3 (worker en dev con `REDIS_*`), sección systemd con el worker, Redis obligatorio |
 | `deploy/README.md` | Tabla de servicios, preflight, sección del worker, migraciones con reinicio del worker |
 | `docs/operacion/ENTORNOS.md`, `RELEASES.md` | Fila del worker, preflight, instalación y orden migrar → reiniciar backend y worker |
@@ -68,6 +69,9 @@ Todas son **decisión del orquestador (pendiente de validar en la prueba de conc
 | D7 | `After=`/`Wants=` `network-online.target`, `mysql.service`, `redis.service` | `Wants` de una unidad inexistente es inocuo si Redis o MySQL están en otro host |
 | D8 | `install.sh` hace `reset-failed` del worker antes de `enable --now` y falla si no queda activo | Repetir la instalación recupera un worker que agotó reinicios; idempotente |
 | D9 | `preflight.sh`: Redis sin respuesta, `REDIS_HOST` con IP o `REDIS_PASS` vacía → `FALTA` (bloqueante) | ADR-003 (Redis obligatorio) y SEG-29/SEC-CFG-08; `REDIS_PASS` solo se comprueba con `grep -q`, nunca se imprime |
+| D11 | `preflight.sh`: host `^[A-Za-z0-9.-]+$` y puerto `^[0-9]{1,5}$` en 1–65535 (si no, `FALTA`), y sondeo con `bash -c '</dev/tcp/$1/$2' _ "$h" "$p"` | Hallazgo Media de auditor-seguridad: inyección de comandos como root por `DB_*`/`REDIS_*` interpolados en `bash -c`. `install.sh` no tiene el patrón (revisado: sin `bash -c`, `/dev/tcp` ni `eval`) |
+| D12 | Redis en el mismo servidor, solo en loopback, `REDIS_HOST=localhost`; remoto solo como excepción con TLS y aprobación del dueño, hoy **no admitido** (la app no habla TLS con Redis) | SEC-CFG-08 (hallazgo Baja); una conexión en claro expondría `REDIS_PASS` y la cola |
+| D13 | `REDIS_PASS=""` y `REDIS_PASS=''` cuentan como vacías | Hallazgo Baja de auditor-seguridad |
 | D10 | `REDIS_PASS` sigue saliendo del `.env` del servidor (Vaultwarden `pokemon/<entorno>/REDIS_PASS`) | Sin secretos en la unidad ni en el repositorio |
 
 ## Reutilización
@@ -100,7 +104,9 @@ Afecta por definición (infra compartida): staging y producción; servicios `<no
 - Reversión: `systemctl disable --now <nombre>-worker`; los trabajos quedan en la BD.
 - `install.sh` comprueba `is-active` a los 3 s: con `Type=simple` un fallo posterior (p. ej. Redis rechaza la contraseña) no lo detecta; revisar `journalctl -u <nombre>-worker`.
 - `install.sh` repetido no reinicia unidades ya activas (comportamiento previo, también del backend): tras actualizar hay que `systemctl restart` (documentado en RELEASES).
-- `DEBUG_LDAP=true` escribe un log en el directorio de trabajo: con `ProtectSystem=strict` fallaría (igual que en el backend).
+- **Pendiente:** `DEBUG_LDAP=true` escribe un log en el directorio de trabajo; con `ProtectSystem=strict` fallaría (igual que en el backend). Pendiente de decidir: `ReadWritePaths` al directorio de registros o log a journald.
+- **Pendiente:** `SystemCallFilter=@system-service` (y `~@privileged @resources`) como endurecimiento adicional, a probar en Rocky 8 en la PoC.
+- **Pendiente:** Redis remoto con TLS requiere una tarea de backend (soporte `ssl` en la conexión); se propondría desde FNC-110 si el dueño lo necesita.
 
 ## Verificación
 | Comando | Resultado |
@@ -113,6 +119,9 @@ Afecta por definición (infra compartida): staging y producción; servicios `<no
 | `preflight.sh` con `.env` sintético: Redis en puerto cerrado y `REDIS_PASS` vacía | `FALTA Redis no responde…` y `FALTA REDIS_PASS sin definir…` |
 | Ídem con `REDIS_HOST` IP | `FALTA REDIS_HOST debe ser un nombre de host…` |
 | Ídem con Redis local accesible y `REDIS_PASS` con valor | `OK Redis accesible…`, `OK REDIS_PASS definida` |
+| `bash tests/deploy/preflight_inyeccion.sh` (`.env` sintéticos en `mktemp -d`, nunca el real) | 12 PASA, `Fallos: 0`, salida 0: la carga `localhost/1;touch${IFS}<tmp>;#` en `DB_HOST`, `REDIS_HOST` y `DB_PORT` no crea el archivo y da `FALTA`; `REDIS_PORT=70000` → `FALTA`; `REDIS_PASS=""`/`''`/vacía → `FALTA`; `"sintetica"` → OK. El control confirma que la carga sí ejecuta con el patrón anterior |
+| Misma prueba con el `preflight.sh` anterior (`git stash`) | 9 FALLA (la carga crea los archivos): la regresión primero falla |
+| `bash -n` tras las correcciones | OK |
 | `validar_proyecto.py` | 1 error y 9 avisos, **idénticos a `develop`** (`.gitignore` sin `logs/`, deuda previa); ninguno nuevo |
 
 **No verificado** (entorno dev: sin `install.sh` ni `systemctl`):
@@ -120,7 +129,7 @@ Afecta por definición (infra compartida): staging y producción; servicios `<no
 - Compatibilidad de las directivas con systemd 239 de Rocky 8 (verificado con 255; las elegidas existen desde ≤ 235).
 - `RestrictAddressFamilies` con la resolución DNS y el TLS de LDAP/SMTP reales.
 - Que `install.sh` completo sea idempotente con el worker (solo revisión del código y `bash -n`).
-- `auditor-seguridad` (requerido por la ficha): no lanzado por instrucción; pendiente.
+- `auditor-seguridad`: aprobado (2026-10-20); hallazgos corregidos en esta tarea.
 
 ## Bitácora
 | Fecha | Nota |
@@ -128,3 +137,4 @@ Afecta por definición (infra compartida): staging y producción; servicios `<no
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | En curso (modo autónomo, autorizado por el dueño) |
 | 2026-10-20 | En revisión: unidad, instalador, preflight y documentación; pendiente prueba en máquina de prueba y auditor-seguridad |
+| 2026-10-20 | auditor-seguridad aprobado; corregidos: Media (inyección en `preflight.sh`, D11, prueba `tests/deploy/preflight_inyeccion.sh`), Bajas (Redis en loopback D12, `REDIS_PASS` con comillas vacías D13); pendientes DEBUG_LDAP y `SystemCallFilter` |

@@ -169,11 +169,17 @@ misma cuenta de servicio y el mismo `.env` que el backend.
 | Aspecto | Valor |
 |---|---|
 | Requisitos | MySQL migrado, Redis con `requirepass` y `REDIS_PASS` en el `.env` (SEG-29); sin ellos sale con código 1 |
+| Redis | En el mismo servidor, escuchando **solo en loopback** y con `REDIS_HOST=localhost` (SEC-CFG-08) |
 | Orden de arranque | Después de la red, `mysql.service` y `redis.service` (si están en el mismo servidor) |
 | Reinicio | `Restart=on-failure` cada 30 s; tras 10 fallos en 15 min queda en `failed` |
 | Apagado | `SIGTERM` termina el intento en curso; `TimeoutStopSec=630` (600 s máx. de intento + 30 s de margen) y después `SIGKILL` |
 | Registros | journald: `journalctl -u <nombre>-worker -f` |
 | Endurecimiento | Sin privilegios ni capacidades, `ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `PrivateDevices`, kernel y cgroups protegidos, solo familias `AF_UNIX`/`AF_INET`/`AF_INET6`; no escribe en disco |
+
+**Redis remoto (excepción):** solo con TLS hacia Redis y aprobación del dueño
+registrada. La app aún no habla TLS con Redis, así que hoy no se admite: hace
+falta antes una tarea de backend. Una conexión en claro por la red expondría
+`REDIS_PASS` y los mensajes de la cola.
 
 Tras agotar los reinicios:
 

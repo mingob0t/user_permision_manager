@@ -86,7 +86,7 @@ Qué variables cambian por entorno. El valor de cada una está en `docs/configur
 | `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (FNC-077) | `false`; `true` solo para la PoC sin Authelia | `false` (se ignora: `APP_ENV` no es `development`) |
 | `DB_*`, `SECRET_KEY`, `SMTP_*` | `.env` local | `.env` del servidor con secretos de Vaultwarden |
 | `LDAP_*` (FNC-040) | `.env` local; vacío = directorio inactivo | `.env` del servidor; `LDAP_BIND_PASSWORD` de Vaultwarden. Con CA interna: copiar su PEM al servidor y apuntar `LDAP_CA_CERT_FILE` (si no, la app no conecta: el certificado se valida) |
-| `REDIS_PASS` (FNC-049) | `.env` local; obligatoria para el worker (Redis local con `requirepass`) | Vaultwarden `pokemon/<entorno>/REDIS_PASS`; Redis con `requirepass` y solo en loopback o red interna |
+| `REDIS_PASS` (FNC-049) | `.env` local; obligatoria para el worker (Redis local con `requirepass`) | Vaultwarden `pokemon/<entorno>/REDIS_PASS`; Redis con `requirepass` y solo en loopback (`REDIS_HOST=localhost`, SEC-CFG-08); remoto solo como excepción con TLS, hoy no soportado por la app (FNC-067) |
 | `PROVISIONING_*` (FNC-049) | por defecto (o valores cortos para probar reintentos) | por defecto; ajustar solo con motivo en `HISTORIAL.md` |
 | `LDAP_USER_OBJECT_CLASSES`, `LDAP_GROUP_PLACEHOLDER_MEMBER` (FNC-041) | `.env` local; vacías = `inetOrgPerson` / sin relleno | `.env` del servidor. El relleno es una entrada sin login ni contraseña, fuera de `LDAP_USERS_BASE_DN` (si no, la app no arranca) |
 

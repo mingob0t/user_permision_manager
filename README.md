@@ -59,7 +59,7 @@ puerto). El navegador entra siempre por el frontend, que reenvía `/api` y
 
 *   Python 3.11 o superior, Node 18.18 o superior (se recomienda 22 LTS).
 *   MySQL accesible por nombre de host (si `DB_ENGINE` no es `mysql`, la app usa SQLite local `nexus.db`).
-*   Redis con contraseña (`requirepass`), accesible por nombre de host: obligatorio para el worker. Sin Redis la API arranca igual, pero los trabajos de aprovisionamiento esperan.
+*   Redis con contraseña (`requirepass`) y escuchando solo en loopback, en la misma máquina (`REDIS_HOST=localhost`, SEC-CFG-08): obligatorio para el worker. Sin Redis la API arranca igual, pero los trabajos de aprovisionamiento esperan.
 
 ### 1. Configuración (una sola vez)
 
@@ -132,7 +132,7 @@ Otorga y revoca accesos en segundo plano (OpenLDAP o conector), con reintentos
 
 | Variable | Valor en desarrollo |
 |---|---|
-| `REDIS_HOST` | nombre de host de Redis, nunca una IP (normalmente `localhost`) |
+| `REDIS_HOST` | `localhost` (Redis solo en loopback, SEC-CFG-08); nunca una IP |
 | `REDIS_PORT` | puerto de Redis (por defecto 6379) |
 | `REDIS_PASS` | la contraseña (`requirepass`) de tu Redis local; **obligatoria** |
 
@@ -140,6 +140,9 @@ Otorga y revoca accesos en segundo plano (OpenLDAP o conector), con reintentos
 # desde la raíz del proyecto, con el venv del backend y la BD migrada
 venv/bin/flask --app run:app provisioning worker   # Ctrl+C: termina el intento en curso y sale
 ```
+
+Redis en otra máquina es una **excepción** que exige TLS hacia Redis, y la app
+todavía no lo soporta: hoy no se admite (ver `deploy/README.md`).
 
 Sin `REDIS_PASS` o sin Redis, el comando sale con código 1 y el motivo. Las
 `PROVISIONING_*` son opcionales (valores por defecto en
