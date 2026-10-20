@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | accesos |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local en la rama, sin push |
 | **Rama** | `fnc/FNC-058-consulta-revocacion-accesos` |
