@@ -159,6 +159,9 @@ def create_app(config_overrides=None):
     # Worker de aprovisionamiento: `flask provisioning worker` (FNC-049).
     from app.modules.provisioning.cli import provisioning_cli
     app.cli.add_command(provisioning_cli)
+    # El resultado de cada trabajo actualiza el acceso otorgado (FNC-054).
+    from app.modules.access.manejadores import registrar as registrar_accesos
+    registrar_accesos()
 
     # Los blueprints heredados ya no procesan datos: solo redirigen o devuelven
     # 410. Sin exentarlos, el CSRF los intercepta antes y responde un 400 en

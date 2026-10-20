@@ -17,6 +17,7 @@
 - Auditoría ampliada e inmutable: actor, usuario afectado, área, plataforma, antes/después, catálogo de eventos e IP real del cliente (corrige SEG-25); migración `0002` (FNC-047, 2026-10-14).
 - Avisos por correo del gestor de accesos (solicitud nueva, aprobada, rechazada y fallo de aprovisionamiento) con plantillas en la migración `0003`; los correos HTML escapan los valores (corrige SEG-23) (FNC-048, 2026-10-15).
 - El admin de área da de alta áreas (queda como su admin), edita y da de baja las suyas; `409` con plataformas o accesos; validación y auditoría del contrato (FNC-045, 2026-10-18).
+- Accesos otorgados con origen y estados, y servicio de otorgar/revocar que encola en el ejecutor y actualiza el estado con su resultado; subir de nivel reemplaza; `409 plataforma_con_accesos`/`area_con_accesos` con accesos reales; migración `0007` (FNC-054, 2026-10-19).
 - Cliente y tipos web de los contratos v1 del gestor de accesos (`lib/access/`), errores con `code`/`fields` y datos simulados tras `NEXT_PUBLIC_ACCESS_MOCKS`; el alta de usuarios ya no envía `auth_source` ni `managed_area_ids` (FNC-069, 2026-10-19).
 - Ejecutor de aprovisionamiento con Redis + RQ: trabajos e intentos en la BD (migración `0006`), `flask provisioning worker`, reintentos con *backoff*, bitácora sin secretos, auditoría `sistema` y aviso de fallo (FNC-049, 2026-10-19).
 - Hook web `usePolling`: refresco periódico con el intervalo del usuario, pausa con la pestaña oculta y *backoff* ante errores (ADR-006) (FNC-071, 2026-10-19).

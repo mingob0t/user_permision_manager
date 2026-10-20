@@ -15,14 +15,15 @@ DIALECTO_SIN_FK = 'sqlite'
 
 
 def tiene_accesos_vigentes(area):
-    """True si alguna cuenta alcanza el área.
+    """True si alguna plataforma del área tiene accesos otorgados vigentes
+    (FNC-054, definición en `docs/contratos/accesos.md`).
 
-    Decisión del orquestador (FNC-045, pendiente de validar en la prueba de
-    concepto): mientras no existan los accesos del gestor (FNC-054/056), un
-    acceso vigente es la membresía en `user_areas`. Los admins del área
-    (`area_admins`) no cuentan: la baja los retira.
+    Sustituye la membresía en `user_areas` que FNC-045 usaba mientras no
+    existían los accesos. Defensa en profundidad: hoy un acceso vigente
+    implica una plataforma del área, que ya da `area_con_plataformas`.
     """
-    return bool(area.area_users)
+    from app.modules.access.consultas import area_tiene_vigentes
+    return area_tiene_vigentes(area.id)
 
 
 def tiene_otros_admins(area, actor):
