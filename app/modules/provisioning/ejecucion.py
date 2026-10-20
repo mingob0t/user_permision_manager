@@ -167,18 +167,28 @@ def reabrir(trabajo, cfg):
     se conserva la bitácora y se dan `PROVISIONING_MAX_ATTEMPTS` intentos más
     (`max_attempts` sube); no se reinicia el contador. Sin commit ni
     auditoría: los hace FNC-062 (`ejecucion_reintentada`).
+
+    El cambio es un `UPDATE … WHERE status = 'fallido'` (FNC-062): de dos
+    reintentos simultáneos solo uno reabre; el otro espera el bloqueo de la
+    fila, ve el estado confirmado y recibe `EstadoInvalido` (409).
     """
     if trabajo.status != ESTADO_FALLIDO:
         raise EstadoInvalido('Solo se reabre un trabajo fallido.')
     if trabajo.operation == OPERACION_OTORGAR and revocado_despues(trabajo):
         # Reabrirlo volvería a meter a una persona ya revocada (re-auditoría).
         raise EstadoInvalido('El acceso se revocó después de este trabajo.')
-    momento = ahora()
-    trabajo.status = ESTADO_PENDIENTE
-    trabajo.max_attempts = trabajo.attempts_count + cfg.max_intentos
-    trabajo.next_attempt_at = trabajo.finished_at = None
-    trabajo.locked_at = trabajo.locked_by = None
-    trabajo.updated_at = momento
+    reabiertos = db.session.execute(
+        update(ProvisioningJob)
+        .where(ProvisioningJob.id == trabajo.id,
+               ProvisioningJob.status == ESTADO_FALLIDO)
+        .values(status=ESTADO_PENDIENTE,
+                max_attempts=ProvisioningJob.attempts_count + cfg.max_intentos,
+                next_attempt_at=None, finished_at=None, locked_at=None,
+                locked_by=None, updated_at=ahora())
+        .execution_options(synchronize_session=False)).rowcount
+    if reabiertos != 1:
+        raise EstadoInvalido('Solo se reabre un trabajo fallido.')
+    db.session.refresh(trabajo)
     return trabajo
 
 

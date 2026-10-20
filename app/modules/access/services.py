@@ -137,13 +137,24 @@ def revocar(acceso, actor=None, motivo=None):
 
 def reabrir_acceso(trabajo):
     """Al reabrir un trabajo fallido (FNC-062), el acceso vuelve a
-    `en_proceso` o `revocando`. Sin commit ni auditoría (los hace FNC-062)."""
+    `en_proceso` o `revocando`. Sin commit ni auditoría (los hace FNC-062).
+
+    El estado se comprueba en la BD (`UPDATE … WHERE status = <fallido>`,
+    FNC-062), no solo en memoria: no pisa una revocación confirmada a la vez.
+    """
     acceso = (db.session.get(PlatformAccessGrant, trabajo.access_id)
               if trabajo.access_id else None)
     if acceso is None:
         return None
-    destino = REAPERTURA.get((trabajo.operation, acceso.status))
-    if destino is None:
+    origen = acceso.status
+    destino = REAPERTURA.get((trabajo.operation, origen))
+    tomadas = 0 if destino is None else (
+        PlatformAccessGrant.query
+        .filter(PlatformAccessGrant.id == acceso.id,
+                PlatformAccessGrant.status == origen)
+        .update({PlatformAccessGrant.status: destino},
+                synchronize_session=False))
+    if tomadas != 1:
         raise errores.estado_invalido(
             'El acceso no está en un estado fallido.')
     acceso.status = destino
