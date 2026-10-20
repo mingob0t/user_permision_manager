@@ -82,7 +82,8 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | `attempts[].error` | string \| null; saneado y truncado a 500, sin secretos (SEC-CON-10) |
 
 ## `POST /provisioning/jobs/<id>/retry`
-- Sin cuerpo. Solo desde `fallido` → `pendiente`; el acceso vuelve a `en_proceso` o `revocando`.
+- Sin datos: cuerpo JSON `{}` (`Content-Type: application/json`, convención de escrituras; sin JSON → `415`); cualquier campo → `400 campo_no_permitido`. Solo desde `fallido` → `pendiente`; el acceso vuelve a `en_proceso` o `revocando`.
+- Un segundo reintento simultáneo, o un otorgar con una revocación posterior de su terna o con el acceso ya no fallido → `409 estado_invalido`.
 - Respuesta: `{"status": "success", "job": Job}`. Auditoría `ejecucion_reintentada`.
 
 ## Aviso de fallo (P10, 2026-10-14)
@@ -116,3 +117,4 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
 | 1 | 2026-10-19 | Aditivo (FNC-049): `status` `cancelado` (un otorgar en espera que una revocación posterior de la misma terna dejó sin efecto; final, no se reintenta) |
 | 1 | 2026-10-15 | Redacción: P10 resuelto, el aviso de fallo respeta `pref_email_notifications` (FNC-048) |
+| 1 | 2026-10-20 | Aclaración (FNC-062): reintento con cuerpo `{}` y casos de `409`; `from`/`to` sin zona en la hora local del proceso, como la auditoría |

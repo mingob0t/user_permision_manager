@@ -77,6 +77,12 @@ def _entero_positivo(args, campo):
     return int(valor)
 
 
+def leer_entero(args, campo):
+    """Id u otro entero ≥ 1 de un filtro propio de otro contrato (p. ej.
+    `access_id` de las ejecuciones, FNC-062); `None` si no viene."""
+    return _entero_positivo(args, campo)
+
+
 def _enumerado(args, campo, permitidos):
     valor = args.get(campo)
     if valor is None or valor == '':

@@ -233,6 +233,42 @@ def _con_solicitud_pendiente(esc, monkeypatch):
     monkeypatch.setattr(queue, 'cola', lambda conexion=None, **_: falsa)
 
 
+def _con_trabajo_fallido(esc, monkeypatch):
+    """Otorgar `fallido` del usuario objetivo con su acceso `fallido`
+    (FNC-062); la cola RQ queda simulada para el aviso del reintento."""
+    from app.modules.access.models import PlatformAccessGrant
+    from app.modules.access.tipos import ESTADO_FALLIDO, ORIGEN_SOLICITUD
+    from app.modules.platforms.tipos import NIVEL_USUARIO
+    from app.modules.provisioning import queue
+    from app.modules.provisioning.models import ProvisioningJob
+    from app.modules.provisioning.tipos import (ESTADO_FALLIDO as
+                                                TRABAJO_FALLIDO,
+                                                OPERACION_OTORGAR,
+                                                PROVEEDOR_LDAP)
+    from app.modules.core.models import Platform
+    from tests.provisioning.conftest import ColaFalsa
+
+    plataforma = db.session.get(Platform, esc.plataforma_id)
+    acceso = PlatformAccessGrant(
+        user_id=esc.objetivo_id, platform_id=esc.plataforma_id,
+        level=NIVEL_USUARIO, origin=ORIGEN_SOLICITUD, request_id=1,
+        status=ESTADO_FALLIDO)
+    acceso.sincronizar_slots()
+    db.session.add(acceso)
+    db.session.flush()
+    trabajo = ProvisioningJob(
+        operation=OPERACION_OTORGAR, provider=PROVEEDOR_LDAP,
+        level=NIVEL_USUARIO, status=TRABAJO_FALLIDO, user_id=esc.objetivo_id,
+        platform_id=plataforma.id, area_id=plataforma.area_id,
+        access_id=acceso.id, idempotency_key=f'acceso-{acceso.id}-otorgar',
+        attempts_count=1, max_attempts=1)
+    db.session.add(trabajo)
+    db.session.commit()
+    esc.trabajo_id = trabajo.id
+    falsa = ColaFalsa()
+    monkeypatch.setattr(queue, 'cola', lambda conexion=None, **_: falsa)
+
+
 def _nueva_solicitud(esc):
     return {'json': {'platform_id': esc.plataforma_id, 'level': 'usuario'}}
 
@@ -429,6 +465,18 @@ CASOS = (
          administradores(), _json({'reason': 'Motivo de rechazo de prueba'}),
          _con_solicitud_pendiente,
          nota='Motivo obligatorio de 10 a 500 caracteres (RF-06): 422'),
+    # ---- Ejecuciones (provisioning/api.py, FNC-062) ----
+    Caso('GET', f'{A}/provisioning/jobs', _fija(f'{A}/provisioning/jobs'),
+         administradores(),
+         nota='El admin solo ve las de sus áreas (tests/provisioning/test_api.py)'),
+    Caso('GET', f'{A}/provisioning/jobs/<int:job_id>',
+         lambda esc: f'{A}/provisioning/jobs/{esc.trabajo_id}',
+         administradores(), preparar=_con_trabajo_fallido,
+         nota='Área ajena: 404'),
+    Caso('POST', f'{A}/provisioning/jobs/<int:job_id>/retry',
+         lambda esc: f'{A}/provisioning/jobs/{esc.trabajo_id}/retry',
+         solo_superadmin(), _json({}), _con_trabajo_fallido,
+         nota='P10: solo el superadmin reintenta; no fallido: 409'),
 )
 
 # Entradas inválidas: con un rol que pasa la protección, la validación
@@ -462,4 +510,6 @@ CASOS_400 = (
     ('GET', f'{A}/access/inventory?per_page=101', _sin_cuerpo),
     ('GET', f'{A}/access-requests/inbox?status=otro', _sin_cuerpo),
     ('GET', f'{A}/access-requests/inbox?per_page=0', _sin_cuerpo),
+    ('GET', f'{A}/provisioning/jobs?status=otro', _sin_cuerpo),
+    ('GET', f'{A}/provisioning/jobs?per_page=101', _sin_cuerpo),
 )
