@@ -214,6 +214,25 @@ def _plataforma_solicitable(esc, monkeypatch):
     db.session.commit()
 
 
+def _con_solicitud_pendiente(esc, monkeypatch):
+    """Solicitud `pendiente` del usuario objetivo en la plataforma solicitable
+    (FNC-057); la cola RQ queda simulada para el trabajo `otorgar`."""
+    from app.modules.access_requests.models import PlatformAccessRequest
+    from app.modules.provisioning import queue
+    from tests.provisioning.conftest import ColaFalsa
+
+    _plataforma_solicitable(esc, monkeypatch)
+    solicitud = PlatformAccessRequest(user_id=esc.objetivo_id,
+                                      platform_id=esc.plataforma_id,
+                                      level='usuario', status='pendiente')
+    solicitud.sincronizar_slot()
+    db.session.add(solicitud)
+    db.session.commit()
+    esc.solicitud_id = solicitud.id
+    falsa = ColaFalsa()
+    monkeypatch.setattr(queue, 'cola', lambda conexion=None, **_: falsa)
+
+
 def _nueva_solicitud(esc):
     return {'json': {'platform_id': esc.plataforma_id, 'level': 'usuario'}}
 
@@ -392,6 +411,20 @@ CASOS = (
               'ya_administra_area); el superadmin no solicita (P6)'),
     Caso('GET', f'{A}/access-requests/mine',
          _fija(f'{A}/access-requests/mine'), con_sesion()),
+
+    # ---- Aprobaciones (access_requests/api.py, FNC-057) ----
+    Caso('GET', f'{A}/access-requests/inbox',
+         _fija(f'{A}/access-requests/inbox'), administradores()),
+    Caso('POST', f'{A}/access-requests/<int:request_id>/approve',
+         lambda esc: f'{A}/access-requests/{esc.solicitud_id}/approve',
+         administradores(), _json({}), _con_solicitud_pendiente,
+         nota='Área ajena, solicitud de otro admin: 404; propia: 403 '
+              '(tests/access_requests/test_approvals.py)'),
+    Caso('POST', f'{A}/access-requests/<int:request_id>/reject',
+         lambda esc: f'{A}/access-requests/{esc.solicitud_id}/reject',
+         administradores(), _json({'reason': 'Motivo de rechazo de prueba'}),
+         _con_solicitud_pendiente,
+         nota='Motivo obligatorio de 10 a 500 caracteres (RF-06): 422'),
 )
 
 # Entradas inválidas: con un rol que pasa la protección, la validación
@@ -421,4 +454,6 @@ CASOS_400 = (
     ('GET', f'{A}/access-requests/catalog?area_id=x', _sin_cuerpo),
     ('GET', f'{A}/access-requests/mine?per_page=0', _sin_cuerpo),
     ('GET', f'{A}/access-requests/mine?status=otro', _sin_cuerpo),
+    ('GET', f'{A}/access-requests/inbox?status=otro', _sin_cuerpo),
+    ('GET', f'{A}/access-requests/inbox?per_page=0', _sin_cuerpo),
 )

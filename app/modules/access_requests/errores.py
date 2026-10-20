@@ -26,3 +26,15 @@ def sin_permiso():
     """El superadmin no solicita: tiene acceso por defecto (P6)."""
     return ErrorDeAcceso('No tienes permiso para esta acción.', 403,
                          'sin_permiso')
+
+
+def solicitud_propia():
+    """P12 / SEC-AUTHZ-08: nadie decide su propia solicitud."""
+    return ErrorDeAcceso('No puedes decidir tu propia solicitud.', 403,
+                         'solicitud_propia')
+
+
+def solicitud_ya_decidida():
+    """Solo se decide una solicitud `pendiente` (SEC-AUTHZ-10)."""
+    return ErrorDeAcceso('La solicitud ya fue decidida.', 409,
+                         'solicitud_ya_decidida')
