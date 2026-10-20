@@ -14,7 +14,6 @@ from app.authz import (any_admin_required, area_admin_required, can_manage_area,
                        scoped_platforms, scoped_users)
 from app.modules.api.helpers import (CUERPO_INVALIDO, NO_ENCONTRADO,
                                      error_response, is_id_list, json_object)
-from app.modules.audit.models import AuditLog
 from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
 from app.modules.platforms.validacion import url_segura
@@ -207,7 +206,7 @@ def set_user_areas(user_id):
 
 
 # --------------------------------------------------------------------------- #
-# Panel y auditoría
+# Panel (la auditoría está en `audit/api.py`, FNC-060)
 # --------------------------------------------------------------------------- #
 
 @api_bp.route('/stats')
@@ -236,21 +235,3 @@ def stats():
     if is_admin() or is_area_admin():
         payload['users'] = scoped_users().count()
     return jsonify(payload)
-
-
-@api_bp.route('/audit')
-@login_required
-def list_audit():
-    """Registros de auditoría dentro del alcance del solicitante."""
-    if is_admin():
-        query = AuditLog.query
-    elif is_area_admin():
-        # Las cuentas que administra, más sus propios eventos.
-        emails = [u.email for u in scoped_users().all()] + [current_user.email]
-        query = AuditLog.query.filter(AuditLog.user.in_(emails))
-    else:
-        query = AuditLog.query.filter_by(user=current_user.email)
-
-    limit = min(request.args.get('limit', 100, type=int), 500)
-    logs = query.order_by(AuditLog.timestamp.desc()).limit(limit).all()
-    return jsonify([log.to_dict() for log in logs])

@@ -233,7 +233,16 @@ CASOS = (
     Caso('PUT', f'{A}/users/<int:user_id>/areas', _objetivo('/areas'),
          administradores(), lambda esc: {'json': {'area_ids': [esc.area_id]}}),
     Caso('GET', f'{A}/stats', _fija(f'{A}/stats'), con_sesion()),
+
+    # ---- Auditoría (audit/api.py, FNC-060) ----
     Caso('GET', f'{A}/audit', _fija(f'{A}/audit'), con_sesion()),
+    Caso('GET', f'{A}/audit/users/<int:user_id>',
+         lambda esc: f'{A}/audit/users/{esc.objetivo_id}',
+         {ANONIMO: 401, ROLE_USER: 404, ROLE_AREA_ADMIN: 200, ROLE_ADMIN: 200},
+         nota='El usuario solo consulta su propio historial: otro id da 404'),
+    Caso('GET', f'{A}/audit/platforms/<int:platform_id>',
+         lambda esc: f'{A}/audit/platforms/{esc.plataforma_id}',
+         administradores()),
 
     # ---- Áreas (areas/api.py) ----
     Caso('POST', f'{A}/areas', _fija(f'{A}/areas'), administradores(201),

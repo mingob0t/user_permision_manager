@@ -25,6 +25,7 @@
 - Plataformas con tipo de integración (`ldap`/`conector`) y grupos del directorio por nivel validados bajo `LDAP_GROUPS_BASE_DN`; URLs solo `https://` (corrige SEG-24 en el backend); migración `0005` (FNC-046, 2026-10-19).
 - Pantalla de áreas: el admin de área da de alta y gestiona las suyas; el superadmin asigna sus administradores; errores por campo y mensajes de los `409` (DIS-016, 2026-10-19).
 - Formulario de plataformas con tipo de integración y grupos de acceso por nivel (solo superadmin), avisos tras guardar, errores por campo y de los `403`/`409`; la tarjeta y la tabla solo enlazan `https://` (corrige SEG-24 en el frontend) (DIS-017, 2026-10-19).
+- Consulta de auditoría por rol con filtros y paginación, e historial por usuario y por plataforma; el admin de área solo ve eventos de sus áreas (corrige SEG-16) (FNC-060, 2026-10-19).
 
 ### Corregido
 - Contraste AA del texto de estado (éxito, error, advertencia, estrella de favorito) con tokens `*-text` por tema, sin clases de paleta fija (DIS-002, 2026-10-19).
