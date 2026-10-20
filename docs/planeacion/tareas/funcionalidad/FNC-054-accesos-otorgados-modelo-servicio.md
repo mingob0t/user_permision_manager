@@ -139,7 +139,7 @@ Lectura: los compartidos reales son `accesos_vigentes` (→ `Platform.to_dict()[
 - Nota (sin tarea): `active_grants` en listas hace una consulta por plataforma (N+1); agrupar en FNC-063 si pesa.
 
 ## Commits / PR
-- COMMIT_AQUI (local, sin push ni PR)
+- `9aa3c5c` (local, sin push ni PR)
 
 ## Bitácora
 | Fecha | Nota |
