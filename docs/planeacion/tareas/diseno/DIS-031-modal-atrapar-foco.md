@@ -17,6 +17,7 @@
 
 ## Objetivo
 - Ciclo de foco dentro del diálogo y foco de regreso al elemento que lo abrió, en el componente compartido
+- Foco inicial en el primer campo del diálogo (hoy va al panel) (auditor-accesibilidad, DIS-013)
 
 ## Impacto en elementos compartidos
 | Elemento | Usado en |

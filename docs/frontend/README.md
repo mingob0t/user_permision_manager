@@ -29,7 +29,7 @@ frontend/src/
 | Ruta | Componente | Qué hace | Visible en el menú para |
 |---|---|---|---|
 | `/` | `Dashboard` | Panel: contadores (áreas, plataformas, visitas y, para administradores, usuarios), top de visitas y plataformas por área (gráfica recharts). | Todos |
-| `/platforms` | `RequestCatalog` + `PlatformCatalog` | Catálogo solicitable (DIS-013): estado por plataforma, filtro por área y búsqueda en cliente, modal de solicitud de nivel con justificación opcional; superadmin solo consulta. Debajo, "Mis plataformas": abre el enlace, registra visita y marca favorito. | Todos |
+| `/platforms` | `RequestCatalog` + `PlatformCatalog` | `h1` "Plataformas" y dos `h2`. Catálogo solicitable (DIS-013): estado por plataforma, filtro por área y búsqueda en cliente, modal de solicitud de nivel con justificación opcional; superadmin solo consulta. Debajo, "Mis plataformas": abre el enlace, registra visita y marca favorito. | Todos |
 | `/requests` | — (reservada, DIS-014) | Mis solicitudes; guarda `requester`. | `usuario`, `admin_area` |
 | `/approvals` | — (reservada, DIS-015) | Aprobaciones; guarda `any_admin`. | `administrador`, `admin_area` |
 | `/inventory` | — (reservada, DIS-021) | Inventario; alcance por rol en el backend. | Todos |

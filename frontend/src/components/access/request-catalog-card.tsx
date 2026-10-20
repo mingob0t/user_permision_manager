@@ -43,8 +43,8 @@ export function RequestCatalogCard({
           {platform.name.slice(0, 2).toUpperCase()}
         </span>
         <div className="min-w-0">
-          <h3 id={tituloId} className="truncate font-medium">{platform.name}</h3>
-          <p className="truncate text-xs text-label">{area.name}</p>
+          <h3 id={tituloId} className="line-clamp-2 break-words font-medium">{platform.name}</h3>
+          <p className="line-clamp-2 break-words text-xs text-label">{area.name}</p>
         </div>
       </div>
 

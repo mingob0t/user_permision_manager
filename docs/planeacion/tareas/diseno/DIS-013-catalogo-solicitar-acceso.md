@@ -47,10 +47,12 @@
 | `frontend/src/components/access/request-form-modal.tsx` | Nuevo: modal con nivel (radio) y justificación opcional con contador |
 | `frontend/src/components/access/access-status-badge.tsx` | Nuevo, reutilizable: `AccessStatusBadge`, `NIVELES` |
 | `frontend/src/components/access/request-errors.ts` | Nuevo: mensajes de `POST /access-requests` y de la carga |
-| `frontend/src/app/platforms/page.tsx` | Compone `RequestCatalog` y, debajo, `PlatformCatalog` |
+| `frontend/src/app/platforms/page.tsx` | `h1` "Plataformas" y dos secciones hermanas con `h2`: `RequestCatalog` ("Catálogo") y `PlatformCatalog` |
 | `frontend/src/components/platform-catalog.tsx` | Solo el encabezado: `h1` "Plataformas" → `h2` "Mis plataformas" |
 | `frontend/src/lib/access/types.ts` | FNC-090: `justification` opcional |
-| `frontend/tests/components/access/request-catalog.test.tsx` | Nuevo: 26 pruebas |
+| `frontend/tests/components/access/request-catalog.test.tsx` | Nuevo: 22 pruebas |
+| `frontend/src/components/form.tsx` | Accesibilidad: placeholder de `INPUT` `text-label/30` → `text-label/85` |
+| `frontend/tests/accesibilidad/medir.ts`, `pares-contraste.ts` | `alfaTexto` y par `placeholder/input` |
 | `frontend/tests/lib/access/peticiones.test.ts` | Caso "crear solicitud sin justificación" (Content-Type JSON) |
 
 ## Decisiones del orquestador (pendientes de validar en la prueba de concepto)
@@ -65,6 +67,9 @@
 - Sin acción, la tarjeta explica el motivo: pendiente, superadmin, área que administra, ya tiene admin, o "No disponible para solicitar".
 - Foco del diálogo: `Modal` enfoca el panel al abrir; al cerrar, la pantalla devuelve el foco al botón que lo abrió. `Modal` no atrapa el foco con Tab (compartido, no se toca): DIS-031.
 - Radios nativos con `accent-primary` y caja `has-[:checked]:border-primary` (utilidades Tailwind sobre tokens existentes; no hay radio en el estándar).
+- Placeholder `/85` en lugar del `/80` pedido por auditor-accesibilidad: con `/80` el par medido sobre `bg-surface-container/30` en panel da 4.48 (emerald) y 4.47 (rose); `/85` pasa en los 7 temas (claro 6.50, oscuro 5.14, mínimo 5.05).
+- `role="alert"` de la justificación en un contenedor del modal, sin tocar `FieldErrorNote` (compartido con el formulario de plataformas).
+- Al cerrar el aviso de éxito el foco va al buscador del catálogo.
 
 ## Reutilización
 - `Modal`, `Field`, `TextArea`, `Button` de `form.tsx`; `Badge`, `Spinner`, `EmptyNote`, `ErrorNote` de `ui.tsx`; `PlatformCard` si admite la acción sin cambiar su uso en Favoritos
@@ -74,6 +79,8 @@
 |---|---|---|---|
 | `PlatformCard` | Componente | Catálogo y Favoritos (`favorites-list.tsx`) | No se modificó |
 | `PlatformCatalog` (encabezado) | Componente | Solo `/platforms` | Pendiente (dueño) |
+| Clase `INPUT` de `form.tsx` (placeholder `/30` → `/85`) | Clase compartida | `TextInput`, `TextArea`, `Select` en: Login (`login-form`), Áreas (`area-form`, `area-admins-panel`), Administrar plataformas (`platform-form`, `platform-integration-fields`), Usuarios (`users-list`), Ajustes (`settings-panel`), Catálogo (`access/`) | Pendiente (dueño): solo cambia el color del placeholder |
+| `medir.ts` (`alfaTexto`) | Utilidad de pruebas | `contraste.test.ts` | Suite en verde |
 | `AccessRequest.justification`, `AccessRequestInput.justification` | Tipo | `lib/access/requests.ts`, `mocks.ts`; DIS-014, DIS-015 | Typecheck y pruebas en verde |
 | `Page` de `/platforms` | Función | Falso positivo de `impacto.py` (mismo nombre en cada `page.tsx`) | N/A |
 
@@ -101,18 +108,20 @@ Reutilizados sin modificar: `Modal`, `Field`, `TextArea`, `TextInput`, `Select`,
 | `npm run lint` | "No ESLint warnings or errors"; salida 0 |
 | `npx eslint tests/components/access tests/lib/access` | Salida 0 |
 | `npx vitest run` | 15 archivos; 499 passed, 25 expected fail (las mismas de DIS-004/005/006), incluidas contraste y colores literales; salida 0 |
+| Tras correcciones de auditor-accesibilidad: `npm run typecheck` / `npm run lint` / `npx eslint tests/components/access tests/accesibilidad` | Salida 0 / 0 / 0 |
+| Tras correcciones: `npx vitest run` | 507 passed (+7 par `placeholder/input`, +1 encabezados), 25 expected fail; salida 0 |
 | `grep` de `style=`, `<style`, `.style.`, `#hex`, `rgb(`, paleta fija e IPs en los archivos tocados | Sin coincidencias |
 
 - Pruebas nuevas: carga, vacío, error con reintento, 403 al cargar; insignias y acción por estado; filtro y búsqueda; superadmin y admin de área; envío sin y con justificación; > 500; Escape y foco; 409 (5 códigos), 403 `sin_permiso`, 422 con campo, 500 genérico; doble envío.
 - `POST` con `Content-Type: application/json`: lo añade `apiRequest` cuando hay cuerpo y `jsonBody` siempre manda cuerpo; cubierto por `peticiones.test.ts` (también sin justificación).
-- **No verificado:** tema claro y oscuro, móvil y escritorio en el navegador (la app exige sesión del backend y no se levantó); solo se usan clases y tokens existentes, medidos por `contraste.test.ts`. Sin revisor, tester, auditor-accesibilidad ni auditor-seguridad (no se lanzaron, por instrucción).
+- **No verificado:** tema claro y oscuro, móvil y escritorio en el navegador (la app exige sesión del backend y no se levantó); solo se usan clases y tokens existentes, medidos por `contraste.test.ts`. Sin revisor, tester ni auditor-seguridad (no se lanzaron, por instrucción). auditor-accesibilidad: 6 fallas confirmadas corregidas (placeholder, foco de radios, foco al cerrar el aviso, nombres cortados en móvil, `role="alert"` del campo, jerarquía de encabezados).
 
 ## Impacto cruzado
 - Origen ← FNC-037
 - Depende de → FNC-036, FNC-024, FNC-025, FNC-069, FNC-070, FNC-056
 - Contrato → docs/contratos/solicitudes.md
 - Absorbe → FNC-090 (resuelta en DIS-013)
-- Genera → DIS-030, DIS-031
+- Genera → DIS-030, DIS-031, DIS-032
 
 ## Riesgos y reversión
 - Puede avanzar con los datos simulados de FNC-069; se integra después del backend.
@@ -125,3 +134,4 @@ Reutilizados sin modificar: `Modal`, `Field`, `TextArea`, `TextInput`, `Select`,
 | 2026-10-19 | FNC-070: el menú ya dice "Catálogo" pero el título de la pantalla (`platform-catalog.tsx`) sigue diciendo "Plataformas"; alinearlo aquí |
 | 2026-10-20 | Aprobada en modo autónomo y En curso; rama `dis/DIS-013-catalogo-solicitar` desde develop (c80f906) |
 | 2026-10-20 | Implementada: catálogo solicitable, modal de solicitud, `AccessStatusBadge`; título "Catálogo"; absorbe FNC-090 (tipos). Propone DIS-030 y DIS-031. En revisión |
+| 2026-10-20 | Correcciones de auditor-accesibilidad (6 confirmadas); propone DIS-032 (texto de 10–11 px en `.nx-badge` y `.nexus-btn`) y amplía DIS-031 (foco inicial al primer campo) |

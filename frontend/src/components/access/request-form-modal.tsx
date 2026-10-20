@@ -112,7 +112,7 @@ export function RequestFormModal({
             {niveles.map((nivel) => (
               <label
                 key={nivel}
-                className="flex cursor-pointer items-start gap-3 rounded-xl border border-panel-border p-3 has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary/20"
+                className="flex cursor-pointer items-start gap-3 rounded-xl border border-panel-border p-3 has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary"
               >
                 <input
                   type="radio"
@@ -146,7 +146,9 @@ export function RequestFormModal({
           <FieldHint id={CONTADOR_ID}>
             {`${texto.length}/${JUSTIFICACION_MAX} caracteres`}
           </FieldHint>
-          <FieldErrorNote id={JUSTIFICACION_ERROR_ID} message={errorJustificacion} />
+          <div role="alert">
+            <FieldErrorNote id={JUSTIFICACION_ERROR_ID} message={errorJustificacion} />
+          </div>
         </div>
 
         {error ? <ErrorNote message={error} /> : null}

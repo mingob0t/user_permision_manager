@@ -22,6 +22,8 @@ import { RequestCatalogCard, puedeSolicitar } from './request-catalog-card';
 import { describeCatalogError } from './request-errors';
 import { RequestFormModal } from './request-form-modal';
 
+const BUSCADOR_ID = 'catalogo-buscar';
+
 /** Cambios locales tras solicitar, por plataforma. */
 type Solicitadas = Record<number, number>;
 
@@ -106,12 +108,18 @@ export function RequestCatalog() {
     requestAnimationFrame(() => avisoRef.current?.focus());
   }
 
+  /** Al quitar el aviso, el foco va al buscador (no cae en `body`). */
+  function cerrarAviso() {
+    setAviso(null);
+    document.getElementById(BUSCADOR_ID)?.focus();
+  }
+
   const filtrando = Boolean(term.trim()) || areaId !== null;
 
   return (
     <section aria-labelledby="catalogo-titulo" className="space-y-6">
       <div>
-        <h1 id="catalogo-titulo" className="text-2xl font-semibold">Catálogo</h1>
+        <h2 id="catalogo-titulo" className="text-xl font-semibold">Catálogo</h2>
         <p className="mt-1 text-sm text-label">
           {esSuperadmin
             ? 'Plataformas de todas las áreas. Como superadmin solo puedes consultarlas.'
@@ -124,7 +132,7 @@ export function RequestCatalog() {
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-bold text-success-text">{aviso}</p>
-              <Button variant="secondary" onClick={() => setAviso(null)}>Cerrar aviso</Button>
+              <Button variant="secondary" onClick={cerrarAviso}>Cerrar aviso</Button>
             </div>
           </Card>
         ) : null}
@@ -132,6 +140,7 @@ export function RequestCatalog() {
 
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <TextInput
+          id={BUSCADOR_ID}
           type="search"
           value={term}
           onChange={(event) => setTerm(event.target.value)}

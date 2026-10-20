@@ -54,6 +54,13 @@ const WIKI = entrada(5, 'Wiki', [1, 'TI'], {
   pending_request_id: 40, can_request: false, requestable_levels: [],
 });
 
+/** Texto de las alertas del diálogo (general y del campo justificación). */
+async function alertas(dialogo: HTMLElement) {
+  await waitFor(() => expect(within(dialogo).getAllByRole('alert')
+    .some((a) => (a.textContent ?? '') !== '')).toBe(true));
+  return within(dialogo).getAllByRole('alert').map((a) => a.textContent ?? '').filter(Boolean);
+}
+
 function tarjeta(nombre: string) {
   return screen.getByRole('article', { name: nombre });
 }
@@ -112,6 +119,13 @@ describe('estados del catálogo', () => {
 });
 
 describe('tarjetas', () => {
+  it('la sección se titula con un h2 "Catálogo" (el h1 es de la página)', async () => {
+    render(<RequestCatalog />);
+    await screen.findByRole('article', { name: 'Wiki' });
+    expect(screen.getByRole('heading', { level: 2, name: 'Catálogo' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+  });
+
   it('indica el estado con texto y solo ofrece solicitar si el contrato lo permite', async () => {
     render(<RequestCatalog />);
     const conta = await screen.findByRole('article', { name: 'Contabilidad' });
@@ -179,6 +193,11 @@ describe('envío de la solicitud', () => {
     const aviso = screen.getByRole('status');
     expect(aviso.textContent).toContain('Solicitud enviada: Nómina');
     await waitFor(() => expect(document.activeElement).toBe(aviso));
+
+    // Al cerrar el aviso el foco va al buscador, no a `body`.
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar aviso' }));
+    expect(aviso.textContent).toBe('');
+    expect(document.activeElement).toBe(screen.getByRole('searchbox', { name: 'Buscar en el catálogo' }));
   });
 
   it('con justificación: la envía recortada y muestra el contador', async () => {
@@ -205,7 +224,8 @@ describe('envío de la solicitud', () => {
       .toBe('Escribe como máximo 500 caracteres.');
 
     fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitud' }));
-    expect(within(dialogo).getByRole('alert').textContent).toBe(MENSAJES_SOLICITUD.validacion);
+    expect(await alertas(dialogo)).toEqual(
+      ['Escribe como máximo 500 caracteres.', MENSAJES_SOLICITUD.validacion]);
     expect(document.activeElement).toBe(campo);
     expect(requestsApi.create).not.toHaveBeenCalled();
   });
@@ -234,7 +254,7 @@ describe('errores del contrato', () => {
     const { dialogo } = await abrirSolicitud('Nómina');
     fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitud' }));
 
-    expect((await within(dialogo).findByRole('alert')).textContent).toBe(mensaje);
+    expect(await alertas(dialogo)).toEqual([mensaje]);
     expect(screen.getByRole('dialog')).toBeTruthy();
     expect(within(tarjeta('Nómina')).queryByText('Solicitud pendiente')).toBeNull();
   });
@@ -248,7 +268,8 @@ describe('errores del contrato', () => {
     fireEvent.change(campo, { target: { value: 'Motivo' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitud' }));
 
-    expect((await within(dialogo).findByRole('alert')).textContent).toBe(MENSAJES_SOLICITUD.validacion);
+    expect(await alertas(dialogo)).toEqual(
+      ['Escribe como máximo 500 caracteres.', MENSAJES_SOLICITUD.validacion]);
     expect(campo.getAttribute('aria-invalid')).toBe('true');
     expect(document.getElementById('solicitud-justificacion-error')?.textContent)
       .toBe('Escribe como máximo 500 caracteres.');
@@ -259,8 +280,7 @@ describe('errores del contrato', () => {
     vi.mocked(requestsApi.create).mockRejectedValue(new ApiError(500, 'Traceback interno'));
     const { dialogo } = await abrirSolicitud('Nómina');
     fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitud' }));
-    expect((await within(dialogo).findByRole('alert')).textContent)
-      .toBe('No se pudo enviar la solicitud. Inténtalo de nuevo.');
+    expect(await alertas(dialogo)).toEqual(['No se pudo enviar la solicitud. Inténtalo de nuevo.']);
   });
 
   it('muestra "Enviando…" y bloquea el doble envío', async () => {
