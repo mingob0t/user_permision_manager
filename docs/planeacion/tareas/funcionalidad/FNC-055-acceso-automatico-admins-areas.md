@@ -8,10 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | accesos |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | En curso |
 | **Creada** | 2026-10-13 |
-| **Estatus Git** | — |
-| **Rama** | `fnc/FNC-055-acceso-automatico-admins-areas` |
+| **Estatus Git** | Rama local, sin push |
+| **Rama** | `fnc/FNC-055-acceso-automatico-admins` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí (otorgamiento sin solicitud) |
 
@@ -64,6 +64,7 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-20 | Aprobada (modo autónomo) y En curso |
 
 ## Decisiones del dueño (2026-10-14)
 - Nivel del acceso automático: `usuario`.
