@@ -95,6 +95,7 @@
 | `venv/bin/python -m pytest -q` (completa) | 1565 passed, 15 xfailed, salida 0 |
 | Regresiones SEG-062-01/02/03 antes de corregir | 9 failed (5 retry `200 == 409`; 4 fechas `ValueError: year … is out of range`) |
 | `venv/bin/python -m pytest -q` (completa, tras corregir) | 1574 passed, 15 xfailed, salida 0 |
+| `venv/bin/python -m pytest -q` (completa, tras el merge de develop) | 1605 passed, 15 xfailed, salida 0 |
 
 - No verificado: concurrencia real en MySQL (se simula con otra conexión en SQLite); aviso al worker con Redis real (cola falsa)
 
@@ -107,4 +108,4 @@
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Aprobada en modo autónomo y En curso (orquestador) |
 | 2026-10-20 | Implementada; En revisión. Pendientes revisor y auditor-seguridad |
-| 2026-10-20 | auditor-seguridad Aprobado; corregidos SEG-062-01/02/03 con regresiones; `git merge --no-ff develop`: ya al día (develop en 0f1e458) |
+| 2026-10-20 | auditor-seguridad Aprobado; corregidos SEG-062-01/02/03 con regresiones; `git merge --no-ff develop` (FNC-063, FNC-066; develop en 5968254): conflictos en `app/__init__.py` y docs resueltos uniendo ambas versiones; `matriz_proteccion.py` y TABLERO sin conflicto |

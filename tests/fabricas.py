@@ -73,3 +73,23 @@ def crear_usuario_de_rol(rol):
     if rol == ROLE_AREA_ADMIN:
         return crear_usuario(ROLE_AREA_ADMIN, areas_administradas=[area])
     return crear_usuario(ROLE_USER, areas=[area])
+
+
+def crear_acceso(usuario, plataforma, estado='activo', nivel='usuario',
+                 origen='solicitud'):
+    """Acceso otorgado (`platform_access_grants`, FNC-054) ya guardado.
+
+    Con origen `solicitud` lleva un `request_id` ficticio (F-AUD-02).
+    """
+    from app.modules.access.models import PlatformAccessGrant
+    from app.modules.access.tipos import ORIGEN_SOLICITUD
+
+    acceso = PlatformAccessGrant(
+        user_id=usuario.id, platform_id=plataforma.id, level=nivel,
+        origin=origen,
+        request_id=_siguiente() if origen == ORIGEN_SOLICITUD else None,
+        status=estado)
+    acceso.sincronizar_slots()
+    db.session.add(acceso)
+    db.session.commit()
+    return acceso

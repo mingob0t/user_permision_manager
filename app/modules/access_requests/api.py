@@ -25,8 +25,8 @@ from app import db
 from app.authz import any_admin_required
 from app.modules.access import errores as errores_acceso
 from app.modules.access.errores import ErrorDeAcceso
-from app.modules.access_requests import (approvals, catalogo, errores,
-                                         serializacion)
+from app.modules.access_requests import (approvals, catalogo, consultas,
+                                         errores, serializacion)
 from app.modules.access_requests.models import PlatformAccessRequest
 from app.modules.access_requests.services import crear
 from app.modules.access_requests.tipos import ESTADO_PENDIENTE, ESTADOS
@@ -129,8 +129,7 @@ def my_requests():
     except ParametroInvalido as error:
         return _invalido(error.campo)
 
-    consulta = PlatformAccessRequest.query.filter(
-        PlatformAccessRequest.user_id == current_user.id)
+    consulta = consultas.mias(current_user.id)
     if estado is not None:
         consulta = consulta.filter(PlatformAccessRequest.status == estado)
     if filtros.platform_id is not None:
