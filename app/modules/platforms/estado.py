@@ -5,7 +5,8 @@
   (FNC-046).
 - `accesos_que_impiden_mover`: los mismos sin los automáticos de los admins
   (`admin_de_area`), que se resincronizan al cambiar el área (FNC-055).
-- `tiene_conector`: FNC-050 la implementa con la configuración del conector.
+- `tiene_conector`: configuración activa del conector de un tipo registrado
+  (FNC-050, `connectors.consultas.conector_disponible`).
 
 Quien la implemente cambia solo esta función: `to_dict` y las validaciones de
 `api.py` ya la usan.
@@ -26,5 +27,7 @@ def accesos_que_impiden_mover(plataforma):
 
 
 def tiene_conector(plataforma):
-    """`True` si la plataforma tiene un conector configurado (FNC-050)."""
-    return False
+    """`True` si la plataforma `conector` tiene una configuración activa de un
+    tipo registrado (FNC-050)."""
+    from app.modules.connectors.consultas import conector_disponible
+    return conector_disponible(plataforma)

@@ -48,6 +48,12 @@ MOTIVO_TIPO_INTEGRACION = 'tipo_integracion'
 MOTIVO_GRUPO_NO_CONFIGURADO = 'grupo_no_configurado'
 MOTIVO_DIRECTORIO_NO_CONFIGURADO = 'directorio_no_configurado'
 MOTIVO_PERSONA_AMBIGUA = 'persona_ambigua'
+# Conectores (FNC-050).
+MOTIVO_CONSULTA_NO_DISPONIBLE = 'consulta_no_disponible'
+MOTIVO_HOST_NO_AUTORIZADO = 'host_no_autorizado'
+MOTIVO_CREDENCIAL_NO_ENCONTRADA = 'credencial_no_encontrada'
+MOTIVO_GESTOR_NO_DISPONIBLE = 'gestor_no_disponible'
+MOTIVO_GESTOR_NO_CONFIGURADO = 'gestor_no_configurado'
 
 MENSAJES = {
     MOTIVO_TIEMPO_AGOTADO: 'Tiempo de espera agotado.',
@@ -59,6 +65,11 @@ MENSAJES = {
     MOTIVO_GRUPO_NO_CONFIGURADO: 'La plataforma no tiene grupo para este nivel.',
     MOTIVO_DIRECTORIO_NO_CONFIGURADO: 'El directorio no está configurado.',
     MOTIVO_PERSONA_AMBIGUA: 'El correo corresponde a más de una persona en el directorio.',
+    MOTIVO_CONSULTA_NO_DISPONIBLE: 'El conector no permite consultar el acceso.',
+    MOTIVO_HOST_NO_AUTORIZADO: 'El host del conector no está autorizado.',
+    MOTIVO_CREDENCIAL_NO_ENCONTRADA: 'La credencial del conector no existe en el gestor de secretos.',
+    MOTIVO_GESTOR_NO_DISPONIBLE: 'El gestor de secretos no respondió.',
+    MOTIVO_GESTOR_NO_CONFIGURADO: 'El gestor de secretos no está configurado.',
     # Motivos del escritor LDAP (`directory/errors.py`).
     MOTIVO_FUERA_DE_BASE: 'El grupo o la persona están fuera de la base autorizada.',
     MOTIVO_GRUPO_INEXISTENTE: 'El grupo no existe en el directorio.',
