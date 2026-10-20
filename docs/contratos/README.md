@@ -8,7 +8,7 @@ Acuerdos de API `/api/v1` del gestor de accesos (fase 3). Se integran a `develop
 |---|---|---|---|---|
 | [areas-y-roles.md](areas-y-roles.md) | 2 (2026-10-19) | backend | web | FNC-044, FNC-045, FNC-055 |
 | [plataformas-integracion.md](plataformas-integracion.md) | 1 (2026-10-14) | backend | web | FNC-046, FNC-055 |
-| [solicitudes.md](solicitudes.md) | 1 (2026-10-14) | backend | web | FNC-056, FNC-057 |
+| [solicitudes.md](solicitudes.md) | 1.1 (2026-10-20) | backend | web | FNC-056, FNC-057 |
 | [accesos.md](accesos.md) | 1.1 (2026-10-20) | backend | web | FNC-054, FNC-058, FNC-059 |
 | [auditoria.md](auditoria.md) | 1 (2026-10-14) | backend | web | FNC-047, FNC-060 |
 | [conectores-y-ejecuciones.md](conectores-y-ejecuciones.md) | 1 (2026-10-14) | backend | web | FNC-061, FNC-062 |
@@ -123,3 +123,4 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 | 1 | 2026-10-14 | Versión inicial (FNC-038); respuestas P7, P8, P10 y P11 y correcciones de revisión incorporadas antes del merge |
 | areas-y-roles 2 | 2026-10-19 | `password` en `POST/PUT /users` (FNC-077) |
 | accesos 1.1 | 2026-10-20 | Acceso automático del admin creador: nivel `usuario`, no `admin` (P6; FNC-054) |
+| solicitudes 1.1 | 2026-10-20 | Justificación opcional (decisión del dueño); detalles del catálogo y `409 estado_invalido` (FNC-056) |

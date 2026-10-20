@@ -36,6 +36,7 @@ app/
     ├── auth/          # Modelos User/AuthConfig (obsoleto) y login; rutas heredadas (redirigen/410)
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
+    ├── access_requests/ # Solicitudes: models, tipos, catalogo (P1 y estado del actor), services (crear), serializacion, api.py (catalog, POST, mine) (FNC-056)
     ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054)
     ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
@@ -78,7 +79,8 @@ Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue a
 | `user_areas` | tabla de relación | `user_id`, `area_id`: pertenencia de un usuario a un área |
 | `area_admins` | tabla de relación | `user_id`, `area_id`: áreas que administra un `admin_area` |
 | `user_platforms` | tabla de relación | `user_id`, `platform_id`: acceso explícito a plataforma (se edita, pero `scoped_platforms` **no** lo usa para filtrar) |
-| `platform_access_grants` | `access.models.PlatformAccessGrant` | FNC-054 (0007): `user_id`, `platform_id` (FK sin `ON DELETE`), `level` (`usuario`/`admin`), `origin` (`solicitud`/`admin_de_area`), `request_id` (sin FK hasta FNC-056), `granted_by`/`revoked_by` (FK `SET NULL`; nulo = sistema), `granted_at`, `status`, `revoked_at`, `revoke_reason` (500), `last_job_id`, `updated_at`; únicos `slot_vigente` (usuario, plataforma, nivel) y `slot_ocupante` (usuario, plataforma: P5). Nunca se borra |
+| `platform_access_grants` | `access.models.PlatformAccessGrant` | FNC-054 (0007): `user_id`, `platform_id` (FK sin `ON DELETE`), `level` (`usuario`/`admin`), `origin` (`solicitud`/`admin_de_area`), `request_id` (sin FK; la tabla de solicitudes existe desde FNC-056, FK propuesta en FNC-088), `granted_by`/`revoked_by` (FK `SET NULL`; nulo = sistema), `granted_at`, `status`, `revoked_at`, `revoke_reason` (500), `last_job_id`, `updated_at`; únicos `slot_vigente` (usuario, plataforma, nivel) y `slot_ocupante` (usuario, plataforma: P5). Nunca se borra |
+| `platform_access_requests` | `access_requests.models.PlatformAccessRequest` | FNC-056 (0008): `user_id`, `platform_id` (FK sin `ON DELETE`), `level`, `justification` (opcional, 500), `status` (`pendiente`/`aprobada`/`rechazada`), `current_level` (nivel ocupado al solicitar), `created_at`, `decided_by` (FK `SET NULL`), `decided_at`, `rejection_reason` (500); único `slot_pendiente` (usuario, plataforma): una pendiente por plataforma también ante carreras |
 | `user_favorites` | tabla de relación | `user_id`, `platform_id` |
 | `audit_logs` | `audit.models.AuditLog` | `timestamp`, `user` (correo o `sistema`, 255), `action` (150), `module`, `target` (255), `detail`, `ip_address`, `status` (`success`/`error`/`warning`/`info`); FNC-047: `actor_id`, `target_user_id`, `area_id`, `platform_id` (FK `SET NULL`), `before_state`/`after_state` (JSON), `request_id`, `grant_id`; índices por fecha, actor, usuario afectado, área y plataforma. Inmutable desde el ORM |
 | `auth_config` | `auth.models.AuthConfig` | **Obsoleta** (FNC-043): nada la lee; solo viaja en el respaldo. `ldap_pass` vacía (migración 0004) y el modelo rechaza escribirla. Resto: `ldap_host`, `ldap_port`, `ldap_ssl`, `ldap_base_dn`, `ldap_user`, `ldap_user_attr`, `ldap_group_admin`, `ldap_group_user`, `ldap_role_mappings` |
@@ -175,6 +177,17 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 - Reglas: `name` 2–100 (obligatorio en alta), `description` ≤ 500, `icon` ≤ 50 (`[A-Za-z0-9_-]`), `color` `#rrggbb`, `status` `Activo`/`Inactivo`; si no → `422 validacion` con `fields`.
 - Nombre único sin distinguir mayúsculas ni acentos en mayúscula (`casefold`) → `409 area_duplicada` (también si la restricción única falla por carrera: `IntegrityError` → rollback).
 - Condiciones de baja: `areas/baja.py` (`conflicto_de_baja`).
+
+### 4.3.3 Solicitudes — `app/modules/access_requests/api.py` (`/api/v1`, FNC-056)
+
+| Método y ruta | Protección | Qué hace |
+|---|---|---|
+| `GET /access-requests/catalog` | Sesión | Plataformas `Activo` de áreas `Activo` del actor (P1: `user_areas`; un admin además las que administra, solo ver; superadmin todas, solo ver) con `my_level`, `my_access_status`, `pending_request_id`, `can_request`, `requestable_levels`. Filtros `area_id`, `q` (≤ 100, sin comodines). |
+| `POST /access-requests` | Sesión; JSON (`415`); `Sec-Fetch-Site: cross-site` → `403 csrf_invalido` | Crea la solicitud `pendiente` y audita `solicitud_creada` en la misma transacción; tras el commit avisa `solicitud_nueva` a los admins del área. |
+| `GET /access-requests/mine` | Sesión | Solicitudes propias paginadas (`created_at` desc); filtros `status`, `platform_id`; `access` del acceso generado. |
+
+- Lista blanca: `platform_id`, `level`, `justification` (opcional, ≤ 500; decisión del dueño 2026-10-20); otro → `400 campo_no_permitido`.
+- Errores en orden: superadmin `403 sin_permiso`; `422 validacion`; fuera de sus áreas `404`; área que administra `409 ya_administra_area` (RF-03); inactiva o nivel sin grupo/conector `409 plataforma_no_disponible`; pendiente `409 solicitud_duplicada` (también por la restricción única ante carreras); mismo nivel o superior `409 nivel_vigente`; subir con el acceso aún no `activo` `409 estado_invalido` (reglas P5 de `access.rules.acceso_a_reemplazar`).
 
 ### 4.4 Sistema y notificaciones — `app/modules/api/admin.py` (`/api/v1`)
 
