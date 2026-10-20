@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | usuarios |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-064-alta-cuentas-ldap` (worktree `pokemon-wt-064`) |
@@ -139,3 +139,4 @@ Salida real de `python3 ~/.claude/agentes/herramientas/impacto.py` (tras el merg
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador). Implementada: `POST /users/directory`, validación, 404/409/422/503/500, auditoría, matriz. Decisiones D1–D8. En revisión; sin revisores (por instrucción) |
 | 2026-10-19 | Revisión: auditor-seguridad Aprobado (1 Media, 2 Baja), revisor Requiere cambios. Merge de develop; corregidos D9 (reserva por correo), ASCII, 409 auditados, `buscar_por_correo`, contrato, impacto, riesgos, `_CONTROL`; FNC-082 Propuesta. Sigue En revisión |
+- Cierre (2026-10-19): revisor y auditor-seguridad atendidos; merge local a `develop` (modo autónomo). Concurrencia verificada solo en SQLite; MySQL pendiente de la PoC.
