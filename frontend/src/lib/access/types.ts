@@ -68,7 +68,8 @@ export interface AccessRequest {
   id: number;
   status: RequestStatus;
   level: AccessLevel;
-  justification: string;
+  /** Opcional desde el contrato 1.1: `null` si no se escribió (FNC-090). */
+  justification: string | null;
   requester: UserRef;
   platform: Ref;
   area: Ref;
@@ -83,8 +84,8 @@ export interface AccessRequest {
 export interface AccessRequestInput {
   platform_id: number;
   level: AccessLevel;
-  /** 10–500 caracteres. */
-  justification: string;
+  /** Opcional (contrato 1.1): ≤ 500 caracteres; vacía equivale a `null` (FNC-090). */
+  justification?: string | null;
 }
 
 export interface RequestListParams extends PageParams {

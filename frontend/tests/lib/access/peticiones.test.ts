@@ -39,6 +39,9 @@ describe.each([
     { platform_id: 12, level: 'admin', justification: 'Cierre mensual' }),
     '/api/v1/access-requests', 'POST',
     { platform_id: 12, level: 'admin', justification: 'Cierre mensual' }],
+  ['crear solicitud sin justificación (contrato 1.1)', () => requestsApi.create(
+    { platform_id: 12, level: 'usuario' }),
+    '/api/v1/access-requests', 'POST', { platform_id: 12, level: 'usuario' }],
   ['mis solicitudes', () => requestsApi.mine({ status: 'pendiente', page: 2 }),
     '/api/v1/access-requests/mine?status=pendiente&page=2', 'GET', undefined],
   ['bandeja sin filtros', () => requestsApi.inbox(),

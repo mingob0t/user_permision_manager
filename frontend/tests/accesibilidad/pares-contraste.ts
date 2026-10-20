@@ -17,6 +17,8 @@ export interface ParContraste {
   fondo: string;
   sobre?: string;
   alfaFondo?: number;
+  /** Opacidad que el marcado aplica al texto (`text-x/NN`). */
+  alfaTexto?: number;
   minimo: number;
 }
 
@@ -39,6 +41,9 @@ export const PARES: ParContraste[] = [
   texto('tab-inactive-text/tab-inactive-bg', '--color-tab-inactive-text', '--color-tab-inactive-bg'),
   texto('label-text/panel', '--color-label-text', '--color-panel-fill'),
   texto('label-text/input-bg', '--color-label-text', '--color-input-bg'),
+  // DIS-013: placeholder de `form.tsx` (`placeholder:text-label/85` sobre `bg-surface-container/30` en panel).
+  { ...texto('placeholder/input', '--color-label-text', '--color-surface-container-bg', '--color-panel-fill'),
+    alfaFondo: 0.3, alfaTexto: 0.85 },
   texto('input-text/input-bg', '--color-input-text', '--color-input-bg'),
   texto('bi-text-main/panel', '--color-bi-text-main', '--color-panel-fill'),
   texto('bi-text-muted/panel', '--color-bi-text-muted', '--color-panel-fill'),
