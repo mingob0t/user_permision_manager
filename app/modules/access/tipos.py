@@ -28,6 +28,9 @@ ORIGENES = (ORIGEN_SOLICITUD, ORIGEN_ADMIN_DE_AREA)
 
 # Motivo que el sistema pone al acceso reemplazado al subir de nivel.
 MOTIVO_REEMPLAZO = 'reemplazado_por_nivel_superior'
+# Motivo del acceso automático que el sistema revoca porque la cuenta ya no
+# administra el área de la plataforma (FNC-055, P6).
+MOTIVO_RETIRO_ADMIN = 'ya_no_administra_el_area'
 
 # Valor de las columnas de unicidad cuando el acceso ocupa su lugar
 # (NULL cuando no: MySQL y SQLite admiten varios NULL en un índice único).

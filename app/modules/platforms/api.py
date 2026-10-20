@@ -10,9 +10,12 @@ Orden de las comprobaciones en `POST` y `PUT`:
 3. Alcance: plataforma y área deben existir y estar en el alcance (`404`).
 4. Formato de los campos (`422 validacion`).
 5. Grupos: base, derivación y que sean distintos (`422`, `409 grupos_iguales`).
-6. Con accesos vigentes no cambian el tipo, los grupos ni el área (`409`).
+6. Con accesos vigentes no cambian el tipo ni los grupos (`409`); tampoco el
+   área, salvo los accesos automáticos de los admins (FNC-055).
 7. Comprobación en el directorio (avisos, nunca error) y guardado con su
    auditoría en la misma transacción (SEC-AUD-06).
+8. Accesos automáticos de los admins del área (FNC-055, P6) en la misma
+   transacción: al dar de alta y al cambiar el área o los grupos.
 """
 
 from flask import Blueprint, jsonify, request
@@ -22,6 +25,7 @@ from app import db
 from app.authz import (any_admin_required, can_manage_area,
                        can_manage_platform, is_admin,
                        platform_manage_required, scoped_users)
+from app.modules.access.area_admin_sync import sincronizar_plataforma
 from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
                                      NO_ENCONTRADO, error_response,
                                      json_object, validation_error)
@@ -31,7 +35,8 @@ from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
 from app.modules.directory.dn import mismo_dn
 from app.modules.platforms import grupos
-from app.modules.platforms.estado import accesos_vigentes
+from app.modules.platforms.estado import (accesos_que_impiden_mover,
+                                          accesos_vigentes)
 from app.modules.platforms.tipos import (CAMPOS_DN, GRUPOS_SIN_VERIFICAR,
                                          NIVEL_ADMIN, NIVEL_USUARIO,
                                          TIPO_CONECTOR)
@@ -220,6 +225,7 @@ def create_platform():
                   detail=f'{_actor()} dio de alta la plataforma '
                          f'{plataforma.name}',
                   commit=False)
+    sincronizar_plataforma(plataforma)
     db.session.commit()
     return _respuesta(plataforma, avisos, 201)
 
@@ -266,7 +272,8 @@ def update_platform(platform_id):
                 else plataforma.area)
         limpios = _validar(datos, alta=False)
         cambio_grupos = _cambios_de_grupos(plataforma, limpios, area)
-        if (cambia_area or cambio_grupos) and accesos_vigentes(plataforma) > 0:
+        if ((cambio_grupos and accesos_vigentes(plataforma) > 0)
+                or (cambia_area and accesos_que_impiden_mover(plataforma) > 0)):
             raise Rechazo(error_response(*PLATAFORMA_CON_ACCESOS))
     except Rechazo as rechazo:
         return rechazo.respuesta
@@ -297,6 +304,8 @@ def update_platform(platform_id):
                       after={k: v for k, v in despues.items()
                              if antes[k] != v},
                       commit=False)
+    if cambia_area or cambio_grupos:
+        sincronizar_plataforma(plataforma)
     db.session.commit()
     return _respuesta(plataforma, avisos)
 

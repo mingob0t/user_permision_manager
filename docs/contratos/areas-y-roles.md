@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 2 (2026-10-19) |
+| Versión | 2.1 (2026-10-20) |
 | Proveedor | backend (FNC-044, FNC-045, FNC-055) |
 | Consumidores | web (FNC-069; pantallas DIS-016, DIS-019) |
 | Solicitudes | — |
@@ -51,7 +51,7 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | `area_ids` | int[] | 0–50 ids existentes, sin repetidos |
 
 - El usuario destino debe tener rol `admin_area`; si no → 409 `rol_no_admin`.
-- Efecto en accesos automáticos: FNC-055 (`sync_area_admin_grants`).
+- Efecto en accesos automáticos (FNC-055, en la misma transacción): cada área agregada otorga al admin un acceso `admin_de_area` nivel `usuario` (`en_proceso`) en cada plataforma `ldap` con grupo o `conector` de esa área, si no tiene ya uno vigente; cada área quitada pasa sus automáticos `activo` a `revocando` (motivo `ya_no_administra_el_area`, actor `sistema`); uno `en_proceso` se revoca al confirmarse. Repetir la misma lista no cambia nada.
 - Respuesta: `{"status": "success", "user": ManagedUser}`; auditoría `admin_asignado` / `admin_retirado` por área.
 
 ### Rol en `POST /users` y `PUT /users/<id>`
@@ -62,7 +62,7 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 - `managed_area_ids` en `POST /users` o `PUT /users/<id>` → `400 campo_no_permitido`. La única vía para asignar áreas administradas es `PUT /users/<id>/managed-areas` (superadmin).
 - `POST /users` con `admin_area` ya **no** copia `area_ids` a las áreas administradas (cambio respecto a hoy); nace sin áreas administradas.
 - `auth_source` → `400 campo_no_permitido`; lo fija el servidor.
-- Degradar `admin_area` → `usuario` borra sus áreas administradas en la misma transacción; auditoría `rol_cambiado` con antes y después.
+- Degradar `admin_area` → `usuario` borra sus áreas administradas en la misma transacción; auditoría `rol_cambiado` con antes y después; sus accesos automáticos se revocan como al quitarle las áreas (FNC-055).
 - Un admin de área solo gestiona cuentas `usuario` de sus áreas (SEC-AUTHZ-06); sobre otro admin o el superadmin → 404.
 - Nadie cambia su propio rol (SEC-AUTHZ-08) → 403 `operacion_propia`.
 - `password` (v2, FNC-077): el portal no fija contraseñas locales. En `POST /users` → `400 campo_no_permitido` (vacía = ausente; la cuenta nace sin clave). En `PUT /users/<id>` solo para la cuenta de emergencia (superadmin local); cualquier otra cuenta → `400 campo_no_permitido`; sin rol de admin → `403 sin_permiso`.
@@ -98,3 +98,4 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | 1 | 2026-10-15 | Aditivo (FNC-044): regla de `password` en `PUT /users/<id>` con `400 campo_no_permitido` (cuenta no local) y `403 sin_permiso` |
 | 1 | 2026-10-18 | Aditivo (FNC-045): `409 area_con_otros_admins` en `DELETE /areas/<id>` para el admin de área (decisión del orquestador, pendiente de validar en la PoC) |
 | 2 | 2026-10-19 | FNC-077 (decisión del dueño 2026-10-15: sin login local): `password` → `400 campo_no_permitido` en `POST /users` y en `PUT /users/<id>` salvo la cuenta de emergencia; excepción de desarrollo; `POST /users` crea cuentas `ldap` fuera de desarrollo. Cliente: DIS-018/DIS-019 (decisión del orquestador, pendiente de validar en la PoC) |
+| 2.1 | 2026-10-20 | Aditivo (FNC-055): efecto en los accesos automáticos de `PUT /users/<id>/managed-areas` y de degradar a `usuario`. Sin cambios de forma |
