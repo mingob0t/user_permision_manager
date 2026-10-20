@@ -13,7 +13,7 @@
 | **Inicio** | 2026-10-19 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-060-consulta-auditoria` (worktree `pokemon-wt-060`) |
-| **Commits / PR** | Ver bitácora (sin PR) |
+| **Commits / PR** | `e4bdcbe` (local, sin PR) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí (exposición de datos por rol) |
 
