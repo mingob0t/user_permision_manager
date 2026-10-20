@@ -62,7 +62,8 @@ Tres roles (columna `users.role`, comparada en minúsculas):
 | `admin_area` | Administra solo las áreas asignadas en `area_admins`: sus plataformas y las cuentas `usuario` de sus áreas. Nunca gestiona a otro admin ni al superadmin (FNC-044). |
 | `usuario` | Solo consulta las plataformas de las áreas asignadas en `user_areas`. |
 
-- **Alcance por fila:** `scoped_areas()`, `scoped_platforms()`, `scoped_users()` devuelven queries ya filtradas según el usuario. Para un admin de área, `scoped_users()` solo devuelve cuentas `usuario` de sus áreas (FNC-044). La auditoría usa `audit.queries.visibles()`: admin por `area_id IN managed_area_ids()` (FNC-060).
+- **Alcance por fila:** `scoped_areas()`, `scoped_platforms()`, `scoped_users()` devuelven queries ya filtradas según el usuario.
+- **Mis plataformas (`scoped_platforms`, FNC-063, P4):** superadmin todas; admin de área las de sus áreas administradas más las de sus accesos `activo`; usuario solo las de sus accesos `activo`. Un acceso cuenta solo si la plataforma es de un área a la que la cuenta pertenece (`user_areas`). `can_access_platform` usa la misma query. No incluye el catálogo para solicitar (`access_requests/catalogo.py`). Ni `user_areas` sola ni `user_platforms` dan visibilidad. Para un admin de área, `scoped_users()` solo devuelve cuentas `usuario` de sus áreas (FNC-044). La auditoría usa `audit.queries.visibles()`: admin por `area_id IN managed_area_ids()` (FNC-060).
 - **Permisos sobre objetos:** `can_access_platform`, `can_manage_area`, `can_manage_platform`, `can_manage_user` (admin de área: solo rol `usuario` de sus áreas).
 - **Roles asignables** (`users/roles.py`, FNC-044): superadmin `usuario` o `admin_area`; admin de área solo `usuario`; `administrador` nunca por la API.
 - **Decoradores:** `admin_required` (solo superadmin), `any_admin_required` (superadmin o admin de área; la vista debe acotar con `scoped_*`), `area_admin_required('area_id')`, `platform_access_required`, `platform_manage_required`. Al denegar responden `403` JSON si la petición es de API.
@@ -78,7 +79,7 @@ Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue a
 | `platforms` | `core.models.Platform` | `id`, `name`, `description` (obligatoria), `area_id` (FK obligatoria), `direct_link`, `icon`, `logo_url`, `bg_color`, `text_color`, `status`, `visits`, `created_at`; FNC-046 (0005): `integration_type` (`ldap`/`conector`), `ldap_group_user_dn`, `ldap_group_admin_dn` (512), `groups_status` (`ok`/`no_existe`/`sin_verificar`) |
 | `user_areas` | tabla de relación | `user_id`, `area_id`: pertenencia de un usuario a un área |
 | `area_admins` | tabla de relación | `user_id`, `area_id`: áreas que administra un `admin_area` |
-| `user_platforms` | tabla de relación | `user_id`, `platform_id`: acceso explícito a plataforma (se edita, pero `scoped_platforms` **no** lo usa para filtrar) |
+| `user_platforms` | tabla de relación | `user_id`, `platform_id`: asignación heredada de NEXUS; se edita pero no da visibilidad (P4: la visibilidad sale de los accesos `activo`, FNC-063); se retira en FNC-065 |
 | `platform_access_grants` | `access.models.PlatformAccessGrant` | FNC-054 (0007): `user_id`, `platform_id` (FK sin `ON DELETE`), `level` (`usuario`/`admin`), `origin` (`solicitud`/`admin_de_area`), `request_id` (sin FK; la tabla de solicitudes existe desde FNC-056, FK propuesta en FNC-088), `granted_by`/`revoked_by` (FK `SET NULL`; nulo = sistema), `granted_at`, `status`, `revoked_at`, `revoke_reason` (500), `last_job_id`, `updated_at`; únicos `slot_vigente` (usuario, plataforma, nivel) y `slot_ocupante` (usuario, plataforma: P5). Nunca se borra |
 | `platform_access_requests` | `access_requests.models.PlatformAccessRequest` | FNC-056 (0008): `user_id`, `platform_id` (FK sin `ON DELETE`), `level`, `justification` (opcional, 500), `status` (`pendiente`/`aprobada`/`rechazada`), `current_level` (nivel ocupado al solicitar), `created_at`, `decided_by` (FK `SET NULL`), `decided_at`, `rejection_reason` (500); único `slot_pendiente` (usuario, plataforma): una pendiente por plataforma también ante carreras |
 | `user_favorites` | tabla de relación | `user_id`, `platform_id` |
@@ -109,7 +110,7 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `GET /me` | Sesión | Identidad, áreas, áreas administradas, permisos (`is_admin`, `is_area_admin`, `can_manage_areas`, `can_manage_system`) y preferencias. |
 | `GET /areas` | Sesión (filtrado por `scoped_areas`) | Áreas visibles con número de plataformas y usuarios. |
 | `GET /areas/<id>` | `area_admin_required` | Detalle de un área administrable. |
-| `GET /platforms?area_id=&q=` | Sesión (`scoped_platforms`) | Catálogo con marca de favorito. |
+| `GET /platforms?area_id=&q=` | Sesión (`scoped_platforms`) | Mis plataformas (accesos `activo`, FNC-063) con marca de favorito. |
 | `POST /platforms/<id>/visit` | Sesión (en alcance) | Suma una visita. |
 | `POST /platforms/<id>/favorite` | Sesión (en alcance) | Alterna favorito. |
 | `GET /favorites` | Sesión | Favoritos aún visibles. |
@@ -150,7 +151,7 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `POST /users` | `any_admin_required` | Alta de cuenta local (`auth_source` lo fija el servidor). Rol fuera de lo asignable → `403 rol_reservado`; `managed_area_ids`, `auth_source`, `password_hash` → `400 campo_no_permitido`. `admin` es identificador reservado. Fuera de desarrollo nace `auth_source=ldap` sin clave y se vincula al entrar por directorio/SSO (con la bandera: `local`); sin contraseña local: `password` → `400 campo_no_permitido` salvo en desarrollo con `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (FNC-077, SEG-02). Un `admin_area` nace sin áreas administradas. |
 | `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: solo la de la cuenta de emergencia (superadmin local); otra cuenta → `400 campo_no_permitido`, salvo en desarrollo con `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (cuentas `local` del alcance) (FNC-077). |
 | `DELETE /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Borra usuario; no permite borrarse a sí mismo ni la cuenta maestra `admin`. |
-| `PUT /users/<id>/platforms` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Define `user_platforms` con plataformas en alcance. Cuerpo no válido → `400 cuerpo_invalido`. |
+| `PUT /users/<id>/platforms` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Define `user_platforms` con plataformas que el solicitante administra (`can_manage_platform`; un acceso propio no basta, FNC-063). Cuerpo no válido → `400 cuerpo_invalido`. |
 | `PUT /me/preferences` | Sesión | Guarda preferencias propias. |
 | `GET /users/inactive?days=` | `admin_required` | Usuarios sin acceso en N días (mínimo `PURGE_MIN_DAYS` = 7), excluye superadmins. |
 | `POST /users/purge` | `admin_required` | Elimina esos usuarios y audita. |
@@ -291,6 +292,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - Errores: `ErrorDeAcceso` con `respuesta` = (mensaje, HTTP, `code`, `fields`) para `error_response`.
 - `manejadores.registrar()` (en `create_app`): el resultado del trabajo lleva el acceso a su estado en la misma transacción; transición inválida → solo log (SEC-CON-09).
 - `consultas.de_usuario(usuario_id, estados, area_ids=None)`: accesos de una cuenta para la API (FNC-058).
+- `consultas.plataformas_con_acceso_activo(usuario_id)`: subconsulta de `platform_id` con acceso `activo`; la usa `authz.scoped_platforms` (FNC-063).
 - `consultas.py`: `platforms.estado.accesos_vigentes` (→ `active_grants`, `409 plataforma_con_accesos`) y `areas.baja.tiene_accesos_vigentes` (`409 area_con_accesos`; ya no cuenta `user_areas`).
 
 ### Acceso automático de los admins (`access/area_admin_sync.py`, FNC-055)
@@ -473,7 +475,7 @@ Quedan como referencia; la línea base `0001` ya refleja su resultado. FNC-028 d
 | 10 | `DB_ENGINE` distinto de `mysql` cae a SQLite (no hay rama PostgreSQL aunque `psycopg2-binary` está en dependencias). | `app/__init__.py` |
 | 11 | Dependencias sin versión fijada (`cryptography`, `ldap3`, `Flask-Mail`, `pandas`, `redis`, `gunicorn`, etc.); algunas sin uso aparente (`Flask-Mail`, `pexpect`, `openpyxl`, `xlrd`, `pandas`, `psycopg2-binary`). | `requirements.txt` |
 | 12 | Redis conectado pero sin uso. | `app/utils/redis_client.py` |
-| 13 | `user_platforms` se edita pero no restringe la visibilidad. | `authz.scoped_platforms` |
+| 13 | `user_platforms` se edita sin efecto: la visibilidad ya sale de los accesos `activo` (FNC-063); retirar tabla y endpoints en FNC-065. | `api/crud.py`, `platforms/api.py` |
 | 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `api/admin.py` |
 | 15 | Control de migraciones resuelto con Alembic (FNC-039). Pruebas del backend completas: suite base (FNC-019), protección por rol (FNC-020), alcance por área (FNC-021), autenticación (FNC-022) y servicios, respaldo, heredadas, CSRF y arranque (FNC-023). | — |
 | 16 | `purge_inactive_users` de `auth/services.py` devuelve un mensaje de error de LDAP no relacionado; la API usa su propia implementación en `crud.py` (duplicado). | `auth/services.py`, `api/crud.py` |

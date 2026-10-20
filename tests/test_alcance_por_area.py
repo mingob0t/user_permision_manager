@@ -3,6 +3,11 @@
 Escenario con dos áreas (A y B), una plataforma en cada una y cinco actores:
 superadmin, admin de A, admin de B, usuario de A y usuario de B.
 
+FNC-063 (P4): un usuario ve una plataforma por un acceso `activo`, no por
+pertenecer al área; por eso cada usuario tiene un acceso activo a la
+plataforma de su área. Los casos sin acceso están en
+`tests/authz/test_visibilidad_por_accesos.py`.
+
 Cada actor solo debe ver y modificar lo de su alcance. Lo que hoy la app hace
 mal se prueba con el resultado correcto y `xfail(strict=True)` con el hallazgo
 y la tarea que lo corrige.
@@ -69,6 +74,8 @@ def alcance(app):
         USUARIO_A: fabricas.crear_usuario(ROLE_USER, areas=[area_a]),
         USUARIO_B: fabricas.crear_usuario(ROLE_USER, areas=[area_b]),
     }
+    fabricas.crear_acceso(actores[USUARIO_A], plataforma_a)
+    fabricas.crear_acceso(actores[USUARIO_B], plataforma_b)
     return Alcance(
         area={'A': area_a.id, 'B': area_b.id},
         plataforma={'A': plataforma_a.id, 'B': plataforma_b.id},

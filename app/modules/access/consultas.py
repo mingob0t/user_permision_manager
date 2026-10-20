@@ -1,7 +1,8 @@
 """Consultas de accesos vigentes para otros módulos (plataformas y áreas)."""
 from app import db
 from app.modules.access.models import PlatformAccessGrant
-from app.modules.access.tipos import ESTADOS_VIGENTES, ORIGEN_ADMIN_DE_AREA
+from app.modules.access.tipos import (ESTADO_ACTIVO, ESTADOS_VIGENTES,
+                                      ORIGEN_ADMIN_DE_AREA)
 from app.modules.core.models import Platform
 
 
@@ -11,6 +12,14 @@ def vigentes_de(usuario_id, plataforma_id):
         PlatformAccessGrant.user_id == usuario_id,
         PlatformAccessGrant.platform_id == plataforma_id,
         PlatformAccessGrant.status.in_(ESTADOS_VIGENTES)).all()
+
+
+def plataformas_con_acceso_activo(usuario_id):
+    """Subconsulta de los `platform_id` en los que la cuenta tiene un acceso
+    `activo` (FNC-063: "mis plataformas"; otros estados no cuentan)."""
+    return db.session.query(PlatformAccessGrant.platform_id).filter(
+        PlatformAccessGrant.user_id == usuario_id,
+        PlatformAccessGrant.status == ESTADO_ACTIVO)
 
 
 def contar_vigentes_de_plataforma(plataforma_id):
