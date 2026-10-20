@@ -5,6 +5,7 @@ Contrato `docs/contratos/auditoria.md` y convenciones de
 `ParametroInvalido`; la ruta responde `400 parametro_invalido`.
 """
 
+import unicodedata
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Optional
@@ -24,6 +25,10 @@ RANGO_MAX_DIAS = 366
 # `GET /audit` sin `page` (cliente actual, `?limit=`): por defecto y tope.
 LIMITE_POR_DEFECTO = 100
 AUDIT_PAGE_SIZE_MAX = 500
+
+# Categoría Unicode de los caracteres de control (NUL, ESC, DEL, C1...):
+# no se admiten en `q` (SEG-FNC059-01).
+CATEGORIA_CONTROL = 'Cc'
 
 # Enteros de consulta (ids, página): más dígitos desbordarían el entero de la BD.
 MAX_DIGITOS_ENTERO = 9
@@ -104,6 +109,10 @@ def _fecha(args, campo):
     return instante, False
 
 
+def _tiene_control(texto):
+    return any(unicodedata.category(c) == CATEGORIA_CONTROL for c in texto)
+
+
 def leer_filtros(args):
     """Filtros comunes de los tres endpoints."""
     desde, _ = _fecha(args, 'from')
@@ -119,7 +128,11 @@ def leer_filtros(args):
         except OverflowError:  # 9999-12-31 (SEG-060-02)
             raise ParametroInvalido('to') from None
 
-    q = (args.get('q') or '').strip() or None
+    crudo = args.get('q') or ''
+    # Sobre el valor sin recortar: `strip` quitaría controles de los extremos.
+    if _tiene_control(crudo):
+        raise ParametroInvalido('q')
+    q = crudo.strip() or None
     if q and len(q) > LARGO_MAX_BUSQUEDA:
         raise ParametroInvalido('q')
 

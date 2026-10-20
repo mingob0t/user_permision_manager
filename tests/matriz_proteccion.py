@@ -412,6 +412,10 @@ CASOS = (
     Caso('GET', f'{A}/access-requests/mine',
          _fija(f'{A}/access-requests/mine'), con_sesion()),
 
+    # ---- Inventario de permisos (access/inventario_api.py, FNC-059) ----
+    Caso('GET', f'{A}/access/inventory', _fija(f'{A}/access/inventory'),
+         administradores(),
+         nota='El usuario no tiene inventario (usa /me/access)'),
     # ---- Aprobaciones (access_requests/api.py, FNC-057) ----
     Caso('GET', f'{A}/access-requests/inbox',
          _fija(f'{A}/access-requests/inbox'), administradores()),
@@ -454,6 +458,8 @@ CASOS_400 = (
     ('GET', f'{A}/access-requests/catalog?area_id=x', _sin_cuerpo),
     ('GET', f'{A}/access-requests/mine?per_page=0', _sin_cuerpo),
     ('GET', f'{A}/access-requests/mine?status=otro', _sin_cuerpo),
+    ('GET', f'{A}/access/inventory?level=otro', _sin_cuerpo),
+    ('GET', f'{A}/access/inventory?per_page=101', _sin_cuerpo),
     ('GET', f'{A}/access-requests/inbox?status=otro', _sin_cuerpo),
     ('GET', f'{A}/access-requests/inbox?per_page=0', _sin_cuerpo),
 )
