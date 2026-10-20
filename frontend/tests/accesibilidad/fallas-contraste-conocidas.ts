@@ -17,12 +17,6 @@ interface FallaConocida {
 const TODOS: NombreContexto[] = ['claro', 'so-oscuro', 'html.dark', 'emerald', 'obsidian', 'rose', 'violet'];
 
 export const FALLAS_CONOCIDAS: FallaConocida[] = [
-  // DIS-002: tokens semánticos de texto (success...). DIS-001 corrigió los de
-  // marca (primary, brand, accent, sky, peach) con variantes `*-text`.
-  { par: 'success/panel', contextos: ['claro', 'emerald', 'rose'], tarea: 'DIS-002' },
-  { par: 'ntf-text-subject/ntf-card', contextos: ['emerald', 'rose'], tarea: 'DIS-002' },
-  { par: 'status-active/panel', contextos: ['emerald', 'rose'], tarea: 'DIS-002' },
-
   // DIS-004: texto sobre primary en botones.
   { par: 'button-text/button-bg', contextos: ['emerald', 'rose', 'violet'], tarea: 'DIS-004' },
 

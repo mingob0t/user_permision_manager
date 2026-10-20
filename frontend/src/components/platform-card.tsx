@@ -66,7 +66,7 @@ export function PlatformCard({
           aria-label={favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
           className="rounded p-1 text-lg leading-none transition-colors hover:bg-surface-container disabled:opacity-50"
         >
-          <span className={favorite ? 'text-amber-400' : 'text-label'}>
+          <span className={favorite ? 'text-warning-text' : 'text-label'}>
             {favorite ? '★' : '☆'}
           </span>
         </button>

@@ -8,7 +8,7 @@
 export function FieldErrorNote({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
   return (
-    <span id={id} className="mt-1.5 block text-xs font-bold text-error">
+    <span id={id} className="mt-1.5 block text-xs font-bold text-error-text">
       {message}
     </span>
   );

@@ -7,7 +7,8 @@
  *
  * - `hex` / `funcion`: `#rrggbb` o `rgb()/hsl()` con números. Los corrige DIS-012.
  * - `paleta`: clases Tailwind de paleta fija (`text-red-600`, `bg-black/60`...).
- *   Las corrige DIS-002 con tokens semánticos (y DIS-012 donde aplica).
+ *   DIS-002 (2026-10-19) quitó las de estado (success, error, warning); quedan
+ *   `bg-black/60` del overlay (DIS-012) y `text-white` de botones (DIS-004).
  */
 
 export interface TopeLiterales {
@@ -20,12 +21,7 @@ export interface TopeLiterales {
 export const EXCEPCIONES: Record<string, TopeLiterales> = {
   'app/error.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-004 / DIS-012' },
   'app/not-found.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-004 / DIS-012' },
-  'components/areas-list.tsx': { hex: 0, funcion: 0, paleta: 3, tarea: 'DIS-002' },
   'components/dashboard.tsx': { hex: 1, funcion: 0, paleta: 0, tarea: 'DIS-003 / DIS-012' },
   'components/form.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-012' },
-  'components/notifications-list.tsx': { hex: 0, funcion: 0, paleta: 9, tarea: 'DIS-002' },
-  'components/platform-admin.tsx': { hex: 0, funcion: 0, paleta: 5, tarea: 'DIS-002 / DIS-012' },
-  'components/platform-card.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-002' },
-  'components/settings-panel.tsx': { hex: 2, funcion: 0, paleta: 8, tarea: 'DIS-002 / DIS-012' },
-  'components/users-list.tsx': { hex: 0, funcion: 0, paleta: 3, tarea: 'DIS-002' },
+  'components/settings-panel.tsx': { hex: 2, funcion: 0, paleta: 0, tarea: 'DIS-012' },
 };

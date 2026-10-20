@@ -27,6 +27,7 @@
 - Formulario de plataformas con tipo de integración y grupos de acceso por nivel (solo superadmin), avisos tras guardar, errores por campo y de los `403`/`409`; la tarjeta y la tabla solo enlazan `https://` (corrige SEG-24 en el frontend) (DIS-017, 2026-10-19).
 
 ### Corregido
+- Contraste AA del texto de estado (éxito, error, advertencia, estrella de favorito) con tokens `*-text` por tema, sin clases de paleta fija (DIS-002, 2026-10-19).
 - Contraste AA de los tokens por tema: título de modales e insignias en oscuro, header y pestaña activa en emerald/rose/violet, y color de marca como texto con variantes `*-text` (DIS-001, 2026-10-19).
 - Login local solo para la cuenta de emergencia (superadmin local) y con `auth_source=local`; el alta de usuarios ya no fija `nexus123` y el portal no fija contraseñas locales salvo la de emergencia; excepción de desarrollo `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (corrige SEG-02) (FNC-077, 2026-10-19).
 - Configuración del directorio solo desde `LDAP_*`: la contraseña de bind sale de la BD (migración `0004`), la prueba de conexión y la búsqueda usan el cliente con TLS validado y responden errores genéricos (corrige SEG-08 de LDAP, SEG-13, SEG-21 de LDAP y SEG-22) (FNC-043, 2026-10-18).
