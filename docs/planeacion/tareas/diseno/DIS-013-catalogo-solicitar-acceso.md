@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | catalogo |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `dis/DIS-013-catalogo-solicitar` |
