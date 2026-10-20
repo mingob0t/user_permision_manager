@@ -1,7 +1,7 @@
 """Consultas de accesos vigentes para otros módulos (plataformas y áreas)."""
 from app import db
 from app.modules.access.models import PlatformAccessGrant
-from app.modules.access.tipos import ESTADOS_VIGENTES
+from app.modules.access.tipos import ESTADOS_VIGENTES, ORIGEN_ADMIN_DE_AREA
 from app.modules.core.models import Platform
 
 
@@ -18,6 +18,17 @@ def contar_vigentes_de_plataforma(plataforma_id):
         return 0
     return PlatformAccessGrant.query.filter(
         PlatformAccessGrant.platform_id == plataforma_id,
+        PlatformAccessGrant.status.in_(ESTADOS_VIGENTES)).count()
+
+
+def contar_vigentes_no_automaticos(plataforma_id):
+    """Vigentes que no son `admin_de_area` (FNC-055: esos se resincronizan
+    al cambiar el área de la plataforma)."""
+    if plataforma_id is None:
+        return 0
+    return PlatformAccessGrant.query.filter(
+        PlatformAccessGrant.platform_id == plataforma_id,
+        PlatformAccessGrant.origin != ORIGEN_ADMIN_DE_AREA,
         PlatformAccessGrant.status.in_(ESTADOS_VIGENTES)).count()
 
 

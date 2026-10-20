@@ -5,11 +5,13 @@ Fuente: `docs/contratos/areas-y-roles.md` y `docs/seguridad/LINEAMIENTOS.md`
 
 - Solo el superadmin asigna `admin_area`; un admin de área solo `usuario`.
 - `administrador` no se asigna nunca por la API: hay un solo superadmin.
-- Dejar de ser `admin_area` borra las áreas administradas.
+- Dejar de ser `admin_area` borra las áreas administradas y revoca sus
+  accesos automáticos (FNC-055).
 """
 
 from app.authz import (ROLE_AREA_ADMIN, ROLE_USER, is_admin, is_area_admin,
                        normalized_role)
+from app.modules.access.area_admin_sync import sincronizar_cuenta
 from app.modules.audit.events import Evento
 from app.modules.audit.services import add_audit_log
 
@@ -74,3 +76,5 @@ def cambiar_rol(cuenta, rol):
                   module=MODULO_AUDITORIA, target=cuenta.email,
                   target_user_id=cuenta.id, before=antes,
                   after=_estado_de_rol(cuenta), commit=False)
+    if rol != ROLE_AREA_ADMIN:
+        sincronizar_cuenta(cuenta)  # revoca sus automáticos (FNC-055)

@@ -257,6 +257,16 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - `manejadores.registrar()` (en `create_app`): el resultado del trabajo lleva el acceso a su estado en la misma transacción; transición inválida → solo log (SEC-CON-09).
 - `consultas.py`: `platforms.estado.accesos_vigentes` (→ `active_grants`, `409 plataforma_con_accesos`) y `areas.baja.tiene_accesos_vigentes` (`409 area_con_accesos`; ya no cuenta `user_areas`).
 
+### Acceso automático de los admins (`access/area_admin_sync.py`, FNC-055)
+- P6: cada admin de área activo recibe en cada plataforma de sus áreas un acceso `admin_de_area`, nivel `usuario`, otorgado por el sistema (`services.otorgar`, auditoría "sistema dio permisos de acceso a admin X"). El superadmin no.
+- Puntos de entrada, en la transacción del llamador (sin `commit`):
+  - `sincronizar_plataforma(plataforma)`: `POST /platforms` (tras `plataforma_creada`) y `PUT /platforms/<id>` al cambiar área, tipo o grupos;
+  - `sincronizar_cuenta(cuenta, areas_nuevas)`: `users.areas_administradas.asignar_areas_administradas` y `users.roles.cambiar_rol` (al dejar `admin_area`, tras `rol_cambiado`).
+- Revoca (`services.revocar`, motivo `ya_no_administra_el_area`) solo accesos `activo`; uno `en_proceso` lo revoca `manejadores.al_exito` al confirmarse el otorgar.
+- Solo otorga ante un evento: una revocación manual del superadmin no se deshace sola. No otorga si ya hay un vigente (cualquier nivel u origen) ni en `ldap` sin grupo de nivel `usuario`.
+- Cambiar `area_id` con solo accesos automáticos ya no da 409 (`platforms.estado.accesos_que_impiden_mover`, `consultas.contar_vigentes_no_automaticos`); tipo y grupos siguen dando 409 (FNC-085).
+- Pendiente: desactivar una cuenta no revoca (FNC-084); plataformas existentes al desplegar (FNC-086); `DELETE /platforms/<id>` con accesos falla por FK (FNC-083).
+
 ### Login de directorio (`authenticate_user_ldap`, FNC-042)
 - Usa el cliente centralizado y `LDAP_*`; sin `LDAP_URL` el login de directorio falla siempre.
 - Flujo: `buscar_usuario` (filtro escapado por `LDAP_USER_ATTR`, por defecto `uid`) → `verificar_contrasena` → cuenta local por el `mail` del directorio.
