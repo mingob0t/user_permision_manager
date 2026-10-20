@@ -164,6 +164,10 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `TTL_RESULTADO_RQ` | RQ no guarda resultados (el estado vive en la BD) | 0 | s | `app/modules/provisioning/queue.py` | FNC-049, 2026-10-19 | Vigente |
 | `LARGO_ERROR`, `LARGO_CLAVE_IDEMPOTENCIA` | Error de la bitácora truncado / largo de la clave | 500 / 100 | caracteres | `app/modules/provisioning/tipos.py` | FNC-049, 2026-10-19 | Vigente |
 | `VARIABLES_SECRETAS`, `LARGO_MINIMO_SECRETO`, `MENSAJES` | Valores que se borran del error, largo mínimo buscado y catálogo de mensajes de la bitácora (SEC-CON-10) | `LDAP_BIND_PASSWORD`, `REDIS_PASS`, `DB_PASS`, `SMTP_PASSWORD`, `SECRET_KEY` / 4 / ver el código | — | `app/modules/provisioning/saneo.py` | FNC-049, 2026-10-19 | Vigente |
+| `ACCESS_REQUEST_JUSTIFICATION_MAX_LENGTH` | Largo máximo de la justificación (opcional) de una solicitud | 500 | caracteres | `app/modules/access_requests/tipos.py` | FNC-056, 2026-10-20 | Vigente |
+| `ID_MAXIMO` | Mayor `platform_id` aceptado al solicitar (mismo criterio que `MAX_DIGITOS_ENTERO`) | 999999999 | — | `app/modules/access_requests/services.py` | FNC-056, 2026-10-20 | Vigente |
+| `ESTADO_ACTIVO` (catálogo) | `status` de área y plataforma visibles en el catálogo solicitable | `Activo` | — | `app/modules/access_requests/catalogo.py` | FNC-056, 2026-10-20 | Vigente |
+| `FORMATO_FECHA` | Fechas de las solicitudes (ISO 8601 UTC con `Z`) | `%Y-%m-%dT%H:%M:%SZ` | — | `app/modules/access_requests/serializacion.py` | FNC-056, 2026-10-20 | Vigente |
 | Gunicorn | Workers / timeout / puerto | 4 / 120 s / 5001 | — | `deploy/backend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | Puerto del backend en dev | Puerto de `run.py` | 5001 | — | `run.py` | FNC-001, 2026-10-13 | Vigente |
 | `client_max_body_size` | Tamaño máximo de petición en nginx | 64 | MB | `deploy/nginx.conf.tmpl` | FNC-001, 2026-10-13 | Vigente |

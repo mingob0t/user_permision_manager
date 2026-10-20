@@ -183,6 +183,20 @@ def _nueva_cuenta_directorio(esc):
                      'area_ids': [esc.area_id]}}
 
 
+def _plataforma_solicitable(esc, monkeypatch):
+    """Plataforma del escenario con grupos de ambos niveles (FNC-056)."""
+    from app.modules.core.models import Platform
+    plataforma = db.session.get(Platform, esc.plataforma_id)
+    plataforma.integration_type = 'ldap'
+    plataforma.ldap_group_user_dn = 'cn=usuario,ou=grupos,dc=pruebas,dc=local'
+    plataforma.ldap_group_admin_dn = 'cn=admin,ou=grupos,dc=pruebas,dc=local'
+    db.session.commit()
+
+
+def _nueva_solicitud(esc):
+    return {'json': {'platform_id': esc.plataforma_id, 'level': 'usuario'}}
+
+
 @dataclass(frozen=True)
 class Caso:
     metodo: str
@@ -336,6 +350,17 @@ CASOS = (
          _zip_respaldo),
     Caso('GET', f'{A}/directory/search', _fija(f'{A}/directory/search?q=ab'),
          solo_superadmin(), preparar=_con_directorio_simulado),
+
+    # ---- Solicitudes (access_requests/api.py, FNC-056) ----
+    Caso('GET', f'{A}/access-requests/catalog',
+         _fija(f'{A}/access-requests/catalog'), con_sesion()),
+    Caso('POST', f'{A}/access-requests', _fija(f'{A}/access-requests'),
+         {ANONIMO: 401, ROLE_USER: 201, ROLE_AREA_ADMIN: 409, ROLE_ADMIN: 403},
+         _nueva_solicitud, _plataforma_solicitable,
+         nota='RF-03: el admin no solicita en el área que administra (409 '
+              'ya_administra_area); el superadmin no solicita (P6)'),
+    Caso('GET', f'{A}/access-requests/mine',
+         _fija(f'{A}/access-requests/mine'), con_sesion()),
 )
 
 # Entradas inválidas: con un rol que pasa la protección, la validación
@@ -359,4 +384,9 @@ CASOS_400 = (
     ('POST', f'{A}/auth-config/test', _json({'ldap_host': HOST_LDAP_FICTICIO})),
     ('POST', f'{A}/backup', _sin_cuerpo),
     ('GET', f'{A}/directory/search?q=a', _sin_cuerpo),
+    # FNC-056: la lista blanca va antes del 403 del superadmin.
+    ('POST', f'{A}/access-requests', _json({'user_id': 1})),
+    ('GET', f'{A}/access-requests/catalog?area_id=x', _sin_cuerpo),
+    ('GET', f'{A}/access-requests/mine?per_page=0', _sin_cuerpo),
+    ('GET', f'{A}/access-requests/mine?status=otro', _sin_cuerpo),
 )
