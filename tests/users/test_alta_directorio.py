@@ -10,7 +10,7 @@ La matriz por rol (401/403/201) está en `tests/matriz_proteccion.py`.
 """
 
 import pytest
-from ldap3 import ALL_ATTRIBUTES, BASE
+from ldap3 import ALL_ATTRIBUTES, BASE, SUBTREE
 from ldap3.core.exceptions import LDAPNoSuchObjectResult, LDAPSocketOpenError
 
 from app import db
@@ -19,7 +19,7 @@ from app.modules.audit.models import AuditLog
 from app.modules.auth.models import User
 from app.modules.directory import ldap_client
 from app.modules.users import directory_accounts
-from tests import fabricas
+from tests import directorio_falso, fabricas
 from tests.directorio_falso import instalar_directorio
 from tests.directory.conftest import dn_persona
 
@@ -394,56 +394,156 @@ def test_fallo_al_escribir_en_el_directorio_da_503(escena, directorio,
     assert len(_eventos('error')) == 1
 
 
-def test_fallo_parcial_deshace_la_bd_audita_y_responde_generico(
+# --------------------------------------------------------------------------- #
+# Revisión de seguridad y del revisor (2026-10-19)
+# --------------------------------------------------------------------------- #
+
+def _entradas_con_correo(correo):
+    with ldap_client.ClienteDirectorio().conexion_servicio() as conexion:
+        conexion.search(directorio_falso.USUARIOS_BASE_DN,
+                        f'(mail={correo})', SUBTREE, attributes=['uid'])
+        return [str(e.entry_dn) for e in conexion.entries]
+
+
+def test_dos_altas_simultaneas_con_el_mismo_correo_solo_gana_una(
         escena, directorio, cliente_como, monkeypatch):
-    from sqlalchemy.exc import OperationalError
+    """La segunda alta llega mientras la primera escribe en el directorio."""
+    from app.modules.directory.writer import EscritorDirectorio
+    original = EscritorDirectorio.create_user
+    segunda = cliente_como(escena['super'])
+    respuestas = []
 
-    def _falla(alta):
-        raise OperationalError('INSERT', {}, Exception('detalle interno'))
+    def _create_user_con_competidor(self, datos):
+        if not respuestas:
+            respuestas.append(segunda.post(
+                URL, json=_cuerpo(uid='ana.otra')))
+        return original(self, datos)
 
-    monkeypatch.setattr(directory_accounts, '_crear_en_portal', _falla)
+    monkeypatch.setattr(EscritorDirectorio, 'create_user',
+                        _create_user_con_competidor)
+    primera = cliente_como(escena['super']).post(URL, json=_cuerpo())
+
+    codigos = sorted([primera.status_code, respuestas[0].status_code])
+    assert codigos[0] == 201 and codigos[1] in (409, 500), codigos
+    assert len(_entradas_con_correo('ana@pruebas.local')) == 1
+    db.session.expire_all()
+    assert User.query.filter_by(email='ana@pruebas.local').count() == 1
+
+
+def test_reserva_con_correo_en_uso_da_409_sin_escribir(
+        escena, directorio, cliente_como, monkeypatch):
+    """Otra alta confirmó el mismo correo entre la comprobación y la reserva."""
+    from sqlalchemy.exc import IntegrityError
+    monkeypatch.setattr(directory_accounts, 'correos_registrados',
+                        lambda correos: set())
+    fabricas.crear_usuario(ROLE_USER, email='ana@pruebas.local')
     respuesta = cliente_como(escena['super']).post(URL, json=_cuerpo())
 
-    datos = _error(respuesta, 500, 'error_interno')
-    assert 'detalle' not in datos['message']
-    # La entrada quedó en el directorio (sin borrado en v1) y la BD no.
-    assert _entrada(directorio, 'ana.ruiz') is not None
+    _error(respuesta, 409, 'correo_duplicado')
+    assert _entrada(directorio, 'ana.ruiz') is None
+    assert IntegrityError  # la reserva falla por `users.email` UNIQUE
+
+
+@pytest.mark.parametrize('correo', ['añá@pruebas.local', 'ana@prüebas.local',
+                                    'ana@pruebas.lócal'])
+def test_correo_no_ascii_da_422(escena, directorio, cliente_como, correo):
+    respuesta = cliente_como(escena['super']).post(
+        URL, json=_cuerpo(email=correo))
+    assert 'email' in _error(respuesta, 422, 'validacion')['fields']
+    assert directorio.filtros == []
+
+
+def test_los_409_se_auditan_como_warning(escena, directorio, cliente_como):
+    directorio.agregar('ana.ruiz', 'clave', correo='otra@pruebas.local')
+    fabricas.crear_usuario(ROLE_USER, email='usada@pruebas.local')
+    cliente = cliente_como(escena['super'])
+    _error(cliente.post(URL, json=_cuerpo()), 409, 'uid_duplicado')
+    _error(cliente.post(URL, json=_cuerpo(uid='ana.dos',
+                                          email='usada@pruebas.local')),
+           409, 'correo_duplicado')
+
+    eventos = _eventos('warning')
+    assert len(eventos) == 2
+    assert 'uid_duplicado' in eventos[0].detail
+    assert 'correo_duplicado' in eventos[1].detail
+    assert all(e.actor_id == escena['super'].id for e in eventos)
+
+
+def test_correo_ambiguo_en_el_directorio_da_409(escena, directorio,
+                                                cliente_como):
+    directorio.agregar('una', 'clave', correo='ana@pruebas.local')
+    directorio.agregar('dos', 'clave', correo='ana@pruebas.local')
+    respuesta = cliente_como(escena['super']).post(URL, json=_cuerpo())
+    _error(respuesta, 409, 'correo_duplicado')
     assert _cuenta('ana@pruebas.local') is None
-    [evento] = _eventos('warning')
-    assert evento.actor_id == escena['super'].id
-    assert 'registro_en_portal_fallido' in evento.detail
 
 
-def test_fallo_parcial_real_en_el_commit(escena, directorio, cliente_como,
-                                         monkeypatch):
-    """El `commit` de la cuenta falla: no queda la cuenta ni su auditoría."""
-    from sqlalchemy.exc import OperationalError
+def test_fallo_al_buscar_el_correo_no_lo_registra_en_el_log(
+        escena, directorio, cliente_como, monkeypatch, caplog):
+    from ldap3.core.exceptions import LDAPOperationsErrorResult
+
+    def _falla(self, *args, **kwargs):
+        raise LDAPOperationsErrorResult(
+            message='fallo con (mail=ana@pruebas.local)')
+
+    monkeypatch.setattr(ldap_client.ClienteDirectorio, 'buscar_por_correo',
+                        _envolver_busqueda(_falla))
+    respuesta = cliente_como(escena['super']).post(URL, json=_cuerpo())
+
+    _error(respuesta, 503, 'directorio_no_disponible')
+    assert 'ana@pruebas.local' not in caplog.text
+    assert _cuenta('ana@pruebas.local') is None
+
+
+def _envolver_busqueda(error_de_busqueda):
+    """`buscar_por_correo` real con `conexion.search` que lanza el error."""
+    real = ldap_client.ClienteDirectorio.buscar_por_correo
+
+    def _buscar(self, correo):
+        conexion_real = self.conexion_servicio
+
+        from contextlib import contextmanager
+
+        @contextmanager
+        def _conexion(*args, **kwargs):
+            with conexion_real(*args, **kwargs) as conexion:
+                conexion.search = lambda *a, **k: error_de_busqueda(conexion)
+                yield conexion
+        self.conexion_servicio = _conexion
+        try:
+            return real(self, correo)
+        finally:
+            del self.conexion_servicio
+    return _buscar
+
+
+def test_fallo_parcial_marca_la_entrada_para_revision_con_su_dn(
+        escena, directorio, cliente_como, monkeypatch):
+    from sqlalchemy.exc import IntegrityError
     original = db.session.commit
     llamadas = {'n': 0}
 
-    def _commit_que_falla_una_vez():
+    def _commit():
         llamadas['n'] += 1
         if llamadas['n'] == 1:
-            raise OperationalError('COMMIT', {}, Exception('detalle'))
+            raise IntegrityError('COMMIT', {}, Exception('users.email'))
         return original()
 
-    monkeypatch.setattr(directory_accounts, '_crear_en_portal',
-                        _envolver_commit(_commit_que_falla_una_vez,
-                                         monkeypatch))
+    from app.modules.directory.writer import EscritorDirectorio
+    escribir = EscritorDirectorio.create_user
+
+    def _create_user(self, datos):
+        resultado = escribir(self, datos)
+        monkeypatch.setattr(db.session, 'commit', _commit)
+        return resultado
+
+    monkeypatch.setattr(EscritorDirectorio, 'create_user', _create_user)
     respuesta = cliente_como(escena['super']).post(URL, json=_cuerpo())
+    monkeypatch.setattr(db.session, 'commit', original)
 
     _error(respuesta, 500, 'error_interno')
+    assert _entrada(directorio, 'ana.ruiz') is not None
     assert _cuenta('ana@pruebas.local') is None
-    assert _eventos('success') == []
-    assert len(_eventos('warning')) == 1
-
-
-def _envolver_commit(commit_falso, monkeypatch):
-    """`_crear_en_portal` real, con `db.session.commit` reemplazado."""
-    real = directory_accounts._crear_en_portal
-
-    def _crear(alta):
-        with monkeypatch.context() as m:
-            m.setattr(db.session, 'commit', commit_falso)
-            return real(alta)
-    return _crear
+    [evento] = _eventos('warning')
+    assert dn_persona('ana.ruiz') in evento.detail
+    assert 'revision' in evento.detail

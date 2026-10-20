@@ -8,21 +8,24 @@ Contrato: `POST /users/directory` en `docs/contratos/usuarios-directorio.md`.
 - Sin contraseña (P8, SEC-LDAP-09): la entrada nace sin `userPassword` y la
   cuenta del portal con `auth_source='ldap'` y `password_hash` NULL
   (SEC-AUTH-04); la contraseña la maneja Authelia.
-- Orden: lista blanca y validación → duplicados en la BD → duplicados en el
-  directorio → entrada en el directorio → cuenta del portal. Si el directorio
-  falla, no se crea nada en la BD.
-- Fallo parcial (directorio creado, BD no): se deshace la BD, se audita y se
-  responde `500 error_interno`. No se borra la entrada (sin borrado en v1);
-  la persona queda registrada en el portal, como `usuario` sin áreas, en su
-  primer login de directorio o SSO (se enlaza por `mail`).
+- Orden: lista blanca y validación → duplicados en la BD → reserva del
+  correo (fila de `users` sin confirmar; `users.email` UNIQUE serializa dos
+  altas con el mismo correo) → `mail` en el directorio, justo antes de
+  escribir → entrada en el directorio → `commit` de la cuenta. Si el
+  directorio falla, se deshace la reserva: no queda nada en la BD.
+- Fallo parcial (entrada creada, `commit` no): rollback, auditoría `warning`
+  con el DN (entrada para revisión; sin borrado en v1) y `500 error_interno`.
+  Un reintento da `409`; la persona queda registrada en el portal, como
+  `usuario` sin áreas, en su primer login de directorio o SSO (por `mail`).
 - Auditoría `cuenta_directorio_creada`: actor de la sesión; el éxito va en la
-  misma transacción que la cuenta (SEC-AUD-06), y los fallos con su estado.
+  misma transacción que la cuenta (SEC-AUD-06); los `409` como `warning`,
+  los fallos del directorio como `error`.
 """
 import logging
 import re
 from dataclasses import dataclass
 
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app import db
 from app.authz import ROLE_USER, is_area_admin, managed_area_ids
@@ -33,17 +36,17 @@ from app.modules.audit.services import add_audit_log
 from app.modules.auth.models import User
 from app.modules.auth.services import ORIGEN_DIRECTORIO, normalizar_correo
 from app.modules.core.models import Area
-from app.modules.directory.busqueda_correo import correo_en_directorio
 from app.modules.directory.configuracion import (ErrorConfiguracionDirectorio,
                                                  directorio_activo)
 from app.modules.directory.errors import Resultado
-from app.modules.directory.ldap_client import ErrorDirectorio
+from app.modules.directory.ldap_client import ErrorDirectorio, PersonaAmbigua
 from app.modules.directory.writer import (PATRON_CORREO, DatosCuenta,
                                           EscritorDirectorio)
 from app.modules.users.areas_administradas import (CAMPO_AREAS,
                                                    validar_area_ids)
 from app.modules.users.correos import correos_registrados
 from app.modules.users.roles import MODULO_AUDITORIA
+from app.utils.naming import _CONTROL as CARACTERES_DE_CONTROL
 from app.utils.naming import sanitize_display_name
 
 logger = logging.getLogger(__name__)
@@ -65,7 +68,6 @@ MAX_CORREO_CONTRATO = 254
 MAX_CORREO = min(MAX_CORREO_CONTRATO, User.__table__.c.email.type.length)
 MIN_NOMBRE = 1
 MAX_NOMBRE = 100
-CARACTERES_DE_CONTROL = re.compile(r'[\x00-\x1f\x7f]')
 
 MENSAJE_OBLIGATORIO = 'Es obligatorio.'
 MENSAJE_TEXTO = 'Debe ser texto.'
@@ -90,6 +92,7 @@ ERROR_INTERNO = ('Ocurrió un error. Intenta de nuevo.', 500, 'error_interno')
 MOTIVO_NO_CONFIGURADO = 'directorio_no_configurado'
 MOTIVO_SIN_CONEXION = 'directorio_no_disponible'
 MOTIVO_REGISTRO_PORTAL = 'registro_en_portal_fallido'
+MOTIVO_REVISION = 'entrada_para_revision'
 SISTEMA_DIRECTORIO = 'directorio'
 SISTEMA_PORTAL = 'portal'
 
@@ -136,7 +139,7 @@ def _validar_correo(correo, errores):
         return
     if len(correo) > MAX_CORREO:
         errores[CAMPO_CORREO] = MENSAJE_CORREO_LARGO
-    elif not PATRON_CORREO.fullmatch(correo):
+    elif not (correo.isascii() and PATRON_CORREO.fullmatch(correo)):
         errores[CAMPO_CORREO] = MENSAJE_CORREO
 
 
@@ -207,8 +210,25 @@ def _auditar(alta, status, detalle, cuenta=None, commit=True):
                   detail=detalle, after=despues, commit=commit)
 
 
-def _crear_en_portal(alta):
-    """Cuenta del portal y su auditoría en una sola transacción."""
+def _conflicto(alta, error):
+    """Audita (aviso) un `409` y lo devuelve; la sesión ya está limpia."""
+    _auditar(alta, 'warning', f'conflicto: {error[2]}')
+    return None, error
+
+
+def _descartar_reserva(alta, error, estado=None, detalle=None):
+    """Deshace la reserva y, si se pide, audita el fallo."""
+    db.session.rollback()
+    if error[1] == 409:
+        return _conflicto(alta, error)
+    if estado:
+        _auditar(alta, estado, detalle)
+    return None, error
+
+
+def _reservar_en_portal(alta):
+    """Cuenta del portal sin confirmar: reserva el correo (`users.email`
+    UNIQUE) y serializa las altas con el mismo correo hasta el `commit`."""
     cuenta = User(
         email=alta.correo,
         nombre=sanitize_display_name(f'{alta.nombre} {alta.apellido}',
@@ -222,22 +242,20 @@ def _crear_en_portal(alta):
                     if alta.area_ids else [])
     db.session.add(cuenta)
     db.session.flush()
-    _auditar(alta, 'success',
-             f'Sistemas: {SISTEMA_DIRECTORIO} y {SISTEMA_PORTAL}',
-             cuenta=cuenta, commit=False)
-    db.session.commit()
     return cuenta
 
 
 def crear_cuenta_directorio(alta, escritor_factory=EscritorDirectorio):
     """Crea la entrada en OpenLDAP y la cuenta del portal.
 
+    Orden: reserva del correo en la BD → `mail` en el directorio (justo antes
+    de escribir) → entrada → `commit` de la cuenta y su auditoría.
     Devuelve `(cuenta, None)` o `(None, (mensaje, HTTP, code))`.
     """
     if _uid_en_portal(alta.uid):
-        return None, UID_DUPLICADO
+        return _conflicto(alta, UID_DUPLICADO)
     if correos_registrados({alta.correo}):
-        return None, CORREO_DUPLICADO
+        return _conflicto(alta, CORREO_DUPLICADO)
 
     if not directorio_activo():
         logger.error('Alta de cuenta: el directorio no está configurado')
@@ -246,36 +264,56 @@ def crear_cuenta_directorio(alta, escritor_factory=EscritorDirectorio):
         return None, DIRECTORIO_NO_DISPONIBLE
     try:
         escritor = escritor_factory()
-        if correo_en_directorio(escritor.cliente, alta.correo):
-            return None, CORREO_DUPLICADO
-    except (ErrorDirectorio, ErrorConfiguracionDirectorio) as exc:
-        if isinstance(exc, ErrorConfiguracionDirectorio):
-            logger.error('Directorio: configuración inválida: %s', exc)
+    except ErrorConfiguracionDirectorio as exc:
+        logger.error('Directorio: configuración inválida: %s', exc)
         _auditar(alta, 'error', f'{SISTEMA_DIRECTORIO}: {MOTIVO_SIN_CONEXION}')
         return None, DIRECTORIO_NO_DISPONIBLE
+
+    try:
+        cuenta = _reservar_en_portal(alta)
+    except IntegrityError:
+        return _descartar_reserva(alta, CORREO_DUPLICADO)
+    except SQLAlchemyError:
+        logger.exception('Alta de cuenta: no se pudo reservar el correo')
+        return _descartar_reserva(alta, ERROR_INTERNO)
+
+    try:
+        if escritor.cliente.buscar_por_correo(alta.correo) is not None:
+            return _descartar_reserva(alta, CORREO_DUPLICADO)
+    except PersonaAmbigua:
+        return _descartar_reserva(alta, CORREO_DUPLICADO)
+    except ErrorDirectorio:
+        return _descartar_reserva(
+            alta, DIRECTORIO_NO_DISPONIBLE, 'error',
+            f'{SISTEMA_DIRECTORIO}: {MOTIVO_SIN_CONEXION}')
 
     resultado = escritor.create_user(DatosCuenta(
         identificador=alta.uid, nombre=alta.nombre, apellido=alta.apellido,
         correo=alta.correo))
     if resultado.resultado is Resultado.YA_ESTABA:
-        return None, UID_DUPLICADO
+        return _descartar_reserva(alta, UID_DUPLICADO)
     if resultado.resultado is not Resultado.HECHO:
-        _auditar(alta, 'error', f'{SISTEMA_DIRECTORIO}: '
-                 f'{resultado.resultado.value} '
-                 f'({resultado.motivo or MOTIVO_SIN_CONEXION})')
-        return None, DIRECTORIO_NO_DISPONIBLE
+        return _descartar_reserva(
+            alta, DIRECTORIO_NO_DISPONIBLE, 'error',
+            f'{SISTEMA_DIRECTORIO}: {resultado.resultado.value} '
+            f'({resultado.motivo or MOTIVO_SIN_CONEXION})')
 
     try:
-        return _crear_en_portal(alta), None
+        _auditar(alta, 'success',
+                 f'Sistemas: {SISTEMA_DIRECTORIO} y {SISTEMA_PORTAL}',
+                 cuenta=cuenta, commit=False)
+        db.session.commit()
     except SQLAlchemyError:
-        db.session.rollback()
         logger.exception('Alta de cuenta: la entrada quedó en el directorio '
                          'y falló el registro en el portal')
         try:
-            _auditar(alta, 'warning',
-                     f'{SISTEMA_DIRECTORIO}: creada; {SISTEMA_PORTAL}: '
-                     f'{MOTIVO_REGISTRO_PORTAL}; se registra en el primer '
-                     'acceso')
+            # Sin borrado en v1: la entrada queda marcada para revisión.
+            _descartar_reserva(
+                alta, ERROR_INTERNO, 'warning',
+                f'{SISTEMA_DIRECTORIO}: creada ({resultado.dn}); '
+                f'{SISTEMA_PORTAL}: {MOTIVO_REGISTRO_PORTAL}; '
+                f'{MOTIVO_REVISION}')
         except Exception:  # la auditoría no oculta la respuesta
             logger.exception('Alta de cuenta: no se pudo auditar el fallo')
         return None, ERROR_INTERNO
+    return cuenta, None
