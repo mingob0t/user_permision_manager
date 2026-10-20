@@ -30,6 +30,9 @@ Origen (diagnóstico inicial, FNC-001):
 ## Objetivo
 _Se completa al aprobar la tarea._
 
+- Requisito antes de desplegar en staging o prod (auditorías de FNC-056 y FNC-058).
+- Mientras tanto, `app/modules/api/csrf_provisional.py` (`escritura_del_portal`: JSON obligatorio y sin `Sec-Fetch-Site: cross-site`) protege `POST /access-requests` y `POST /access/<id>/revoke`; no reemplaza esta tarea.
+
 ## Alcance
 - **Incluye:** lo descrito en el contexto.
 - **No incluye:** _se precisa al aprobar._
@@ -48,3 +51,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-20 | Marcada como requisito antes de staging o prod (auditorías de FNC-056 y FNC-058) |

@@ -135,11 +135,12 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 |---|---|---|
 | `GET /me/access` | Sesión | Accesos propios; superadmin: vacío. Sin `last_job_id` para el rol usuario. |
 | `GET /users/<id>/access` | `any_admin_required` (usuario → `403`); admin: él mismo o `can_manage_user`, si no → `404` | Superadmin: todos; admin: solo plataformas de sus áreas. |
-| `POST /access/<id>/revoke` | `any_admin_required` + `rules.validar_revocacion` (área ajena, otro admin o `admin_de_area` → `404`; propio → `403 operacion_propia`) | Cuerpo solo `reason` (≤ 500, opcional; otro campo → `400 campo_no_permitido`). `activo` → `revocando` + trabajo + `acceso_revocado` en una transacción (`services.revocar`); otro estado o choque simultáneo → `409 estado_invalido`. Responde `{"status": "success", "access": Access}`. |
+| `POST /access/<id>/revoke` | `any_admin_required`; JSON (`415`) y no `cross-site` (`403 csrf_invalido`); `rules.validar_revocacion` (área ajena, otro admin o `admin_de_area` → `404`; propio → `403 operacion_propia`) | Cuerpo solo `reason` (≤ 500, opcional; otro campo → `400 campo_no_permitido`). `activo` → `revocando` + trabajo + `acceso_revocado` en una transacción (`services.revocar`); otro estado o choque simultáneo → `409 estado_invalido`. Responde `{"status": "success", "access": Access}`. |
 
 - Listas: `status` (estado o `vigente`, por defecto), `page`, `per_page` (`audit.parametros.leer_paginacion`); inválido → `400 parametro_invalido`. Orden `granted_at` e `id` descendente.
 - Forma `Access`: `access/serializacion.py` (fechas UTC con `Z`; `granted_by`/`revoked_by` en una consulta por página).
-- CSRF: exenta como el resto de la API v1 hasta FNC-008 (`xfail` en `tests/access/test_api.py`).
+- CSRF provisional (H1): `POST /access/<id>/revoke` usa `api.csrf_provisional.escritura_del_portal` (no JSON → `415 tipo_no_soportado`; `Sec-Fetch-Site: cross-site` → `403 csrf_invalido`). El CSRF real sigue en FNC-008 (`xfail` en `tests/access/test_api.py`).
+- Concurrencia (H2): `services.revocar` toma el acceso con `UPDATE ... WHERE status = 'activo'`; la segunda revocación simultánea da `409 estado_invalido` sin sobrescribir `revoked_by` ni `revoke_reason`.
 
 ### 4.3 Escritura — `app/modules/api/crud.py` (`/api/v1`)
 

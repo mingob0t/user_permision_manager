@@ -170,6 +170,8 @@ def test_usuario_no_consulta_accesos_de_otra_cuenta(escena, cliente_como):
 # --------------------------------------------------------------------------- #
 
 def _revocar(cliente, acceso_id, **kwargs):
+    # El cliente web siempre envía JSON (CSRF provisional, H1).
+    kwargs.setdefault('json', {})
     return cliente.post(f'{A}/access/{acceso_id}/revoke', **kwargs)
 
 
@@ -337,15 +339,78 @@ def test_choque_simultaneo_responde_409_y_revierte(escena, cliente_como,
     _sin_cambios(acceso.id)
 
 
-@pytest.mark.xfail(strict=True, reason='SEG-06 / FNC-008: la API v1 está '
-                   'exenta de CSRF; una petición de otro sitio revoca')
-def test_peticion_de_otro_sitio_no_revoca(escena, cliente_como, cola_falsa):
+@pytest.mark.xfail(strict=True, reason='SEG-06 / FNC-008: sin token CSRF ni '
+                   'comprobación de Origin; la protección provisional solo '
+                   'mira Sec-Fetch-Site y el tipo JSON')
+def test_peticion_sin_token_y_origen_ajeno_no_revoca(escena, cliente_como,
+                                                     cola_falsa):
     acceso = _acceso(escena['usuario'], escena['plataforma'])
 
     respuesta = _revocar(cliente_como(escena['admin']), acceso.id,
-                         headers={'Origin': ORIGEN_AJENO,
-                                  'Sec-Fetch-Site': 'cross-site'})
+                         headers={'Origin': ORIGEN_AJENO})
 
     assert respuesta.status_code in (400, 403)
     assert recargar(acceso.id).status == ESTADO_ACTIVO
 
+
+
+# --------------------------------------------------------------------------- #
+# H1 (auditoría FNC-058): CSRF provisional
+# --------------------------------------------------------------------------- #
+
+def test_formulario_urlencoded_no_revoca_415(escena, cliente_como, cola_falsa):
+    acceso = _acceso(escena['usuario'], escena['plataforma'])
+
+    respuesta = cliente_como(escena['admin']).post(
+        f'{A}/access/{acceso.id}/revoke', data={'reason': 'x'},
+        content_type='application/x-www-form-urlencoded')
+
+    assert respuesta.status_code == 415
+    assert respuesta.get_json()['code'] == 'tipo_no_soportado'
+    _sin_cambios(acceso.id)
+
+
+def test_peticion_cross_site_no_revoca_403(escena, cliente_como, cola_falsa):
+    acceso = _acceso(escena['usuario'], escena['plataforma'])
+
+    respuesta = _revocar(cliente_como(escena['admin']), acceso.id,
+                         headers={'Sec-Fetch-Site': 'cross-site'})
+
+    assert respuesta.status_code == 403
+    assert respuesta.get_json()['code'] == 'csrf_invalido'
+    _sin_cambios(acceso.id)
+
+
+# --------------------------------------------------------------------------- #
+# H2 (auditoría FNC-058): revocación concurrente
+# --------------------------------------------------------------------------- #
+
+def test_segunda_revocacion_concurrente_409_sin_sobrescribir(
+        escena, cola_falsa):
+    """La otra transacción ya confirmó la revocación; esta aún tiene el
+    acceso `activo` en memoria (lectura previa)."""
+    from sqlalchemy import update
+
+    from app.modules.access import services
+    from app.modules.access.errores import ErrorDeAcceso
+
+    acceso = _acceso(escena['usuario'], escena['plataforma'])
+    obsoleto = db.session.get(PlatformAccessGrant, acceso.id)
+    assert obsoleto.status == ESTADO_ACTIVO
+    with db.engine.begin() as conexion:  # la primera revocación, confirmada
+        conexion.execute(
+            update(PlatformAccessGrant)
+            .where(PlatformAccessGrant.id == acceso.id)
+            .values(status=ESTADO_REVOCANDO, revoked_by=escena['super'].id,
+                    revoke_reason='primera', slot_ocupante=None))
+
+    with pytest.raises(ErrorDeAcceso) as info:
+        services.revocar(obsoleto, actor=escena['admin'], motivo='segunda')
+    db.session.rollback()
+
+    assert info.value.http == 409 and info.value.codigo == 'estado_invalido'
+    final = recargar(acceso.id)
+    assert (final.status, final.revoked_by, final.revoke_reason) == (
+        ESTADO_REVOCANDO, escena['super'].id, 'primera')
+    assert ProvisioningJob.query.count() == 0
+    assert AuditLog.query.filter_by(action='acceso_revocado').count() == 0

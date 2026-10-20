@@ -14,8 +14,10 @@ Decisiones del orquestador (pendientes de validar en la prueba de concepto):
   un área ajena) → 404. Solo ve los accesos de plataformas de sus áreas.
 - `last_job_id` se omite para el rol usuario (contrato) y se envía a los
   administradores.
-- CSRF: la API v1 sigue exenta como el resto hasta FNC-008 (P13); la prueba
-  `xfail(strict=True)` lo deja visible.
+- CSRF: la API v1 sigue exenta de Flask-WTF hasta FNC-008 (P13). Mientras,
+  revocar usa `api.csrf_provisional.escritura_del_portal` (JSON obligatorio,
+  sin `Sec-Fetch-Site: cross-site`; auditoría H1); la prueba
+  `xfail(strict=True)` del CSRF real sigue para FNC-008.
 """
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
@@ -29,6 +31,7 @@ from app.modules.access.errores import ErrorDeAcceso
 from app.modules.access.models import PlatformAccessGrant
 from app.modules.access.serializacion import accesos_publicos
 from app.modules.access.tipos import ESTADOS, ESTADOS_VIGENTES
+from app.modules.api.csrf_provisional import escritura_del_portal
 from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
                                      NO_ENCONTRADO, error_response,
                                      json_object)
@@ -103,6 +106,7 @@ def _motivo():
 @access_api_bp.route('/access/<int:access_id>/revoke', methods=['POST'])
 @login_required
 @any_admin_required
+@escritura_del_portal
 def revoke_access(access_id):
     acceso = db.session.get(PlatformAccessGrant, access_id)
     if acceso is None:
