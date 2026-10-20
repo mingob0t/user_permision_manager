@@ -22,6 +22,10 @@
 - Contrato `plataformas-integracion.md`: campo opcional (misma versión, nota en Historial).
 - N+1 de `active_grants` en listas (nota de FNC-054): agrupar.
 
+## Agregado por la auditoría de FNC-063 (Baja, previos)
+- `scoped_platforms` no filtra por `status` de plataforma ni de área: con acceso activo se ve una plataforma o área inactiva con su `direct_link`. Filtrar por `Activo` como `catalogo.py`.
+- `/stats` (`platforms_by_area`) y `/areas` (`platforms_count`, `users_count`) cuentan todo el área, no solo "mis plataformas": usar `platforms_q`.
+
 ## Impacto cruzado
 - Origen ← FNC-063
 - Relacionada → DIS-017

@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | authz |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | — |
 | **Rama** | `fnc/FNC-063-visibilidad-plataformas` |
