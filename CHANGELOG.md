@@ -22,6 +22,7 @@
 - Ejecutor de aprovisionamiento con Redis + RQ: trabajos e intentos en la BD (migración `0006`), `flask provisioning worker`, reintentos con *backoff*, bitácora sin secretos, auditoría `sistema` y aviso de fallo (FNC-049, 2026-10-19).
 - Alta de cuentas en OpenLDAP desde el portal (`POST /users/directory`): superadmin y admins para sus áreas, rol `usuario`, sin contraseña, 409 por uid o correo duplicados y auditoría (FNC-064, 2026-10-19).
 - Hook web `usePolling`: refresco periódico con el intervalo del usuario, pausa con la pestaña oculta y *backoff* ante errores (ADR-006) (FNC-071, 2026-10-19).
+- Solicitudes de acceso: catálogo solicitable por áreas del usuario (P1) con su estado, `POST /access-requests` (sin justificación obligatoria; una pendiente por plataforma garantizada en la BD; P5 y RF-03) con auditoría y aviso a los admins del área, y `GET /access-requests/mine` paginado; migración `0008` (FNC-056, 2026-10-20).
 - Menú por rol del gestor de accesos (Mis solicitudes, Aprobaciones, Inventario, Conectores; Plataformas pasa a Catálogo), guarda `RequireRole` y rutas reservadas (FNC-070, 2026-10-19).
 - Pruebas del frontend con Vitest (`npm test`): cliente de la API, `AuditLog`, contraste WCAG de los tokens y tope de colores literales (FNC-025, 2026-10-13).
 - Plataformas con tipo de integración (`ldap`/`conector`) y grupos del directorio por nivel validados bajo `LDAP_GROUPS_BASE_DN`; URLs solo `https://` (corrige SEG-24 en el backend); migración `0005` (FNC-046, 2026-10-19).

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1 (2026-10-14) |
+| Versión | 1.1 (2026-10-20) |
 | Proveedor | backend (FNC-056, FNC-057) |
 | Consumidores | web (FNC-069; pantallas DIS-013, DIS-014, DIS-015) |
 | Solicitudes | — |
@@ -32,7 +32,7 @@ Solo se decide una solicitud `pendiente`, con bloqueo de fila (SEC-AUTHZ-10).
 Propia solicitud en approve/reject → 403 `solicitud_propia` (SEC-AUTHZ-08).
 
 ## `GET /access-requests/catalog`
-- P1: plataformas con `status = Activo` de las áreas a las que pertenece el actor (`user_areas`). Superadmin: todas, `can_request = false`.
+- P1: plataformas con `status = Activo` de las áreas `Activo` a las que pertenece el actor (`user_areas`); un admin de área ve además las que administra (`can_request = false`). Superadmin: todas, `can_request = false`.
 - Filtros: `area_id` (int), `q` (texto, ≤ 100). Sin paginar (acotado por áreas del usuario). Orden: área, nombre.
 
 ```json
@@ -54,7 +54,7 @@ Propia solicitud en approve/reject → 403 `solicitud_propia` (SEC-AUTHZ-08).
 |---|---|---|---|
 | `platform_id` | int | Sí | En el catálogo del actor |
 | `level` | `"usuario"` \| `"admin"` | Sí | P5: un nivel por plataforma; pedir `admin` con `usuario` vigente es subir (reemplaza al aprobarse) |
-| `justification` | string | Sí | 10–500 caracteres |
+| `justification` | string \| null | No | ≤ 500 caracteres; recortada; vacía → null (decisión del dueño, 2026-10-20: no se pide) |
 
 Respuesta `201`: `{"status": "success", "request": AccessRequest}`. Auditoría `solicitud_creada`; correo `solicitud_nueva` a los admins del área (FNC-048).
 
@@ -104,7 +104,8 @@ Respuesta: `{"status": "success", "request": AccessRequest}`. Auditoría `solici
 | 409 | `ya_administra_area` | Ya administras esta área; tienes acceso automático. |
 | 409 | `plataforma_no_disponible` | La plataforma está inactiva o sin integración configurada. |
 | 409 | `solicitud_ya_decidida` | La solicitud ya fue decidida. |
-| 422 | `validacion` | `fields.justification` / `fields.reason`: "Escribe entre 10 y 500 caracteres." |
+| 409 | `estado_invalido` | Subir de nivel con el acceso actual aún no `activo` (accesos.md) |
+| 422 | `validacion` | `fields.justification`: "Escribe como máximo 500 caracteres."; `fields.reason`: "Escribe entre 10 y 500 caracteres." |
 
 ## Refresco
 | Pantalla | Polling |
@@ -127,3 +128,4 @@ Respuesta: `{"status": "success", "request": AccessRequest}`. Auditoría `solici
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
+| 1.1 | 2026-10-20 | `justification` opcional, sin mínimo (decisión del dueño); catálogo solo de áreas `Activo` y admin ve sus áreas sin solicitar; `409 estado_invalido` al subir con acceso no activo (FNC-056) |
