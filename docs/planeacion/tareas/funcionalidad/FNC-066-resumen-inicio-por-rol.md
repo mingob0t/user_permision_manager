@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | estadisticas |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Rama local |
 | **Rama** | `fnc/FNC-066-resumen-inicio` |
