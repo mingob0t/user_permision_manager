@@ -133,6 +133,16 @@ Salida de `impacto.py` (contra `develop`). Las filas de funciones (`acceso`, `cr
 | `test_guardia_rutas` antes de la matriz | 1 failed (rutas nuevas sin caso); después en verde |
 | `venv/bin/python -m pytest -q` (antes del merge de develop) | 1360 passed, 14 xfailed, código de salida 0 |
 
+| SEG-FNC056-01: `pytest tests/access_requests -k fuera_de_rango` antes de corregir | 5 failed (`OverflowError` → 500 con 10^30; 0, -1 y 10^9 daban 404) |
+| Después: `pytest tests/access_requests tests/audit` | 152 passed, código de salida 0 |
+
+## Seguridad
+| Hallazgo | Severidad | Estado |
+|---|---|---|
+| auditor-seguridad | — | Aprobado |
+| SEG-FNC056-01: `platform_id` = 10^30 → `OverflowError` y 500 | Baja | Corregido: `platform_id` entre 1 y `ID_MAXIMO` (`10^MAX_DIGITOS_ENTERO - 1`, criterio de `audit/parametros.py`); fuera de rango → `422 validacion` |
+| SEG-FNC056-02: aviso con todos los admins en el mismo `To:` y sin límite de solicitudes por usuario | — | Anotado en FNC-089 (CCO y límite) |
+
 No verificado: MySQL real (solo SQLite); revisor y auditor-seguridad no ejecutados (fuera del encargo).
 
 ## Riesgos y reversión
@@ -143,4 +153,5 @@ No verificado: MySQL real (solo SQLite); revisor y auditor-seguridad no ejecutad
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Aprobada en modo autónomo; En curso (desarrollador) |
+| 2026-10-20 | auditor-seguridad aprobado; SEG-FNC056-01 corregido con regresión que falló primero; SEG-FNC056-02 anotado en FNC-089 |
 | 2026-10-20 | Implementada: módulo `access_requests`, migración 0008 (encadenada a 0007), matriz, contrato 1.1; genera FNC-088, FNC-089, FNC-090. En revisión |

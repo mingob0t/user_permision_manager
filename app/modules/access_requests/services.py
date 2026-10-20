@@ -26,6 +26,7 @@ from app.modules.access_requests.models import PlatformAccessRequest
 from app.modules.access_requests.tipos import (
     ACCESS_REQUEST_JUSTIFICATION_MAX_LENGTH, ESTADO_PENDIENTE)
 from app.modules.audit.events import Evento
+from app.modules.audit.parametros import MAX_DIGITOS_ENTERO
 from app.modules.audit.services import add_audit_log
 from app.modules.provisioning.reloj import ahora
 
@@ -44,8 +45,15 @@ def estado_auditado(solicitud):
 # Datos
 # --------------------------------------------------------------------------- #
 
-def _es_entero(valor):
-    return isinstance(valor, int) and not isinstance(valor, bool)
+# Mismo criterio que los ids de consulta (`audit/parametros.py`): más dígitos
+# desbordarían el entero de la BD (SEG-FNC056-01: 10^30 daba 500).
+ID_MAXIMO = 10 ** MAX_DIGITOS_ENTERO - 1
+
+
+def _es_id(valor):
+    """Entero (sin booleanos) de 1 a `ID_MAXIMO`."""
+    return (isinstance(valor, int) and not isinstance(valor, bool)
+            and 1 <= valor <= ID_MAXIMO)
 
 
 def limpiar_justificacion(valor):
@@ -62,7 +70,7 @@ def limpiar_justificacion(valor):
 
 def validar_datos(plataforma_id, nivel, justificacion):
     """(plataforma_id, nivel, justificación limpia) o `422 validacion`."""
-    if not _es_entero(plataforma_id):
+    if not _es_id(plataforma_id):
         raise errores_acceso.validacion('platform_id',
                                         'Indica una plataforma.')
     if nivel not in NIVELES:

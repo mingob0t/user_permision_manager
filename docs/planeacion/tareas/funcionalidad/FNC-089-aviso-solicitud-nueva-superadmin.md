@@ -16,9 +16,12 @@
 - Hueco: un área sin admins activos no avisa a nadie, aunque el superadmin puede aprobar.
 - Pregunta al dueño: ¿superadmin siempre, solo como respaldo cuando el área no tiene admins, o nunca?
 - Origen: FNC-056.
+- SEG-FNC056-02 (auditor-seguridad, FNC-056): el aviso `solicitud_nueva` va con todos los admins en el mismo `To:` (cada uno ve los correos de los demás) y no hay límite de solicitudes por usuario (un usuario puede generar correos sin tope). Propuesta: destinatarios en CCO (o un envío por destinatario) y un límite de solicitudes por usuario y ventana de tiempo.
 
 ## Criterios de aceptación
 - [ ] Destinatarios según la respuesta del dueño, con prueba de SMTP simulado
+- [ ] Destinatarios en CCO (o envío individual): ningún admin ve los correos de otros (SEG-FNC056-02)
+- [ ] Límite de solicitudes por usuario con `429 demasiadas_peticiones` y constante registrada (SEG-FNC056-02)
 - [ ] Contrato y `docs/backend/README.md` actualizados
 
 ## Impacto cruzado

@@ -283,3 +283,15 @@ def test_audita_en_la_misma_transaccion(escena, cliente_como):
     assert registro.to_dict()['after']['status'] == 'pendiente'
     assert registro.to_dict()['before'] is None
 
+
+
+@pytest.mark.parametrize('plataforma_id', [10 ** 30, -(10 ** 30), 0, -1,
+                                           10 ** 9])
+def test_platform_id_fuera_de_rango_es_422(escena, cliente_como,
+                                           plataforma_id):
+    """SEG-FNC056-01: un entero enorme daba OverflowError (500)."""
+    respuesta = cliente_como(escena['usuario']).post(
+        RUTA, json={'platform_id': plataforma_id, 'level': 'usuario'})
+
+    assert _codigo(respuesta) == (422, 'validacion')
+    assert 'platform_id' in respuesta.get_json()['fields']
