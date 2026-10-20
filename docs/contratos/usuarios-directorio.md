@@ -19,7 +19,7 @@ Convenciones comunes: [README.md](README.md). P2: superadmin y admins (para sus 
 | Campo | Tipo | Obligatorio | Regla |
 |---|---|---|---|
 | `uid` | string | Sí | 3–64; `^[a-z][a-z0-9._-]*$`; único en el directorio y en la BD |
-| `email` | string | Sí | Correo válido, ≤ 254; único en la BD |
+| `email` | string | Sí | Correo válido, solo ASCII, ≤ 120 (columna `users.email` `String(120)`); único en la BD y en el directorio |
 | `given_name` | string | Sí | 1–100 |
 | `surname` | string | Sí | 1–100 |
 | `area_ids` | int[] | Sí para admin | 1–50; todas en alcance del actor (superadmin: cualquiera, puede ir vacío) |
@@ -72,3 +72,4 @@ Solo superadmin (resto: 401/403). Fuente única: variables `LDAP_*` (ADR-004); s
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
 | 1 | 2026-10-18 | Sección "Configuración del directorio" agregada (FNC-043): documenta endpoints que no tenían contrato. **Aditivo** para el contrato (sigue v1): no cambia ningún endpoint ya contratado. Sí cambia la forma heredada de NEXUS que lee `settings-panel.tsx`; la adapta DIS-023. Decisión del orquestador (pendiente de validar en la prueba de concepto) |
+| 1 | 2026-10-19 | `email` ≤ 120 en lugar de ≤ 254 (motivo: `users.email` es `String(120)`; más largo daría 500 en Postgres), solo ASCII y único también en el directorio (FNC-064, revisión de seguridad). **Restrictivo** (un valor antes válido ahora da `422`/`409`); sigue v1 porque ningún cliente lo usaba en producción (FNC-069 solo en simulado). Decisión del orquestador (pendiente de validar en la prueba de concepto) |

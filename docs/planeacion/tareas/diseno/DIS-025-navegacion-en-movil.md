@@ -45,3 +45,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-19 | Creada como Propuesta desde la revisión de FNC-070 |
+| 2026-10-19 | DIS-001 (captura de `/platforms` a 390 px con Chrome sin interfaz): el contenido se corta a la derecha (buscador y tarjetas); no viene de los tokens, sin investigar la causa |

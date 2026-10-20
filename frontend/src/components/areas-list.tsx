@@ -130,7 +130,7 @@ function AreasScreen() {
                         type="button"
                         onClick={() => setEditing(area)}
                         aria-label={`Editar ${area.name}`}
-                        className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
+                        className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
                       >
                         Editar
                       </button>
@@ -139,7 +139,7 @@ function AreasScreen() {
                           type="button"
                           onClick={() => setAssigning(area)}
                           aria-label={`Administradores de ${area.name}`}
-                          className="rounded px-2 py-1 text-xs text-primary hover:bg-primary/10"
+                          className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
                         >
                           Administradores
                         </button>
@@ -148,7 +148,7 @@ function AreasScreen() {
                         type="button"
                         onClick={() => setRemoving(area)}
                         aria-label={`Eliminar ${area.name}`}
-                        className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-500/10 dark:text-red-300"
+                        className="rounded px-2 py-1 text-xs text-error-text hover:bg-error/10"
                       >
                         Eliminar
                       </button>

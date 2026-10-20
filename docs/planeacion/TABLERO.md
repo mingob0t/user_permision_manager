@@ -37,8 +37,8 @@
 | FNC-033 | Validar el contraste de los colores elegidos por el usuario (onColor) | web | 4 | tema | Media | Propuesta | 2026-10-13 | | | — | Depende de DIS-001 |
 | FNC-034 | Semántica accesible: aria-label contextual, scope en th y texto del tipo de notificación | web | 4 | global | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-035 | Depurar documentación obsoleta (business_rules, ARCHITECTURE, README raíz, deploy/README) | infra | 6 | docs | Baja | Propuesta | 2026-10-13 | | | — |  |
-| DIS-001 | Completar tokens por tema: panel-header-text, badge, on-primary, brand y accent en oscuro | web | 4 | tokens | Alta | Propuesta | 2026-10-13 | | | — |  |
-| DIS-002 | Tokens semánticos de texto (success, danger, warning, primary) y sustituir clases Tailwind literales | web | 4 | tokens | Alta | Propuesta | 2026-10-13 | | | — |  |
+| DIS-001 | Completar tokens por tema: panel-header-text, badge, on-primary, brand y accent en oscuro | web | 4 | tokens | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `dis/DIS-001-tokens-por-tema` (commit local `a46ee94`, sin push) | Adelantada de fase 4 (las pantallas de fase 3 usan sus tokens); desbloquea DIS-004 y FNC-033; 56 celdas de contraste pasan; decisiones del orquestador en la ficha |
+| DIS-002 | Tokens semánticos de texto de estado (success, error, warning, info) y sustituir clases Tailwind literales | web | 4 | tokens | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `dis/DIS-002-tokens-semanticos-texto` (commit local `6df30b6`, sin push) | Adelantada de fase 4; `primary` absorbido por DIS-001; fallas de contraste 32 → 25; revisor y accesibilidad Aprobado; lista para cierre |
 | DIS-003 | Gráfica del inicio: corregir variables --nx-* inexistentes y colores de ejes | web | 4 | dashboard | Alta | Propuesta | 2026-10-13 | | | — |  |
 | DIS-004 | Botones: texto sobre primary por token, peligro y advertencia, hover del secundario | web | 4 | componentes | Media | Propuesta | 2026-10-13 | | | — | Depende de DIS-001 |
 | DIS-005 | Texto atenuado con tokens muted de 4.5:1 | web | 4 | tokens | Media | Propuesta | 2026-10-13 | | | — |  |
@@ -59,6 +59,7 @@
 | FNC-078 | Lista blanca completa de campos en POST/PUT /users (SEC-AUTHZ-09) e is_active | backend | 3 | usuarios-roles | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044 |
 | FNC-079 | Alta de cuentas de directorio en el servidor (auth_source=ldap, sin contraseña) para el importador | backend | 3 | usuarios | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044; vincula FNC-064, FNC-069, DIS-018, DIS-019; FNC-077 ya crea `ldap` en `POST /users` |
 | FNC-081 | Purgar hashes de contraseña heredados de cuentas locales no administrador y política mínima de la contraseña de emergencia | backend | 5 | auth | Baja | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-077 |
+| FNC-082 | Helper común de lista blanca de campos (campos_no_permitidos en roles, áreas, directorio, plataformas) | backend | 4 | api | Baja | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-064 |
 | FNC-083 | 409 al borrar plataformas o cuentas con accesos otorgados | backend | 3 | accesos | Media | Propuesta | 2026-10-19 | | | — | Origen: FNC-054 |
 | FNC-037 | Planeación de la fase 3: gestor de accesos | backend | 3 | planeacion | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-14 | Merge local a develop | Plan de la fase 3; genera FNC-038 a FNC-071 y DIS-013 a DIS-024 |
 | FNC-038 | Contratos v1 backend↔web del gestor de accesos | backend | 3 | contratos | Alta | Hecha | 2026-10-13 | 2026-10-14 | 2026-10-14 | Merge local a develop (434a51c) | Depende de P1, P14, FNC-037, ADR-006 |
@@ -88,7 +89,7 @@
 | FNC-060 | Consulta de auditoría por rol e historial por usuario y por plataforma | backend | 3 | auditoria | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-047, FNC-038 |
 | FNC-061 | API de configuración de conectores (superadmin) | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, FNC-038 |
 | FNC-062 | API de ejecuciones: bitácora de aprovisionamiento y reintento manual | backend | 3 | aprovisionamiento | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-049, FNC-038, P10 |
-| FNC-064 | Usuarios: crear cuentas en OpenLDAP desde el portal | backend | 3 | usuarios | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-041, FNC-044, FNC-038, P2, P8 |
+| FNC-064 | Usuarios: crear cuentas en OpenLDAP desde el portal | backend | 3 | usuarios | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `fnc/FNC-064-alta-cuentas-ldap` (commit local, sin push) | Depende de FNC-041, FNC-044, FNC-038, P2, P8; coordina con FNC-079; impacto en el cliente para DIS-019; auditor-seguridad Aprobado (1 Media, 2 Baja) y revisor Requiere cambios, corregidos; genera FNC-082 |
 | FNC-066 | Resumen del inicio por rol: pendientes, accesos y solicitudes | backend | 3 | estadisticas | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-056, FNC-049, FNC-038 |
 | FNC-067 | Servicio del worker de aprovisionamiento en el despliegue | infra | 3 | deploy | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-049, ADR-003 |
 | FNC-068 | Credenciales de conectores y del bind LDAP desde Vaultwarden en staging y producción | infra | 3 | secretos | Alta | Propuesta | 2026-10-13 | | | — | Depende de ADR-005, FNC-050 |

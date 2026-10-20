@@ -237,7 +237,9 @@ class ClienteDirectorio:
             except LDAPSizeLimitExceededResult:
                 entradas, ambiguo = [], True
             except LDAPException as exc:
-                raise self.registrar_error('búsqueda por correo', exc) from None
+                # Sin detalle: el mensaje del servidor puede repetir el correo.
+                raise self.registrar_error('búsqueda por correo', exc,
+                                           con_detalle=False) from None
             else:
                 entradas = list(conexion.entries)
                 ambiguo = len(entradas) > 1

@@ -181,3 +181,22 @@ Definidos en `frontend/src/styles/tokens.css` (tema claro en `:root, html.light`
 
 | Token | Rol | Valor tema claro | Valor tema oscuro | Archivo | Alta (tarea, fecha) | Estado |
 |---|---|---|---|---|---|---|
+| `--color-primary-text` | Texto de marca (enlaces, menú activo, pestaña de Ajustes) | `29 78 216`; emerald `4 120 87`; rose `190 18 60` | `96 165 250` (SO y `html.dark`); obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente |
+| `--color-brand-text` | Texto en color brand | `67 56 202`; emerald `4 120 87`; rose `190 18 60` | `129 140 248`; obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-accent-text` | Texto en color accent | `124 58 237`; emerald `15 118 110`; rose `190 18 60` | `167 139 250`; obsidian `250 204 21`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-accent-sky-text` | Texto en color sky | `14 116 144`; emerald `15 118 110`; rose `190 18 60` | `6 182 212`; obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-accent-peach-text` | Texto en color peach/KPI | `180 83 9`; emerald `180 83 9`; rose `194 65 12` | `245 158 11`; obsidian `250 204 21`; violet `251 146 60` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-success-text` | Texto de éxito ("Guardado", notificación success) | `4 120 87` (todos los claros) | `110 231 183` (SO, `html.dark`, obsidian, violet) | `tokens.css` | DIS-002, 2026-10-19 | Vigente |
+| `--color-error-text` | Texto de error (`ErrorNote`, errores por campo, Eliminar) | `185 28 28` | `252 165 165` | `tokens.css` | DIS-002, 2026-10-19 | Vigente |
+| `--color-warning-text` | Texto de advertencia y estrella de favorito | `146 64 14` | `252 211 77` | `tokens.css` | DIS-002, 2026-10-19 | Vigente |
+| `--color-info-text` | Texto informativo | `29 78 216` | `147 197 253` | `tokens.css` | DIS-002, 2026-10-19 | Vigente (sin consumidor aún) |
+| `--color-error` | Relleno/tinte de error (utilidad `error`) | `239 68 68` (todos) | ídem | `tokens.css` | DIS-002, 2026-10-19 (antes literal en `tailwind.config.ts`) | Vigente |
+| `--color-info` | Relleno/tinte informativo (utilidad `info`) | `59 130 246` (todos) | ídem | `tokens.css` | DIS-002, 2026-10-19 (antes literal) | Vigente (sin consumidor aún) |
+| `--color-warning` | Relleno/tinte de advertencia (utilidad `warning`) | `245 158 11` (todos) | ídem | `tokens.css` | FNC-001 (heredado); utilidad DIS-002 | Vigente |
+| `--color-ntf-text-subject`, `--color-status-active` | Asunto de notificación / estado activo (sin consumidor en React) | emerald `4 120 87`; rose `190 18 60`; resto sin cambio | sin cambio | `tokens.css` | FNC-001 (heredado); emerald/rose DIS-002 | Vigente |
+| `--color-primary-solid` | Relleno de marca con texto encima (pestaña activa) | `var(--color-primary)`; emerald `4 120 87`; rose `225 29 72` | `var(--color-primary)`; violet `124 58 237` | `tokens.css` | DIS-001, 2026-10-19 | Vigente |
+| `--color-on-primary` | Texto sobre `--color-primary-solid` | `255 255 255` | `255 255 255`; obsidian `9 9 11` | `tokens.css` | DIS-001, 2026-10-19 | Vigente |
+| `--color-panel-header-text` | Título de modales y cabeceras de tabla | `30 58 138` | `96 165 250` (SO, `html.dark`); obsidian `212 212 216`; violet `167 139 250` | `tokens.css` | FNC-001 (heredado); por tema DIS-001 | Vigente |
+| `--badge-<tono>-bg` / `-text` (8 tonos) | Insignias `.nx-badge-*` | tinte 0.1 + tono 700 | tinte 0.15 + tono 300-400 (ahora también SO oscuro, obsidian, violet; mismos valores repetidos en 4 bloques: observación, sin tarea) | `tokens.css` | FNC-001 (heredado); por tema DIS-001 | Vigente |
+| `--color-header-bg` | Fondo del header | `#2563eb`; emerald `#047857`; rose `#e11d48` | `#1e3a8a`; obsidian `#18181b`; violet `#2e1065` | `tokens.css` | FNC-001; valores emerald/rose DIS-001 | Vigente |
+| `--color-tab-active-bg` / `-text` | Pestaña activa | `var(--color-primary-solid)` / `var(--color-on-primary)` | ídem | `tokens.css` | FNC-001 (heredado); DIS-001 | Vigente |

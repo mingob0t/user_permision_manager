@@ -78,7 +78,7 @@ export function ErrorNote({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="rounded-xl border border-error/30 bg-error/10 p-4 text-sm font-bold text-error"
+      className="rounded-xl border border-error/30 bg-error/10 p-4 text-sm font-bold text-error-text"
     >
       {message}
     </div>

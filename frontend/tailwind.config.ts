@@ -26,6 +26,16 @@ export default {
         sky: 'rgb(var(--color-accent-sky) / <alpha-value>)',
         brand: 'rgb(var(--color-brand) / <alpha-value>)',
 
+        // Texto de marca por tema (DIS-001): los de arriba son rellenos.
+        'primary-text': 'rgb(var(--color-primary-text) / <alpha-value>)',
+        'brand-text': 'rgb(var(--color-brand-text) / <alpha-value>)',
+        'accent-text': 'rgb(var(--color-accent-text) / <alpha-value>)',
+        'accent-sky-text': 'rgb(var(--color-accent-sky-text) / <alpha-value>)',
+        'accent-peach-text': 'rgb(var(--color-accent-peach-text) / <alpha-value>)',
+        // Relleno de marca con texto encima y su texto (DIS-001).
+        'primary-solid': 'rgb(var(--color-primary-solid) / <alpha-value>)',
+        'on-primary': 'rgb(var(--color-on-primary) / <alpha-value>)',
+
         // Surfaces & Backgrounds
         'body-bg': 'var(--color-body-bg)',
         'body-text': 'var(--color-body-text)',
@@ -68,10 +78,16 @@ export default {
         'bi-muted': 'rgb(var(--color-bi-text-muted) / <alpha-value>)',
         'kpi-highlight': 'rgb(var(--color-kpi-highlight) / <alpha-value>)',
 
+        // Estados: rellenos y tintes (`bg-error/10`); DIS-002 quitó los literales.
         success: 'rgb(var(--color-success) / <alpha-value>)',
-        warning: '#f59e0b',
-        error: '#ef4444',
-        info: '#3b82f6',
+        warning: 'rgb(var(--color-warning) / <alpha-value>)',
+        error: 'rgb(var(--color-error) / <alpha-value>)',
+        info: 'rgb(var(--color-info) / <alpha-value>)',
+        // Estados como texto, por tema (DIS-002).
+        'success-text': 'rgb(var(--color-success-text) / <alpha-value>)',
+        'warning-text': 'rgb(var(--color-warning-text) / <alpha-value>)',
+        'error-text': 'rgb(var(--color-error-text) / <alpha-value>)',
+        'info-text': 'rgb(var(--color-info-text) / <alpha-value>)',
 
         // Alias usados por el marcado de base.html
         bg: 'var(--color-body-bg)',
