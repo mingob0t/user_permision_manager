@@ -220,13 +220,22 @@ else
     warn "cliente mysql ausente; útil para aplicar las migraciones de utils/migrations"
 fi
 
+# Los valores del .env no son de confianza (el script corre como root): host y
+# puerto se validan con lista blanca y se pasan como argumentos posicionales,
+# nunca interpolados dentro de `bash -c` (inyección de comandos, FNC-067).
+host_valido()   { [[ "$1" =~ ^[A-Za-z0-9.-]+$ ]]; }
+puerto_valido() { [[ "$1" =~ ^[0-9]{1,5}$ ]] && (( 10#$1 >= 1 && 10#$1 <= 65535 )); }
+probe_tcp()     { timeout 5 bash -c '</dev/tcp/$1/$2' _ "$1" "$2" 2>/dev/null; }
+
 if [[ -f .env ]]; then
     ok ".env presente"
     db_host=$(grep -E '^DB_HOST=' .env | cut -d= -f2- | tr -d '"'"'"' ')
     db_port=$(grep -E '^DB_PORT=' .env | cut -d= -f2- | tr -d '"'"'"' ')
     db_name=$(grep -E '^DB_NAME=' .env | cut -d= -f2- | tr -d '"'"'"' ')
     : "${db_host:=localhost}"; : "${db_port:=3306}"
-    if timeout 5 bash -c "</dev/tcp/${db_host}/${db_port}" 2>/dev/null; then
+    if ! host_valido "$db_host" || ! puerto_valido "$db_port"; then
+        bad "DB_HOST/DB_PORT con formato no válido (host: letras, dígitos, '.' y '-'; puerto 1-65535)"
+    elif probe_tcp "$db_host" "$db_port"; then
         ok "base de datos accesible en ${db_host}:${db_port} (${db_name:-sin nombre})"
     else
         bad "no se pudo conectar a la base de datos en ${db_host}:${db_port}"
@@ -234,11 +243,24 @@ if [[ -f .env ]]; then
     redis_host=$(grep -E '^REDIS_HOST=' .env | cut -d= -f2- | tr -d '"'"'"' ')
     redis_port=$(grep -E '^REDIS_PORT=' .env | cut -d= -f2- | tr -d '"'"'"' ')
     : "${redis_host:=localhost}"; : "${redis_port:=6379}"
-    if timeout 5 bash -c "</dev/tcp/${redis_host}/${redis_port}" 2>/dev/null; then
+    # Redis es obligatorio para el worker de aprovisionamiento (ADR-003,
+    # FNC-067): sin él, la unidad NOMBRE-worker no arranca.
+    # Solo nombre de host: el worker rechaza una IP literal.
+    if [[ "$redis_host" =~ ^[0-9.]+$ || "$redis_host" == *:* ]]; then
+        bad "REDIS_HOST debe ser un nombre de host, no una IP (el worker no arrancaría)"
+    fi
+    if ! host_valido "$redis_host" || ! puerto_valido "$redis_port"; then
+        bad "REDIS_HOST/REDIS_PORT con formato no válido (host: letras, dígitos, '.' y '-'; puerto 1-65535)"
+    elif probe_tcp "$redis_host" "$redis_port"; then
         ok "Redis accesible en ${redis_host}:${redis_port}"
     else
-        warn "Redis no responde en ${redis_host}:${redis_port} (la app arranca igual)"
+        bad "Redis no responde en ${redis_host}:${redis_port} (obligatorio para el worker de aprovisionamiento)"
     fi
+    # Solo se comprueba que tenga valor; nunca se imprime (SEG-29). Unas
+    # comillas vacías ("" o '') no cuentan como valor.
+    grep -qE "^REDIS_PASS=([^\"'[:space:]].*|\"[^\"]+\".*|'[^']+'.*)$" .env \
+        && ok "REDIS_PASS definida" \
+        || bad "REDIS_PASS sin definir: el worker exige Redis con contraseña (SEG-29)"
     grep -qE '^SECRET_KEY=.+' .env \
         && ok "SECRET_KEY definida" \
         || bad "SECRET_KEY sin definir: las sesiones no serían seguras"
@@ -303,11 +325,11 @@ if [[ "$APP_NAME" =~ ^[a-z][a-z0-9_-]{0,31}$ ]]; then
 else
     bad "APP_NAME='$APP_NAME' no es válido (minúsculas, dígitos, '-' o '_')"
 fi
-printf "  unidades:  %s-backend, %s-frontend\n" "$APP_NAME" "$APP_NAME"
+printf "  unidades:  %s-backend, %s-frontend, %s-worker\n" "$APP_NAME" "$APP_NAME" "$APP_NAME"
 printf "  prefijo:   /opt/%s\n" "$APP_NAME"
 printf "  registros: /var/log/%s\n" "$APP_NAME"
 printf "  nginx:     /etc/nginx/conf.d/%s.conf\n" "$APP_NAME"
-for u in "${APP_NAME}-backend" "${APP_NAME}-frontend"; do
+for u in "${APP_NAME}-backend" "${APP_NAME}-frontend" "${APP_NAME}-worker"; do
     if systemctl list-unit-files "$u.service" 2>/dev/null | grep -q "$u"; then
         warn "$u.service ya existe; la instalación lo sobrescribirá"
     fi

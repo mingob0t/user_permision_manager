@@ -1,0 +1,63 @@
+# Worker de aprovisionamiento de @APP_TITLE@ (FNC-049, ADR-003: Redis + RQ).
+# Lo instala deploy/install.sh. No escucha en ningún puerto: lee la cola de la
+# BD y de Redis y escribe en OpenLDAP o en el conector de cada plataforma.
+# Compatible con systemd 239 (Rocky Linux 8): no usa directivas más nuevas.
+[Unit]
+Description=@APP_TITLE@ Worker de aprovisionamiento (RQ)
+After=network-online.target mysql.service redis.service
+Wants=network-online.target mysql.service redis.service
+# Reinicio con freno: hasta 10 arranques fallidos en 15 min; después la unidad
+# queda en `failed` (visible en `systemctl --failed`) en lugar de reintentar
+# sin fin con una configuración rota. Los trabajos no se pierden: la BD es la
+# cola y el barrido los retoma al volver.
+StartLimitIntervalSec=900
+StartLimitBurst=10
+
+[Service]
+Type=simple
+User=@SVC_USER@
+Group=@SVC_GROUP@
+WorkingDirectory=@PREFIX@
+# El mismo .env que el backend (600, solo la cuenta de servicio). Sin
+# REDIS_PASS o sin Redis el worker sale con código 1 y un mensaje claro.
+EnvironmentFile=@PREFIX@/.env
+# --app explícito: no depende de que FLASK_APP esté en el .env.
+ExecStart=@PREFIX@/venv/bin/flask --app run:app provisioning worker
+Restart=on-failure
+RestartSec=30
+
+# Apagado ordenado: SIGTERM termina el intento en curso y sale (RQ).
+# TimeoutStopSec cubre el máximo admitido de PROVISIONING_ATTEMPT_TIMEOUT_SECONDS
+# (600 s) más MARGEN_RESERVA_SEGUNDOS (30 s): nunca se corta un intento. Si un
+# intento sigue colgado pasado ese tiempo, systemd envía SIGKILL y la reserva
+# vencida la retoma el barrido.
+KillSignal=SIGTERM
+KillMode=mixed
+TimeoutStopSec=630
+
+# Registros: a journald (journalctl -u @APP_NAME@-worker).
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=@APP_NAME@-worker
+
+# Endurecimiento: el worker no escribe en disco ni necesita privilegios.
+UMask=0077
+NoNewPrivileges=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+SystemCallArchitectures=native
+# Solo red IP (MySQL, Redis, OpenLDAP, SMTP, conectores) y sockets locales.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

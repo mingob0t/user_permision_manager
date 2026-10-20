@@ -17,7 +17,7 @@ cliente ──HTTPS 443──> nginx ──(auth_request)──> Authelia (exist
                          └── /  y /_next/static/ ──> <nombre>-frontend (node server.js, loopback:3000)
 
 <nombre>-backend ──> MySQL (por nombre de host) · Redis opcional · OpenLDAP (lectura; escritura acotada, FNC-041) · SMTP
-<nombre>-worker  ──> MySQL · Redis (obligatorio, con contraseña) · OpenLDAP (escritura acotada) · SMTP   (FNC-049; unidad en FNC-067)
+<nombre>-worker  ──> MySQL · Redis (obligatorio, con contraseña) · OpenLDAP (escritura acotada) · SMTP   (FNC-049; unidad FNC-067, no escucha)
 ```
 
 - Ambos servicios bajo **el mismo dominio**: la cookie de sesión de Flask llega al frontend sin CORS.
@@ -38,7 +38,7 @@ Evaluación previa que **no modifica nada**; termina con código 1 si hay algo b
 4. Python ≥ 3.11 con `venv` (busca intérpretes ya instalados).
 5. Node ≥ 18.18 y npm (recomienda 22 LTS) y disponibilidad del módulo `nodejs:22`.
 6. Cabeceras de compilación y salida a Internet (directa o por `PROXY_URL`, con credenciales enmascaradas).
-7. Conectividad real a la BD y a Redis leyendo `DB_HOST`/`DB_PORT`/`REDIS_HOST`/`REDIS_PORT` del `.env`, y que `SECRET_KEY` esté definida.
+7. Conectividad real a la BD y a Redis leyendo `DB_HOST`/`DB_PORT`/`REDIS_HOST`/`REDIS_PORT` del `.env`, y que `SECRET_KEY` esté definida. Desde FNC-067 Redis es **bloqueante**: no responde, `REDIS_HOST` es una IP o `REDIS_PASS` está vacía → `FALTA` (el worker no arrancaría).
 8. Puertos 5001 y 3000 libres.
 9. nginx (`nginx -t`, `/etc/nginx/conf.d`).
 10. SELinux (`httpd_can_network_connect`) y firewalld (`https`).
@@ -53,7 +53,7 @@ Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defe
 3. Copia del proyecto al prefijo; el `.env` queda legible solo por la cuenta de servicio.
 4. Backend: `venv` y `pip install -r requirements.txt`.
 5. Frontend: `npm ci`, `npm run build` y copia de estáticos a `.next/standalone`.
-6. Unidades systemd a partir de las plantillas.
+6. Unidades systemd a partir de las plantillas: backend, frontend y worker (`reset-failed` del worker antes de `enable --now`).
 7. nginx en `/etc/nginx/conf.d/<nombre>.conf`, SELinux y firewalld.
 
 **No aplica migraciones**: se ejecuta `venv/bin/alembic upgrade head` a mano antes de reiniciar (ver `docs/backend/README.md` §7). `utils/migrations/` queda como histórico.
@@ -64,12 +64,12 @@ Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defe
 |---|---|---|---|
 | `<nombre>-backend` | `venv/bin/gunicorn run:app`, 4 workers, timeout 120 s | loopback:5001 | `EnvironmentFile=<prefijo>/.env`; logs `access.log` y `error.log` en el directorio de registros; `After=mysql.service`; endurecido (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges`; solo escribe en el directorio de registros). |
 | `<nombre>-frontend` | `node server.js` en `frontend/.next/standalone` | loopback:3000 | `NODE_ENV=production`, `PORT=3000`, `HOSTNAME` en loopback; depende del backend; mismo endurecimiento. |
-| `<nombre>-worker` (FNC-067, pendiente) | `venv/bin/flask provisioning worker` (FNC-049) | no escucha | Mismo `.env`; `KillSignal=SIGTERM` (termina el intento en curso) y `TimeoutStopSec` mayor que `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS`; reinicio automático. Sin `REDIS_PASS` o sin Redis sale con código 1. |
+| `<nombre>-worker` (FNC-067) | `venv/bin/flask --app run:app provisioning worker` (FNC-049) | no escucha | Misma cuenta y mismo `.env`; `After=` red, `mysql.service` y `redis.service`; `KillSignal=SIGTERM` (termina el intento en curso) y `TimeoutStopSec=630` (máximo de `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS` + 30 s); `Restart=on-failure` cada 30 s, máx. 10 en 15 min y luego `failed`; registros en journald; endurecido como el backend más `PrivateDevices`, kernel y cgroups protegidos, sin capacidades y solo `AF_UNIX`/`AF_INET`/`AF_INET6`. Sin `REDIS_PASS` o sin Redis sale con código 1. |
 
 ## Promoción de un cambio
 
 1. Rama de la tarea → revisión (`revisor`, `tester` y, si aplica, `auditor-seguridad`) → merge aprobado por el usuario.
-2. Despliegue a **pruebas**: `preflight.sh`, `install.sh` (repetible), migraciones pendientes a mano y verificación.
+2. Despliegue a **pruebas**: `preflight.sh`, `install.sh` (repetible), migraciones pendientes a mano, reinicio de backend y worker (`systemctl restart <nombre>-backend <nombre>-worker`) y verificación.
 3. Despliegue a **producción** con la versión etiquetada (ver [RELEASES.md](RELEASES.md)).
 
 ## Diferencias entre entornos
@@ -86,7 +86,7 @@ Qué variables cambian por entorno. El valor de cada una está en `docs/configur
 | `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (FNC-077) | `false`; `true` solo para la PoC sin Authelia | `false` (se ignora: `APP_ENV` no es `development`) |
 | `DB_*`, `SECRET_KEY`, `SMTP_*` | `.env` local | `.env` del servidor con secretos de Vaultwarden |
 | `LDAP_*` (FNC-040) | `.env` local; vacío = directorio inactivo | `.env` del servidor; `LDAP_BIND_PASSWORD` de Vaultwarden. Con CA interna: copiar su PEM al servidor y apuntar `LDAP_CA_CERT_FILE` (si no, la app no conecta: el certificado se valida) |
-| `REDIS_PASS` (FNC-049) | `.env` local; obligatoria para el worker (Redis local con `requirepass`) | Vaultwarden `pokemon/<entorno>/REDIS_PASS`; Redis con `requirepass` y solo en loopback o red interna |
+| `REDIS_PASS` (FNC-049) | `.env` local; obligatoria para el worker (Redis local con `requirepass`) | Vaultwarden `pokemon/<entorno>/REDIS_PASS`; Redis con `requirepass` y solo en loopback (`REDIS_HOST=localhost`, SEC-CFG-08); remoto solo como excepción con TLS, hoy no soportado por la app (FNC-067) |
 | `PROVISIONING_*` (FNC-049) | por defecto (o valores cortos para probar reintentos) | por defecto; ajustar solo con motivo en `HISTORIAL.md` |
 | `LDAP_USER_OBJECT_CLASSES`, `LDAP_GROUP_PLACEHOLDER_MEMBER` (FNC-041) | `.env` local; vacías = `inetOrgPerson` / sin relleno | `.env` del servidor. El relleno es una entrada sin login ni contraseña, fuera de `LDAP_USERS_BASE_DN` (si no, la app no arranca) |
 

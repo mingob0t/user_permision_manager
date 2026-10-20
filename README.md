@@ -50,15 +50,16 @@ datos; Next.js no accede a la base de datos, solo consume la API. Ver
 
 ## ⚙️ Iniciar los servicios
 
-Son dos procesos independientes: el **backend** (Flask, puerto 5001) y el
-**frontend** (Next.js, puerto 3000). El navegador entra siempre por el
-frontend, que reenvía `/api` y `/auth` al backend.
+Son tres procesos independientes: el **backend** (Flask, puerto 5001), el
+**frontend** (Next.js, puerto 3000) y el **worker de aprovisionamiento** (sin
+puerto). El navegador entra siempre por el frontend, que reenvía `/api` y
+`/auth` al backend.
 
 ### Requisitos
 
 *   Python 3.11 o superior, Node 18.18 o superior (se recomienda 22 LTS).
 *   MySQL accesible por nombre de host (si `DB_ENGINE` no es `mysql`, la app usa SQLite local `nexus.db`).
-*   Redis es opcional: si no responde, la app arranca igual.
+*   Redis con contraseña (`requirepass`) y escuchando solo en loopback, en la misma máquina (`REDIS_HOST=localhost`, SEC-CFG-08): obligatorio para el worker. Sin Redis la API arranca igual, pero los trabajos de aprovisionamiento esperan.
 
 ### 1. Configuración (una sola vez)
 
@@ -124,22 +125,48 @@ curl -s -o /dev/null -w '%{http_code}\n' localhost:3000/login   # espera 200
 Abre `http://localhost:3000` en el navegador. El backend debe estar arriba
 antes de iniciar sesión.
 
-### 4. En el servidor (systemd)
+### 4. Worker de aprovisionamiento (terminal 3)
 
-Tras `deploy/install.sh` (ver abajo), los dos servicios quedan como unidades
-systemd llamadas `NOMBRE-backend` y `NOMBRE-frontend` (`NOMBRE` es el valor de
-`--name`, por defecto `nexus`):
+Otorga y revoca accesos en segundo plano (OpenLDAP o conector), con reintentos
+(FNC-049, ADR-003). Necesita Redis local con contraseña y, en el `.env`:
+
+| Variable | Valor en desarrollo |
+|---|---|
+| `REDIS_HOST` | `localhost` (Redis solo en loopback, SEC-CFG-08); nunca una IP |
+| `REDIS_PORT` | puerto de Redis (por defecto 6379) |
+| `REDIS_PASS` | la contraseña (`requirepass`) de tu Redis local; **obligatoria** |
 
 ```bash
-sudo systemctl start   nexus-backend nexus-frontend    # iniciar
-sudo systemctl stop    nexus-backend nexus-frontend    # detener
-sudo systemctl restart nexus-backend nexus-frontend    # reiniciar
-systemctl status       nexus-backend nexus-frontend    # estado
-journalctl -u nexus-backend -f                          # logs del backend
-journalctl -u nexus-frontend -f                         # logs del frontend
+# desde la raíz del proyecto, con el venv del backend y la BD migrada
+venv/bin/flask --app run:app provisioning worker   # Ctrl+C: termina el intento en curso y sale
 ```
 
-El frontend depende del backend: systemd arranca primero `nexus-backend`.
+Redis en otra máquina es una **excepción** que exige TLS hacia Redis, y la app
+todavía no lo soporta: hoy no se admite (ver `deploy/README.md`).
+
+Sin `REDIS_PASS` o sin Redis, el comando sale con código 1 y el motivo. Las
+`PROVISIONING_*` son opcionales (valores por defecto en
+[VARIABLES.md](docs/configuracion/VARIABLES.md)).
+
+### 5. En el servidor (systemd)
+
+Tras `deploy/install.sh` (ver abajo), los tres procesos quedan como unidades
+systemd llamadas `NOMBRE-backend`, `NOMBRE-frontend` y `NOMBRE-worker`
+(`NOMBRE` es el valor de `--name`, por defecto `nexus`):
+
+```bash
+sudo systemctl start   nexus-backend nexus-frontend nexus-worker    # iniciar
+sudo systemctl stop    nexus-backend nexus-frontend nexus-worker    # detener
+sudo systemctl restart nexus-backend nexus-frontend nexus-worker    # reiniciar
+systemctl status       nexus-backend nexus-frontend nexus-worker    # estado
+journalctl -u nexus-backend -f                          # logs del backend
+journalctl -u nexus-frontend -f                         # logs del frontend
+journalctl -u nexus-worker -f                           # logs del worker
+```
+
+El frontend depende del backend: systemd arranca primero `nexus-backend`. El
+worker arranca después de la red, MySQL y Redis; si agota sus reinicios queda
+en `failed` (`sudo systemctl reset-failed nexus-worker && sudo systemctl start nexus-worker`).
 
 ## 🚀 Instalación en servidor (Rocky Linux 8)
 
@@ -149,13 +176,14 @@ sudo ./deploy/install.sh --domain nexus.example.com
 ```
 
 `preflight.sh` comprueba distribución, recursos, Python, Node, cabeceras de
-compilación, conectividad con la base de datos y Redis, puertos libres, nginx,
-SELinux y firewalld. Sale con código 1 si hay algo que resolver antes.
+compilación, conectividad con la base de datos y Redis (obligatorio, con
+`REDIS_PASS`), puertos libres, nginx, SELinux y firewalld. Sale con código 1
+si hay algo que resolver antes.
 
 `install.sh` instala los paquetes, crea el usuario de servicio, copia el
-proyecto, monta el venv, construye el frontend, registra las dos unidades
-systemd y configura nginx. Es idempotente. Opciones: `--prefix`, `--user`,
-`--domain`, `--skip-packages`.
+proyecto, monta el venv, construye el frontend, registra las tres unidades
+systemd (backend, frontend y worker) y configura nginx. Es idempotente.
+Opciones: `--prefix`, `--user`, `--domain`, `--skip-packages`.
 
 Detalles y notas de seguridad en [deploy/README.md](deploy/README.md).
 
