@@ -37,7 +37,7 @@ app/
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
     ├── access_requests/ # Solicitudes: models, tipos, catalogo (P1 y estado del actor), services (crear), serializacion, api.py (catalog, POST, mine) (FNC-056)
-    ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054); api.py y serializacion.py (FNC-058)
+    ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054); api.py y serializacion.py (FNC-058); inventario e inventario_api (FNC-059)
     ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060); rutas heredadas
@@ -201,6 +201,15 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 
 - Lista blanca: `platform_id`, `level`, `justification` (opcional, ≤ 500; decisión del dueño 2026-10-20); otro → `400 campo_no_permitido`.
 - Errores en orden: superadmin `403 sin_permiso`; `422 validacion`; fuera de sus áreas `404`; área que administra `409 ya_administra_area` (RF-03); inactiva o nivel sin grupo/conector `409 plataforma_no_disponible`; pendiente `409 solicitud_duplicada` (también por la restricción única ante carreras); mismo nivel o superior `409 nivel_vigente`; subir con el acceso aún no `activo` `409 estado_invalido` (reglas P5 de `access.rules.acceso_a_reemplazar`).
+
+### 4.3.4 Inventario de permisos — `app/modules/access/inventario_api.py` (`/api/v1`, FNC-059)
+
+| Método y ruta | Protección | Qué hace |
+|---|---|---|
+| `GET /access/inventory` | `any_admin_required` (usuario `403`) | F-AUD-02: accesos con usuario, plataforma, área, nivel, origen, `granted_at`, `granted_by` (null = sistema) y estado. Superadmin todo; admin solo plataformas de sus áreas. Filtros `area_id`, `platform_id`, `user_id`, `level`, `origin`, `status` (estado o `vigente`, por defecto), `q` (nombre o correo, ≤ 100, sin comodines); paginada (`per_page` ≤ `ACCESS_INVENTORY_PAGE_SIZE_MAX`). Orden área, plataforma, usuario. |
+
+- Un filtro fuera de alcance da lista vacía (los filtros se suman al alcance, como en la auditoría). Valor inválido → `400 parametro_invalido`.
+- Consulta en `access/inventario.py` (`visibles`, `filtrar`, `ordenados`); forma `Access` con `access.serializacion.accesos_publicos` (FNC-058).
 
 ### 4.4 Sistema y notificaciones — `app/modules/api/admin.py` (`/api/v1`)
 

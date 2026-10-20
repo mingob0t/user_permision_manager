@@ -392,6 +392,11 @@ CASOS = (
               'ya_administra_area); el superadmin no solicita (P6)'),
     Caso('GET', f'{A}/access-requests/mine',
          _fija(f'{A}/access-requests/mine'), con_sesion()),
+
+    # ---- Inventario de permisos (access/inventario_api.py, FNC-059) ----
+    Caso('GET', f'{A}/access/inventory', _fija(f'{A}/access/inventory'),
+         administradores(),
+         nota='El usuario no tiene inventario (usa /me/access)'),
 )
 
 # Entradas inválidas: con un rol que pasa la protección, la validación
@@ -421,4 +426,6 @@ CASOS_400 = (
     ('GET', f'{A}/access-requests/catalog?area_id=x', _sin_cuerpo),
     ('GET', f'{A}/access-requests/mine?per_page=0', _sin_cuerpo),
     ('GET', f'{A}/access-requests/mine?status=otro', _sin_cuerpo),
+    ('GET', f'{A}/access/inventory?level=otro', _sin_cuerpo),
+    ('GET', f'{A}/access/inventory?per_page=101', _sin_cuerpo),
 )

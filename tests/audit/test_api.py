@@ -189,6 +189,8 @@ def test_paginada_por_defecto(esc, como):
     'platform_id=0', 'user_id=-3', 'from=2026-13-01', 'to=ayer',
     'from=2026-10-05&to=2026-10-01', f'q={"x" * (LARGO_MAX_BUSQUEDA + 1)}',
     'page=1&per_page=9999999999',
+    # SEG-FNC059-01: NUL y otros caracteres de control en `q`.
+    'q=a%00b', 'q=a%01', 'q=a%09b', 'q=%7F', 'q=a%C2%85',
 ])
 def test_parametros_invalidos(esc, como, consulta):
     _invalido(como('superadmin').get(f'{A}/audit?{consulta}'))
