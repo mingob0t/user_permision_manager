@@ -4,6 +4,7 @@ Contrato: `PUT /users/<id>/managed-areas` en `docs/contratos/areas-y-roles.md`.
 Solo el superadmin las asigna (SEC-AUTHZ-05); la ruta vive en `api.py`.
 """
 
+from app.modules.access.area_admin_sync import sincronizar_cuenta
 from app.modules.audit.events import Evento
 from app.modules.audit.services import add_audit_log
 from app.modules.core.models import Area
@@ -38,7 +39,8 @@ def asignar_areas_administradas(cuenta, area_ids):
 
     No confirma: quien llama guarda el cambio y su auditoría en una sola
     transacción (SEC-AUD-06). Registra `admin_asignado` por área agregada y
-    `admin_retirado` por área quitada.
+    `admin_retirado` por área quitada. Los accesos automáticos de la cuenta
+    se ajustan en la misma transacción (FNC-055).
     """
     antes = {a.id: a for a in (cuenta.managed_areas or [])}
     nuevas = Area.query.filter(Area.id.in_(area_ids)).all() if area_ids else []
@@ -49,6 +51,8 @@ def asignar_areas_administradas(cuenta, area_ids):
         _auditar(Evento.ADMIN_ASIGNADO, cuenta, despues[area_id])
     for area_id in sorted(set(antes) - set(despues)):
         _auditar(Evento.ADMIN_RETIRADO, cuenta, antes[area_id])
+    sincronizar_cuenta(cuenta, [despues[i] for i in sorted(set(despues)
+                                                           - set(antes))])
 
 
 def _auditar(evento, cuenta, area):

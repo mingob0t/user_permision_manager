@@ -6,8 +6,8 @@ Acuerdos de API `/api/v1` del gestor de accesos (fase 3). Se integran a `develop
 
 | Contrato | Versión | Proveedor | Consumidor | Tareas que lo implementan |
 |---|---|---|---|---|
-| [areas-y-roles.md](areas-y-roles.md) | 2 (2026-10-19) | backend | web | FNC-044, FNC-045, FNC-055 |
-| [plataformas-integracion.md](plataformas-integracion.md) | 1 (2026-10-14) | backend | web | FNC-046, FNC-055 |
+| [areas-y-roles.md](areas-y-roles.md) | 2.1 (2026-10-20) | backend | web | FNC-044, FNC-045, FNC-055 |
+| [plataformas-integracion.md](plataformas-integracion.md) | 1.1 (2026-10-20) | backend | web | FNC-046, FNC-055 |
 | [solicitudes.md](solicitudes.md) | 1.1 (2026-10-20) | backend | web | FNC-056, FNC-057 |
 | [accesos.md](accesos.md) | 1.1 (2026-10-20) | backend | web | FNC-054, FNC-058, FNC-059 |
 | [auditoria.md](auditoria.md) | 1 (2026-10-14) | backend | web | FNC-047, FNC-060 |
@@ -113,9 +113,9 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 | Pregunta | Valor aplicado | Dónde |
 |---|---|---|
 | P13 regla de absorción | Afecta la implementación, no la forma del contrato; el contrato ya exige CSRF (SEC-SES-04) | README.md |
-| P6 (resto) | Resuelto por el dueño (2026-10-14): acceso automático nivel `usuario` para todos los admins del área (incluido el creador); se revoca al quitarle el área (FNC-055) | plataformas-integracion.md, accesos.md |
+| P6 (resto) | Resuelto por el dueño (2026-10-14) e implementado en FNC-055: acceso automático nivel `usuario` para todos los admins del área (incluido el creador), auditado "admin X dio de alta la plataforma Y" y "sistema dio permisos de acceso a admin X"; se revoca al quitarle el área o el rol | plataformas-integracion.md, accesos.md, areas-y-roles.md |
 | §12.11 de seguridad | Lista blanca de hosts de conectores fijada por el despliegue (no editable en la interfaz) | conectores-y-ejecuciones.md |
-| Superadmin en grupos LDAP | El acceso por defecto del superadmin no genera registros de acceso; si debe estar en los grupos LDAP, se define en FNC-055 | accesos.md |
+| Superadmin en grupos LDAP | Resuelto (dueño, 2026-10-14; FNC-055): el superadmin tiene acceso por defecto en el portal, no recibe accesos automáticos ni entra a los grupos LDAP | accesos.md |
 
 ## Historial
 | Versión | Fecha | Cambio |
@@ -123,4 +123,5 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 | 1 | 2026-10-14 | Versión inicial (FNC-038); respuestas P7, P8, P10 y P11 y correcciones de revisión incorporadas antes del merge |
 | areas-y-roles 2 | 2026-10-19 | `password` en `POST/PUT /users` (FNC-077) |
 | accesos 1.1 | 2026-10-20 | Acceso automático del admin creador: nivel `usuario`, no `admin` (P6; FNC-054) |
+| plataformas-integracion 1.1, areas-y-roles 2.1 | 2026-10-20 | Accesos automáticos de los admins: cambio de área con resincronización y efecto de asignar o quitar áreas (FNC-055) |
 | solicitudes 1.1 | 2026-10-20 | Justificación opcional (decisión del dueño); detalles del catálogo y `409 estado_invalido` (FNC-056) |

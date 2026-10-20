@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1 (2026-10-14) |
+| Versión | 1.1 (2026-10-20) |
 | Proveedor | backend (FNC-046, FNC-055) |
 | Consumidores | web (FNC-069; pantalla DIS-017) |
 | Solicitudes | — |
@@ -48,7 +48,8 @@ Convenciones comunes: [README.md](README.md). Cambia `POST /platforms`, `PUT /pl
 - Si no llegan los DN, el backend los **deriva** de la convención de las variables `LDAP_*` del `.env` (ADR-004, FNC-043).
 - Todo DN se valida bajo la OU de grupos de plataforma, comparando RDN normalizados (SEC-LDAP-04) → si no, 422.
 - Si el grupo no existe en el directorio, la plataforma se guarda y la respuesta trae un aviso (los grupos los crea el administrador del directorio en v1).
-- Cambiar `integration_type`, los DN o `area_id` con `active_grants > 0` → 409.
+- Cambiar `integration_type` o los DN con `active_grants > 0` → 409.
+- Cambiar `area_id` → 409 solo con accesos vigentes que no sean `admin_de_area`. Los automáticos se resincronizan en la misma transacción: los de los admins del área anterior pasan a `revocando` (motivo `ya_no_administra_el_area`) y los admins de la nueva reciben el suyo `en_proceso` (FNC-055; decisión del orquestador, pendiente de validar en la prueba de concepto).
 
 ### Alta por un admin (decisión del dueño, P6)
 En la misma transacción:
@@ -58,6 +59,7 @@ En la misma transacción:
 
 - El superadmin tiene acceso por defecto: su alta no genera acceso automático.
 - Todos los admins del área reciben el acceso automático (nivel `usuario`); al quitarle el área a un admin se revocan sus accesos `admin_de_area` de esa área (FNC-055).
+- No lo reciben un admin inactivo ni una plataforma `ldap` sin grupo de nivel `usuario` (heredada); al completar sus grupos o cambiar el tipo, sí (FNC-055).
 
 ## Salida
 ```json
@@ -98,3 +100,4 @@ En la misma transacción:
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
 | 1 | 2026-10-19 | Aditivo (FNC-046): nota de plataformas heredadas (0005), URL guardadas no válidas como `null`, `409 grupo_en_uso`; cambiar `integration_type` en `PUT` solo superadmin (`403 dn_solo_superadmin`) |
+| 1.1 | 2026-10-20 | FNC-055: cambiar `area_id` ya no da 409 por accesos `admin_de_area` (se resincronizan); sin acceso automático para admins inactivos ni plataformas `ldap` sin grupo (decisión del orquestador, pendiente de validar en la PoC). Sin cambios de forma |

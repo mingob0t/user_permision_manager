@@ -338,6 +338,9 @@ def plataforma_ldap(area):
 @pytest.fixture
 def con_accesos(monkeypatch):
     monkeypatch.setattr(api_plataformas, 'accesos_vigentes', lambda p: 1)
+    # El área la impiden los vigentes que no son automáticos (FNC-055).
+    monkeypatch.setattr(api_plataformas, 'accesos_que_impiden_mover',
+                        lambda p: 1)
 
 
 @pytest.mark.parametrize('cambio', [
