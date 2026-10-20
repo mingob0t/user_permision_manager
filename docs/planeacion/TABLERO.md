@@ -77,7 +77,7 @@
 | FNC-051 | Conector tipo API HTTP | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, P9 |
 | FNC-052 | Conector tipo SSH | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, P9 |
 | FNC-053 | Conector tipo base de datos | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, P9 |
-| FNC-054 | Accesos otorgados: modelo con origen y estados, y servicio de otorgar y revocar | backend | 3 | accesos | Alta | En revisión | 2026-10-13 | 2026-10-19 | | `fnc/FNC-054-accesos-otorgados`: `9aa3c5c` (local, sin push) | Depende de FNC-039, FNC-046, FNC-047, FNC-049, P5; migración 0007; genera FNC-083; pendiente revisor y auditor-seguridad |
+| FNC-054 | Accesos otorgados: modelo con origen y estados, y servicio de otorgar y revocar | backend | 3 | accesos | Alta | Hecha | 2026-10-13 | 2026-10-19 | | `fnc/FNC-054-accesos-otorgados`: `9aa3c5c` (local, sin push) | Depende de FNC-039, FNC-046, FNC-047, FNC-049, P5; migración 0007; genera FNC-083; pendiente revisor y auditor-seguridad |
 | FNC-055 | Acceso automático de los admins a las plataformas de sus áreas | backend | 3 | accesos | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-044, FNC-045, FNC-046, P6 |
 | FNC-058 | Accesos: consulta por usuario, mis accesos y revocación manual | backend | 3 | accesos | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-038 |
 | FNC-059 | Inventario de permisos: quién tiene qué plataforma, nivel, desde cuándo y quién aprobó | backend | 3 | accesos | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-038 |
