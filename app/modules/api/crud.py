@@ -196,7 +196,7 @@ def delete_user(user_id):
 @any_admin_required
 def set_user_platforms(user_id):
     """Asigna plataformas concretas a un usuario."""
-    from app.authz import scoped_platforms
+    from app.authz import can_manage_platform, scoped_platforms
 
     target = User.query.get_or_404(user_id)
     if not can_manage_user(target):
@@ -206,7 +206,9 @@ def set_user_platforms(user_id):
     platform_ids = (data or {}).get('platform_ids') or []
     if data is None or not is_id_list(platform_ids):
         return _error(*CUERPO_INVALIDO)
-    allowed = {p.id for p in scoped_platforms().all()}
+    # Solo las que administra: un acceso activo propio (FNC-063) no le da
+    # alcance sobre la plataforma.
+    allowed = {p.id for p in scoped_platforms().all() if can_manage_platform(p)}
     if [i for i in platform_ids if i not in allowed]:
         return _error('Hay plataformas fuera de tu alcance.', 403)
 

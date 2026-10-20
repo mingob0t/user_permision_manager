@@ -151,8 +151,10 @@ def plataforma_heredada(app):
 
 def test_url_heredada_no_https_sale_null_en_el_listado(cliente_como,
                                                         plataforma_heredada):
-    usuario = cliente_como(fabricas.crear_usuario(
-        ROLE_USER, areas=[plataforma_heredada.area]))
+    cuenta = fabricas.crear_usuario(ROLE_USER, areas=[plataforma_heredada.area])
+    # FNC-063: el usuario ve la plataforma por un acceso activo.
+    fabricas.crear_acceso(cuenta, plataforma_heredada)
+    usuario = cliente_como(cuenta)
 
     listado = usuario.get(f'{A}/platforms').get_json()
 

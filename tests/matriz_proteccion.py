@@ -266,9 +266,14 @@ CASOS = (
     Caso('GET', f'{A}/areas/<int:area_id>', _area(), administradores()),
     Caso('GET', f'{A}/platforms', _fija(f'{A}/platforms'), con_sesion()),
     Caso('POST', f'{A}/platforms/<int:platform_id>/visit', _plataforma('/visit'),
-         con_sesion()),
+         {ANONIMO: 401, ROLE_USER: 404, ROLE_AREA_ADMIN: 200, ROLE_ADMIN: 200},
+         nota='FNC-063: el usuario de la matriz no tiene acceso activo; el 200 '
+              'con acceso está en tests/authz'),
     Caso('POST', f'{A}/platforms/<int:platform_id>/favorite',
-         _plataforma('/favorite'), con_sesion()),
+         _plataforma('/favorite'),
+         {ANONIMO: 401, ROLE_USER: 404, ROLE_AREA_ADMIN: 200, ROLE_ADMIN: 200},
+         nota='FNC-063: el usuario de la matriz no tiene acceso activo; el 200 '
+              'con acceso está en tests/authz'),
     Caso('GET', f'{A}/favorites', _fija(f'{A}/favorites'), con_sesion()),
     Caso('GET', f'{A}/users', _fija(f'{A}/users'), administradores()),
     Caso('PUT', f'{A}/users/<int:user_id>/areas', _objetivo('/areas'),

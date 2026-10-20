@@ -11,8 +11,9 @@ Niveles de acceso (de mayor a menor):
     admin_area    -> administra las áreas que tiene asignadas en `area_admins`:
                      sus plataformas, sus usuarios y sus permisos. No ve ni toca
                      nada de otras áreas ni la configuración global.
-    usuario       -> solo consulta las plataformas de las áreas que tiene
-                     asignadas en `user_areas`.
+    usuario       -> solo abre las plataformas en las que tiene un acceso
+                     `activo` (FNC-063), de las áreas a las que pertenece
+                     (`user_areas`).
 
 El área es la unidad de aislamiento (tenant). El aislamiento se aplica por
 fila: cada consulta se filtra por las áreas que el usuario alcanza, mediante las
@@ -113,13 +114,35 @@ def scoped_areas(user=None, only_active=False):
 
 
 def scoped_platforms(user=None):
-    """Query de las plataformas visibles para el usuario."""
+    """Query de "mis plataformas": las que el usuario abre, marca favoritas y
+    visita (FNC-063, P4).
+
+    - Superadmin: todas (acceso por defecto, P6).
+    - Admin de área: las de las áreas que administra (acceso automático,
+      FNC-055) y las de sus accesos `activo`.
+    - Usuario: las de sus accesos `activo`.
+
+    Un acceso solo cuenta si la plataforma es de un área a la que la cuenta
+    pertenece (`user_areas`, P1). Otros estados del acceso no dan
+    visibilidad. `user_platforms` no interviene (P4; se retira en FNC-065).
+    El catálogo para solicitar es otro: `access_requests/catalogo.py`.
+    """
+    from app import db
+    from app.modules.access.consultas import plataformas_con_acceso_activo
     from app.modules.core.models import Platform
 
     user = user if user is not None else current_user
     if is_admin(user):
         return Platform.query
-    return Platform.query.filter(Platform.area_id.in_(user_area_ids(user)))
+    if not _valid(user):
+        return Platform.query.filter(False)
+    member_ids = [a.id for a in (user.areas or [])]
+    by_grant = db.and_(Platform.id.in_(plataformas_con_acceso_activo(user.id)),
+                       Platform.area_id.in_(member_ids))
+    if is_area_admin(user):
+        return Platform.query.filter(
+            db.or_(Platform.area_id.in_(managed_area_ids(user)), by_grant))
+    return Platform.query.filter(by_grant)
 
 
 def scoped_users(user=None):
@@ -157,13 +180,16 @@ def scoped_users(user=None):
 # --------------------------------------------------------------------------- #
 
 def can_access_platform(platform, user=None):
-    """True si el usuario puede ver esa plataforma."""
+    """True si la plataforma está en "mis plataformas" (`scoped_platforms`)."""
+    from app.modules.core.models import Platform
+
     if platform is None:
         return False
     user = user if user is not None else current_user
     if is_admin(user):
         return True
-    return platform.area_id in user_area_ids(user)
+    return scoped_platforms(user).filter(
+        Platform.id == platform.id).first() is not None
 
 
 def can_manage_area(area_id, user=None):
