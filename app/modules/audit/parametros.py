@@ -95,10 +95,12 @@ def _fecha(args, campo):
             dia = date.fromisoformat(valor)
             return datetime(dia.year, dia.month, dia.day), True
         instante = datetime.fromisoformat(valor)
-    except ValueError:
+        if instante.tzinfo is not None:
+            instante = instante.astimezone().replace(tzinfo=None)
+    except (ValueError, OverflowError):
+        # OverflowError: la conversión de zona sale del rango de `datetime`
+        # (p. ej. 0001-01-01 con +01:00) (SEG-060-02).
         raise ParametroInvalido(campo) from None
-    if instante.tzinfo is not None:
-        instante = instante.astimezone().replace(tzinfo=None)
     return instante, False
 
 
@@ -112,7 +114,10 @@ def leer_filtros(args):
         if hasta - desde > timedelta(days=RANGO_MAX_DIAS):
             raise ParametroInvalido('to')
     if hasta:
-        hasta += timedelta(days=1) if solo_fecha else INSTANTE_MINIMO
+        try:
+            hasta += timedelta(days=1) if solo_fecha else INSTANTE_MINIMO
+        except OverflowError:  # 9999-12-31 (SEG-060-02)
+            raise ParametroInvalido('to') from None
 
     q = (args.get('q') or '').strip() or None
     if q and len(q) > LARGO_MAX_BUSQUEDA:

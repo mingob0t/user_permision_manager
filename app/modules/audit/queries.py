@@ -9,29 +9,24 @@ Visibilidad (Anexo A de `docs/seguridad/LINEAMIENTOS.md`, SEG-16):
 Toda consulta de auditoría hacia el cliente parte de `visibles()`.
 """
 
-from sqlalchemy import and_, false, or_
+from sqlalchemy import false, or_
 from sqlalchemy.orm import selectinload
 
-from app import db
 from app.authz import is_admin, is_area_admin, managed_area_ids
 from app.modules.audit.models import AuditLog
-from app.modules.auth.models import User
 
 ESCAPE_LIKE = '\\'
 
 
-def de_usuario(usuario_id, correo=None):
-    """Eventos donde la cuenta es actor o usuario afectado.
+def de_usuario(usuario_id):
+    """Eventos donde la cuenta es actor o usuario afectado, solo por id.
 
-    `correo`: también los registros anteriores a FNC-047 (sin `actor_id`) cuyo
-    `user` es ese correo; los posteriores siempre llevan `actor_id`.
+    Sin coincidencia por correo (SEG-060-01): al borrar una cuenta `actor_id`
+    queda en NULL y el correo puede pasar a otra persona. Los registros
+    anteriores a FNC-047 (sin `actor_id`) solo los ve el superadmin.
     """
-    criterios = [AuditLog.actor_id == usuario_id,
-                 AuditLog.target_user_id == usuario_id]
-    if correo:
-        criterios.append(and_(AuditLog.actor_id.is_(None),
-                              AuditLog.user == correo))
-    return or_(*criterios)
+    return or_(AuditLog.actor_id == usuario_id,
+               AuditLog.target_user_id == usuario_id)
 
 
 def de_plataforma(plataforma_id):
@@ -50,7 +45,7 @@ def visibles(usuario):
         # in_([]) es SQL falso: sin áreas no ve nada.
         return consulta.filter(AuditLog.area_id.in_(managed_area_ids(usuario)))
     if usuario is not None and usuario.is_authenticated:
-        return consulta.filter(de_usuario(usuario.id, usuario.email))
+        return consulta.filter(de_usuario(usuario.id))
     return consulta.filter(false())
 
 
@@ -72,9 +67,7 @@ def filtrar(consulta, filtros):
     if filtros.platform_id:
         consulta = consulta.filter(AuditLog.platform_id == filtros.platform_id)
     if filtros.user_id:
-        cuenta = db.session.get(User, filtros.user_id)
-        consulta = consulta.filter(de_usuario(
-            filtros.user_id, cuenta.email if cuenta else None))
+        consulta = consulta.filter(de_usuario(filtros.user_id))
     if filtros.desde:
         consulta = consulta.filter(AuditLog.timestamp >= filtros.desde)
     if filtros.hasta:

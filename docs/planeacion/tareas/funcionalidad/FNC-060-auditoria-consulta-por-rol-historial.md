@@ -91,7 +91,7 @@
 | Plataforma de área ajena | `404`, no `403`: el contrato y SEC-AUTHZ-04 prevalecen sobre el criterio de la ficha |
 | Admin y eventos sin área | Solo el superadmin; el admin tampoco ve sus propios logins (Anexo A: "área afectada") |
 | Usuario: `before`/`after` | `null`, igual que `ip` (requisito de FNC-047: solo superadmin o admin en su alcance) |
-| Usuario: registros anteriores a FNC-047 | "Los propios" incluye filas sin `actor_id` cuyo `user` es su correo (sin esto perdería su historial) |
+| Usuario: registros anteriores a FNC-047 | Sin coincidencia por correo; solo los ve el superadmin (SEG-060-01). No hay corte fijo seguro: el id y la fecha de la migración `0002` cambian por entorno, y aun con corte las filas heredadas de una cuenta borrada pasarían a quien reciba su correo |
 | `GET /audit/users/<id>` del admin | Él mismo o cuentas que `can_manage_user` (SEC-AUTHZ-06); otras → `404` |
 | `time` en UTC | Sin cambio (hora local `AAAA-MM-DD HH:MM:SS`): pendiente del dueño; `from`/`to` con zona se convierten a hora local |
 | Filtros | Se aplican también sin `page`; `400` incluye `fields` (aditivo); `limit` < 1 se acota a 1 |
@@ -101,6 +101,13 @@
 - xfail de SEG-16 retirado. Nota: aquel xfail fallaba por un artefacto de la prueba (Flask-Login guarda el usuario en `g`, compartido por el app context de la prueba), no por SEG-16 en sí; se limpia `g._login_user` y se agregó la regresión real del usuario compartido.
 - Pytest completo (`venv/bin/python -m pytest -q`): **1144 passed, 14 xfailed**, código 0 (294 s). Antes (develop): 1070 passed, 15 xfailed.
 - No verificado: pantalla `/audit` en navegador (no se tocó el frontend; DIS-020) y MySQL (pruebas en SQLite).
+
+## Hallazgos de auditor-seguridad (Aprobado)
+| ID | Severidad | Estado |
+|---|---|---|
+| SEG-060-01 | Media | Corregido: coincidencia por correo retirada (`queries.de_usuario` solo por id). Regresión `test_correo_reutilizado_no_ve_eventos_de_la_cuenta_borrada` (falló antes) |
+| SEG-060-02 | Baja | Corregido: `OverflowError` de `from`/`to` → `400 parametro_invalido`. Regresión `test_fechas_en_el_limite_no_dan_500` (3 casos; antes 500) |
+| SEG-060-03 | — | Endurecimiento pendiente: `from` o `to` solos dejan el rango abierto (el tope de 366 días solo aplica con ambos) |
 
 ## Impacto en elementos compartidos (salida real de `impacto.py`)
 | Elemento modificado | Tipo | Definido en | Usado en (fuera de la tarea) | Áreas afectadas | ¿Validado? |
@@ -123,3 +130,4 @@ Lectura:
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-14 | Requisitos agregados por la revisión de FNC-047 |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador). Implementada en `fnc/FNC-060-consulta-auditoria`: `audit/api.py`, `queries.py`, `parametros.py`; `GET /audit` sale de `api/routes.py`; matriz con los 2 endpoints nuevos; cierra SEG-16 (FNC-015). Sin migración. Sin revisores (por instrucción) |
+| 2026-10-20 | auditor-seguridad Aprobado; SEG-060-01 y 02 corregidos con regresiones (4 failed antes); 03 anotado. `merge --no-ff develop` (FNC-064, `514e87f`) |

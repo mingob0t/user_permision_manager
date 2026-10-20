@@ -80,7 +80,8 @@ def esc(app):
          status='info')
     _log('ub_en_b', ev, actor=ub, area=area_b.id, plataforma=plat_b.id,
          status='error')
-    # Registro anterior a FNC-047: solo el correo, sin actor_id ni área.
+    # Registro anterior a FNC-047: solo el correo, sin actor_id ni área; solo
+    # lo ve el superadmin (SEG-060-01).
     _log('heredado_ua', ev, user=ua.email, accion=Evento.AREA_EDITADA)
     return Escenario(cuentas={k: v.id for k, v in cuentas.items()},
                      area={'A': area_a.id, 'B': area_b.id},
@@ -111,7 +112,7 @@ def _invalido(respuesta):
 
 
 TODOS = {'ua_en_a', 'ua_en_b', 'sistema_a_ua', 'ub_en_b', 'heredado_ua'}
-PROPIOS_UA = {'ua_en_a', 'ua_en_b', 'sistema_a_ua', 'heredado_ua'}
+PROPIOS_UA = {'ua_en_a', 'ua_en_b', 'sistema_a_ua'}
 
 
 # --------------------------------------------------------------------------- #
@@ -179,7 +180,7 @@ def test_con_page_es_lista_paginada(esc, como):
 
 def test_paginada_por_defecto(esc, como):
     datos = como('usuario_a').get(f'{A}/audit?page=1').get_json()
-    assert (datos['page'], datos['per_page'], datos['total']) == (1, 25, 4)
+    assert (datos['page'], datos['per_page'], datos['total']) == (1, 25, 3)
 
 
 @pytest.mark.parametrize('consulta', [
@@ -305,3 +306,41 @@ def test_historial_de_plataforma_inexistente_es_404(esc, como):
                                   '/audit/platforms/1'])
 def test_sin_sesion_es_401(esc, client, ruta):
     assert client.get(f'{A}{ruta}').status_code == 401
+
+
+# --------------------------------------------------------------------------- #
+# Hallazgos de auditor-seguridad
+# --------------------------------------------------------------------------- #
+
+def test_correo_reutilizado_no_ve_eventos_de_la_cuenta_borrada(app, como,
+                                                              cliente_como):
+    """SEG-060-01: al borrar una cuenta, `actor_id` queda en NULL (FK `SET
+    NULL`); quien reciba después el mismo correo no ve esos eventos."""
+    correo = 'reciclado@pruebas.local'
+    anterior = fabricas.crear_usuario(ROLE_USER, email=correo)
+    eventos = {}
+    _log('de_la_anterior', eventos, actor=anterior, afectado=anterior)
+    # Lo que hace la FK en MySQL; SQLite de pruebas no la aplica (fuera del
+    # ORM, como `areas/baja.py`).
+    db.session.connection().execute(AuditLog.__table__.update()
+                       .where(AuditLog.id == eventos['de_la_anterior'])
+                       .values(actor_id=None, target_user_id=None))
+    db.session.delete(anterior)
+    db.session.commit()
+    fabricas.crear_usuario(ROLE_USER)  # evita que SQLite reutilice el id
+    nueva = fabricas.crear_usuario(ROLE_USER, email=correo)
+
+    g.pop('_login_user', None)
+    cliente = cliente_como(nueva)
+    assert cliente.get(f'{A}/audit').get_json() == []
+    historial = cliente.get(f'{A}/audit/users/{nueva.id}').get_json()
+    assert historial['total'] == 0
+
+
+@pytest.mark.parametrize('consulta', [
+    'from=0001-01-01T00:00:00%2B01:00', 'to=9999-12-31',
+    'to=9999-12-31T23:59:59.999999',
+])
+def test_fechas_en_el_limite_no_dan_500(esc, como, consulta):
+    """SEG-060-02: OverflowError al convertir o al sumar el día → 400."""
+    _invalido(como('superadmin').get(f'{A}/audit?{consulta}'))

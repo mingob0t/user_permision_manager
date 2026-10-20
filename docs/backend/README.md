@@ -117,7 +117,7 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 
 | Endpoint | Protección | Comportamiento |
 |---|---|---|
-| `GET /audit` | Sesión (alcance) | Superadmin: todo; admin de área: eventos con `area_id` de sus áreas (sin área: solo superadmin; SEG-16); usuario: los propios (actor o afectado, y los anteriores a FNC-047 por correo). Sin `page`: arreglo (`limit` 100, máx. 500); con `page`: `{items, page, per_page, total}`. |
+| `GET /audit` | Sesión (alcance) | Superadmin: todo; admin de área: eventos con `area_id` de sus áreas (sin área: solo superadmin; SEG-16); usuario: los propios (actor o afectado, solo por id; los anteriores a FNC-047 solo el superadmin, SEG-060-01). Sin `page`: arreglo (`limit` 100, máx. 500); con `page`: `{items, page, per_page, total}`. |
 | `GET /audit/users/<id>` | Sesión; superadmin cualquiera, admin él mismo o `can_manage_user`, usuario solo él; si no → `404` | Paginado; eventos de la cuenta dentro del alcance. |
 | `GET /audit/platforms/<id>` | `any_admin_required` (usuario → `403`) + `can_manage_platform` (ajena → `404`) | Paginado; eventos de la plataforma dentro del alcance. |
 

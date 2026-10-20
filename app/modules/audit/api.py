@@ -96,7 +96,7 @@ def user_history(user_id):
     cuenta = db.session.get(User, user_id)
     if cuenta is None or not _puede_ver_historial_de(cuenta):
         return error_response(*NO_ENCONTRADO)
-    return _historial(queries.de_usuario(cuenta.id, cuenta.email))
+    return _historial(queries.de_usuario(cuenta.id))
 
 
 @audit_api_bp.route('/audit/platforms/<int:platform_id>')
