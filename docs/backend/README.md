@@ -41,7 +41,7 @@ app/
     ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
-    ├── users/         # api.py (managed-areas), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
+    ├── users/         # api.py (managed-areas, alta en directorio), directory_accounts.py (FNC-064), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
     └── areas/         # api.py, validacion.py, baja.py (FNC-045); routes.py heredadas
 alembic.ini            # Configuración de Alembic (sin URL ni secretos)
 migrations/
@@ -148,6 +148,7 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
 | `PUT /users/<id>/managed-areas` | `admin_required` | Reemplaza `area_admins` de un `admin_area` con `{"area_ids": [...]}` (0–50, existentes, sin repetidos; si no → `422 validacion`). Destino sin rol `admin_area` → `409 rol_no_admin`. Audita `admin_asignado`/`admin_retirado` por área en la misma transacción. Responde `{"status": "success", "user": ManagedUser}`. |
+| `POST /users/directory` | `any_admin_required`; admin solo sus áreas | FNC-064, contrato `usuarios-directorio.md`. Lista blanca `uid`, `email`, `given_name`, `surname`, `area_ids` (otro, incluido `password` o `role` → `400 campo_no_permitido`). Admin: `area_ids` 1–50 de sus áreas (ajena o inexistente → `404`); superadmin: cualquiera o vacío. `422 validacion` por campo (correo ≤ 120, la columna). Correo solo ASCII. Duplicados (auditados `warning`): uid en el directorio, reservado o cuenta heredada → `409 uid_duplicado`; correo en el portal o en el directorio (`ClienteDirectorio.buscar_por_correo`; ambiguo también) → `409 correo_duplicado`. Reserva el correo con la fila de `users` sin confirmar (UNIQUE: dos altas simultáneas, una gana), busca el `mail` justo antes de escribir, crea la entrada sin contraseña (`EscritorDirectorio.create_user`) y confirma la cuenta `usuario` `auth_source=ldap` sin `password_hash`; fallo del directorio (o sin configurar) → `503 directorio_no_disponible` sin tocar la BD; fallo parcial (`commit`) → `500 error_interno`, rollback, auditoría `warning` con el DN (entrada para revisión) y la persona se registra en su primer acceso. Audita `cuenta_directorio_creada` (éxito en la misma transacción; fallos `error`/`warning`). Responde `201 {"status": "success", "user": ManagedUser}`. |
 
 ### 4.3.2 Áreas — `app/modules/areas/api.py` (`/api/v1`, FNC-045)
 
@@ -318,6 +319,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/test_proteccion_por_rol.py`: matriz ruta × rol (401/403/2xx), entradas inválidas (400) y RF-04 (sin `xfail` desde FNC-044).
   - `tests/test_alcance_por_area.py` (FNC-021): alcance por área con áreas A y B y 5 actores, y escalada con ids ajenos (SEG-05 y SEG-09 sin `xfail` desde FNC-044; queda el de FNC-015).
   - Roles y áreas administradas (FNC-044): `tests/users/test_roles_y_areas_administradas.py`.
+  - Alta de cuentas en OpenLDAP (FNC-064): `tests/users/test_alta_directorio.py` (directorio simulado de `tests/directorio_falso.py`).
   - Contraseñas locales y cuenta de emergencia (FNC-077): `tests/users/test_contrasenas_locales.py`; `peticiones_auth.activar_login_local_de_todas(monkeypatch, entorno)`.
   - Alta, edición y baja de áreas por el admin (FNC-045): `tests/areas/test_alta_y_baja_por_admin.py`.
   - Ejecutor de aprovisionamiento (FNC-049): `tests/provisioning/` (encolado, reintentos, permanentes, reserva, idempotencia, saneo, proveedor LDAP sobre `MOCK_SYNC`, worker y comando). `conftest.py`: `cola_falsa` (cola RQ en el mismo proceso, como `is_async=False`, sin Redis), `proveedor_simulado`, `avisos`.
