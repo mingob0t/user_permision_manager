@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | solicitudes |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local en `fnc/FNC-056-solicitudes`, sin push |
 | **Rama** | `fnc/FNC-056-solicitudes` |
