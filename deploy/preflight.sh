@@ -234,11 +234,21 @@ if [[ -f .env ]]; then
     redis_host=$(grep -E '^REDIS_HOST=' .env | cut -d= -f2- | tr -d '"'"'"' ')
     redis_port=$(grep -E '^REDIS_PORT=' .env | cut -d= -f2- | tr -d '"'"'"' ')
     : "${redis_host:=localhost}"; : "${redis_port:=6379}"
+    # Redis es obligatorio para el worker de aprovisionamiento (ADR-003,
+    # FNC-067): sin él, la unidad NOMBRE-worker no arranca.
+    # Solo nombre de host: el worker rechaza una IP literal.
+    if [[ "$redis_host" =~ ^[0-9.]+$ || "$redis_host" == *:* ]]; then
+        bad "REDIS_HOST debe ser un nombre de host, no una IP (el worker no arrancaría)"
+    fi
     if timeout 5 bash -c "</dev/tcp/${redis_host}/${redis_port}" 2>/dev/null; then
         ok "Redis accesible en ${redis_host}:${redis_port}"
     else
-        warn "Redis no responde en ${redis_host}:${redis_port} (la app arranca igual)"
+        bad "Redis no responde en ${redis_host}:${redis_port} (obligatorio para el worker de aprovisionamiento)"
     fi
+    # Solo se comprueba que tenga valor; nunca se imprime (SEG-29).
+    grep -qE '^REDIS_PASS=.+' .env \
+        && ok "REDIS_PASS definida" \
+        || bad "REDIS_PASS sin definir: el worker exige Redis con contraseña (SEG-29)"
     grep -qE '^SECRET_KEY=.+' .env \
         && ok "SECRET_KEY definida" \
         || bad "SECRET_KEY sin definir: las sesiones no serían seguras"
@@ -303,11 +313,11 @@ if [[ "$APP_NAME" =~ ^[a-z][a-z0-9_-]{0,31}$ ]]; then
 else
     bad "APP_NAME='$APP_NAME' no es válido (minúsculas, dígitos, '-' o '_')"
 fi
-printf "  unidades:  %s-backend, %s-frontend\n" "$APP_NAME" "$APP_NAME"
+printf "  unidades:  %s-backend, %s-frontend, %s-worker\n" "$APP_NAME" "$APP_NAME" "$APP_NAME"
 printf "  prefijo:   /opt/%s\n" "$APP_NAME"
 printf "  registros: /var/log/%s\n" "$APP_NAME"
 printf "  nginx:     /etc/nginx/conf.d/%s.conf\n" "$APP_NAME"
-for u in "${APP_NAME}-backend" "${APP_NAME}-frontend"; do
+for u in "${APP_NAME}-backend" "${APP_NAME}-frontend" "${APP_NAME}-worker"; do
     if systemctl list-unit-files "$u.service" 2>/dev/null | grep -q "$u"; then
         warn "$u.service ya existe; la instalación lo sobrescribirá"
     fi
