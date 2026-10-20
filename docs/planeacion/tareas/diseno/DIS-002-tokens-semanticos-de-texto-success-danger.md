@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | tokens |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | disenador-web |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-19 |
@@ -113,3 +113,4 @@ Vistas a validar: Notificaciones (iconos por tono), Administrar plataformas (tar
 | 2026-10-19 | DIS-001 absorbió `primary` como texto (`--color-primary-text`, pares `primary-text/*`); el alcance queda en success, danger y warning y las clases literales |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador; adelantada de fase 4). Implementada: tokens de estado por tema, utilidades sin literales, 9 componentes, regresión (69 failed antes). test/lint/typecheck/build código 0; fallas conocidas 32 → 25. En revisión, sin revisores (por instrucción) |
 | 2026-10-19 | Revisor Aprobado y auditor-accesibilidad Aprobado; regresión CSS ampliada a estados, título actualizado y nota a DIS-004 (botón danger). test/lint/typecheck código 0. Lista para cierre, En revisión |
+- Cierre (2026-10-19): revisor y auditor-accesibilidad Aprobado; merge local a `develop` (modo autónomo; adelantada de la fase 4).
