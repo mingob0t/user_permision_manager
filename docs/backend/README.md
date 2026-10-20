@@ -36,6 +36,7 @@ app/
     ├── auth/          # Modelos User/AuthConfig (obsoleto) y login; rutas heredadas (redirigen/410)
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
+    ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054)
     ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060); rutas heredadas
@@ -77,6 +78,7 @@ Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue a
 | `user_areas` | tabla de relación | `user_id`, `area_id`: pertenencia de un usuario a un área |
 | `area_admins` | tabla de relación | `user_id`, `area_id`: áreas que administra un `admin_area` |
 | `user_platforms` | tabla de relación | `user_id`, `platform_id`: acceso explícito a plataforma (se edita, pero `scoped_platforms` **no** lo usa para filtrar) |
+| `platform_access_grants` | `access.models.PlatformAccessGrant` | FNC-054 (0007): `user_id`, `platform_id` (FK sin `ON DELETE`), `level` (`usuario`/`admin`), `origin` (`solicitud`/`admin_de_area`), `request_id` (sin FK hasta FNC-056), `granted_by`/`revoked_by` (FK `SET NULL`; nulo = sistema), `granted_at`, `status`, `revoked_at`, `revoke_reason` (500), `last_job_id`, `updated_at`; únicos `slot_vigente` (usuario, plataforma, nivel) y `slot_ocupante` (usuario, plataforma: P5). Nunca se borra |
 | `user_favorites` | tabla de relación | `user_id`, `platform_id` |
 | `audit_logs` | `audit.models.AuditLog` | `timestamp`, `user` (correo o `sistema`, 255), `action` (150), `module`, `target` (255), `detail`, `ip_address`, `status` (`success`/`error`/`warning`/`info`); FNC-047: `actor_id`, `target_user_id`, `area_id`, `platform_id` (FK `SET NULL`), `before_state`/`after_state` (JSON), `request_id`, `grant_id`; índices por fecha, actor, usuario afectado, área y plataforma. Inmutable desde el ORM |
 | `auth_config` | `auth.models.AuthConfig` | **Obsoleta** (FNC-043): nada la lee; solo viaja en el respaldo. `ldap_pass` vacía (migración 0004) y el modelo rechaza escribirla. Resto: `ldap_host`, `ldap_port`, `ldap_ssl`, `ldap_base_dn`, `ldap_user`, `ldap_user_attr`, `ldap_group_admin`, `ldap_group_user`, `ldap_role_mappings` |
@@ -246,6 +248,15 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - Exige `REDIS_PASS` y `REDIS_HOST` como nombre de host; variables `PROVISIONING_*` validadas en `create_app()`.
 - API de ejecuciones y reintento manual: FNC-062. Unidad systemd: FNC-067.
 
+### Accesos otorgados (`app/modules/access/`, FNC-054)
+- `services.otorgar(usuario, plataforma, nivel, origen, actor=None, request_id=None)` y `services.revocar(acceso, actor=None, motivo=None)`: cambian el acceso, encolan (`acceso-<id>-otorgar|revocar`) y auditan (`acceso_otorgado`, `acceso_revocado`) **sin commit**; `actor=None` = sistema (FNC-055).
+- Estados (contrato `accesos.md`): `en_proceso` → `activo`/`fallido`; `activo` → `revocando` → `revocado`/`fallo_revocacion`; reintento `fallido` → `en_proceso` y `fallo_revocacion` → `revocando` (`services.reabrir_acceso`, FNC-062). Revocar solo desde `activo`.
+- P5: subir a `admin` pasa el `usuario` (debe estar `activo`) a `revocando` con `reemplazado_por_nivel_superior`; mismo nivel o inferior → `nivel_vigente`.
+- Reglas (`rules.py`): por solicitud, quien otorga administra la plataforma y la cuenta (`can_manage_user`) y la cuenta es del área (P1); `admin_de_area` solo el sistema, nivel `usuario`, a un admin del área; superadmin → `acceso_por_defecto`; propio → `operacion_propia`; un admin no revoca accesos `admin_de_area` ni de otros admins (404).
+- Errores: `ErrorDeAcceso` con `respuesta` = (mensaje, HTTP, `code`, `fields`) para `error_response`.
+- `manejadores.registrar()` (en `create_app`): el resultado del trabajo lleva el acceso a su estado en la misma transacción; transición inválida → solo log (SEC-CON-09).
+- `consultas.py`: `platforms.estado.accesos_vigentes` (→ `active_grants`, `409 plataforma_con_accesos`) y `areas.baja.tiene_accesos_vigentes` (`409 area_con_accesos`; ya no cuenta `user_areas`).
+
 ### Login de directorio (`authenticate_user_ldap`, FNC-042)
 - Usa el cliente centralizado y `LDAP_*`; sin `LDAP_URL` el login de directorio falla siempre.
 - Flujo: `buscar_usuario` (filtro escapado por `LDAP_USER_ATTR`, por defecto `uid`) → `verificar_contrasena` → cuenta local por el `mail` del directorio.
@@ -334,6 +345,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - Contraseñas locales y cuenta de emergencia (FNC-077): `tests/users/test_contrasenas_locales.py`; `peticiones_auth.activar_login_local_de_todas(monkeypatch, entorno)`.
   - Alta, edición y baja de áreas por el admin (FNC-045): `tests/areas/test_alta_y_baja_por_admin.py`.
   - Ejecutor de aprovisionamiento (FNC-049): `tests/provisioning/` (encolado, reintentos, permanentes, reserva, idempotencia, saneo, proveedor LDAP sobre `MOCK_SYNC`, worker y comando). `conftest.py`: `cola_falsa` (cola RQ en el mismo proceso, como `is_async=False`, sin Redis), `proveedor_simulado`, `avisos`.
+  - Accesos otorgados (FNC-054): `tests/access/` (servicio, estados, P5, alcance, unicidad en BD, puntos de extensión y punta a punta con `DirectorioMock` y `cola_falsa`).
   - Plataformas (FNC-046): `tests/platforms/` (tipo, DN, derivación, avisos, 409, auditoría; regresión SEG-24).
   - Autenticación (FNC-022): `test_login_local.py`, `test_login_directorio.py`, `test_sso.py`, `test_sesion_y_logout.py`; 3 `xfail` con su tarea (FNC-006, 014; el de SEG-02 pasó a prueba normal en FNC-077); los 9 de FNC-002 y FNC-013 pasaron a pruebas normales en FNC-042.
   - `tests/directorio_falso.py`: `instalar_directorio(monkeypatch, variables=None, **config)` activa `LDAP_*` ficticias y conecta el cliente centralizado a `MOCK_SYNC` (personas, grupos, filtros recibidos); `config` crea `auth_config` (FNC-042).

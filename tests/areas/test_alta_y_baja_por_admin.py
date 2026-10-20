@@ -312,8 +312,15 @@ def test_baja_con_plataformas_da_409(sin_miembros, como):
     assert _eventos('area_eliminada') == []
 
 
-def test_baja_con_accesos_vigentes_da_409(escena, como):
-    """El usuario de A la alcanza (`user_areas`): es un acceso vigente."""
+def test_baja_con_accesos_vigentes_da_409(escena, como, monkeypatch):
+    """Accesos otorgados vigentes del área (FNC-054; antes, `user_areas`).
+
+    Un acceso vigente implica una plataforma del área (que responde antes
+    `area_con_plataformas`): aquí se simula la consulta para probar el 409.
+    """
+    from app.modules.access import consultas
+    monkeypatch.setattr(consultas, 'area_tiene_vigentes', lambda area_id: True)
+
     respuesta = como('super').delete(f"{A}/areas/{escena['A']}")
 
     _codigo(respuesta, 409, 'area_con_accesos')

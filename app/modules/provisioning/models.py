@@ -8,8 +8,8 @@
   saneado y truncado (SEC-CON-10).
 - Las fechas son UTC sin zona (`reloj.ahora`).
 - Al borrar un usuario, área o plataforma el trabajo se conserva con la
-  referencia en NULL (historial). `access_id` aún no tiene FK: la tabla de
-  accesos llega con FNC-054.
+  referencia en NULL (historial). `access_id` apunta a
+  `platform_access_grants` sin FK (FNC-054: evita el ciclo con `last_job_id`).
 """
 from app import db
 from app.modules.provisioning.reloj import ahora
