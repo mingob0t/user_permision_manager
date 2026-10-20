@@ -137,6 +137,7 @@ def create_app(config_overrides=None):
     from app.modules.platforms.api import platforms_api_bp
     from app.modules.audit.api import audit_api_bp
     from app.modules.access_requests.api import access_requests_api_bp
+    from app.modules.access.inventario_api import access_inventory_api_bp
 
 
 
@@ -155,7 +156,8 @@ def create_app(config_overrides=None):
     # participa del CSRF de Flask-WTF.
     for bp in (api_bp, crud_bp, admin_bp, auth_api_bp, users_api_bp,
                areas_api_bp, directory_api_bp, platforms_api_bp,
-               audit_api_bp, access_requests_api_bp):
+               audit_api_bp, access_requests_api_bp,
+               access_inventory_api_bp):
         csrf.exempt(bp)
         app.register_blueprint(bp)
 

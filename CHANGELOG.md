@@ -28,6 +28,7 @@
 - Plataformas con tipo de integración (`ldap`/`conector`) y grupos del directorio por nivel validados bajo `LDAP_GROUPS_BASE_DN`; URLs solo `https://` (corrige SEG-24 en el backend); migración `0005` (FNC-046, 2026-10-19).
 - Pantalla de áreas: el admin de área da de alta y gestiona las suyas; el superadmin asigna sus administradores; errores por campo y mensajes de los `409` (DIS-016, 2026-10-19).
 - Acceso automático de los admins de área (P6): nivel `usuario`, otorgado por el sistema al dar de alta una plataforma, asignar un área o cambiar la plataforma de área; se revoca al quitarle el área o el rol de admin. El superadmin no recibe accesos automáticos (FNC-055, 2026-10-20).
+- Inventario de permisos `GET /access/inventory` (F-AUD-02): quién tiene qué plataforma, nivel, origen, desde cuándo y quién aprobó; superadmin todo, admin sus áreas, usuario `403`; filtros y paginación (FNC-059, 2026-10-20).
 - Formulario de plataformas con tipo de integración y grupos de acceso por nivel (solo superadmin), avisos tras guardar, errores por campo y de los `403`/`409`; la tarjeta y la tabla solo enlazan `https://` (corrige SEG-24 en el frontend) (DIS-017, 2026-10-19).
 - Consulta de auditoría por rol con filtros y paginación, e historial por usuario y por plataforma; el admin de área solo ve eventos de sus áreas (corrige SEG-16) (FNC-060, 2026-10-19).
 
