@@ -10,8 +10,8 @@ Contrato `docs/contratos/solicitudes.md`. Orden de `POST /access-requests`:
    (FNC-048); un fallo del correo no revierte la solicitud.
 
 CSRF: la API v1 sigue exenta de Flask-WTF hasta FNC-008. Mientras, este
-endpoint exige `Content-Type: application/json` (un formulario de otro sitio
-no puede enviarlo sin preflight) y rechaza `Sec-Fetch-Site: cross-site`.
+endpoint usa `api.csrf_provisional.escritura_del_portal` (JSON obligatorio y
+sin `Sec-Fetch-Site: cross-site`; extraído aquí de FNC-056 en FNC-058).
 Decisión del orquestador (pendiente de validar en la prueba de concepto).
 """
 import logging
@@ -26,6 +26,7 @@ from app.modules.access_requests import catalogo, errores, serializacion
 from app.modules.access_requests.models import PlatformAccessRequest
 from app.modules.access_requests.services import crear
 from app.modules.access_requests.tipos import ESTADOS
+from app.modules.api.csrf_provisional import escritura_del_portal
 from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
                                      error_response, json_object)
 from app.modules.audit.parametros import (ParametroInvalido, leer_filtros,
@@ -41,23 +42,11 @@ access_requests_api_bp = Blueprint('api_access_requests', __name__,
 CAMPOS_PERMITIDOS = frozenset({'platform_id', 'level', 'justification'})
 PARAMETRO_INVALIDO = ('Parámetro de consulta inválido.', 400,
                       'parametro_invalido')
-CSRF_INVALIDO = ('La petición no viene del portal.', 403, 'csrf_invalido')
-TIPO_NO_SOPORTADO = ('El cuerpo debe ser JSON.', 415, 'tipo_no_soportado')
-SITIO_AJENO = 'cross-site'
 
 
 def _invalido(campo):
     return error_response(*PARAMETRO_INVALIDO,
                           fields={campo: PARAMETRO_INVALIDO[0]})
-
-
-def _rechazo_de_escritura():
-    """Respuesta de error si la escritura no viene del portal o no es JSON."""
-    if request.headers.get('Sec-Fetch-Site', '').lower() == SITIO_AJENO:
-        return error_response(*CSRF_INVALIDO)
-    if not request.is_json:
-        return error_response(*TIPO_NO_SOPORTADO)
-    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -86,10 +75,8 @@ def catalog():
 
 @access_requests_api_bp.route('/access-requests', methods=['POST'])
 @login_required
+@escritura_del_portal
 def create_request():
-    rechazo = _rechazo_de_escritura()
-    if rechazo is not None:
-        return rechazo
     datos = json_object()
     if datos is None:
         return error_response(*CUERPO_INVALIDO)

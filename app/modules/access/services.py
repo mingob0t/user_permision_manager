@@ -106,16 +106,30 @@ def otorgar(usuario, plataforma, nivel, origen, actor=None, request_id=None):
     return acceso
 
 
+def _tomar_activo(acceso):
+    """`UPDATE ... WHERE status = 'activo'` (H2, auditoría FNC-058): solo una
+    transacción toma el acceso, también con READ COMMITTED; la otra espera el
+    bloqueo de la fila, ve el estado confirmado y no cambia nada."""
+    tomadas = (PlatformAccessGrant.query
+               .filter(PlatformAccessGrant.id == acceso.id,
+                       PlatformAccessGrant.status == ESTADO_ACTIVO)
+               .update({PlatformAccessGrant.status: ESTADO_REVOCANDO},
+                       synchronize_session=False))
+    return tomadas == 1
+
+
 def revocar(acceso, actor=None, motivo=None):
     """`activo` → `revocando` y trabajo `revocar`; lo devuelve.
 
     Desde otro estado (incluido `revocado`) no encola nada:
-    `409 estado_invalido`.
+    `409 estado_invalido`. El estado se comprueba en la BD (`_tomar_activo`),
+    no solo en memoria: una revocación simultánea no sobrescribe
+    `revoked_by` ni `revoke_reason`.
     """
     motivo = rules.limpiar_motivo(motivo)
     rules.validar_revocacion(actor, acceso)
-    if acceso.status != ESTADO_ACTIVO:
-        # `fallo_revocacion` → `revocando` es solo el reintento (FNC-062).
+    # `fallo_revocacion` → `revocando` es solo el reintento (FNC-062).
+    if acceso.status != ESTADO_ACTIVO or not _tomar_activo(acceso):
         raise errores.estado_invalido()
     _pedir_revocacion(acceso, actor, motivo, ahora())
     return acceso
