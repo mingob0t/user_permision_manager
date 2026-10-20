@@ -217,9 +217,9 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 |---|---|---|
 | `GET /provisioning/jobs` | `any_admin_required` (usuario `403`) | Bitácora paginada (`created_at` desc), sin `attempts`. Superadmin todo; admin solo trabajos con `area_id` de sus áreas. Filtros `status`, `operation`, `provider`, `area_id`, `platform_id`, `user_id`, `access_id`, `from`, `to`. |
 | `GET /provisioning/jobs/<id>` | `any_admin_required` | Detalle con `attempts` (error saneado otra vez al salir, SEC-CON-10); ajeno o inexistente → `404`. |
-| `POST /provisioning/jobs/<id>/retry` | `admin_required` (P10) + `escritura_del_portal` | Cuerpo `{}` (otro campo → `400`). Solo desde `fallido`: `reintento.reintentar` (reabre trabajo y acceso con `UPDATE` condicional, auditoría `ejecucion_reintentada`, aviso al worker tras el commit). No fallido, simultáneo o con revocación posterior → `409 estado_invalido`. |
+| `POST /provisioning/jobs/<id>/retry` | `admin_required` (P10) + `escritura_del_portal` | Cuerpo `{}` (otro campo → `400`). Solo desde `fallido`: `reintento.reintentar` (reabre trabajo y acceso con `UPDATE` condicional, auditoría `ejecucion_reintentada`, aviso al worker tras el commit). No fallido, simultáneo, con revocación posterior, sin acceso o un otorgar que ya no pasa `rules.validar_otorgamiento` (cuenta borrada, inactiva, superadmin o fuera del área) → `409 estado_invalido`. |
 
-- `from`/`to` sin zona: hora local del proceso (como la auditoría), comparadas en UTC.
+- `from`/`to` sin zona: hora local del proceso (como la auditoría), comparadas en UTC; un extremo que desborda al convertir → `400 parametro_invalido` (SEG-062-03).
 - No se envían `idempotency_key`, `locked_by` ni `locked_at`. Área de un trabajo = la de la plataforma al encolar (decisión del orquestador, pendiente de validar en la prueba de concepto).
 
 ### 4.4 Sistema y notificaciones — `app/modules/api/admin.py` (`/api/v1`)

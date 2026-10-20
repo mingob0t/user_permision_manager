@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from app.authz import is_admin, managed_area_ids
+from app.modules.audit.parametros import ParametroInvalido
 from app.modules.provisioning.models import ProvisioningJob
 
 
@@ -28,12 +29,17 @@ class FiltrosTrabajos:
     hasta: Optional[datetime] = None  # exclusivo
 
 
-def a_utc(instante):
+def a_utc(instante, campo):
     """Instante de `leer_filtros` (hora local sin zona) → UTC sin zona, como
-    se guardan los trabajos (`reloj.ahora`)."""
+    se guardan los trabajos (`reloj.ahora`). Fuera del rango de `datetime`
+    al convertir (p. ej. `0001-01-01`, `9999-12-31T23:59:59`) →
+    `ParametroInvalido(campo)` (SEG-062-03)."""
     if instante is None:
         return None
-    return instante.astimezone(timezone.utc).replace(tzinfo=None)
+    try:
+        return instante.astimezone(timezone.utc).replace(tzinfo=None)
+    except (ValueError, OverflowError):
+        raise ParametroInvalido(campo) from None
 
 
 def visibles(actor):

@@ -305,7 +305,10 @@ def test_reintento_inexistente_404(escena, cliente_como):
 @pytest.mark.parametrize('estado', [ESTADO_PENDIENTE, ESTADO_REINTENTANDO,
                                     ESTADO_EXITOSO])
 def test_reintento_de_un_no_fallido_409(escena, cliente_como, estado):
-    trabajo = _trabajo(escena['usuario'], escena['plataforma'], estado=estado)
+    # Con acceso válido: el 409 lo da el estado, no la falta de acceso.
+    acceso = _acceso(escena['usuario'], escena['plataforma'])
+    trabajo = _trabajo(escena['usuario'], escena['plataforma'], estado=estado,
+                       acceso=acceso)
 
     respuesta = cliente_como(escena['super']).post(
         f'{A}/{trabajo.id}/retry', **JSON_VACIO)
@@ -420,3 +423,77 @@ def test_segundo_reintento_simultaneo_409(escena, cliente_como, cola_falsa,
     assert _recargar(PlatformAccessGrant, acceso.id).status == ESTADO_FALLIDO
     assert AuditLog.query.filter_by(action='ejecucion_reintentada').count() == 0
     assert cola_falsa.ids() == []
+
+
+# --------------------------------------------------------------------------- #
+# Re-auditoría FNC-062: SEG-062-01/02 (revalidar al reintentar un otorgar)
+# --------------------------------------------------------------------------- #
+
+def _reintentar_y_esperar_409(escena, cliente_como, trabajo, acceso=None):
+    respuesta = cliente_como(escena['super']).post(
+        f'{A}/{trabajo.id}/retry', **JSON_VACIO)
+    assert respuesta.status_code == 409, respuesta.get_json()
+    assert respuesta.get_json()['code'] == 'estado_invalido'
+    assert _recargar(ProvisioningJob, trabajo.id).status == JOB_FALLIDO
+    if acceso is not None:
+        assert _recargar(PlatformAccessGrant, acceso.id).status == \
+            ESTADO_FALLIDO
+    assert AuditLog.query.filter_by(action='ejecucion_reintentada').count() == 0
+
+
+def _otorgar_fallido(escena):
+    acceso = _acceso(escena['usuario'], escena['plataforma'])
+    trabajo = _trabajo(escena['usuario'], escena['plataforma'], acceso=acceso)
+    return acceso, trabajo
+
+
+def test_reintento_cuenta_inactiva_409(escena, cliente_como, cola_falsa):
+    acceso, trabajo = _otorgar_fallido(escena)
+    escena['usuario'].is_active = False
+    db.session.commit()
+    _reintentar_y_esperar_409(escena, cliente_como, trabajo, acceso)
+    assert cola_falsa.ids() == []
+
+
+def test_reintento_cuenta_ahora_superadmin_409(escena, cliente_como,
+                                               cola_falsa):
+    acceso, trabajo = _otorgar_fallido(escena)
+    escena['usuario'].role = ROLE_ADMIN
+    db.session.commit()
+    _reintentar_y_esperar_409(escena, cliente_como, trabajo, acceso)
+
+
+def test_reintento_cuenta_fuera_del_area_409(escena, cliente_como,
+                                             cola_falsa):
+    acceso, trabajo = _otorgar_fallido(escena)
+    escena['usuario'].areas = [escena['otra']]
+    db.session.commit()
+    _reintentar_y_esperar_409(escena, cliente_como, trabajo, acceso)
+
+
+def test_reintento_cuenta_borrada_409(escena, cliente_como, cola_falsa):
+    acceso, trabajo = _otorgar_fallido(escena)
+    # El trabajo conserva el historial con la referencia en NULL.
+    trabajo.user_id = None
+    db.session.commit()
+    _reintentar_y_esperar_409(escena, cliente_como, trabajo, acceso)
+
+
+def test_reintento_sin_acceso_409(escena, cliente_como, cola_falsa):
+    trabajo = _trabajo(escena['usuario'], escena['plataforma'])
+    assert trabajo.access_id is None
+    _reintentar_y_esperar_409(escena, cliente_como, trabajo)
+
+
+# --------------------------------------------------------------------------- #
+# SEG-062-03: fechas en los extremos → 400, no 500
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize('consulta', [
+    'from=0001-01-01', 'from=0001-01-01T00:00:00',
+    'to=9999-12-31T23:59:59', 'to=9999-12-31T23:59:59Z',
+])
+def test_fecha_extrema_400(escena, cliente_como, consulta):
+    respuesta = cliente_como(escena['super']).get(f'{A}?{consulta}')
+    assert respuesta.status_code == 400, respuesta.get_data(as_text=True)
+    assert respuesta.get_json()['code'] == 'parametro_invalido'

@@ -58,8 +58,8 @@ def _leer_filtros():
         area_id=comunes.area_id, platform_id=comunes.platform_id,
         user_id=comunes.user_id,
         access_id=leer_entero(request.args, 'access_id'),
-        desde=consultas.a_utc(comunes.desde),
-        hasta=consultas.a_utc(comunes.hasta))
+        desde=consultas.a_utc(comunes.desde, 'from'),
+        hasta=consultas.a_utc(comunes.hasta, 'to'))
 
 
 @provisioning_api_bp.route('/jobs')
@@ -107,7 +107,7 @@ def retry_job(job_id):
     if trabajo is None:
         return error_response(*NO_ENCONTRADO)
     try:
-        reintento.reintentar(trabajo)
+        reintento.reintentar(trabajo, current_user)
         db.session.commit()
     except reintento.ReintentoInvalido as error:
         db.session.rollback()
