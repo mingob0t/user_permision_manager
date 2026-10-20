@@ -59,7 +59,7 @@
 - [x] Criterios comunes backend (FNC-037): sin endpoints nuevos (matriz sin cambios)
 
 ## Impacto cruzado
-- Genera → FNC-082, FNC-055, FNC-056, FNC-057, FNC-058, FNC-059, FNC-063, FNC-065
+- Genera → FNC-083, FNC-055, FNC-056, FNC-057, FNC-058, FNC-059, FNC-063, FNC-065
 - Origen ← FNC-037
 - Depende de → FNC-036, FNC-019, FNC-039, FNC-046, FNC-047, FNC-049, Respuesta a P5
 
@@ -135,7 +135,7 @@ Salida real de `impacto.py` (contra `develop`):
 Lectura: los compartidos reales son `accesos_vigentes` (→ `Platform.to_dict()['active_grants']` en todas las listas de plataformas, una consulta por plataforma; y el `409 plataforma_con_accesos` de `PUT /platforms`), `tiene_accesos_vigentes` (baja de áreas: un área con miembros y sin accesos ya se puede borrar) y `create_app` (registra manejadores globales del ejecutor). El resto son **homónimos** (`__init__`, `_actor`, `_auditar`, `_codigo`, `otorgar`/`revocar` de los proveedores, `upgrade`/`downgrade` de cada migración, fixtures de prueba con el mismo nombre): funciones distintas en otros módulos, no se modificaron.
 
 ## Propuestas registradas
-- FNC-082: `DELETE /platforms/<id>` y baja de cuentas con accesos: hoy MySQL lo rechaza por FK (500); falta `409` explícito.
+- FNC-083: `DELETE /platforms/<id>` y baja de cuentas con accesos: hoy MySQL lo rechaza por FK (500); falta `409` explícito.
 - Nota (sin tarea): `active_grants` en listas hace una consulta por plataforma (N+1); agrupar en FNC-063 si pesa.
 
 ## Commits / PR

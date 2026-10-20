@@ -59,7 +59,7 @@
 | FNC-078 | Lista blanca completa de campos en POST/PUT /users (SEC-AUTHZ-09) e is_active | backend | 3 | usuarios-roles | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044 |
 | FNC-079 | Alta de cuentas de directorio en el servidor (auth_source=ldap, sin contraseña) para el importador | backend | 3 | usuarios | Media | Propuesta | 2026-10-15 | | | — | Origen: revisión de FNC-044; vincula FNC-064, FNC-069, DIS-018, DIS-019; FNC-077 ya crea `ldap` en `POST /users` |
 | FNC-081 | Purgar hashes de contraseña heredados de cuentas locales no administrador y política mínima de la contraseña de emergencia | backend | 5 | auth | Baja | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-077 |
-| FNC-082 | 409 al borrar plataformas o cuentas con accesos otorgados | backend | 3 | accesos | Media | Propuesta | 2026-10-19 | | | — | Origen: FNC-054 |
+| FNC-083 | 409 al borrar plataformas o cuentas con accesos otorgados | backend | 3 | accesos | Media | Propuesta | 2026-10-19 | | | — | Origen: FNC-054 |
 | FNC-037 | Planeación de la fase 3: gestor de accesos | backend | 3 | planeacion | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-14 | Merge local a develop | Plan de la fase 3; genera FNC-038 a FNC-071 y DIS-013 a DIS-024 |
 | FNC-038 | Contratos v1 backend↔web del gestor de accesos | backend | 3 | contratos | Alta | Hecha | 2026-10-13 | 2026-10-14 | 2026-10-14 | Merge local a develop (434a51c) | Depende de P1, P14, FNC-037, ADR-006 |
 | FNC-039 | Migraciones versionadas de MySQL para la fase 3 (según ADR-002) | backend | 3 | bd | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-039-migraciones-alembic` (commit local, sin push) | Depende de ADR-002; Alembic 1.20.0, línea base `0001`; pendiente prueba del dueño en MySQL |
@@ -77,7 +77,7 @@
 | FNC-051 | Conector tipo API HTTP | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, P9 |
 | FNC-052 | Conector tipo SSH | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, P9 |
 | FNC-053 | Conector tipo base de datos | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, P9 |
-| FNC-054 | Accesos otorgados: modelo con origen y estados, y servicio de otorgar y revocar | backend | 3 | accesos | Alta | En revisión | 2026-10-13 | 2026-10-19 | | `fnc/FNC-054-accesos-otorgados`: `9aa3c5c` (local, sin push) | Depende de FNC-039, FNC-046, FNC-047, FNC-049, P5; migración 0007; genera FNC-082; pendiente revisor y auditor-seguridad |
+| FNC-054 | Accesos otorgados: modelo con origen y estados, y servicio de otorgar y revocar | backend | 3 | accesos | Alta | En revisión | 2026-10-13 | 2026-10-19 | | `fnc/FNC-054-accesos-otorgados`: `9aa3c5c` (local, sin push) | Depende de FNC-039, FNC-046, FNC-047, FNC-049, P5; migración 0007; genera FNC-083; pendiente revisor y auditor-seguridad |
 | FNC-055 | Acceso automático de los admins a las plataformas de sus áreas | backend | 3 | accesos | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-044, FNC-045, FNC-046, P6 |
 | FNC-058 | Accesos: consulta por usuario, mis accesos y revocación manual | backend | 3 | accesos | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-038 |
 | FNC-059 | Inventario de permisos: quién tiene qué plataforma, nivel, desde cuándo y quién aprobó | backend | 3 | accesos | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-038 |

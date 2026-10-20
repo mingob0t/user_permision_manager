@@ -1,4 +1,4 @@
-# FNC-082 — 409 al borrar plataformas o cuentas con accesos otorgados
+# FNC-083 — 409 al borrar plataformas o cuentas con accesos otorgados
 
 | Campo | Valor |
 |---|---|
