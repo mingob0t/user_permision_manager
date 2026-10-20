@@ -11,6 +11,7 @@ y la tarea que lo corrige.
 from dataclasses import dataclass
 
 import pytest
+from flask import g
 
 from app import db
 from app.authz import (ROLE_ADMIN, ROLE_AREA_ADMIN, ROLE_USER,
@@ -40,11 +41,6 @@ USUARIOS = (USUARIO_A, USUARIO_B)
 # Actor -> área propia ('A' o 'B'); el superadmin no tiene.
 AREA_DE = {ADMIN_A: 'A', ADMIN_B: 'B', USUARIO_A: 'A', USUARIO_B: 'B'}
 OTRA = {'A': 'B', 'B': 'A'}
-
-_SEG16 = pytest.mark.xfail(
-    strict=True,
-    reason='SEG-20261013-16 / FNC-015: la auditoría del admin_area se filtra '
-           'por actor y no por área')
 
 
 @dataclass
@@ -501,17 +497,22 @@ def test_estadisticas_filtradas(alcance, cliente_como, actor):
 # Auditoría
 # --------------------------------------------------------------------------- #
 
-def _registrar(email, accion='ACCIÓN DE PRUEBA'):
-    db.session.add(AuditLog(user=email, action=accion, module='Pruebas'))
+def _registrar(cuenta, area_id, accion='ACCIÓN DE PRUEBA'):
+    db.session.add(AuditLog(user=cuenta.email, actor_id=cuenta.id,
+                            area_id=area_id, action=accion, module='Pruebas'))
     db.session.commit()
 
 
 @pytest.fixture
 def auditoria(alcance):
-    """Un registro por actor; devuelve actor -> correo."""
-    correos = {actor: _usuario(uid).email for actor, uid in alcance.actor.items()}
-    for correo in correos.values():
-        _registrar(correo)
+    """Un registro por actor en su área (el del superadmin, sin área);
+    devuelve actor -> correo (FNC-060: el admin ve por área afectada)."""
+    correos = {}
+    for actor, uid in alcance.actor.items():
+        cuenta = _usuario(uid)
+        area = AREA_DE.get(actor)
+        _registrar(cuenta, alcance.area[area] if area else None)
+        correos[actor] = cuenta.email
     return correos
 
 
@@ -529,16 +530,34 @@ def test_auditoria_filtrada(alcance, auditoria, cliente_como, actor, visibles):
     assert usuarios == {auditoria[v] for v in visibles}
 
 
-@_SEG16
+def test_admin_area_no_ve_eventos_de_otra_area_de_un_usuario_compartido(
+        alcance, cliente_como):
+    """SEG-16 (FNC-060): un usuario de A que también es de B actúa en B; el
+    admin de A no ve ese registro (antes filtraba por actor, no por área)."""
+    esc = alcance
+    compartido = fabricas.crear_usuario(
+        ROLE_USER, areas=[db.session.get(Area, esc.area['A']),
+                          db.session.get(Area, esc.area['B'])])
+    _registrar(compartido, esc.area['B'], accion='EN B')
+    _registrar(compartido, esc.area['A'], accion='EN A')
+    respuesta = _como(cliente_como, esc, ADMIN_A).get(f'{A}/audit')
+    assert respuesta.status_code == 200
+    assert [r['action'] for r in respuesta.get_json()
+            if r['user'] == compartido.email] == ['EN A']
+
+
 def test_admin_area_no_ve_auditoria_de_otra_area(alcance, cliente_como,
                                                  admin_b_miembro_de_a):
-    """El admin de B (miembro de A) edita su plataforma de B: el admin de A no
-    debe ver ese registro."""
+    """SEG-16 (FNC-060, antes xfail): el admin de B (miembro de A) edita su
+    plataforma de B: el admin de A no ve ese registro."""
     esc = alcance
     edicion = cliente_como(_usuario(admin_b_miembro_de_a)).put(
         f"{A}/platforms/{esc.plataforma['B']}",
         json={'description': 'Editada en B'})
     assert edicion.status_code == 200
+    # Las peticiones comparten el app context de la prueba: sin esto,
+    # Flask-Login reutiliza el usuario de la petición anterior (`g`).
+    g.pop('_login_user', None)
     respuesta = _como(cliente_como, esc, ADMIN_A).get(f'{A}/audit')
     assert respuesta.status_code == 200
     assert not [r for r in respuesta.get_json()

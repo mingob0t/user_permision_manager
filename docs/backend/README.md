@@ -28,7 +28,7 @@ app/
 │   └── redis_client.py# Cliente Redis global (sin uso funcional)
 └── modules/
     ├── api/           # API v1 que consume el frontend
-    │   ├── routes.py  # Lectura: me, áreas, plataformas, favoritos, usuarios, stats, auditoría
+    │   ├── routes.py  # Lectura: me, áreas, plataformas, favoritos, usuarios, stats
     │   ├── crud.py    # Escritura: miembros de área, usuarios, preferencias, purga
     │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, respaldo; notificaciones in-app
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
@@ -39,7 +39,7 @@ app/
     ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054)
     ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
-    ├── audit/         # Modelo AuditLog y add_audit_log(); rutas heredadas
+    ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060); rutas heredadas
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
     ├── users/         # api.py (managed-areas, alta en directorio), directory_accounts.py (FNC-064), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
@@ -61,7 +61,7 @@ Tres roles (columna `users.role`, comparada en minúsculas):
 | `admin_area` | Administra solo las áreas asignadas en `area_admins`: sus plataformas y las cuentas `usuario` de sus áreas. Nunca gestiona a otro admin ni al superadmin (FNC-044). |
 | `usuario` | Solo consulta las plataformas de las áreas asignadas en `user_areas`. |
 
-- **Alcance por fila:** `scoped_areas()`, `scoped_platforms()`, `scoped_users()` devuelven queries ya filtradas según el usuario. Para un admin de área, `scoped_users()` solo devuelve cuentas `usuario` de sus áreas (FNC-044); `GET /audit` le suma sus propios eventos.
+- **Alcance por fila:** `scoped_areas()`, `scoped_platforms()`, `scoped_users()` devuelven queries ya filtradas según el usuario. Para un admin de área, `scoped_users()` solo devuelve cuentas `usuario` de sus áreas (FNC-044). La auditoría usa `audit.queries.visibles()`: admin por `area_id IN managed_area_ids()` (FNC-060).
 - **Permisos sobre objetos:** `can_access_platform`, `can_manage_area`, `can_manage_platform`, `can_manage_user` (admin de área: solo rol `usuario` de sus áreas).
 - **Roles asignables** (`users/roles.py`, FNC-044): superadmin `usuario` o `admin_area`; admin de área solo `usuario`; `administrador` nunca por la API.
 - **Decoradores:** `admin_required` (solo superadmin), `any_admin_required` (superadmin o admin de área; la vista debe acotar con `scoped_*`), `area_admin_required('area_id')`, `platform_access_required`, `platform_manage_required`. Al denegar responden `403` JSON si la petición es de API.
@@ -114,7 +114,18 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 | `GET /users` | `any_admin_required` (`scoped_users`) | Usuarios administrables. |
 | `PUT /users/<id>/areas` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Reasigna áreas dentro del alcance; conserva las que el solicitante no administra. Cuerpo no objeto o `area_ids` no lista de enteros → `400 cuerpo_invalido`. |
 | `GET /stats` | Sesión (alcance) | Contadores, top 5 de visitas, plataformas por área; `users` solo para administradores. |
-| `GET /audit?limit=` | Sesión (alcance) | Superadmin: todo; admin de área: eventos de sus usuarios; usuario: los propios. Máximo 500. Arreglo de `AuditEntry` con `actor`, `area`, `platform`, `target_user`, `before`, `after` (FNC-047); `page` y alcance por área llegan con FNC-060. |
+
+### 4.2.1 Auditoría — `app/modules/audit/api.py` (`/api/v1`, FNC-060)
+
+| Endpoint | Protección | Comportamiento |
+|---|---|---|
+| `GET /audit` | Sesión (alcance) | Superadmin: todo; admin de área: eventos con `area_id` de sus áreas (sin área: solo superadmin; SEG-16); usuario: los propios (actor o afectado, solo por id; los anteriores a FNC-047 solo el superadmin, SEG-060-01). Sin `page`: arreglo (`limit` 100, máx. 500); con `page`: `{items, page, per_page, total}`. |
+| `GET /audit/users/<id>` | Sesión; superadmin cualquiera, admin él mismo o `can_manage_user`, usuario solo él; si no → `404` | Paginado; eventos de la cuenta dentro del alcance. |
+| `GET /audit/platforms/<id>` | `any_admin_required` (usuario → `403`) + `can_manage_platform` (ajena → `404`) | Paginado; eventos de la plataforma dentro del alcance. |
+
+- Filtros: `action` (catálogo), `result`, `area_id`, `platform_id`, `user_id`, `from`/`to` (ISO 8601, ≤ 366 días; `to` de solo fecha incluye el día), `q` (≤ 100, en `user` y `target`), `page`, `per_page` (1–100); inválido → `400 parametro_invalido` con `fields`.
+- `ip`, `before`, `after`: `null` para el usuario normal. Orden `time` y `id` descendente.
+- `time` sigue en hora local `AAAA-MM-DD HH:MM:SS` (UTC pendiente del dueño, SEC-AUD-02); `from`/`to` con zona se convierten a la hora local.
 
 ### 4.3 Escritura — `app/modules/api/crud.py` (`/api/v1`)
 

@@ -165,7 +165,7 @@ La fase 3 tocará casi todo el backend de esta tabla: es probable que FNC-002, 0
 | `app/modules/api/admin.py` | 06 / 08 (SMTP), 17 / 21, 29 (FNC-043 movió LDAP a `directory/api.py` y cerró 08 de LDAP, 13, 22 y 21 de LDAP) | 008 / 010 / 017 |
 | `notifications/models.py` (`auth/models.py`: 08 cerrado por FNC-043) | 08 | 010 |
 | `notifications/services.py` | — (23 cerrado por FNC-048) | — |
-| `api/routes.py` (`/audit`), `audit/` | 16 (25 cerrado por FNC-047) | 060 (015 parcial); requisito previo de FNC-054/056 |
+| `audit/` | — (25 cerrado por FNC-047; 16 cerrado por FNC-060: `GET /audit` pasó a `audit/api.py` con alcance por `area_id`) | 015 (solo el pendiente de SEC-AUD-06 de FNC-046) |
 | `run.py` | 18 | 009 |
 | `deploy/nginx.conf.tmpl` | 04, 15 / 29 | 004 / 017 |
 | `frontend/next.config.ts` | 04 | 005 |

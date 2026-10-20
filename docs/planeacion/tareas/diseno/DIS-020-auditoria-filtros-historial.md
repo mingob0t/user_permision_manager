@@ -64,3 +64,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-19 | Impacto de FNC-060 (backend, En revisión): `/audit`, `/audit/users/<id>` y `/audit/platforms/<id>` listos según el contrato. A considerar: el admin ya no ve eventos sin área (ni sus propios logins); el usuario recibe `ip`, `before` y `after` en `null`; parámetro inválido → `400 parametro_invalido` con `fields`; plataforma de área ajena → `404` (no `403`); `time` sigue en hora local sin `Z` (UTC pendiente del dueño) |

@@ -16,7 +16,7 @@
 | FNC-012 | LDAP para OpenLDAP: TLS validado, conexión centralizada y atributos configurables (uid, memberOf/groupOfNames) | backend | 5 | auth | Alta | Propuesta | 2026-10-13 | | | — | Cubierta por FNC-042 (login) y FNC-043 (En revisión: prueba, búsqueda, SEC-LDAP-01) |
 | FNC-013 | Rol desde el directorio con DN exacto y un solo superadmin | backend | 5 | auth | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-012; absorbida por FNC-042 (En revisión); un solo superadmin al asignar: FNC-044 |
 | FNC-014 | Límite de intentos en el login | backend | 5 | auth | Media | Propuesta | 2026-10-13 | | | — |  |
-| FNC-015 | Auditoría filtrada por área e IP real del cliente | backend | 5 | audit | Media | Propuesta | 2026-10-13 | | | — |  |
+| FNC-015 | Auditoría filtrada por área e IP real del cliente | backend | 5 | audit | Media | Propuesta | 2026-10-13 | | | — | SEG-25 cerrado por FNC-047 y SEG-16 por FNC-060 (En revisión); queda el pendiente SEC-AUD-06 de FNC-046 |
 | FNC-016 | Dependencias: npm audit y pip-audit, fijar versiones y quitar las que no se usan | infra | 5 | dependencias | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-017 | Higiene de seguridad: errores genéricos, escape en correos, validación de URLs, IP y hosts fuera del código, límites de carga | backend | 5 | global | Baja | Propuesta | 2026-10-13 | | | — | SEG-23 cerrado por FNC-048; SEG-21 de LDAP por FNC-043 (En revisión); SEG-24 backend por FNC-046 (En revisión); SEG-24 frontend por DIS-017 (En revisión) |
 | FNC-018 | Retención de datos personales y seudonimización | infra | 5 | operacion | Baja | Propuesta | 2026-10-13 | | | — |  |
@@ -86,7 +86,7 @@
 | FNC-065 | Retirar la asignación directa de plataformas (`user_platforms`) y migrarla a accesos | backend | 3 | accesos | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-063, P4 |
 | FNC-056 | Solicitudes: catálogo solicitable, crear solicitud y mis solicitudes | backend | 3 | solicitudes | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-039, FNC-046, FNC-047, FNC-048, FNC-054, FNC-038, P1 |
 | FNC-057 | Aprobaciones: bandeja por área, aprobar y rechazar con motivo obligatorio | backend | 3 | solicitudes | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-056, FNC-054, FNC-048, P12 |
-| FNC-060 | Consulta de auditoría por rol e historial por usuario y por plataforma | backend | 3 | auditoria | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-047, FNC-038 |
+| FNC-060 | Consulta de auditoría por rol e historial por usuario y por plataforma | backend | 3 | auditoria | Alta | Hecha | 2026-10-13 | 2026-10-19 | | `fnc/FNC-060-consulta-auditoria` (commit local `e4bdcbe`, sin push) | Depende de FNC-047, FNC-038; cierra SEG-16 (FNC-015); impacto en DIS-020 |
 | FNC-061 | API de configuración de conectores (superadmin) | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, FNC-038 |
 | FNC-062 | API de ejecuciones: bitácora de aprovisionamiento y reintento manual | backend | 3 | aprovisionamiento | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-049, FNC-038, P10 |
 | FNC-064 | Usuarios: crear cuentas en OpenLDAP desde el portal | backend | 3 | usuarios | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `fnc/FNC-064-alta-cuentas-ldap` (commit local, sin push) | Depende de FNC-041, FNC-044, FNC-038, P2, P8; coordina con FNC-079; impacto en el cliente para DIS-019; auditor-seguridad Aprobado (1 Media, 2 Baja) y revisor Requiere cambios, corregidos; genera FNC-082 |
