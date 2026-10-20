@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app import db
+from app.authz import ROLE_ADMIN
 from app.modules.access import rules, services
 from app.modules.access.errores import ErrorDeAcceso
 from app.modules.access.models import PlatformAccessGrant
@@ -308,7 +309,8 @@ def test_no_se_otorga_un_nivel_con_su_revocacion_en_curso(
     ('ajeno', 'admin', 'no_encontrado'),          # cuenta fuera de sus áreas
     ('ajeno', 'super', 'no_encontrado'),          # P1: no es del área
     ('admin2', 'admin', 'no_encontrado'),         # otro admin (SEC-AUTHZ-06)
-    ('super', 'admin', 'acceso_por_defecto'),     # P6
+    ('super', 'admin', 'no_encontrado'),          # no revela al superadmin
+    ('super', 'admin_otra', 'no_encontrado'),
     ('usuario', 'usuario', 'operacion_propia'),   # SEC-AUTHZ-08
 ])
 def test_otorgar_denegado(escena, cola_falsa, usuario, actor, codigo):
@@ -318,6 +320,44 @@ def test_otorgar_denegado(escena, cola_falsa, usuario, actor, codigo):
     assert _codigo(info) == codigo
     db.session.rollback()
     assert PlatformAccessGrant.query.count() == 0 and _trabajos() == []
+
+
+def test_solo_el_superadmin_recibe_acceso_por_defecto(escena, cola_falsa):
+    """P6: el código propio del superadmin solo lo ve otro superadmin."""
+    from tests import fabricas
+    otro_super = fabricas.crear_usuario(ROLE_ADMIN, areas=[escena['area']])
+
+    with pytest.raises(ErrorDeAcceso) as info:
+        services.otorgar(otro_super, escena['plataforma'], NIVEL_USUARIO,
+                         ORIGEN_SOLICITUD, actor=escena['super'],
+                         request_id=1)
+
+    assert _codigo(info) == 'acceso_por_defecto'
+
+
+@pytest.mark.parametrize('actor', ['admin', 'super'])
+def test_no_se_otorga_a_una_cuenta_inactiva(escena, cola_falsa, actor):
+    escena['usuario'].is_active = False
+    db.session.commit()
+
+    with pytest.raises(ErrorDeAcceso) as info:
+        _otorgar(escena, actor=actor)
+
+    assert _codigo(info) == 'cuenta_inactiva'
+    db.session.rollback()
+    assert PlatformAccessGrant.query.count() == 0 and _trabajos() == []
+
+
+def test_no_se_otorga_acceso_automatico_a_un_admin_inactivo(escena,
+                                                           cola_falsa):
+    escena['admin'].is_active = False
+    db.session.commit()
+
+    with pytest.raises(ErrorDeAcceso) as info:
+        services.otorgar(escena['admin'], escena['plataforma'],
+                         NIVEL_USUARIO, ORIGEN_ADMIN_DE_AREA)
+
+    assert _codigo(info) == 'cuenta_inactiva'
 
 
 @pytest.mark.parametrize('actor', ['admin', 'super'])

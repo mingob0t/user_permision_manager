@@ -47,7 +47,7 @@ Los endpoints `/audit/users/<id>` y `/audit/platforms/<id>` son siempre paginado
   "ip": null, "status": "success",
   "actor": null, "area": { "id": 3, "name": "Finanzas" }, "platform": { "id": 12, "name": "Contabilidad" },
   "target_user": { "id": 2, "email": "luis@ejemplo.local" },
-  "before": null, "after": { "status": "en_proceso", "level": "admin", "origin": "admin_de_area" } }
+  "before": null, "after": { "status": "en_proceso", "level": "usuario", "origin": "admin_de_area" } }
 ```
 | Campo | Tipo | Nota |
 |---|---|---|
@@ -96,3 +96,4 @@ El catálogo vive en FNC-047; agregar valores es aditivo (misma versión).
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
 | 1 | 2026-10-15 | Aditivo: `action` `notificacion_fallida` (FNC-048) |
+| 1 | 2026-10-20 | Corrección del ejemplo: `acceso_otorgado` automático con nivel `usuario` (P6; accesos.md 1.1, FNC-054) |

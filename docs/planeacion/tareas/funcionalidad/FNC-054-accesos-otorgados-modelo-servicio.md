@@ -85,7 +85,8 @@
 - Revocar solo desde `activo` (contrato); `fallo_revocacion` → `revocando` y `fallido` → `en_proceso` solo por reintento (`reabrir_acceso`, para FNC-062).
 - Otorgar por solicitud: `request_id` obligatorio; quien otorga administra la plataforma **y** la cuenta (`can_manage_user`: nunca a otro admin) y la cuenta pertenece al área (P1); propio → `403 operacion_propia`.
 - `admin_de_area`: solo el sistema (`actor=None`), nivel `usuario`, a un admin del área; un admin no lo revoca (404), el superadmin sí.
-- Superadmin destinatario → `409 acceso_por_defecto` (código nuevo del servicio; FNC-057 decide si lo expone).
+- Superadmin destinatario → `409 acceso_por_defecto` solo si el actor es superadmin; un admin de área recibe `404` (no revela quién es el superadmin; auditor-seguridad). Código nuevo del servicio; FNC-057 decide si lo expone.
+- Cuenta inactiva → `409 cuenta_inactiva` (defensa en profundidad; sin código en el contrato). Por solicitud se comprueba tras el alcance del actor; para el acceso automático, primero.
 - `user_id`/`platform_id` sin `ON DELETE`: MySQL impide borrar cuentas o plataformas con accesos (queda gente en grupos sin rastro). `last_job_id` y `provisioning_jobs.access_id` sin FK (ciclo).
 - Auditoría: el servicio registra `acceso_otorgado` y `acceso_revocado` (solicitado) con antes/después; el resultado lo audita el ejecutor (`acceso_activo`…, actor `sistema`, `grant_id`): los manejadores no duplican eventos.
 - `revoked_by`/`revoke_reason` al pedir; `revoked_at` al confirmar (SEC-CON-09).
@@ -97,6 +98,7 @@
 | `venv/bin/python -m pytest -q tests/access` | 65 passed, código 0 |
 | Regresión: `tests/access/test_puntos_de_extension.py` con `estado.py` y `baja.py` de `develop` | 8 failed, 1 passed (fallan antes) |
 | `venv/bin/python -m pytest -q` (completo) | 1135 passed, 15 xfailed, código 0 (653 s); base `develop`: 1070 passed, 15 xfailed |
+| `venv/bin/python -m pytest -q tests/access tests/areas tests/platforms` (tras auditor-seguridad, 2026-10-20) | 210 passed, código 0 |
 | `git ls-files app/modules/access migrations/versions/0007_accesos_otorgados.py tests/access` | 13 archivos versionados |
 
 No verificado: MySQL real (únicos con NULL, FK sin `ON DELETE`), Redis real y LDAP real (se usó `MOCK_SYNC` y cola falsa). Sin revisores (por instrucción): pendientes `revisor` y `auditor-seguridad` (autorización).
@@ -138,11 +140,17 @@ Lectura: los compartidos reales son `accesos_vigentes` (→ `Platform.to_dict()[
 - FNC-083: `DELETE /platforms/<id>` y baja de cuentas con accesos: hoy MySQL lo rechaza por FK (500); falta `409` explícito.
 - Nota (sin tarea): `active_grants` en listas hace una consulta por plataforma (N+1); agrupar en FNC-063 si pesa.
 
+## Revisiones
+| Fecha | Revisor | Veredicto | Estado |
+|---|---|---|---|
+| 2026-10-20 | auditor-seguridad | 3 hallazgos (vía orquestador) | Corregido: alcance del actor antes de `is_admin(usuario)` (404 a un admin), `409 cuenta_inactiva`, contrato `accesos.md` 1.1 (nivel `usuario` del acceso automático; también el ejemplo de `auditoria.md`); FNC-083 ampliada (purga de inactivos y `DELETE /platforms`). Regresiones: 5 failed antes |
+
 ## Commits / PR
 - `9aa3c5c` (local, sin push ni PR)
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
+| 2026-10-20 | Correcciones de auditor-seguridad (3 hallazgos) en un commit nuevo; sigue En revisión. Impacto cruzado web: `frontend/src/lib/access/mocks.ts:37` aún usa `level: 'admin'` en el acceso automático (solicitud para FNC-069) |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador); implementada en `fnc/FNC-054-accesos-otorgados`; En revisión, sin revisores (por instrucción) |
 | 2026-10-13 | Creada como Propuesta (FNC-037) |

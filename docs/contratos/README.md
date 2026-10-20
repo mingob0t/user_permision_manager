@@ -9,7 +9,7 @@ Acuerdos de API `/api/v1` del gestor de accesos (fase 3). Se integran a `develop
 | [areas-y-roles.md](areas-y-roles.md) | 2 (2026-10-19) | backend | web | FNC-044, FNC-045, FNC-055 |
 | [plataformas-integracion.md](plataformas-integracion.md) | 1 (2026-10-14) | backend | web | FNC-046, FNC-055 |
 | [solicitudes.md](solicitudes.md) | 1 (2026-10-14) | backend | web | FNC-056, FNC-057 |
-| [accesos.md](accesos.md) | 1 (2026-10-14) | backend | web | FNC-054, FNC-058, FNC-059 |
+| [accesos.md](accesos.md) | 1.1 (2026-10-20) | backend | web | FNC-054, FNC-058, FNC-059 |
 | [auditoria.md](auditoria.md) | 1 (2026-10-14) | backend | web | FNC-047, FNC-060 |
 | [conectores-y-ejecuciones.md](conectores-y-ejecuciones.md) | 1 (2026-10-14) | backend | web | FNC-061, FNC-062 |
 | [usuarios-directorio.md](usuarios-directorio.md) | 1 (2026-10-14) | backend | web | FNC-064 |
@@ -113,7 +113,7 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 | Pregunta | Valor aplicado | Dónde |
 |---|---|---|
 | P13 regla de absorción | Afecta la implementación, no la forma del contrato; el contrato ya exige CSRF (SEC-SES-04) | README.md |
-| P6 (resto) | Nivel del acceso automático del admin creador: `admin`; otros admins del área y revocación al quitarle el área: según FNC-055 | plataformas-integracion.md |
+| P6 (resto) | Resuelto por el dueño (2026-10-14): acceso automático nivel `usuario` para todos los admins del área (incluido el creador); se revoca al quitarle el área (FNC-055) | plataformas-integracion.md, accesos.md |
 | §12.11 de seguridad | Lista blanca de hosts de conectores fijada por el despliegue (no editable en la interfaz) | conectores-y-ejecuciones.md |
 | Superadmin en grupos LDAP | El acceso por defecto del superadmin no genera registros de acceso; si debe estar en los grupos LDAP, se define en FNC-055 | accesos.md |
 
@@ -122,3 +122,4 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038); respuestas P7, P8, P10 y P11 y correcciones de revisión incorporadas antes del merge |
 | areas-y-roles 2 | 2026-10-19 | `password` en `POST/PUT /users` (FNC-077) |
+| accesos 1.1 | 2026-10-20 | Acceso automático del admin creador: nivel `usuario`, no `admin` (P6; FNC-054) |

@@ -10,7 +10,10 @@ Decisiones del orquestador (pendientes de validar en la prueba de concepto):
 - Solo se sube de nivel (P5, `requestable_levels`); el acceso que se reemplaza
   debe estar `activo`.
 - El superadmin no recibe accesos: tiene acceso por defecto y no entra a los
-  grupos LDAP (P6).
+  grupos LDAP (P6). `409 acceso_por_defecto` solo lo ve un superadmin; a un
+  admin de área le da 404 (no revela quién es el superadmin).
+- No se otorga a una cuenta inactiva: `409 cuenta_inactiva` (defensa en
+  profundidad; el contrato no lo define).
 """
 from app.authz import (can_manage_platform, can_manage_user, is_admin,
                        is_area_admin, managed_area_ids)
@@ -84,20 +87,33 @@ def validar_otorgamiento(actor, usuario, plataforma, origen):
     """Quién puede otorgar qué a quién (SEC-AUTHZ-03/06/07/08)."""
     if usuario is None or plataforma is None:
         raise errores.fuera_de_alcance()
-    if is_admin(usuario):
-        raise errores.acceso_por_defecto()
     if origen == ORIGEN_ADMIN_DE_AREA:
         # Lo otorga el sistema (FNC-055) a un admin del área de la plataforma.
+        # Sin actor humano no hay nada que ocultar: la cuenta inactiva se
+        # dice antes (`authz` trata a una cuenta inactiva como sin rol).
+        if actor is None and not usuario.is_active:
+            raise errores.cuenta_inactiva()
         if actor is not None or not _administra_area(usuario,
                                                      plataforma.area_id):
             raise errores.fuera_de_alcance()
-        return
+    else:
+        _validar_alcance_del_actor(actor, usuario, plataforma)
+    if is_admin(usuario):
+        # Solo llega aquí un superadmin como actor: un admin de área ya
+        # recibió 404 y no distingue la cuenta del superadmin.
+        raise errores.acceso_por_defecto()
+    if not usuario.is_active:
+        raise errores.cuenta_inactiva()
+
+
+def _validar_alcance_del_actor(actor, usuario, plataforma):
+    """Antes de mirar a la cuenta destino: fuera de alcance → 404."""
     if actor is None:
         raise errores.fuera_de_alcance()
     if _mismo(actor, usuario):
         raise errores.operacion_propia(revocar=False)
-    if not (can_manage_platform(plataforma, actor)
-            and can_manage_user(usuario, actor)):
+    if not is_admin(actor) and not (can_manage_platform(plataforma, actor)
+                                    and can_manage_user(usuario, actor)):
         raise errores.fuera_de_alcance()
     if plataforma.area_id not in {a.id for a in (usuario.areas or [])}:
         raise errores.fuera_de_alcance()  # P1

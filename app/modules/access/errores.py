@@ -46,6 +46,11 @@ def acceso_por_defecto():
                          'acceso_por_defecto')
 
 
+def cuenta_inactiva():
+    """Defensa en profundidad: no se otorga a una cuenta desactivada."""
+    return ErrorDeAcceso('La cuenta está inactiva.', 409, 'cuenta_inactiva')
+
+
 def validacion(campo, mensaje):
     return ErrorDeAcceso(MENSAJE_VALIDACION, 422, 'validacion',
                          {campo: mensaje})

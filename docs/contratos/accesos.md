@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1 (2026-10-14) |
+| Versión | 1.1 (2026-10-20) |
 | Proveedor | backend (FNC-054, FNC-058, FNC-059) |
 | Consumidores | web (FNC-069; pantallas DIS-014, DIS-018, DIS-021) |
 | Solicitudes | — |
@@ -101,7 +101,7 @@ Orden: área, plataforma, usuario. Respuesta paginada de `Access` (mismos campos
 
 ## Datos simulados
 ```json
-{ "items": [ { "id": 78, "status": "en_proceso", "level": "admin", "origin": "admin_de_area",
+{ "items": [ { "id": 78, "status": "en_proceso", "level": "usuario", "origin": "admin_de_area",
   "user": { "id": 2, "name": "Luis Paz", "email": "luis@ejemplo.local" },
   "platform": { "id": 12, "name": "Contabilidad", "integration_type": "conector" },
   "area": { "id": 3, "name": "Finanzas" }, "request_id": null, "granted_by": null,
@@ -113,3 +113,4 @@ Orden: área, plataforma, usuario. Respuesta paginada de `Access` (mismos campos
 | Versión | Fecha | Cambio |
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
+| 1.1 | 2026-10-20 | Corrección (FNC-054, auditor-seguridad): el acceso automático (`admin_de_area`) es de nivel `usuario` para todos los admins del área, incluido el creador (P6, dueño 2026-10-14); el ejemplo de datos simulados decía `admin` |
