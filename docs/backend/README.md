@@ -37,7 +37,7 @@ app/
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
     ├── access_requests/ # Solicitudes: models, tipos, catalogo (P1 y estado del actor), services (crear), serializacion, api.py (catalog, POST, mine) (FNC-056)
-    ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054)
+    ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054); api.py y serializacion.py (FNC-058)
     ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060); rutas heredadas
@@ -128,6 +128,19 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 - Filtros: `action` (catálogo), `result`, `area_id`, `platform_id`, `user_id`, `from`/`to` (ISO 8601, ≤ 366 días; `to` de solo fecha incluye el día), `q` (≤ 100, en `user` y `target`), `page`, `per_page` (1–100); inválido → `400 parametro_invalido` con `fields`.
 - `ip`, `before`, `after`: `null` para el usuario normal. Orden `time` y `id` descendente.
 - `time` sigue en hora local `AAAA-MM-DD HH:MM:SS` (UTC pendiente del dueño, SEC-AUD-02); `from`/`to` con zona se convierten a la hora local.
+
+### 4.2.2 Accesos — `app/modules/access/api.py` (`/api/v1`, FNC-058)
+
+| Endpoint | Protección | Comportamiento |
+|---|---|---|
+| `GET /me/access` | Sesión | Accesos propios; superadmin: vacío. Sin `last_job_id` para el rol usuario. |
+| `GET /users/<id>/access` | `any_admin_required` (usuario → `403`); admin: él mismo o `can_manage_user`, si no → `404` | Superadmin: todos; admin: solo plataformas de sus áreas. |
+| `POST /access/<id>/revoke` | `any_admin_required`; JSON (`415`) y no `cross-site` (`403 csrf_invalido`); `rules.validar_revocacion` (área ajena, otro admin o `admin_de_area` → `404`; propio → `403 operacion_propia`) | Cuerpo solo `reason` (≤ 500, opcional; otro campo → `400 campo_no_permitido`). `activo` → `revocando` + trabajo + `acceso_revocado` en una transacción (`services.revocar`); otro estado o choque simultáneo → `409 estado_invalido`. Responde `{"status": "success", "access": Access}`. |
+
+- Listas: `status` (estado o `vigente`, por defecto), `page`, `per_page` (`audit.parametros.leer_paginacion`); inválido → `400 parametro_invalido`. Orden `granted_at` e `id` descendente.
+- Forma `Access`: `access/serializacion.py` (fechas UTC con `Z`; `granted_by`/`revoked_by` en una consulta por página).
+- CSRF provisional (H1): `POST /access/<id>/revoke` usa `api.csrf_provisional.escritura_del_portal` (no JSON → `415 tipo_no_soportado`; `Sec-Fetch-Site: cross-site` → `403 csrf_invalido`). El CSRF real sigue en FNC-008 (`xfail` en `tests/access/test_api.py`).
+- Concurrencia (H2): `services.revocar` toma el acceso con `UPDATE ... WHERE status = 'activo'`; la segunda revocación simultánea da `409 estado_invalido` sin sobrescribir `revoked_by` ni `revoke_reason`.
 
 ### 4.3 Escritura — `app/modules/api/crud.py` (`/api/v1`)
 
@@ -268,6 +281,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - Reglas (`rules.py`): por solicitud, quien otorga administra la plataforma y la cuenta (`can_manage_user`) y la cuenta es del área (P1); `admin_de_area` solo el sistema, nivel `usuario`, a un admin del área; superadmin → `acceso_por_defecto`; propio → `operacion_propia`; un admin no revoca accesos `admin_de_area` ni de otros admins (404).
 - Errores: `ErrorDeAcceso` con `respuesta` = (mensaje, HTTP, `code`, `fields`) para `error_response`.
 - `manejadores.registrar()` (en `create_app`): el resultado del trabajo lleva el acceso a su estado en la misma transacción; transición inválida → solo log (SEC-CON-09).
+- `consultas.de_usuario(usuario_id, estados, area_ids=None)`: accesos de una cuenta para la API (FNC-058).
 - `consultas.py`: `platforms.estado.accesos_vigentes` (→ `active_grants`, `409 plataforma_con_accesos`) y `areas.baja.tiene_accesos_vigentes` (`409 area_con_accesos`; ya no cuenta `user_areas`).
 
 ### Acceso automático de los admins (`access/area_admin_sync.py`, FNC-055)
