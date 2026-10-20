@@ -8,14 +8,15 @@ superadmin todo (`inventario.visibles`). Parámetros:
   `access.tipos`.
 Un valor inválido responde `400 parametro_invalido`.
 
-Blueprint propio para no tocar `access/api.py` (FNC-058, en paralelo).
+Forma `Access`: `access.serializacion.accesos_publicos` (FNC-058), con
+`last_job_id` (solo admins). Blueprint propio, separado de `access/api.py`.
 """
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 
 from app.authz import any_admin_required
 from app.modules.access import inventario
-from app.modules.access.inventario_serializacion import accesos_publicos
+from app.modules.access.serializacion import accesos_publicos
 from app.modules.access.tipos import ESTADOS, NIVELES, ORIGENES
 from app.modules.api.helpers import error_response
 from app.modules.audit.parametros import (POR_PAGINA_MAX, ParametroInvalido,

@@ -30,6 +30,7 @@
 - Consulta de accesos (`GET /me/access`, `GET /users/<id>/access`) con alcance por rol y revocación manual (`POST /access/<id>/revoke`, motivo opcional ≤ 500) por el admin del área o el superadmin; fuera de alcance → `404`; solo JSON y no `cross-site` (CSRF provisional compartido con las solicitudes hasta FNC-008); una revocación simultánea da `409` sin sobrescribir la primera (FNC-058, 2026-10-20).
 - Acceso automático de los admins de área (P6): nivel `usuario`, otorgado por el sistema al dar de alta una plataforma, asignar un área o cambiar la plataforma de área; se revoca al quitarle el área o el rol de admin. El superadmin no recibe accesos automáticos (FNC-055, 2026-10-20).
 - Inventario de permisos `GET /access/inventory` (F-AUD-02): quién tiene qué plataforma, nivel, origen, desde cuándo y quién aprobó; superadmin todo, admin sus áreas, usuario `403`; filtros y paginación (FNC-059, 2026-10-20).
+- Los filtros `q` de auditoría, inventario y catálogo rechazan caracteres de control (NUL, ESC, DEL...) con `400 parametro_invalido` (SEG-FNC059-01, FNC-059, 2026-10-20).
 - Formulario de plataformas con tipo de integración y grupos de acceso por nivel (solo superadmin), avisos tras guardar, errores por campo y de los `403`/`409`; la tarjeta y la tabla solo enlazan `https://` (corrige SEG-24 en el frontend) (DIS-017, 2026-10-19).
 - Consulta de auditoría por rol con filtros y paginación, e historial por usuario y por plataforma; el admin de área solo ve eventos de sus áreas (corrige SEG-16) (FNC-060, 2026-10-19).
 

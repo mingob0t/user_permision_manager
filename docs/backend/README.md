@@ -209,7 +209,7 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 | `GET /access/inventory` | `any_admin_required` (usuario `403`) | F-AUD-02: accesos con usuario, plataforma, área, nivel, origen, `granted_at`, `granted_by` (null = sistema) y estado. Superadmin todo; admin solo plataformas de sus áreas. Filtros `area_id`, `platform_id`, `user_id`, `level`, `origin`, `status` (estado o `vigente`, por defecto), `q` (nombre o correo, ≤ 100, sin comodines); paginada (`per_page` ≤ `ACCESS_INVENTORY_PAGE_SIZE_MAX`). Orden área, plataforma, usuario. |
 
 - Un filtro fuera de alcance da lista vacía (los filtros se suman al alcance, como en la auditoría). Valor inválido → `400 parametro_invalido`.
-- Consulta en `access/inventario.py` (`visibles`, `filtrar`, `ordenados`); forma `Access` provisional en `inventario_serializacion.py` hasta FNC-095.
+- Consulta en `access/inventario.py` (`visibles`, `filtrar`, `ordenados`); forma `Access` con `access.serializacion.accesos_publicos` (FNC-058).
 
 ### 4.4 Sistema y notificaciones — `app/modules/api/admin.py` (`/api/v1`)
 

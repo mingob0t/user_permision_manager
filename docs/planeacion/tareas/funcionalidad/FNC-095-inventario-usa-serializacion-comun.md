@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | accesos |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-20 |
 
 ## Contexto
@@ -17,9 +17,15 @@
 - Origen: FNC-059.
 
 ## Criterios de aceptación
-- [ ] `access/inventario_api.py` usa `access.serializacion.accesos_publicos` (con `last_job_id`)
-- [ ] `access/inventario_serializacion.py` eliminado; formato de fecha único en ambos endpoints
-- [ ] `tests/access/test_inventario.py` en verde
+- [x] `access/inventario_api.py` usa `access.serializacion.accesos_publicos` (con `last_job_id`)
+- [x] `access/inventario_serializacion.py` eliminado; formato de fecha único en ambos endpoints
+- [x] `tests/access/test_inventario.py` en verde
 
 ## Impacto cruzado
 - Origen ← FNC-059; depende de FNC-058 integrada en develop
+
+## Bitácora
+| Fecha | Nota |
+|---|---|
+| 2026-10-20 | Creada como Propuesta (FNC-059) |
+| 2026-10-20 | Hecha: resuelta en FNC-059 |
