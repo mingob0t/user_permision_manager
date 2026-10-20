@@ -136,6 +136,27 @@ def _con_directorio_simulado(esc, monkeypatch):
     instalar_directorio(monkeypatch)
 
 
+def _con_acceso_activo(esc, monkeypatch):
+    """Acceso `activo` del usuario objetivo en la plataforma (FNC-058); la
+    cola RQ queda simulada para el trabajo `revocar`."""
+    from app.modules.access.models import PlatformAccessGrant
+    from app.modules.access.tipos import ESTADO_ACTIVO, ORIGEN_SOLICITUD
+    from app.modules.platforms.tipos import NIVEL_USUARIO
+    from app.modules.provisioning import queue
+    from tests.provisioning.conftest import ColaFalsa
+
+    acceso = PlatformAccessGrant(
+        user_id=esc.objetivo_id, platform_id=esc.plataforma_id,
+        level=NIVEL_USUARIO, origin=ORIGEN_SOLICITUD, request_id=1,
+        status=ESTADO_ACTIVO)
+    acceso.sincronizar_slots()
+    db.session.add(acceso)
+    db.session.commit()
+    esc.acceso_id = acceso.id
+    falsa = ColaFalsa()
+    monkeypatch.setattr(queue, 'cola', lambda conexion=None, **_: falsa)
+
+
 def _con_sso_activo(esc, monkeypatch):
     # El cliente de pruebas llega desde loopback, que es proxy de confianza
     # por defecto. Las reglas del SSO se prueban en FNC-022.
@@ -250,6 +271,16 @@ CASOS = (
          lambda esc: f'{A}/audit/platforms/{esc.plataforma_id}',
          administradores()),
 
+    # ---- Accesos (access/api.py, FNC-058) ----
+    Caso('GET', f'{A}/me/access', _fija(f'{A}/me/access'), con_sesion()),
+    Caso('GET', f'{A}/users/<int:user_id>/access', _objetivo('/access'),
+         administradores(),
+         nota='Fuera del alcance del admin: 404 (tests/access/test_api.py)'),
+    Caso('POST', f'{A}/access/<int:access_id>/revoke',
+         lambda esc: f'{A}/access/{esc.acceso_id}/revoke', administradores(),
+         _json({'reason': 'Revocación de prueba'}), _con_acceso_activo,
+         nota='Área ajena o acceso automático de otro admin: 404'),
+
     # ---- Áreas (areas/api.py) ----
     Caso('POST', f'{A}/areas', _fija(f'{A}/areas'), administradores(201),
          _json({'name': 'Área nueva de prueba'}),
@@ -351,6 +382,7 @@ CASOS_400 = (
     ('POST', f'{A}/users/directory', _json({'password': 'x'})),
     ('PUT', f'{A}/me/preferences', _json({'refresh_interval': 'no-numero'})),
     ('POST', f'{A}/users/purge', _json({'days': 'no-numero'})),
+    ('GET', f'{A}/me/access?status=otro', _sin_cuerpo),
     ('PUT', f'{A}/settings', _json({'portal_identity_type': 'otro'})),
     ('PUT', f'{A}/smtp', _json({'port': 'no-numero'})),
     ('POST', f'{A}/smtp/test', _json({'email': 'sin-arroba'})),
