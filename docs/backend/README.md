@@ -36,7 +36,7 @@ app/
     ├── auth/          # Modelos User/AuthConfig (obsoleto) y login; rutas heredadas (redirigen/410)
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform; rutas heredadas
-    ├── access_requests/ # Solicitudes: models, tipos, catalogo (P1 y estado del actor), services (crear), serializacion, api.py (catalog, POST, mine) (FNC-056); approvals (bandeja, aprobar, rechazar) y rutas inbox/approve/reject (FNC-057)
+    ├── access_requests/ # Solicitudes: models, tipos, catalogo (P1 y estado del actor), services (crear), serializacion, api.py (catalog, POST, mine) (FNC-056); approvals (bandeja, aprobar, rechazar) y rutas inbox/approve/reject (FNC-057); consultas (`mias`, FNC-066)
     ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054); api.py y serializacion.py (FNC-058); inventario e inventario_api (FNC-059)
     ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión FNC-050/054) (FNC-046)
@@ -44,7 +44,8 @@ app/
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
     ├── settings/      # Modelo SystemConfig; rutas heredadas
     ├── users/         # api.py (managed-areas, alta en directorio), directory_accounts.py (FNC-064), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
-    └── areas/         # api.py, validacion.py, baja.py (FNC-045); routes.py heredadas
+    ├── areas/         # api.py, validacion.py, baja.py (FNC-045); routes.py heredadas
+    └── home/          # Inicio: services.py (resumen por rol) y api.py (`/home/summary`) (FNC-066)
 alembic.ini            # Configuración de Alembic (sin URL ni secretos)
 migrations/
 ├── env.py             # URL de construir_uri_bd(); importa app/modules/*/models.py
@@ -211,6 +212,15 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 
 - Un filtro fuera de alcance da lista vacía (los filtros se suman al alcance, como en la auditoría). Valor inválido → `400 parametro_invalido`.
 - Consulta en `access/inventario.py` (`visibles`, `filtrar`, `ordenados`); forma `Access` con `access.serializacion.accesos_publicos` (FNC-058).
+
+### 4.3.5 Inicio — `app/modules/home/api.py` (`/api/v1`, FNC-066)
+
+| Método y ruta | Protección | Qué hace |
+|---|---|---|
+| `GET /home/summary` | Sesión (alcance) | Contrato `inicio.md`: `scope` `propio` (usuario: `my_access`, `my_requests`), `areas` (admin: lo propio más `pending_approvals`, `failed_access`, `oldest_pending_at` y `totals` de sus áreas) o `global` (superadmin: lo mismo sin lo propio). Solo conteos y una fecha. |
+
+- Decisión: endpoint propio, `GET /stats` no cambia (contrato `inicio.md`: "`GET /stats` no cambia"; su forma la consume el panel actual).
+- Sin consultas propias: `access.consultas.de_usuario`, `access_requests.consultas.mias`, `approvals.bandeja` (mismo total que `/access-requests/inbox`), `access.inventario.visibles` (mismo alcance que `/access/inventory`) y `authz.scoped_areas`.
 
 ### 4.4 Sistema y notificaciones — `app/modules/api/admin.py` (`/api/v1`)
 

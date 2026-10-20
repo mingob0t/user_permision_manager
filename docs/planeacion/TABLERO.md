@@ -99,7 +99,7 @@
 | FNC-061 | API de configuración de conectores (superadmin) | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, FNC-038 |
 | FNC-062 | API de ejecuciones: bitácora de aprovisionamiento y reintento manual | backend | 3 | aprovisionamiento | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-049, FNC-038, P10 |
 | FNC-064 | Usuarios: crear cuentas en OpenLDAP desde el portal | backend | 3 | usuarios | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `fnc/FNC-064-alta-cuentas-ldap` (commit local, sin push) | Depende de FNC-041, FNC-044, FNC-038, P2, P8; coordina con FNC-079; impacto en el cliente para DIS-019; auditor-seguridad Aprobado (1 Media, 2 Baja) y revisor Requiere cambios, corregidos; genera FNC-082 |
-| FNC-066 | Resumen del inicio por rol: pendientes, accesos y solicitudes | backend | 3 | estadisticas | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-056, FNC-049, FNC-038 |
+| FNC-066 | Resumen del inicio por rol: pendientes, accesos y solicitudes | backend | 3 | estadisticas | Media | En revisión | 2026-10-13 | 2026-10-20 | | `fnc/FNC-066-resumen-inicio` (commit local, sin push) | Depende de FNC-054, FNC-056, FNC-049, FNC-038; genera FNC-100 |
 | FNC-067 | Servicio del worker de aprovisionamiento en el despliegue | infra | 3 | deploy | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-049, ADR-003 |
 | FNC-068 | Credenciales de conectores y del bind LDAP desde Vaultwarden en staging y producción | infra | 3 | secretos | Alta | Propuesta | 2026-10-13 | | | — | Depende de ADR-005, FNC-050 |
 | FNC-069 | Cliente y tipos web del gestor de accesos | web | 3 | lib-api | Alta | Hecha | 2026-10-13 | 2026-10-19 | 2026-10-19 | `fnc/FNC-069-cliente-web-gestor` (commit local, sin push) | Depende de FNC-038; absorbe FNC-005 parcial (IP en `lib/api.ts`); adapta `/users` a FNC-044; impacto para DIS-016/017/018/019/023 |
@@ -119,3 +119,4 @@
 | DIS-024 | Inicio por rol | web | 3 | dashboard | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-071, FNC-066 |
 | DIS-025 | Navegación en móvil (el menú lateral está oculto bajo md) | web | 3 | navegacion | Alta | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-070 (deuda 8 del frontend) |
 | FNC-080 | Unicidad de los grupos LDAP de plataformas ante altas concurrentes | backend | 5 | platforms | Baja | Propuesta | 2026-10-19 | | | — | Origen: re-auditoría de FNC-046 |
+| FNC-100 | Inicio: fallos de aprovisionamiento visibles por rol (`failed_jobs`) | backend | 3 | estadisticas | Baja | Propuesta | 2026-10-20 | | | — | Origen: FNC-066; depende de FNC-062 |

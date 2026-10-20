@@ -35,6 +35,7 @@
 - Formulario de plataformas con tipo de integración y grupos de acceso por nivel (solo superadmin), avisos tras guardar, errores por campo y de los `403`/`409`; la tarjeta y la tabla solo enlazan `https://` (corrige SEG-24 en el frontend) (DIS-017, 2026-10-19).
 - Consulta de auditoría por rol con filtros y paginación, e historial por usuario y por plataforma; el admin de área solo ve eventos de sus áreas (corrige SEG-16) (FNC-060, 2026-10-19).
 - "Mis plataformas" según los accesos otorgados: `GET /platforms`, `/favorites`, visitas, favoritos y `/stats` muestran a un usuario solo las plataformas con un acceso `activo` de sus áreas; el admin de área ve las de sus áreas y las de sus accesos activos; el superadmin, todas. Otros estados no dan visibilidad (FNC-063, 2026-10-20).
+- Resumen del inicio por rol `GET /home/summary`: el usuario recibe sus accesos y solicitudes por estado; el admin de área, además, pendientes por aprobar, accesos fallidos y totales de sus áreas; el superadmin, los globales. `GET /stats` no cambia (FNC-066, 2026-10-20).
 
 ### Corregido
 - Contraste AA del texto de estado (éxito, error, advertencia, estrella de favorito) con tokens `*-text` por tema, sin clases de paleta fija (DIS-002, 2026-10-19).

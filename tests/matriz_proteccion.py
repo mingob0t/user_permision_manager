@@ -298,6 +298,9 @@ CASOS = (
     Caso('PUT', f'{A}/users/<int:user_id>/areas', _objetivo('/areas'),
          administradores(), lambda esc: {'json': {'area_ids': [esc.area_id]}}),
     Caso('GET', f'{A}/stats', _fija(f'{A}/stats'), con_sesion()),
+    # ---- Inicio (home/api.py, FNC-066) ----
+    Caso('GET', f'{A}/home/summary', _fija(f'{A}/home/summary'), con_sesion(),
+         nota='Contadores con el alcance del rol (tests/home/test_resumen.py)'),
 
     # ---- Auditoría (audit/api.py, FNC-060) ----
     Caso('GET', f'{A}/audit', _fija(f'{A}/audit'), con_sesion()),
