@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | auditoria |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-19 |
 | **Estatus Git** | Commit local, sin push |
