@@ -64,6 +64,7 @@
 | FNC-084 | Revocar los accesos de una cuenta al desactivarla | backend | 3 | accesos | Media | Propuesta | 2026-10-20 | | | — | Origen: FNC-055 |
 | FNC-085 | Cambiar grupos o tipo de una plataforma con accesos automáticos | backend | 3 | accesos | Media | Propuesta | 2026-10-20 | | | — | Origen: FNC-055 |
 | FNC-086 | Sincronización inicial de los accesos automáticos de plataformas existentes | backend | 3 | accesos | Media | Propuesta | 2026-10-20 | | | — | Origen: FNC-055 |
+| FNC-087 | Confirmación del superadmin cuando el grupo LDAP derivado ya existe | backend | 3 | plataformas | Media | Propuesta | 2026-10-20 | | | — | Origen: FNC-055 (SEG-FNC055-01) |
 | FNC-037 | Planeación de la fase 3: gestor de accesos | backend | 3 | planeacion | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-14 | Merge local a develop | Plan de la fase 3; genera FNC-038 a FNC-071 y DIS-013 a DIS-024 |
 | FNC-038 | Contratos v1 backend↔web del gestor de accesos | backend | 3 | contratos | Alta | Hecha | 2026-10-13 | 2026-10-14 | 2026-10-14 | Merge local a develop (434a51c) | Depende de P1, P14, FNC-037, ADR-006 |
 | FNC-039 | Migraciones versionadas de MySQL para la fase 3 (según ADR-002) | backend | 3 | bd | Alta | En revisión | 2026-10-13 | 2026-10-14 | | `fnc/FNC-039-migraciones-alembic` (commit local, sin push) | Depende de ADR-002; Alembic 1.20.0, línea base `0001`; pendiente prueba del dueño en MySQL |
@@ -82,7 +83,7 @@
 | FNC-052 | Conector tipo SSH | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, P9 |
 | FNC-053 | Conector tipo base de datos | backend | 3 | conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-050, P9 |
 | FNC-054 | Accesos otorgados: modelo con origen y estados, y servicio de otorgar y revocar | backend | 3 | accesos | Alta | Hecha | 2026-10-13 | 2026-10-19 | | `fnc/FNC-054-accesos-otorgados`: `9aa3c5c` (local, sin push) | Depende de FNC-039, FNC-046, FNC-047, FNC-049, P5; migración 0007; genera FNC-083; pendiente revisor y auditor-seguridad |
-| FNC-055 | Acceso automático de los admins a las plataformas de sus áreas | backend | 3 | accesos | Alta | En revisión | 2026-10-13 | 2026-10-20 | | `fnc/FNC-055-acceso-automatico-admins` (local, sin push) | Depende de FNC-054, FNC-044, FNC-045, FNC-046, P6; contratos plataformas-integracion 1.1 y areas-y-roles 2.1; genera FNC-084, FNC-085, FNC-086; pendiente revisor y auditor-seguridad |
+| FNC-055 | Acceso automático de los admins a las plataformas de sus áreas | backend | 3 | accesos | Alta | Hecha | 2026-10-13 | 2026-10-20 | | `fnc/FNC-055-acceso-automatico-admins` (local, sin push) | Depende de FNC-054, FNC-044, FNC-045, FNC-046, P6; contratos plataformas-integracion 1.1 y areas-y-roles 2.1; genera FNC-084, FNC-085, FNC-086; auditor-seguridad aprobado; genera FNC-087 |
 | FNC-058 | Accesos: consulta por usuario, mis accesos y revocación manual | backend | 3 | accesos | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-038 |
 | FNC-059 | Inventario de permisos: quién tiene qué plataforma, nivel, desde cuándo y quién aprobó | backend | 3 | accesos | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, FNC-038 |
 | FNC-063 | Visibilidad de plataformas y acceso a ellas según los accesos otorgados | backend | 3 | authz | Alta | Propuesta | 2026-10-13 | | | — | Depende de FNC-054, P4 |
