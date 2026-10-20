@@ -1,4 +1,4 @@
-# DIS-002 — Tokens semánticos de texto (success, danger, warning) y sustituir clases Tailwind literales
+# DIS-002 — Tokens semánticos de texto de estado (success, error, warning, info) y sustituir clases Tailwind literales
 
 | Campo | Valor |
 |---|---|
@@ -56,6 +56,7 @@ Texto de estado (success, error, warning, info) a >= 4.5:1 en los 7 contextos de
 | `npm run typecheck` | código 0 |
 | `npm run build` | código 0; CSS generado con `text-*-text` y `bg-*/NN` sobre tokens |
 
+- Margen justo: `success-text/success-15` sobre panel 4.57 (claro, emerald); cualquier ajuste de `--color-success` o del tinte debe volver a medirse.
 - Fallas conocidas: 32 → 25 (las 7 de DIS-002 cumplen; quedan DIS-004 3, DIS-005 8, DIS-006 14).
 - Topes de paleta fija: `areas-list`, `notifications-list`, `platform-admin`, `platform-card`, `users-list` salen de excepciones; `settings-panel` 8 → 0.
 - Medido (WCAG, `tests/accesibilidad/medir.ts`):
@@ -78,6 +79,13 @@ Texto de estado (success, error, warning, info) a >= 4.5:1 en los 7 contextos de
 - Visual: `next dev` + API simulada local, Chromium sin cabeza; claro/oscuro (SO) en 1280 y 390 px: `/admin/platforms` (tarjeta sin enlace, Eliminar), modal con errores por campo, `/platforms` (estrella), `/notifications` (4 tonos), `/users` con 500 (`ErrorNote`), `/areas`. `getComputedStyle` confirma los valores del token por tema. Capturas en el scratchpad de la sesión.
 - No verificado visualmente: "Guardado"/pruebas de Ajustes (requieren acción; medido), temas emerald/obsidian/rose/violet y `html.dark` (sin selector; medidos).
 - Grep del diff: sin `style=`, `<style`, `.style.`, IPs; hex solo en comentarios de `tokens.css`.
+- Auditoría de accesibilidad (auditor-accesibilidad, 2026-10-19): **Aprobado**. 4 *-text >= 4.5:1 sobre panel, body y tintes /10 y /15 en los 7 contextos (mín. 4.19 solo success/15 sobre body en rose-light, no usado así); rellenos y botón danger sin cambio; sin paleta fija ni estados como texto sin *-text.
+
+## Revisiones
+- Revisor (2026-10-19): **Aprobado**.
+- Accesibilidad (auditor-accesibilidad, 2026-10-19): **Aprobado** (ver Verificación).
+- Ajuste posterior (pedido del orquestador): `COLOR_CSS_DE_RELLENO` incluye `success|error|warning|info`; comprobado que `color: rgb(var(--color-error))` en `src/styles` hace fallar la prueba (1 failed, revertido).
+- Lista para cierre: sigue En revisión; el orquestador la cierra al integrar.
 
 ## Impacto en elementos compartidos
 `tokens.css` y `tailwind.config.ts` son compartidos por toda la UI. Salida real de `impacto.py` (contra `develop`):
@@ -104,3 +112,4 @@ Vistas a validar: Notificaciones (iconos por tono), Administrar plataformas (tar
 | 2026-10-19 | DIS-017 (auditor-accesibilidad): `text-error` de los errores por campo y de `ErrorNote`; tarjeta `amber` de "sin enlace" y botón Eliminar `text-red-*` en `platform-admin.tsx`; heredado, no corregido en DIS-017 |
 | 2026-10-19 | DIS-001 absorbió `primary` como texto (`--color-primary-text`, pares `primary-text/*`); el alcance queda en success, danger y warning y las clases literales |
 | 2026-10-19 | Aprobada (modo autónomo, vía orquestador; adelantada de fase 4). Implementada: tokens de estado por tema, utilidades sin literales, 9 componentes, regresión (69 failed antes). test/lint/typecheck/build código 0; fallas conocidas 32 → 25. En revisión, sin revisores (por instrucción) |
+| 2026-10-19 | Revisor Aprobado y auditor-accesibilidad Aprobado; regresión CSS ampliada a estados, título actualizado y nota a DIS-004 (botón danger). test/lint/typecheck código 0. Lista para cierre, En revisión |

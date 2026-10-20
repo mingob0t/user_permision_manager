@@ -32,9 +32,9 @@ const TEXTO_DE_PALETA_FIJA = new RegExp(
   'g',
 );
 
-/** `color: rgb(var(--color-primary))`, `color: var(--color-accent-sky) !important`... */
+/** `color: rgb(var(--color-primary))`, `color: var(--color-accent-sky) !important`, `color: rgb(var(--color-error))` (DIS-002)... */
 const COLOR_CSS_DE_RELLENO =
-  /(?<![\w-])color\s*:\s*(?:rgba?\()?\s*var\(\s*--color-(?:primary|brand|accent|accent-sky|accent-violet|accent-peach)\s*\)/g;
+  /(?<![\w-])color\s*:\s*(?:rgba?\()?\s*var\(\s*--color-(?:primary|brand|accent|accent-sky|accent-violet|accent-peach|success|error|warning|info)\s*\)/g;
 
 function archivos(carpeta: string, extensiones = EXTENSIONES): string[] {
   return readdirSync(carpeta, { withFileTypes: true }).flatMap((entrada) => {
