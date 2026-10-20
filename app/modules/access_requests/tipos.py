@@ -12,7 +12,11 @@ PENDIENTE = 1
 # Justificación: el dueño decidió no pedirla (2026-10-20); si llega, ≤ 500.
 ACCESS_REQUEST_JUSTIFICATION_MAX_LENGTH = 500
 
+# Motivo del rechazo: obligatorio (RF-06), 10–500 caracteres (FNC-057).
+ACCESS_REQUEST_REJECTION_MIN_LENGTH = 10
+
 # Largos de columna.
 LARGO_NIVEL = 10
 LARGO_ESTADO = 20
 LARGO_TEXTO = 500
+ACCESS_REQUEST_REJECTION_MAX_LENGTH = LARGO_TEXTO  # columna `rejection_reason`
