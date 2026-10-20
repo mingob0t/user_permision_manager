@@ -534,7 +534,7 @@ export function UsersList() {
                   <button
                     type="button"
                     onClick={() => setRemoving(user)}
-                    className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-500/10 dark:text-red-300"
+                    className="rounded px-2 py-1 text-xs text-error-text hover:bg-error/10"
                   >
                     Eliminar
                   </button>

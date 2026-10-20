@@ -13,9 +13,9 @@ const ICONS: Record<string, string> = {
 };
 
 const TONES: Record<string, string> = {
-  success: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300',
-  error: 'bg-red-500/15 text-red-600 dark:text-red-300',
-  warning: 'bg-amber-500/15 text-amber-600 dark:text-amber-300',
+  success: 'bg-success/15 text-success-text',
+  error: 'bg-error/15 text-error-text',
+  warning: 'bg-warning/15 text-warning-text',
   info: 'bg-primary/15 text-primary-text',
 };
 

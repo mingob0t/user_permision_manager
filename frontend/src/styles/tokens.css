@@ -78,6 +78,11 @@ table.dataTable tbody tr {
   /* Rosa/Rojo — Estado crítico */
   --color-danger: 225 29 72;           /* #e11d48 — Rose-600 */
 
+  /* DIS-002 — Rellenos de estado de las utilidades `error` e `info` de
+     Tailwind (antes literales #ef4444 y #3b82f6 en tailwind.config.ts). */
+  --color-error: 239 68 68;            /* #ef4444 — Red-500 */
+  --color-info: 59 130 246;            /* #3b82f6 — Blue-500 */
+
   /* Pizarra — Secundario neutro */
   --color-secondary: 100 116 139;      /* #64748b — Slate-500  */
 
@@ -92,6 +97,13 @@ table.dataTable tbody tr {
   --color-accent-text: 124 58 237;     /* Violet-600 */
   --color-accent-sky-text: 14 116 144; /* Cyan-700 */
   --color-accent-peach-text: 180 83 9; /* Amber-700 */
+
+  /* DIS-002 — Variantes de TEXTO de los estados (>= 4.5:1 sobre panel y
+     sobre su tinte `bg-<estado>/15`). Los de arriba son rellenos. */
+  --color-success-text: 4 120 87;      /* Emerald-700 */
+  --color-error-text: 185 28 28;       /* Red-700 */
+  --color-warning-text: 146 64 14;     /* Amber-800 */
+  --color-info-text: 29 78 216;        /* Blue-700 */
 
   /* DIS-001 — Relleno de marca que lleva texto encima (pestaña activa) y
      el texto sobre él (>= 4.5:1). En temas donde primary no alcanza con
@@ -237,6 +249,10 @@ table.dataTable tbody tr {
     --color-accent-text: 167 139 250;       /* Violet-400 */
     --color-accent-sky-text: 6 182 212;     /* Cyan-500 */
     --color-accent-peach-text: 245 158 11;  /* Amber-500 */
+    --color-success-text: 110 231 183;      /* DIS-002: Emerald-300 */
+    --color-error-text: 252 165 165;        /* DIS-002: Red-300 */
+    --color-warning-text: 252 211 77;       /* DIS-002: Amber-300 */
+    --color-info-text: 147 197 253;         /* DIS-002: Blue-300 */
     --badge-primary-bg: 37 99 235 / 0.15;  --badge-primary-text: 96 165 250;
     --badge-success-bg: 16 185 129 / 0.15; --badge-success-text: 52 211 153;
     --badge-error-bg: 244 63 94 / 0.15;    --badge-error-text: 251 113 133;
@@ -324,6 +340,10 @@ html.dark {
   --color-accent-text: 167 139 250;       /* Violet-400 */
   --color-accent-sky-text: 6 182 212;     /* Cyan-500 */
   --color-accent-peach-text: 245 158 11;  /* Amber-500 */
+  --color-success-text: 110 231 183;    /* DIS-002: Emerald-300 */
+  --color-error-text: 252 165 165;    /* DIS-002: Red-300 */
+  --color-warning-text: 252 211 77;     /* DIS-002: Amber-300 */
+  --color-info-text: 147 197 253;     /* DIS-002: Blue-300 */
 
   --color-panel-fill: 15 23 42;           /* Slate-900 */
   --color-panel-border: 51 65 85;         /* Slate-600: sólido */
@@ -435,9 +455,9 @@ html.theme-emerald-light {
   --color-ntf-editor-input-bg: 255 255 255;
   --color-ntf-preview-card: 255 255 255;
   --color-ntf-text-editor: 28 25 23;
-  --color-ntf-text-subject: 5 150 105;
+  --color-ntf-text-subject: 4 120 87;   /* DIS-002: Emerald-700 (Emerald-600 3.77:1) */
   --color-ntf-border: 5 150 105 / 0.12;
-  --color-status-active: 5 150 105;
+  --color-status-active: 4 120 87;      /* DIS-002: Emerald-700 */
 }
 
 
@@ -462,6 +482,10 @@ html.theme-obsidian-dark {
   --color-accent-text: 250 204 21;      /* Yellow-400 */
   --color-accent-sky-text: 161 161 170; /* Zinc-400 */
   --color-accent-peach-text: 250 204 21; /* Yellow-400 */
+  --color-success-text: 110 231 183;    /* DIS-002: Emerald-300 */
+  --color-error-text: 252 165 165;    /* DIS-002: Red-300 */
+  --color-warning-text: 252 211 77;     /* DIS-002: Amber-300 */
+  --color-info-text: 147 197 253;     /* DIS-002: Blue-300 */
   --color-primary-solid: var(--color-primary);
   --color-on-primary: 9 9 11;           /* Zinc-950 sobre Zinc-400 */
 
@@ -600,9 +624,9 @@ html.theme-rose-light {
   --color-ntf-editor-input-bg: 255 255 255;
   --color-ntf-preview-card: 255 255 255;
   --color-ntf-text-editor: 28 25 23;
-  --color-ntf-text-subject: 244 63 94;
+  --color-ntf-text-subject: 190 18 60;  /* DIS-002: Rose-700 (Rose-500 3.67:1) */
   --color-ntf-border: 244 63 94 / 0.12;
-  --color-status-active: 244 63 94;
+  --color-status-active: 190 18 60;     /* DIS-002: Rose-700 */
 }
 
 
@@ -627,6 +651,10 @@ html.theme-violet-dark {
   --color-accent-text: 167 139 250;     /* Violet-400 */
   --color-accent-sky-text: 167 139 250; /* Violet-400 */
   --color-accent-peach-text: 251 146 60; /* Orange-400 */
+  --color-success-text: 110 231 183;    /* DIS-002: Emerald-300 */
+  --color-error-text: 252 165 165;    /* DIS-002: Red-300 */
+  --color-warning-text: 252 211 77;     /* DIS-002: Amber-300 */
+  --color-info-text: 147 197 253;     /* DIS-002: Blue-300 */
   --color-primary-solid: 124 58 237;    /* Violet-600: blanco 5.70:1 */
   --color-on-primary: 255 255 255;
 

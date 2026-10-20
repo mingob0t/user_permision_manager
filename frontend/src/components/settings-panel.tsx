@@ -14,7 +14,7 @@ type Tab = 'portal' | 'smtp' | 'templates' | 'ldap' | 'backup' | 'preferences';
 
 function Saved({ show }: { show: boolean }) {
   if (!show) return null;
-  return <span className="text-sm text-emerald-600 dark:text-emerald-300">Guardado.</span>;
+  return <span className="text-sm text-success-text">Guardado.</span>;
 }
 
 /** Identidad visual del portal. */
@@ -188,7 +188,7 @@ function BackupTab() {
     <Card className="space-y-5">
       {error ? <ErrorNote message={error} /> : null}
       {done ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-300">{done}</p>
+        <p className="text-sm text-success-text">{done}</p>
       ) : null}
 
       <div>
@@ -376,7 +376,7 @@ function SmtpTab() {
           </div>
         </Field>
         {state.tested ? (
-          <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-300">
+          <p className="mt-2 text-sm text-success-text">
             {state.tested}
           </p>
         ) : null}
@@ -616,7 +616,7 @@ function LdapTab() {
       </div>
 
       {state.probe ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-300">{state.probe}</p>
+        <p className="text-sm text-success-text">{state.probe}</p>
       ) : null}
     </Card>
   );

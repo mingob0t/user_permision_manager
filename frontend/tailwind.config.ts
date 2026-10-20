@@ -78,10 +78,16 @@ export default {
         'bi-muted': 'rgb(var(--color-bi-text-muted) / <alpha-value>)',
         'kpi-highlight': 'rgb(var(--color-kpi-highlight) / <alpha-value>)',
 
+        // Estados: rellenos y tintes (`bg-error/10`); DIS-002 quitó los literales.
         success: 'rgb(var(--color-success) / <alpha-value>)',
-        warning: '#f59e0b',
-        error: '#ef4444',
-        info: '#3b82f6',
+        warning: 'rgb(var(--color-warning) / <alpha-value>)',
+        error: 'rgb(var(--color-error) / <alpha-value>)',
+        info: 'rgb(var(--color-info) / <alpha-value>)',
+        // Estados como texto, por tema (DIS-002).
+        'success-text': 'rgb(var(--color-success-text) / <alpha-value>)',
+        'warning-text': 'rgb(var(--color-warning-text) / <alpha-value>)',
+        'error-text': 'rgb(var(--color-error-text) / <alpha-value>)',
+        'info-text': 'rgb(var(--color-info-text) / <alpha-value>)',
 
         // Alias usados por el marcado de base.html
         bg: 'var(--color-body-bg)',
