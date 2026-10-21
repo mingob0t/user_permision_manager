@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | configuracion-conectores |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Rama local, sin push |
 | **Rama** | `dis/DIS-022-conectores-ejecuciones` |
