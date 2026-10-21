@@ -92,6 +92,34 @@ Salida de `impacto.py` (contra `develop`):
 - `dashboard.tsx` conserva los literales heredados de la gráfica (`#6366f1`, `contentStyle`): deuda DIS-003, sin cambios.
 - Sin revisor, tester ni auditores (por instrucción del orquestador).
 
+## Correcciones del auditor-accesibilidad (2026-10-21)
+| # | Hallazgo | Corrección | Prueba (falló antes) |
+|---|---|---|---|
+| 1 | Medio: tras un error, el reintento del sondeo desmontaba el contenido (`useAsync` deja `data` en null y `usePolling` solo devolvía el último dato con `error`), se perdía el foco y se repetía el aviso | `usePolling` devuelve `data ?? ultimoDato.current` | `tests/lib/use-polling.test.ts` ("durante el reintento…"); `role-summary.test.tsx` ("reintento del sondeo…": contador montado y con foco) |
+| 2 | `dashboard.tsx`: "Plataformas por área" y "Más visitadas" eran h2 | h3 bajo el h2 "Actividad del portal" | `tests/components/dashboard.test.tsx` (nueva) |
+| 3 | Estado vacío del resumen sin región viva | Envuelto en `role="status"` | `role-summary.test.tsx` (vacío) |
+| 4 | Contador sin indicación de hover | `[&:hover>div]:border-primary` en el `Link` (borde del `Card`, token `--color-primary`; contraste ya medido en `foco-primary/panel` y `tab-indicador/body-bg`) | `role-summary.test.tsx` (usuario) |
+| 5 | `.nexus-btn-primary:hover` con `filter: brightness(1.1)`: 3,97:1 en rose | Quitado el filtro en `components.css`; el hover usa los mismos tokens que el par `nexus-btn-primary`, ya medido en los 7 contextos | `tests/accesibilidad/hover-botones.test.ts` (nueva) |
+
+- Observación: durante el reintento el `ErrorNote` se oculta porque `useAsync` limpia `error` al empezar cada consulta, y vuelve a anunciarse si falla de nuevo. No se cambió `useAsync` porque es compartido por todas las pantallas; si hace falta, va en DIS-033.
+
+### Compartidos de esta corrección (validar)
+| Elemento | Cambio | Pantallas que lo usan |
+|---|---|---|
+| `usePolling` (`lib/use-polling.ts`) | `data` conserva el último válido también mientras reintenta | `/requests` (`my-requests.tsx`, `my-access.tsx`), `/approvals` (`approvals-inbox.tsx`), `/users` panel de accesos (`users/user-access-panel.tsx`), `/` (`home/role-summary.tsx`) |
+| `.nexus-btn-primary:hover` (`styles/components.css`) | Sin `filter: brightness(1.1)` (se mantienen elevación y sombra) | Todo `Button` `primary` y `danger` de `form.tsx` (formularios, diálogos de aprobar, rechazar, revocar y confirmar, login, ajustes, áreas, usuarios, plataformas) y los enlaces `nexus-btn-primary` |
+
+Salida de `impacto.py` tras la corrección: `Dashboard` (`app/page.tsx`), `nexus-btn-primary` (`form.tsx`), y `Grupo`, `enlace` y `tinte`, que son falsos positivos por coincidencia de nombre. `usePolling` no aparece en la salida y se agregó a mano en la tabla anterior.
+
+### Verificación tras la corrección (en `frontend/`)
+| Comando | Resultado |
+|---|---|
+| `npm run typecheck` | salida 0 |
+| `npm run lint` | salida 0 |
+| `npx vitest run` | salida 0: 23 archivos, 788 passed, 25 expected fail (las 25 conocidas) |
+| `npx next build` | salida 0; la regla `[&:hover>div]:border-primary` aparece en el CSS generado |
+- Sigue sin verificarse en navegador.
+
 ## Tareas generadas
 - DIS-036 (Propuesta): enlaces con filtro
 - DIS-037 (Propuesta): contadores heredados duplicados
@@ -111,3 +139,4 @@ Salida de `impacto.py` (contra `develop`):
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Aprobada en modo autónomo por el orquestador; En curso |
 | 2026-10-21 | Retomada tras corte por límite de uso; implementada y verificada (typecheck, lint, vitest, build en 0); En revisión |
+| 2026-10-21 | Corregidos 5 hallazgos del auditor-accesibilidad, con prueba que falló antes; compartidos: `usePolling` y `.nexus-btn-primary:hover` |

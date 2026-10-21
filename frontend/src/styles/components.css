@@ -1532,7 +1532,6 @@ input[name="db_engine"]:checked + label .w-5.h-5 .bg-primary {
 .nexus-btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 15px 30px -8px rgb(var(--color-primary) / 0.4) !important;
-    filter: brightness(1.1);
 }
 
 .nexus-btn-secondary {

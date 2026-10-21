@@ -119,7 +119,7 @@ function ContadorEnlace({ contador }: { contador: Contador }) {
     <Link
       href={contador.ruta}
       aria-label={`${contador.etiqueta}: ${contador.valor}. Ir a ${contador.destino}`}
-      className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary [&:hover>div]:border-primary"
     >
       <StatTile label={contador.etiqueta} value={contador.valor} />
     </Link>
@@ -147,7 +147,7 @@ function Contenido({ resumen }: { resumen: HomeSummary }) {
 
   if (resumenVacio(grupos)) {
     return (
-      <div className="space-y-3">
+      <div role="status" className="space-y-3">
         <EmptyNote message={MENSAJES_VACIO[resumen.scope]} />
         {resumen.scope === 'propio' ? (
           <Link href={RUTAS_INICIO.catalogo} className="nexus-btn nexus-btn-primary">

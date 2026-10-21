@@ -57,7 +57,7 @@ function Estadisticas({ stats }: { stats: Stats }) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="text-sm font-medium">Plataformas por área</h2>
+          <h3 className="text-sm font-medium">Plataformas por área</h3>
           {byArea.length === 0 ? (
             <p className="pt-4 text-sm text-label">Sin datos todavía.</p>
           ) : (
@@ -101,7 +101,7 @@ function Estadisticas({ stats }: { stats: Stats }) {
         </Card>
 
         <Card>
-          <h2 className="text-sm font-medium">Más visitadas</h2>
+          <h3 className="text-sm font-medium">Más visitadas</h3>
           {stats.most_visited.length === 0 ? (
             <p className="pt-4 text-sm text-label">Sin visitas registradas.</p>
           ) : (

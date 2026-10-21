@@ -5,7 +5,7 @@
  * - Superadmin: pendientes y resumen global, sin lo propio.
  * - Estados de carga, vacío y error (sin texto del servidor, con reintento).
  */
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HomeSummary } from '@/lib/access/types';
 
@@ -92,6 +92,8 @@ describe('RoleSummary', () => {
     expect(enlace('Pendientes: 1. Ir a Mis solicitudes').getAttribute('href')).toBe(RUTAS_INICIO.solicitudes);
     expect(enlace('Con acceso: 2. Ir a Mis accesos').getAttribute('href')).toBe(RUTAS_INICIO.solicitudes);
     expect(enlace('En proceso: 1. Ir a Mis accesos').getAttribute('href')).toBe(RUTAS_INICIO.solicitudes);
+    // Indicación de hover con un token existente sobre el borde del `Card` (auditor-accesibilidad).
+    expect(enlace('En proceso: 1. Ir a Mis accesos').className).toContain('[&:hover>div]:border-primary');
     expect(screen.queryByRole('link', { name: /Ir a Aprobaciones/ })).toBeNull();
     expect(screen.queryByRole('link', { name: /Ir a Inventario/ })).toBeNull();
     expect(enlace('Ver auditoría').getAttribute('href')).toBe('/audit');
@@ -129,7 +131,8 @@ describe('RoleSummary', () => {
       my_requests: { pendiente: 0, aprobada: 0, rechazada: 0 },
     });
     render(<RoleSummary />);
-    expect(await screen.findByText(MENSAJES_VACIO.propio)).toBeTruthy();
+    const vacio = await screen.findByText(MENSAJES_VACIO.propio);
+    expect(vacio.closest('[role="status"]')).not.toBeNull();
     expect(enlace('Ir al catálogo').getAttribute('href')).toBe(RUTAS_INICIO.catalogo);
   });
 
@@ -150,5 +153,30 @@ describe('RoleSummary', () => {
     vi.mocked(homeApi.summary).mockRejectedValue(new ApiError(403, 'Forbidden'));
     render(<RoleSummary />);
     expect((await screen.findByRole('alert')).textContent).toContain('No tienes permiso para ver los datos del resumen.');
+  });
+
+  it('reintento del sondeo tras un error: los contadores siguen montados y el foco no se pierde', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(homeApi.summary).mockResolvedValueOnce(USUARIO);
+      render(<RoleSummary />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      const contador = enlace('Pendientes: 1. Ir a Mis solicitudes');
+      contador.focus();
+      expect(document.activeElement).toBe(contador);
+
+      vi.mocked(homeApi.summary).mockRejectedValueOnce(new ApiError(500, 'falla'));
+      await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+      expect(screen.getByRole('alert')).toBeTruthy();
+
+      // Reintento con backoff (≤ 120 s) que queda en curso.
+      vi.mocked(homeApi.summary).mockReturnValueOnce(new Promise(() => {}));
+      await act(async () => { await vi.advanceTimersByTimeAsync(120_000); });
+      expect(homeApi.summary).toHaveBeenCalledTimes(3);
+      expect(contador.isConnected).toBe(true);
+      expect(document.activeElement).toBe(contador);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
