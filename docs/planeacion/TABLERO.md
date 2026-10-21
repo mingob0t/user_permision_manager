@@ -117,7 +117,7 @@
 | DIS-022 | Configuración de conectores y bitácora de ejecuciones | web | 3 | configuracion-conectores | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-070, FNC-071, FNC-061, FNC-062 |
 | DIS-023 | Ajustes: pestaña Directorio para OpenLDAP | web | 3 | configuracion-directorio | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-069, FNC-043; FNC-043 cambió la forma de `/auth-config` (ver bitácora): la pestaña actual queda rota hasta esta tarea |
 | DIS-024 | Inicio por rol | web | 3 | dashboard | Media | Hecha | 2026-10-13 | 2026-10-20 | | `dis/DIS-024-inicio-por-rol` (commit local, sin push) | Depende de FNC-069, FNC-071, FNC-066; genera DIS-036, DIS-037; compartido: `dashboard.tsx` (`/`); gráfica heredada conservada; sin revisor ni auditores; no verificado en navegador |
-| DIS-025 | Navegación en móvil (el menú lateral está oculto bajo md) | web | 3 | navegacion | Alta | Propuesta | 2026-10-19 | | | — | Origen: revisión de FNC-070 (deuda 8 del frontend) |
+| DIS-025 | Navegación en móvil (el menú lateral está oculto bajo md) | web | 3 | navegacion | Alta | Hecha | 2026-10-19 | 2026-10-21 | | `dis/DIS-025-navegacion-movil` (commit local, sin push) | Origen: revisión de FNC-070 (deuda 8 del frontend); genera DIS-038; relacionada con DIS-031; compartido: `AppShell` (todas las páginas autenticadas); decisiones del orquestador en la ficha; sin revisor ni auditores; no verificado en navegador |
 | DIS-030 | Catálogo: unificar el catálogo solicitable y "Mis plataformas" | web | 3 | catalogo | Media | Propuesta | 2026-10-20 | | | — | Origen: DIS-013 |
 | DIS-031 | `Modal`: atrapar el foco con Tab, foco inicial en el primer campo y devolverlo al cerrar | web | 3 | componentes | Media | Propuesta | 2026-10-20 | | | — | Origen: DIS-013 |
 | DIS-032 | Texto de 10–11 px en `.nx-badge` y `.nexus-btn` (mínimo 12 px) | web | 3 | estilos | Media | Propuesta | 2026-10-20 | | | — | Origen: auditor-accesibilidad en DIS-013; relacionada con DIS-007 |
@@ -126,5 +126,6 @@
 | DIS-035 | Administrar plataformas: enlace al historial y acciones de fila de 48 px | web | 3 | plataformas | Media | Propuesta | 2026-10-20 | | | — | Origen: DIS-020; relacionada con DIS-008, DIS-032 |
 | DIS-036 | Inicio: enlaces que abren la pantalla con el filtro del contador | web | 3 | dashboard | Baja | Propuesta | 2026-10-21 | | | — | Origen: DIS-024 |
 | DIS-037 | Panel: retirar o reubicar los contadores heredados que duplican el resumen por rol | web | 3 | dashboard | Baja | Propuesta | 2026-10-21 | | | — | Origen: DIS-024; relacionada con DIS-003 |
+| DIS-038 | Menú móvil y `Modal`: token de velo y bloqueo de desplazamiento sin `el.style` | web | 3 | componentes | Baja | Propuesta | 2026-10-21 | | | — | Origen: DIS-025; relacionada con DIS-031 |
 | FNC-080 | Unicidad de los grupos LDAP de plataformas ante altas concurrentes | backend | 5 | platforms | Baja | Propuesta | 2026-10-19 | | | — | Origen: re-auditoría de FNC-046 |
 | FNC-100 | Inicio: fallos de aprovisionamiento visibles por rol (`failed_jobs`) | backend | 3 | estadisticas | Baja | Propuesta | 2026-10-20 | | | — | Origen: FNC-066; depende de FNC-062 |

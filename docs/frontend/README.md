@@ -50,7 +50,7 @@ frontend/src/
 
 ## 3. Menú por rol
 
-Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exigir un `RoleRequirement` de `components/require-role.tsx`; los permisos salen de `GET /api/v1/me` (`permissions.is_admin`, `permissions.is_area_admin`).
+Definido en `components/app-shell.tsx` (`NAV`, FNC-070). La misma lista (`Nav`) se muestra en la barra lateral desde `md` y en el menú móvil bajo `md` (DIS-025). Cada entrada puede exigir un `RoleRequirement` de `components/require-role.tsx`; los permisos salen de `GET /api/v1/me` (`permissions.is_admin`, `permissions.is_area_admin`).
 
 - `any_admin`: superadmin o admin de área; `admin`: solo superadmin; `requester`: usuario y admin de área (el superadmin no solicita)
 
@@ -70,7 +70,8 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 
 | Componente | Archivo | Rol |
 |---|---|---|
-| `AppShell` | `app-shell.tsx` | Marco: barra lateral (oculta en móvil), cabecera con nombre, rol y "Salir"; estados de carga y error de sesión. |
+| `AppShell` | `app-shell.tsx` | Marco: barra lateral (`md` y mayores), cabecera con menú móvil, nombre, rol y "Salir"; estados de carga y error de sesión. |
+| `MobileMenu` | `mobile-menu.tsx` | Bajo `md`: botón "Menú" (`aria-expanded`, `aria-controls`) y panel `role="dialog"` con la misma `Nav` por rol; cierra con Escape, al elegir opción y con clic fuera; foco al primer enlace, de vuelta al botón y atrapado con Tab; áreas de 48 px. Trampa de foco local hasta DIS-031 (DIS-025). |
 | `SessionProvider` / `useSession` | `session-provider.tsx` | Pide `/me` una vez; sin sesión redirige a `/login`. |
 | `RequireRole` / `meetsRequirement` | `require-role.tsx` | Guarda de ruta y regla de visibilidad por rol (FNC-070). |
 | `RoleSummary`, `gruposDelResumen`, `RUTAS_INICIO` | `home/role-summary.tsx` | Resumen de inicio por rol: grupos de contadores según los campos del contrato `inicio.md`; cada contador es `StatTile` dentro de `Link` con nombre accesible "Etiqueta: n. Ir a Pantalla"; carga, vacío (usuario: enlace al catálogo) y error con Reintentar (DIS-024). |
@@ -189,8 +190,8 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 | 5 | Sin selector de tema; temas adicionales definidos pero inalcanzables. | `styles/tokens.css` |
 | 6 | Pocas pruebas de frontend: runner y pruebas base listas (FNC-025); faltan pruebas de más pantallas. | `frontend/tests/` |
 | 7 | Componentes grandes con varias responsabilidades (`settings-panel.tsx`, `users-list.tsx`). | `components/` |
-| 8 | Navegación lateral oculta en móvil (`hidden md:block`) sin menú alternativo. | `app-shell.tsx` |
+| 8 | ~~Navegación lateral oculta en móvil sin menú alternativo~~ — resuelta por DIS-025 (`MobileMenu`). | `app-shell.tsx` |
 | 9 | Valor por defecto del backend escrito como dirección de loopback numérica en el código (incumple "sin IPs"; debería ser `localhost` o configuración). | `next.config.ts`, `lib/api.ts` |
-| 10 | Título "Nexus" fijo en `layout.tsx` y en la barra lateral, aunque el nombre del portal es configurable en `system_config`. | `app/layout.tsx`, `app-shell.tsx` |
+| 10 | Título "Nexus" fijo en `layout.tsx` y en la barra lateral, aunque el nombre del portal es configurable en `system_config`. | `app/layout.tsx`, `app-shell.tsx`, `mobile-menu.tsx` |
 
 > Límites de las pruebas automáticas: la de contraste mide los tokens de `tokens.css`, no el CSS final (reglas con `!important` pueden ignorarlos); la de colores literales no detecta colores con nombre, `oklch()`/`lab()` ni valores arbitrarios de Tailwind.

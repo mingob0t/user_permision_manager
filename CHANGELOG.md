@@ -3,6 +3,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Navegación en móvil: botón "Menú" en la cabecera bajo `md` con panel de las mismas entradas por rol, cierre con Escape, al elegir opción o con clic fuera, foco atrapado y áreas de 48 px (DIS-025, 2026-10-21).
 - Inicio por rol en el Panel: mis solicitudes y mis accesos (usuario), pendientes y resumen de sus áreas (admin de área) o global (superadmin), con cada contador enlazado a su pantalla y refresco periódico (DIS-024, 2026-10-21).
 - Conectores: interfaz común, registro de tipos, configuración por plataforma sin secretos (migración `0009`), lista blanca de hosts `CONNECTOR_ALLOWED_HOSTS`, credenciales por referencia en ejecución (entorno en dev; Vaultwarden en FNC-068) y proveedor `conector` del ejecutor con tipo `noop` de prueba (FNC-050, 2026-10-20).
 - Estructura inicial del proyecto (FNC-001, 2026-10-13).

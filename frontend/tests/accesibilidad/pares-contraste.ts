@@ -113,6 +113,9 @@ export const PARES: ParContraste[] = [
   // Nuevo: anillo de foco `ring-primary` del contador, junto al borde del `Card` (no textual, 3:1);
   // del lado del fondo de página ya lo mide `tab-indicador/body-bg`.
   { id: 'foco-primary/panel', texto: '--color-primary', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
+  // DIS-025 (auditor-accesibilidad): borde `border-primary` del panel del menú móvil y anillo de
+  // foco de sus botones y enlaces; del lado del panel lo mide `foco-primary/panel` y del lado del
+  // contenido, `tab-indicador/body-bg` (no textuales, 3:1). Sin par nuevo.
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },
