@@ -8,10 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | conectores |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
+| **Estatus** | En curso |
 | **Creada** | 2026-10-13 |
-| **Estatus Git** | — |
-| **Rama** | `fnc/FNC-051-conector-api-http` |
+| **Estatus Git** | Local, sin push |
+| **Rama** | `fnc/FNC-051-conector-api` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí (ejecución remota con credenciales) |
 
