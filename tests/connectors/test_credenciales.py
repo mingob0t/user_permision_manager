@@ -115,3 +115,21 @@ def test_resolver_no_registra_el_valor_en_logs(monkeypatch, caplog):
     credencial = credenciales.resolver_credencial(REFERENCIA)
     assert credencial.secreto == SECRETO_FICTICIO
     assert SECRETO_FICTICIO not in caplog.text
+
+
+@pytest.mark.parametrize('referencia', ['pokemon__erp', 'pokemon/_erp',
+                                        'pokemon/erp_', 'pokemon/erp/../x'])
+def test_b3_entorno_rechaza_referencias_ambiguas(referencia):
+    """Regresión B3: sin `__` ni separadores dobles en la variable de dev."""
+    variable = nombre_variable(referencia)
+    with pytest.raises(CredencialNoEncontrada):
+        ProveedorSecretosEntorno({variable: SECRETO_FICTICIO}).obtener(
+            referencia)
+
+
+def test_b3_referencia_valida_y_conflictos():
+    assert credenciales.referencia_valida(REFERENCIA) is True
+    assert credenciales.referencia_valida('pokemon__erp') is False
+    assert credenciales.referencias_en_conflicto(
+        REFERENCIA, ['pokemon/pruebas_noop', REFERENCIA, 'otra/cosa']) == [
+            'pokemon/pruebas_noop']

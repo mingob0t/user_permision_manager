@@ -264,3 +264,40 @@ def test_el_conector_recibe_solo_datos_del_servidor(conector_noop):
     assert (destino.host, destino.puerto, destino.tiempo_espera) == (
         configuracion.host, configuracion.port, 10)
     assert REFERENCIA not in repr(destino)
+
+
+def test_b1_el_destino_lleva_el_host_normalizado(conector_noop):
+    """Regresión B1 (auditor-seguridad): el host crudo de la BD no llega al tipo."""
+    plataforma, configuracion, usuario = conector_noop
+    recibido = {}
+
+    class Espia(Conector):
+        def otorgar(self, solicitud):
+            recibido['host'] = self.destino.host
+            return ResultadoProveedor(RESULTADO_EXITOSO)
+
+        def revocar(self, solicitud):
+            return ResultadoProveedor(RESULTADO_EXITOSO)
+
+    registry.registrar_tipo(TipoConector('espia_host', Espia, lambda p: {}))
+    try:
+        configuracion.type = 'espia_host'
+        configuracion.host = ' NOOP.Pruebas.LOCAL '
+        db.session.commit()
+        resultado = ProveedorConector().otorgar(operacion(plataforma, usuario))
+    finally:
+        registry.quitar_tipo('espia_host')
+    assert resultado.resultado == RESULTADO_EXITOSO
+    assert recibido['host'] == 'noop.pruebas.local'
+
+
+def test_b3_referencia_que_colisiona_con_otra_es_permanente(conector_noop):
+    """Regresión B3: dos referencias distintas con la misma variable de dev."""
+    plataforma, configuracion, usuario = conector_noop
+    area = fabricas.crear_area()
+    otra = fabricas.crear_plataforma(area, integration_type='conector')
+    from tests.connectors.conftest import crear_conector
+    crear_conector(otra, credential_ref='pokemon/pruebas_noop')
+    resultado = ProveedorConector().otorgar(operacion(plataforma, usuario))
+    assert (resultado.resultado, resultado.motivo) == (
+        RESULTADO_ERROR_PERMANENTE, 'credencial_no_encontrada')

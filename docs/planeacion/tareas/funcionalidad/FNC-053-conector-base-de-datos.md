@@ -63,7 +63,13 @@
 - Cada plataforma tiene su API o esquema: el tipo es genérico y lo específico va en parámetros.
 - Reversión: desregistrar el tipo.
 
+## Requisitos de seguridad heredados de FNC-050 (auditor-seguridad)
+- Resolver el DNS del host antes de conectar y rechazar si resuelve a una IP privada, de loopback, *link-local* o no enrutable (DNS *rebinding*); conectar a la IP ya validada, no volver a resolver.
+- No seguir redirecciones a otros hosts (SEC-CON-06 por analogía): sin *failover* ni réplicas que el servidor anuncie fuera de la lista blanca; TLS validado (SEC-CON-05).
+- Usar el host de `Destino` (ya normalizado, B1 de FNC-050) y la lista blanca `CONNECTOR_ALLOWED_HOSTS`; nunca un host de `params`.
+
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-20 | Recomendaciones de auditor-seguridad sobre FNC-050 agregadas (sección «Requisitos de seguridad heredados de FNC-050») |

@@ -8,6 +8,10 @@
 - Entorno: la referencia `pokemon/contabilidad-api` se lee de
   `CONNECTOR_CREDENTIAL_POKEMON_CONTABILIDAD_API` (y el usuario opcional de
   `…__USUARIO`).
+- Regla de referencias (auditor-seguridad B3): la variable que resulta no
+  puede tener `__` ni empezar o terminar en `_` (chocaría con `__USUARIO`), y
+  dos referencias distintas no pueden dar la misma variable
+  (`pokemon/erp-api` y `pokemon/erp_api`): `referencias_en_conflicto`.
 - Caché breve en memoria (`CONNECTOR_CREDENTIAL_CACHE_SECONDS`) por fuente y
   referencia; los fallos no se guardan.
 - Nunca se registra ni se representa el valor (`repr` lo oculta). Los errores
@@ -26,6 +30,8 @@ VAR_ENTORNO = 'APP_ENV'
 ENTORNO_DESARROLLO = 'development'
 PREFIJO_VARIABLE = 'CONNECTOR_CREDENTIAL_'
 SUFIJO_USUARIO = '__USUARIO'
+SEPARADOR_DOBLE = '__'
+SEPARADOR = '_'
 _NO_ALFANUMERICO = re.compile(r'[^A-Z0-9]')
 
 FUENTE_ENTORNO = 'entorno'
@@ -42,6 +48,10 @@ class CredencialNoEncontrada(ErrorDeCredencial):
 
 class GestorNoDisponible(ErrorDeCredencial):
     """La fuente no respondió (transitorio)."""
+
+
+class ReferenciaInvalida(CredencialNoEncontrada):
+    """La referencia es ambigua en su variable de dev (permanente)."""
 
 
 class GestorNoConfigurado(ErrorDeCredencial):
@@ -67,7 +77,24 @@ class ProveedorDeSecretos(ABC):
 
 def nombre_variable(referencia):
     """Variable de entorno de dev que guarda la credencial de `referencia`."""
-    return PREFIJO_VARIABLE + _NO_ALFANUMERICO.sub('_', referencia.upper())
+    return PREFIJO_VARIABLE + _NO_ALFANUMERICO.sub(SEPARADOR, referencia.upper())
+
+
+def referencia_valida(referencia):
+    """`False` si la variable de la referencia tiene `__` o separadores en los
+    extremos (ambigua con `__USUARIO` o con otra referencia)."""
+    if not isinstance(referencia, str) or not referencia:
+        return False
+    sufijo = nombre_variable(referencia)[len(PREFIJO_VARIABLE):]
+    return (SEPARADOR_DOBLE not in sufijo and not sufijo.startswith(SEPARADOR)
+            and not sufijo.endswith(SEPARADOR))
+
+
+def referencias_en_conflicto(referencia, otras):
+    """Referencias distintas de `referencia` que dan su misma variable."""
+    variable = nombre_variable(referencia)
+    return sorted({o for o in otras if isinstance(o, str) and o != referencia
+                   and nombre_variable(o) == variable})
 
 
 class ProveedorSecretosEntorno(ProveedorDeSecretos):
@@ -79,6 +106,8 @@ class ProveedorSecretosEntorno(ProveedorDeSecretos):
         self._entorno = os.environ if entorno is None else entorno
 
     def obtener(self, referencia):
+        if not referencia_valida(referencia):
+            raise ReferenciaInvalida('Referencia ambigua para el entorno.')
         nombre = nombre_variable(referencia)
         secreto = self._entorno.get(nombre) or ''
         if not secreto:

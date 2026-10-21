@@ -4,8 +4,9 @@ import pytest
 
 from app.modules.connectors import registry
 from app.modules.connectors.registry import TipoConector
-from app.modules.connectors.validacion import (MENSAJE_HOST,
-                                               validar_configuracion)
+from app.modules.connectors.validacion import (
+    MENSAJE_HOST, MENSAJE_PARAMS_PROFUNDOS, MENSAJE_REFERENCIA_EN_CONFLICTO,
+    validar_configuracion)
 from tests.connectors.conftest import HOST_PERMITIDO, REFERENCIA
 
 ENTORNO = {'APP_ENV': 'development', 'CONNECTOR_ALLOWED_HOSTS': HOST_PERMITIDO}
@@ -97,3 +98,65 @@ def test_active_debe_ser_booleano(app):
     assert 'active' in errores
     limpio, errores = validar_configuracion(datos(active=False), ENTORNO)
     assert errores == {} and limpio['active'] is False
+
+
+def _libre():
+    registry.registrar_tipo(TipoConector('libre', fabrica=object,
+                                         validar_params=lambda p: {}))
+
+
+def test_b2_secretos_dentro_de_listas(app):
+    """Regresión B2: una clave sensible dentro de una lista se detecta."""
+    _libre()
+    try:
+        _, errores = validar_configuracion(
+            datos(type='libre',
+                  params={'extras': [{'nombre': 'x'}, {'api_key': 'y'}]}),
+            ENTORNO)
+        assert 'params.extras.1.api_key' in errores
+        _, errores = validar_configuracion(
+            datos(type='libre', params={'lista': [[{'token': 'z'}]]}), ENTORNO)
+        assert 'params.lista.0.0.token' in errores
+    finally:
+        registry.quitar_tipo('libre')
+
+
+def test_b2_profundidad_excesiva_es_invalida_sin_recursionerror(app):
+    """Regresión B2: un anidado profundo se rechaza, no rompe la validación."""
+    _libre()
+    profundo = {}
+    actual = profundo
+    for _ in range(5000):
+        actual['n'] = [{}]
+        actual = actual['n'][0]
+    try:
+        _, errores = validar_configuracion(datos(type='libre',
+                                                 params=profundo), ENTORNO)
+        assert errores['params'] == MENSAJE_PARAMS_PROFUNDOS
+        poco = {'a': {'b': [{'c': 1}]}}
+        _, errores = validar_configuracion(datos(type='libre', params=poco),
+                                           ENTORNO)
+        assert errores == {}
+    finally:
+        registry.quitar_tipo('libre')
+
+
+@pytest.mark.parametrize('referencia', ['pokemon__erp', 'pokemon/_erp',
+                                        'pokemon._erp', 'pokemon/erp_'])
+def test_b3_referencia_con_doble_guion_bajo_en_su_variable(app, referencia):
+    """Regresión B3: `__` en la variable choca con el sufijo `__USUARIO`."""
+    _, errores = validar_configuracion(datos(credential_ref=referencia),
+                                       ENTORNO)
+    assert 'credential_ref' in errores
+
+
+def test_b3_referencia_que_colisiona_con_otra_en_uso(app):
+    """Regresión B3: misma variable de entorno que otra referencia distinta."""
+    for en_uso in (['pokemon/pruebas_noop'], ['POKEMON/PRUEBAS-NOOP'],
+                   ['pokemon.pruebas.noop']):
+        _, errores = validar_configuracion(datos(), ENTORNO,
+                                           referencias_en_uso=en_uso)
+        assert errores.get('credential_ref') == MENSAJE_REFERENCIA_EN_CONFLICTO
+    _, errores = validar_configuracion(datos(), ENTORNO,
+                                       referencias_en_uso=[REFERENCIA])
+    assert errores == {}  # la misma referencia (otra plataforma) sí vale

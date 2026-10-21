@@ -57,7 +57,13 @@
 ## Riesgos y reversión
 - Reversión: revertir la rama.
 
+## Requisitos de seguridad heredados de FNC-050 (auditor-seguridad)
+- Solo el superadmin crea, modifica, borra o prueba conectores (SEC-CON-11); matriz con 403 para usuario y admin de área.
+- Validar el cuerpo con `connectors.validacion.validar_configuracion(datos, referencias_en_uso=…)`, pasando las `credential_ref` de las demás plataformas (`consultas.referencias_de_otras`); sin reglas propias.
+- Al guardar o borrar la configuración, llamar a `connectors.credenciales.limpiar_cache()` para no seguir usando la credencial anterior (B4).
+
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-20 | Recomendaciones de auditor-seguridad sobre FNC-050 agregadas (sección «Requisitos de seguridad heredados de FNC-050») |

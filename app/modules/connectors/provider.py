@@ -6,9 +6,11 @@ Por cada operación:
 2. Host en `CONNECTOR_ALLOWED_HOSTS` (se revalida en cada ejecución,
    SEC-CON-07); si no, permanente `host_no_autorizado`.
 3. Cuenta: correo de la cuenta del portal (dato del servidor, SEC-CON-03).
-4. Credencial desde la fuente del despliegue (ADR-005): no encontrada o
+4. Referencia sin `__` en su variable y sin equivalente en otra plataforma
+   (B3); si no, permanente `credencial_no_encontrada`.
+   Credencial desde la fuente del despliegue (ADR-005): no encontrada o
    gestor sin configurar → permanente; gestor caído → transitorio.
-5. Llamada al tipo con el `Destino` y la `Credencial`. El detalle que devuelva
+5. Llamada al tipo con el `Destino` (host normalizado, B1) y la `Credencial`. El detalle que devuelva
    se limpia del valor de la credencial antes de llegar a la bitácora (que
    además lo sanea, SEC-CON-10). Una excepción del tipo cuenta como
    transitoria sin guardar su texto; el tiempo de espera de RQ sigue hasta el
@@ -25,12 +27,17 @@ from app.modules.auth.models import User
 from app.modules.connectors import credenciales
 from app.modules.connectors.base import Destino, SolicitudConector
 from app.modules.connectors.configuracion import (cargar_configuracion,
-                                                  host_permitido)
-from app.modules.connectors.consultas import configuracion_de
+                                                  host_permitido,
+                                                  normalizar_host)
+from app.modules.connectors.consultas import (configuracion_de,
+                                              referencias_de_otras)
 from app.modules.connectors.credenciales import (CredencialNoEncontrada,
                                                  ErrorDeCredencial,
                                                  GestorNoConfigurado,
-                                                 GestorNoDisponible)
+                                                 GestorNoDisponible,
+                                                 ReferenciaInvalida,
+                                                 referencia_valida,
+                                                 referencias_en_conflicto)
 from app.modules.connectors.registry import obtener_tipo
 from app.modules.core.models import Platform
 from app.modules.platforms.tipos import CAMPOS_DN, TIPO_CONECTOR
@@ -51,6 +58,7 @@ logger = logging.getLogger(__name__)
 
 _RESULTADOS_CREDENCIAL = {
     CredencialNoEncontrada: (permanente, MOTIVO_CREDENCIAL_NO_ENCONTRADA),
+    ReferenciaInvalida: (permanente, MOTIVO_CREDENCIAL_NO_ENCONTRADA),
     GestorNoConfigurado: (permanente, MOTIVO_GESTOR_NO_CONFIGURADO),
     GestorNoDisponible: (transitorio, MOTIVO_GESTOR_NO_DISPONIBLE),
 }
@@ -98,7 +106,8 @@ class ProveedorConector(Provisioner):
         cfg = cargar_configuracion()
         if not host_permitido(configuracion.host, cfg):
             raise _Fallo(permanente(MOTIVO_HOST_NO_AUTORIZADO))
-        return Destino(host=configuracion.host, puerto=configuracion.port,
+        return Destino(host=normalizar_host(configuracion.host),
+                       puerto=configuracion.port,
                        params=MappingProxyType(dict(configuracion.params or {})),
                        tiempo_espera=cfg.tiempo_espera)
 
@@ -116,6 +125,12 @@ class ProveedorConector(Provisioner):
             plataforma_id=operacion.plataforma_id, cuenta=cuenta)
 
     def _credencial(self, configuracion):
+        referencia = configuracion.credential_ref
+        if not referencia_valida(referencia) or referencias_en_conflicto(
+                referencia, referencias_de_otras(configuracion.platform_id)):
+            logger.warning('Conector: referencia ambigua en la plataforma %s.',
+                           configuracion.platform_id)
+            raise _Fallo(permanente(MOTIVO_CREDENCIAL_NO_ENCONTRADA))
         try:
             return credenciales.resolver_credencial(configuracion.credential_ref)
         except ErrorDeCredencial as exc:

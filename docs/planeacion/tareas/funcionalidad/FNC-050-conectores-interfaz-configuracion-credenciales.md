@@ -96,8 +96,21 @@
 | `venv/bin/python -m pytest tests/connectors tests/test_migraciones.py -q` | 79 + migraciones en verde (tras corregir `AuditLog.detail` y cambiar IPv4 literales por IPv6 de documentación y formas abreviadas, como exige el control) |
 | `venv/bin/python -m pytest -q` (suite completa) | **1630 passed, 15 xfailed, salida 0** (747 s, tras el último ajuste de pruebas) |
 | `venv/bin/python -m pytest -q` tras traer develop (`bcd02a3`) | **1684 passed, 15 xfailed, salida 0** (889 s) |
+| Regresiones B1–B3 antes de corregir | 7 fallidas + `test_validacion_conector.py` sin importar (`MENSAJE_PARAMS_PROFUNDOS`), salida 2 |
+| `venv/bin/pytest tests/connectors` tras corregir | **93 passed, salida 0** |
+| `venv/bin/pytest tests` (suite completa) tras corregir | **1698 passed, 15 xfailed, salida 0** (988 s) |
 
 No verificado: MySQL real (las migraciones se prueban en SQLite); Vaultwarden real (FNC-068); tipos concretos (FNC-051 a FNC-053). No se lanzaron `revisor`, `tester` ni `auditor-seguridad` (indicación del orquestador; el auditor es obligatorio antes de cerrar).
+
+## Correcciones de auditor-seguridad (veredicto Aprobado, hallazgos bajos)
+| # | Hallazgo | Corrección | Regresión (fallaba antes) |
+|---|---|---|---|
+| B1 | `Destino` recibía el host crudo de la BD | `provider.py`: `normalizar_host(configuracion.host)` | `test_b1_el_destino_lleva_el_host_normalizado` |
+| B2 | `_claves_sensibles` no revisaba listas y un anidado profundo daba `RecursionError` | Recorre objetos y listas hasta `PROFUNDIDAD_MAXIMA_PARAMS` (8); más profundo → `params`: «Los parámetros tienen demasiados niveles.» | `test_b2_secretos_dentro_de_listas`, `test_b2_profundidad_excesiva_es_invalida_sin_recursionerror` |
+| B3 | Referencias con `__` o distintas con la misma variable de dev | `referencia_valida` (sin `__` ni `_` en los extremos de la variable) y `referencias_en_conflicto`; validación con `referencias_en_uso`, entorno (`ReferenciaInvalida`) y proveedor (contra las demás plataformas) → permanente `credencial_no_encontrada` | `test_b3_*` en `test_credenciales.py`, `test_validacion_conector.py` y `test_proveedor_conector.py` |
+| B4 | La caché puede servir una credencial vieja tras cambiar la configuración o rotarla | Anotado en las fichas de FNC-061 (`limpiar_cache()` al guardar o borrar) y FNC-068 (al rotar) | — (lo implementan esas tareas) |
+
+Recomendaciones anotadas: FNC-051, FNC-052 y FNC-053 (resolver el DNS y rechazar IPs privadas o de loopback; no seguir redirecciones a otros hosts, SEC-CON-06); FNC-061 (solo superadmin, SEC-CON-11; usar `validar_configuracion`).
 
 ## Impacto en elementos compartidos
 Salida de `python3 ~/.claude/agentes/herramientas/impacto.py` tras traer develop (`bcd02a3`), con los archivos nuevos ya en commit:
@@ -144,3 +157,4 @@ Además (no los detecta la herramienta): `create_app()` valida `CONNECTOR_*` y r
 | 2026-10-20 | Aprobada en modo autónomo por el orquestador; En curso en `fnc/FNC-050-conectores-base` (worktree `pokemon-wt-060`) |
 | 2026-10-20 | Implementada; 79 pruebas nuevas (fallaban antes); suite 1630 passed, 15 xfailed, salida 0. En revisión; pendiente `revisor` y `auditor-seguridad` |
 | 2026-10-20 | Rama actualizada con develop (FNC-062, FNC-067: `9499592`; DIS-013: `6c9eaa7`), con conflictos solo en documentación, resueltos uniendo ambas versiones. 0009 sigue sobre 0008. Impacto recalculado |
+| 2026-10-20 | auditor-seguridad: Aprobado. Corregidos B1, B2 y B3 con regresión (fallaban antes); B4 y las recomendaciones anotadas en FNC-051/052/053/061/068. Suite: 1698 passed, 15 xfailed, salida 0 |

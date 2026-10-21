@@ -8,8 +8,10 @@ Reglas del contrato `conectores-y-ejecuciones.md` (`PUT
   (SEC-CON-07).
 - `port`: entero 1–65535.
 - `params`: objeto sin claves que parezcan secretos (mismos fragmentos que la
-  auditoría, SEC-AUD-05) y válido para el esquema del tipo.
-- `credential_ref`: referencia del ítem del gestor (≤ 200), nunca el valor.
+  auditoría, SEC-AUD-05; también dentro de listas), con a lo más
+  `PROFUNDIDAD_MAXIMA_PARAMS` niveles, y válido para el esquema del tipo.
+- `credential_ref`: referencia del ítem del gestor (≤ 200), nunca el valor;
+  sin `__` en su variable de dev ni equivalente a otra en uso (B3).
 - `active`: booleano (por defecto `true`).
 
 `validar_configuracion(datos)` → `(limpio, errores)` con errores
@@ -21,6 +23,8 @@ from app.modules.audit.sanitizar import FRAGMENTOS_SENSIBLES
 from app.modules.connectors.configuracion import (cargar_configuracion,
                                                   host_permitido,
                                                   normalizar_host)
+from app.modules.connectors.credenciales import (referencia_valida,
+                                                 referencias_en_conflicto)
 from app.modules.connectors.registry import obtener_tipo
 from app.modules.connectors.tipos import (LARGO_REFERENCIA, PUERTO_MAXIMO,
                                           PUERTO_MINIMO)
@@ -33,6 +37,13 @@ MENSAJE_PARAM_SECRETO = 'No incluyas secretos en los parámetros.'
 MENSAJE_REFERENCIA = ('Usa la referencia del ítem en el gestor de secretos '
                       f'(máximo {LARGO_REFERENCIA} caracteres).')
 MENSAJE_ACTIVO = 'Debe ser verdadero o falso.'
+MENSAJE_PARAMS_PROFUNDOS = 'Los parámetros tienen demasiados niveles.'
+MENSAJE_REFERENCIA_EN_CONFLICTO = ('La referencia equivale a otra ya usada; '
+                                   'usa la misma o una distinta.')
+
+# Niveles de objetos y listas que se revisan en `params` (auditor-seguridad
+# B2): más profundo se rechaza en lugar de agotar la recursión.
+PROFUNDIDAD_MAXIMA_PARAMS = 8
 
 # Segmentos separados por "/" de letras, dígitos, ".", "_" y "-", sin
 # empezar por punto ni guion.
@@ -45,15 +56,28 @@ def _es_entero(valor):
     return isinstance(valor, int) and not isinstance(valor, bool)
 
 
-def _claves_sensibles(params, prefijo=''):
-    """Claves (con su ruta) que parecen nombrar un secreto."""
+class _DemasiadoProfundo(Exception):
+    """`params` supera `PROFUNDIDAD_MAXIMA_PARAMS`."""
+
+
+def _claves_sensibles(valor, ruta='', nivel=1):
+    """Claves (con su ruta; índice en las listas) que parecen nombrar un
+    secreto, en objetos y listas hasta `PROFUNDIDAD_MAXIMA_PARAMS`."""
+    if isinstance(valor, dict):
+        hijos = ((str(clave), hijo, True) for clave, hijo in valor.items())
+    elif isinstance(valor, list):
+        hijos = ((str(i), hijo, False) for i, hijo in enumerate(valor))
+    else:
+        return []
+    if nivel > PROFUNDIDAD_MAXIMA_PARAMS:
+        raise _DemasiadoProfundo()
     encontradas = []
-    for clave, valor in params.items():
-        ruta = f'{prefijo}{clave}'
-        if any(f in str(clave).lower() for f in FRAGMENTOS_SENSIBLES):
-            encontradas.append(ruta)
-        elif isinstance(valor, dict):
-            encontradas.extend(_claves_sensibles(valor, f'{ruta}.'))
+    for nombre, hijo, es_clave in hijos:
+        actual = f'{ruta}.{nombre}' if ruta else nombre
+        if es_clave and any(f in nombre.lower() for f in FRAGMENTOS_SENSIBLES):
+            encontradas.append(actual)
+        else:
+            encontradas.extend(_claves_sensibles(hijo, actual, nivel + 1))
     return encontradas
 
 
@@ -61,7 +85,11 @@ def _validar_params(params, tipo, errores):
     if not isinstance(params, dict):
         errores['params'] = MENSAJE_PARAMS
         return
-    sensibles = _claves_sensibles(params)
+    try:
+        sensibles = _claves_sensibles(params)
+    except _DemasiadoProfundo:
+        errores['params'] = MENSAJE_PARAMS_PROFUNDOS
+        return
     for ruta in sensibles:
         errores[PREFIJO_PARAMS + ruta] = MENSAJE_PARAM_SECRETO
     if tipo is not None and not sensibles:
@@ -69,8 +97,12 @@ def _validar_params(params, tipo, errores):
             errores[PREFIJO_PARAMS + campo] = mensaje
 
 
-def validar_configuracion(datos, entorno=None):
-    """Configuración normalizada y errores por campo (vacío si es válida)."""
+def validar_configuracion(datos, entorno=None, referencias_en_uso=()):
+    """Configuración normalizada y errores por campo (vacío si es válida).
+
+    `referencias_en_uso`: `credential_ref` de las demás plataformas (FNC-061
+    las pasa); una distinta con la misma variable de dev se rechaza (B3).
+    """
     cfg = cargar_configuracion(entorno)
     errores = {}
 
@@ -91,8 +123,11 @@ def validar_configuracion(datos, entorno=None):
 
     referencia = datos.get('credential_ref')
     if (not isinstance(referencia, str) or len(referencia) > LARGO_REFERENCIA
-            or not PATRON_REFERENCIA.fullmatch(referencia)):
+            or not PATRON_REFERENCIA.fullmatch(referencia)
+            or not referencia_valida(referencia)):
         errores['credential_ref'] = MENSAJE_REFERENCIA
+    elif referencias_en_conflicto(referencia, referencias_en_uso):
+        errores['credential_ref'] = MENSAJE_REFERENCIA_EN_CONFLICTO
 
     activo = datos.get('active', True)
     if not isinstance(activo, bool):

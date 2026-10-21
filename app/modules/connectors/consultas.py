@@ -11,6 +11,14 @@ def configuracion_de(plataforma_id):
     return PlatformConnector.query.filter_by(platform_id=plataforma_id).first()
 
 
+def referencias_de_otras(plataforma_id):
+    """`credential_ref` de las configuraciones de las demás plataformas."""
+    filas = (PlatformConnector.query
+             .with_entities(PlatformConnector.credential_ref)
+             .filter(PlatformConnector.platform_id != plataforma_id).all())
+    return [fila.credential_ref for fila in filas]
+
+
 def conector_disponible(plataforma):
     """`True` si la plataforma `conector` tiene una configuración activa de un
     tipo registrado (lo que el ejecutor puede usar)."""
