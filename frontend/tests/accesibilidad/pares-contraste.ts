@@ -82,6 +82,11 @@ export const PARES: ParContraste[] = [
   // DIS-014: insignias de estado de solicitud (`RequestStatusBadge`) sobre `Card`.
   ...Object.entries(ESTADOS_SOLICITUD).map(([estado, { tono }]) =>
     texto(`badge-solicitud-${estado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
+  // DIS-015: Aprobaciones. Texto de las filas y de los diálogos (`text-body-text` en `Card` y
+  // `.nx-modal-glass`, ambos `--color-panel-fill`) y botón secundario ("Rechazar", "Cancelar":
+  // `.nexus-btn-secondary`, `--color-tab-inactive-text` sobre `--color-surface-container-bg`).
+  texto('body-text/panel', '--color-body-text', '--color-panel-fill'),
+  texto('btn-secondary-text/btn-secondary-bg', '--color-tab-inactive-text', '--color-surface-container-bg'),
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },
