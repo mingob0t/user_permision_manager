@@ -11,25 +11,24 @@
  * - Sin refresco periódico (contrato, "Refresco"): botón "Recargar".
  */
 
-import { useMemo, useState } from 'react';
-import { api } from '@/lib/api';
+import Link from 'next/link';
+import { useState } from 'react';
 import { inventoryApi } from '@/lib/access/inventory';
 import type { InventoryParams } from '@/lib/access/types';
-import type { AreaRef } from '@/lib/types';
 import { useAsync } from '@/lib/use-async';
+import { rutaHistorialPlataforma } from '../audit/audit-routes';
 import { Button } from '../form';
-import { useSession } from '../session-provider';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
 import {
   FILTROS_INICIALES,
   type FiltrosInventario,
   InventoryFilters,
-  type PlataformaFiltro,
   hayFiltros,
 } from './inventory-filters';
 import { InventoryTable } from './inventory-table';
 import { ListPager } from './list-pager';
 import { listLoadError } from './request-errors';
+import { useOpcionesAlcance } from './scope-filters';
 
 const NOMBRE_LISTA = 'los accesos del inventario';
 
@@ -50,9 +49,6 @@ export function aParametros(filtros: FiltrosInventario, page: number): Inventory
 }
 
 export function Inventory() {
-  const { session } = useSession();
-  const esSuperadmin = session?.permissions.is_admin ?? false;
-
   const [filtros, setFiltros] = useState<FiltrosInventario>(FILTROS_INICIALES);
   const [page, setPage] = useState(1);
 
@@ -65,24 +61,9 @@ export function Inventory() {
     [clave],
   );
 
-  // Áreas del filtro: las administradas; el superadmin, todas (`GET /areas`).
-  const todas = useAsync<AreaRef[]>(
-    () => (esSuperadmin ? api.areas() : Promise.resolve([])),
-    [esSuperadmin],
-  );
-  const areas = useMemo<AreaRef[]>(
-    () => (esSuperadmin ? (todas.data ?? []) : (session?.managed_areas ?? [])),
-    [esSuperadmin, todas.data, session],
-  );
-
-  // Plataformas del filtro: las de las áreas del alcance.
-  const catalogo = useAsync(() => api.platforms(), []);
-  const plataformas = useMemo<PlataformaFiltro[]>(() => {
-    const ids = new Set(areas.map((a) => a.id));
-    return (catalogo.data ?? [])
-      .filter((p) => esSuperadmin || ids.has(p.area_id))
-      .map(({ id, name, area_id }) => ({ id, name, area_id }));
-  }, [catalogo.data, areas, esSuperadmin]);
+  // Áreas y plataformas del filtro, según el rol (DIS-020: compartido con Auditoría).
+  const opciones = useOpcionesAlcance();
+  const plataformaElegida = opciones.plataformas.find((p) => p.id === filtros.platformId);
 
   function cambiar(cambio: Partial<FiltrosInventario>) {
     setFiltros((prev) => ({ ...prev, ...cambio }));
@@ -99,13 +80,7 @@ export function Inventory() {
 
   return (
     <div className="space-y-4">
-      <InventoryFilters
-        filtros={filtros}
-        areas={areas}
-        plataformas={plataformas}
-        esSuperadmin={esSuperadmin}
-        onChange={cambiar}
-      />
+      <InventoryFilters filtros={filtros} opciones={opciones} onChange={cambiar} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-label" aria-live="polite">
@@ -113,15 +88,27 @@ export function Inventory() {
             ? 'Recargando…'
             : data ? `${data.total} ${data.total === 1 ? 'acceso' : 'accesos'}` : ''}
         </p>
-        {/* `aria-disabled` mientras carga: el foco se queda en el botón (con `disabled` caería en `body`). */}
-        <Button
-          variant="secondary"
-          onClick={recargar}
-          aria-disabled={lista.loading || undefined}
-          className="aria-disabled:opacity-40"
-        >
-          Recargar
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          {/* DIS-020: con una plataforma elegida, su historial en Auditoría. */}
+          {plataformaElegida ? (
+            <Link
+              href={rutaHistorialPlataforma(plataformaElegida.id)}
+              className="nexus-btn nexus-btn-secondary"
+              aria-label={`Historial de ${plataformaElegida.name} en Auditoría`}
+            >
+              Historial
+            </Link>
+          ) : null}
+          {/* `aria-disabled` mientras carga: el foco se queda en el botón (con `disabled` caería en `body`). */}
+          <Button
+            variant="secondary"
+            onClick={recargar}
+            aria-disabled={lista.loading || undefined}
+            className="aria-disabled:opacity-40"
+          >
+            Recargar
+          </Button>
+        </div>
       </div>
 
       {lista.loading && !data ? <Spinner label="Cargando el inventario…" /> : null}

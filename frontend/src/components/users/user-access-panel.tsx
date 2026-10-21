@@ -16,6 +16,7 @@
  * - Refresco con `usePolling` y el intervalo de la preferencia del usuario.
  */
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { grantsApi } from '@/lib/access/grants';
 import type { Access, AccessListParams, AccessOrigin, AccessStatus } from '@/lib/access/types';
@@ -30,6 +31,7 @@ import { ListPager } from '../access/list-pager';
 import { FILTROS } from '../access/my-access';
 import { listLoadError } from '../access/request-errors';
 import { ETIQUETA_CELDA, ResponsiveList, ResponsiveRow } from '../access/responsive-list';
+import { rutaHistorialUsuario } from '../audit/audit-routes';
 import { RevokeAccessDialog } from './revoke-access-dialog';
 
 type Filtro = NonNullable<AccessListParams['status']>;
@@ -322,7 +324,17 @@ export function UserAccessPanel({ user, onClose }: { user: ManagedUser; onClose:
           </h2>
           <p className="break-words text-sm text-label">{user.email}</p>
         </div>
-        <Button variant="secondary" onClick={onClose}>Cerrar accesos</Button>
+        <div className="flex flex-wrap gap-3">
+          {/* DIS-020: historial del usuario en Auditoría. */}
+          <Link
+            href={rutaHistorialUsuario(user.id)}
+            className="nexus-btn nexus-btn-secondary"
+            aria-label={`Historial de ${user.name} en Auditoría`}
+          >
+            Historial
+          </Link>
+          <Button variant="secondary" onClick={onClose}>Cerrar accesos</Button>
+        </div>
       </div>
 
       {user.role === 'administrador' ? (

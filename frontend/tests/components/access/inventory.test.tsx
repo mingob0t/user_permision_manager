@@ -177,6 +177,17 @@ describe('Inventory: filtros', () => {
   });
 });
 
+describe('Inventory: historial (DIS-020)', () => {
+  it('con una plataforma elegida enlaza su historial en Auditoría', async () => {
+    render(<Inventory />);
+    await waitFor(() => expect(opciones('Plataforma')).toContain('Wiki'));
+    expect(screen.queryByRole('link', { name: /Historial/ })).toBeNull();
+    fireEvent.change(screen.getByLabelText('Plataforma'), { target: { value: '14' } });
+    const enlace = screen.getByRole('link', { name: 'Historial de Wiki en Auditoría' });
+    expect(enlace.getAttribute('href')).toBe('/audit/platforms/14');
+  });
+});
+
 describe('Inventory: estados', () => {
   it('carga', () => {
     vi.mocked(inventoryApi.list).mockReturnValue(new Promise(() => {}));
@@ -251,6 +262,8 @@ describe('Inventory: utilidades', () => {
   it('limpiarBusqueda quita control, recorta y limita a 100', () => {
     expect(limpiarBusqueda('\u0000 a\tb \u007f')).toBe('ab');
     expect(limpiarBusqueda('x'.repeat(150))).toHaveLength(BUSQUEDA_MAX);
+    // DIS-020: también C1 (categoría Cc del servidor).
+    expect(limpiarBusqueda('a\u0085b\u009f')).toBe('ab');
   });
 
   it('aParametros omite los filtros vacíos', () => {

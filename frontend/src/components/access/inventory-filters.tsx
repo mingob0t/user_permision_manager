@@ -12,10 +12,12 @@
 
 import { useState } from 'react';
 import type { AccessLevel, AccessOrigin, InventoryParams } from '@/lib/access/types';
-import type { AreaRef } from '@/lib/types';
 import { Button, Field, Select, TextInput } from '../form';
 import { NIVELES } from './access-status-badge';
 import { FILTROS } from './my-access';
+import { type OpcionesAlcance, ScopeSelects } from './scope-filters';
+
+export type { PlataformaFiltro } from './scope-filters';
 
 export type FiltroEstado = NonNullable<InventoryParams['status']>;
 
@@ -48,15 +50,9 @@ export const ORIGENES_INVENTARIO: Record<AccessOrigin, string> = {
 
 export const FILTRO_AREA_ID = 'inventario-filtro-area';
 
-/** Plataforma del filtro: solo lo que el filtro necesita de `Platform`. */
-export interface PlataformaFiltro {
-  id: number;
-  name: string;
-  area_id: number;
-}
-
-// Caracteres de control C0 y DEL: el servidor rechaza `q` con ellos (400).
-const CONTROL = /[\u0000-\u001f\u007f]/g;
+// Caracteres de control (categoría Unicode Cc: C0, DEL y C1): el servidor
+// rechaza `q` con ellos (400, SEG-FNC059-01).
+const CONTROL = /[\u0000-\u001f\u007f-\u009f]/g;
 
 /** Texto de búsqueda listo para enviar. */
 export function limpiarBusqueda(texto: string): string {
@@ -71,22 +67,15 @@ export function hayFiltros(filtros: FiltrosInventario): boolean {
 
 export function InventoryFilters({
   filtros,
-  areas,
-  plataformas,
-  esSuperadmin,
+  opciones,
   onChange,
 }: {
   filtros: FiltrosInventario;
-  areas: AreaRef[];
-  /** Plataformas del alcance; se acotan al área elegida. */
-  plataformas: PlataformaFiltro[];
-  esSuperadmin: boolean;
+  /** Áreas y plataformas del alcance (`useOpcionesAlcance`). */
+  opciones: OpcionesAlcance;
   onChange: (cambio: Partial<FiltrosInventario>) => void;
 }) {
   const [borrador, setBorrador] = useState(filtros.q);
-  const visibles = filtros.areaId === null
-    ? plataformas
-    : plataformas.filter((p) => p.area_id === filtros.areaId);
 
   function buscar(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -110,35 +99,13 @@ export function InventoryFilters({
       </form>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Área">
-          <Select
-            id={FILTRO_AREA_ID}
-            value={filtros.areaId ?? ''}
-            onChange={(event) => {
-              const areaId = event.target.value ? Number(event.target.value) : null;
-              const sigue = plataformas.some(
-                (p) => p.id === filtros.platformId && (areaId === null || p.area_id === areaId));
-              onChange({ areaId, platformId: sigue ? filtros.platformId : null });
-            }}
-          >
-            <option value="">{esSuperadmin ? 'Todas las áreas' : 'Todas mis áreas'}</option>
-            {areas.map((area) => (
-              <option key={area.id} value={area.id}>{area.name}</option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Plataforma">
-          <Select
-            value={filtros.platformId ?? ''}
-            onChange={(event) =>
-              onChange({ platformId: event.target.value ? Number(event.target.value) : null })}
-          >
-            <option value="">Todas las plataformas</option>
-            {visibles.map((plataforma) => (
-              <option key={plataforma.id} value={plataforma.id}>{plataforma.name}</option>
-            ))}
-          </Select>
-        </Field>
+        <ScopeSelects
+          areaId={filtros.areaId}
+          platformId={filtros.platformId}
+          opciones={opciones}
+          areaSelectId={FILTRO_AREA_ID}
+          onChange={onChange}
+        />
         <Field label="Estado">
           <Select
             value={filtros.status}

@@ -104,6 +104,10 @@ export const PARES: ParContraste[] = [
     alfaFondo: 0.3 },
   { ...texto('placeholder/input-sobre-body-bg', '--color-label-text', '--color-surface-container-bg', '--color-body-bg'),
     alfaFondo: 0.3, alfaTexto: 0.85 },
+  // DIS-020: auditoría. Error del rango de fechas (`text-error-text`) bajo los filtros, sobre el
+  // fondo de página. Filas, insignias (`TONOS_BADGE`), detalle en `.nx-modal-glass` y enlaces
+  // `.nexus-btn-secondary` reutilizan pares ya medidos.
+  texto('error-text/body-bg', '--color-error-text', '--color-body-bg'),
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },
