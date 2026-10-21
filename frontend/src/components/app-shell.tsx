@@ -1,9 +1,10 @@
 'use client';
 
-/** Marco de la aplicación: navegación lateral y cabecera con la sesión. */
+/** Marco de la aplicación: navegación lateral, menú móvil (DIS-025) y cabecera con la sesión. */
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { MobileMenu } from './mobile-menu';
 import { meetsRequirement, type RoleRequirement } from './require-role';
 import { SessionProvider, useSession } from './session-provider';
 import { ErrorNote, Spinner } from './ui';
@@ -32,7 +33,12 @@ const NAV: NavItem[] = [
   { href: '/settings', label: 'Ajustes' },
 ];
 
-function Nav() {
+/**
+ * Lista del menú filtrada por rol. La usan la barra lateral (`md` y mayores) y
+ * el menú móvil (DIS-025); `touch` da áreas de 48 px y `onNavigate` cierra el
+ * menú móvil al elegir una opción.
+ */
+function Nav({ touch = false, onNavigate }: { touch?: boolean; onNavigate?: () => void }) {
   const { session } = useSession();
   const pathname = usePathname();
   if (!session) return null;
@@ -50,7 +56,8 @@ function Nav() {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`rounded-lg px-3 py-2 text-sm transition-colors ${
+            onClick={onNavigate}
+            className={`${touch ? 'flex min-h-12 items-center ' : ''}rounded-lg px-3 py-2 text-sm transition-colors ${
               active
                 ? 'bg-primary/15 font-medium text-primary-text'
                 : 'text-label hover:bg-surface-container hover:text-body-text'
@@ -103,14 +110,17 @@ function Frame({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-4 border-b border-panel-border bg-panel-fill px-6 py-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{session.name}</p>
-            <p className="truncate text-xs text-label">
-              <RoleLabel role={session.role} />
-              {session.managed_areas.length > 0
-                ? ` · ${session.managed_areas.length} área(s)`
-                : ''}
-            </p>
+          <div className="flex min-w-0 items-center gap-3">
+            <MobileMenu>{(close) => <Nav touch onNavigate={close} />}</MobileMenu>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{session.name}</p>
+              <p className="truncate text-xs text-label">
+                <RoleLabel role={session.role} />
+                {session.managed_areas.length > 0
+                  ? ` · ${session.managed_areas.length} área(s)`
+                  : ''}
+              </p>
+            </div>
           </div>
           <a
             href="/logout"
