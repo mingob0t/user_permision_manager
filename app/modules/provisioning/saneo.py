@@ -56,6 +56,15 @@ MOTIVO_HOST_NO_AUTORIZADO = 'host_no_autorizado'
 MOTIVO_CREDENCIAL_NO_ENCONTRADA = 'credencial_no_encontrada'
 MOTIVO_GESTOR_NO_DISPONIBLE = 'gestor_no_disponible'
 MOTIVO_GESTOR_NO_CONFIGURADO = 'gestor_no_configurado'
+# Conector API HTTP (FNC-051).
+MOTIVO_CONFIGURACION_INVALIDA = 'configuracion_invalida'
+MOTIVO_DESTINO_NO_PERMITIDO = 'destino_no_permitido'
+MOTIVO_TLS = 'tls_no_valido'
+MOTIVO_VALOR_NO_VALIDO = 'valor_no_valido'
+MOTIVO_HTTP_RECHAZADO = 'http_rechazado'
+MOTIVO_HTTP_TRANSITORIO = 'http_transitorio'
+MOTIVO_RED = 'red_no_disponible'
+MOTIVO_REDIRECCION = 'redireccion_no_permitida'
 
 MENSAJES = {
     MOTIVO_TIEMPO_AGOTADO: 'Tiempo de espera agotado.',
@@ -72,6 +81,14 @@ MENSAJES = {
     MOTIVO_CREDENCIAL_NO_ENCONTRADA: 'La credencial del conector no existe en el gestor de secretos.',
     MOTIVO_GESTOR_NO_DISPONIBLE: 'El gestor de secretos no respondió.',
     MOTIVO_GESTOR_NO_CONFIGURADO: 'El gestor de secretos no está configurado.',
+    MOTIVO_CONFIGURACION_INVALIDA: 'La configuración del conector no es válida.',
+    MOTIVO_DESTINO_NO_PERMITIDO: 'El host del conector resuelve a una dirección no pública.',
+    MOTIVO_VALOR_NO_VALIDO: 'La cuenta o el nivel no son válidos para la plataforma.',
+    MOTIVO_TLS: 'No se pudo validar el certificado TLS de la plataforma.',
+    MOTIVO_HTTP_RECHAZADO: 'La plataforma rechazó la operación.',
+    MOTIVO_HTTP_TRANSITORIO: 'La plataforma no pudo atender la operación por ahora.',
+    MOTIVO_RED: 'No se pudo conectar con la plataforma.',
+    MOTIVO_REDIRECCION: 'La plataforma respondió con una redirección, que no se sigue.',
     # Motivos del escritor LDAP (`directory/errors.py`).
     MOTIVO_FUERA_DE_BASE: 'El grupo o la persona están fuera de la base autorizada.',
     MOTIVO_GRUPO_INEXISTENTE: 'El grupo no existe en el directorio.',

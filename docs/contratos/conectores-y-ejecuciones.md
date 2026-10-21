@@ -2,12 +2,12 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.1 (2026-10-21) |
-| Proveedor | backend (FNC-061, FNC-062; base FNC-049, FNC-050) |
+| Versión | 1.2 (2026-10-21) |
+| Proveedor | backend (FNC-051, FNC-061, FNC-062; base FNC-049, FNC-050) |
 | Consumidores | web (FNC-069; pantallas DIS-022, DIS-018) |
 | Solicitudes | — |
 
-Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: los tipos `api`, `ssh` y `bd` (FNC-051 a FNC-053) esperan; su esquema de `params` se agrega como versión aditiva.
+Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: el tipo `api` (FNC-051) ya tiene esquema de `params` (§ siguiente); `ssh` y `bd` (FNC-052, FNC-053) esperan y agregarán el suyo como versión aditiva.
 
 ## Endpoints
 
@@ -44,6 +44,21 @@ Conectores: solo superadmin (SEC-CON-11).
   "credential_status": "ok", "active": true, "updated_at": "2026-10-14T14:00:00Z" }
 ```
 `credential_status`: `ok` \| `no_encontrada` \| `sin_verificar`. Nunca se devuelve el valor de la credencial.
+
+## `params` del tipo `api` (FNC-051)
+Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`.
+| Campo | Tipo | Obligatorio | Regla |
+|---|---|---|---|
+| `base_path` | string | No | Empieza con `/`; letras, dígitos y `. _ ~ / : -`; sin `..`; sin marcas |
+| `auth` | object | Sí | `esquema`: `bearer` (`Authorization: Bearer`), `basic` (`Authorization: Basic`, la credencial debe traer usuario) o `cabecera` (el secreto en la cabecera `nombre`; no puede ser `Host`, `Authorization`, `Content-Type`, etc.) |
+| `otorgar`, `revocar` | object | Sí | `metodo` (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`), `ruta` (misma regla que `base_path`, admite marcas), `consulta` (≤ 5 campos de texto con marcas), `cuerpo` (objeto JSON; solo con `POST`/`PUT`/`PATCH`; marcas solo en valores de texto; ≤ 4 niveles), `sin_cambios` (lista de estados 400–499 que cuentan como «ya estaba así») |
+| `consultar` | object | No | Igual que `otorgar`; sin él, consultar da `consulta_no_disponible` (permanente) |
+
+- Marcas permitidas (datos del servidor, nunca texto del usuario): `{correo}`, `{nivel}`, `{plataforma}`. Cualquier otra, o una llave suelta → `422`.
+- Ejemplo: `{"base_path": "/api/v1", "auth": {"esquema": "bearer"}, "otorgar": {"metodo": "POST", "ruta": "/usuarios", "cuerpo": {"email": "{correo}", "rol": "{nivel}"}}, "revocar": {"metodo": "DELETE", "ruta": "/usuarios/{correo}"}, "consultar": {"metodo": "GET", "ruta": "/usuarios", "consulta": {"email": "{correo}"}}}`.
+- Salida: solo HTTPS; el host resuelve a IP públicas y se conecta a la IP validada; sin redirecciones; TLS validado (CA del sistema o `CONNECTOR_HTTP_CA_FILE`).
+- Estados: 2xx éxito; `sin_cambios` (por defecto `[404, 410]` al revocar); 408, 425, 429, 500, 502, 503 y 504 transitorios; 3xx y el resto, permanentes. `consultar`: 2xx presente, 404 ausente.
+- Motivos nuevos en la bitácora (mensaje genérico; detalle solo `HTTP <estado>`): `configuracion_invalida`, `valor_no_valido` (cuenta o nivel vacíos, `.`/`..` o con segmento así; `{correo}` sin `@`), `destino_no_permitido`, `tls_no_valido`, `http_rechazado`, `http_transitorio`, `red_no_disponible`, `redireccion_no_permitida`.
 
 ## `DELETE /platforms/<id>/connector`
 - `409 plataforma_con_accesos` si hay accesos vigentes. Respuesta `{"status": "success"}`. Auditoría `conector_eliminado`.
@@ -122,3 +137,4 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | 1 | 2026-10-20 | Aclaración (FNC-062): reintento con cuerpo `{}` y casos de `409`; `from`/`to` sin zona en la hora local del proceso, como la auditoría |
 | 1 | 2026-10-20 | Aclaración (FNC-061): `DELETE` y `POST .../test` con cuerpo `{}` (convención de escrituras; sin JSON → `415`; cualquier campo → `400 campo_no_permitido`); `PUT` con campo fuera de la lista → `400 campo_no_permitido`; plataforma o configuración inexistente → `404`; cambiar `type` con accesos vigentes → `409 plataforma_con_accesos`; `test` deja `credential_status` en `ok` o `no_encontrada` |
 | 1.1 | 2026-10-21 | Aclaración (FNC-061, auditor-seguridad): `POST .../test` exige cuerpo `{}` (sin Content-Type JSON → `415`) y actualiza `credential_status`; error aditivo `409 conector_concurrente` en el `PUT` que crea |
+| 1.2 | 2026-10-21 | Aditivo (FNC-051): esquema de `params` del tipo `api` (`422 fields.params.<campo>`) y 8 motivos nuevos en la bitácora de ejecuciones (incluye `valor_no_valido`, auditoría) |
