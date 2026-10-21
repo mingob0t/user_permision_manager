@@ -3,6 +3,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Conector tipo API HTTP (`api`): otorgar, revocar y consultar con plantillas seguras (`{correo}`, `{nivel}`, `{plataforma}`), autenticación por cabecera con la credencial del gestor, estados HTTP clasificados (404 al revocar = ya revocado), destino resuelto y validado contra IP no públicas, conexión a la IP validada, TLS verificado, sin redirecciones; variable `CONNECTOR_HTTP_CA_FILE` y contrato 1.2 (FNC-051, 2026-10-21).
 - Navegación en móvil: botón "Menú" en la cabecera bajo `md` con panel de las mismas entradas por rol, cierre con Escape, al elegir opción o con clic fuera, foco atrapado y áreas de 48 px (DIS-025, 2026-10-21).
 - Inicio por rol en el Panel: mis solicitudes y mis accesos (usuario), pendientes y resumen de sus áreas (admin de área) o global (superadmin), con cada contador enlazado a su pantalla y refresco periódico (DIS-024, 2026-10-21).
 - API de configuración de conectores solo para el superadmin: `GET`/`PUT`/`DELETE /platforms/<id>/connector` y prueba de conexión sin cambios (`POST .../test`), con lista blanca de campos, hosts de `CONNECTOR_ALLOWED_HOSTS`, `409` con accesos vigentes, auditoría sin secretos y caché de credenciales vaciada al guardar o borrar (FNC-061, 2026-10-20).

@@ -59,7 +59,7 @@ def test_referencia_invalida(app, referencia):
 
 
 def test_tipo_sin_implementar_o_desconocido(app):
-    for tipo in ('api', 'ssh', 'bd', 'otro', None):
+    for tipo in ('ssh', 'bd', 'otro', None):
         _, errores = validar_configuracion(datos(type=tipo), ENTORNO)
         assert 'type' in errores, tipo
 
