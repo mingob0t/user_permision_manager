@@ -55,7 +55,12 @@
 ## Riesgos y reversión
 - Reversión: retirar la cuenta de servicio.
 
+## Requisitos de seguridad heredados de FNC-050 (auditor-seguridad)
+- Al rotar una credencial, llamar a `connectors.credenciales.limpiar_cache()` (o esperar `CONNECTOR_CREDENTIAL_CACHE_SECONDS`) para no seguir usando el valor anterior (B4).
+- Implementar `ProveedorSecretosVaultwarden.obtener` respetando el mapeo de errores: no encontrada → `CredencialNoEncontrada`; caído → `GestorNoDisponible`; sin configurar → `GestorNoConfigurado`; nunca el valor en el texto.
+
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-20 | Recomendaciones de auditor-seguridad sobre FNC-050 agregadas (sección «Requisitos de seguridad heredados de FNC-050») |

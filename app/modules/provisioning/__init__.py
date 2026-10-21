@@ -8,5 +8,5 @@ from app.modules.provisioning.ldap_provider import ProveedorLdap
 from app.modules.provisioning.providers import registrar_proveedor
 from app.modules.provisioning.tipos import PROVEEDOR_LDAP
 
-# `conector` lo registra FNC-050; mientras tanto da `conector_no_disponible`.
+# `conector` lo registra `connectors.registrar(app)` en `create_app()` (FNC-050).
 registrar_proveedor(PROVEEDOR_LDAP, ProveedorLdap)

@@ -3,6 +3,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Conectores: interfaz común, registro de tipos, configuración por plataforma sin secretos (migración `0009`), lista blanca de hosts `CONNECTOR_ALLOWED_HOSTS`, credenciales por referencia en ejecución (entorno en dev; Vaultwarden en FNC-068) y proveedor `conector` del ejecutor con tipo `noop` de prueba (FNC-050, 2026-10-20).
 - Estructura inicial del proyecto (FNC-001, 2026-10-13).
 - ESLint estándar de Next.js en el frontend y línea base de typecheck, lint y build (FNC-024, 2026-10-13).
 - Suite base de pruebas del backend con pytest: fixtures, BD temporal y clientes por rol (FNC-019, 2026-10-13).
