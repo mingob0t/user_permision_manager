@@ -145,6 +145,7 @@ def create_app(config_overrides=None):
     from app.modules.access_requests.api import access_requests_api_bp
     from app.modules.access.inventario_api import access_inventory_api_bp
     from app.modules.provisioning.api import provisioning_api_bp
+    from app.modules.connectors.api import connectors_api_bp
     from app.modules.home.api import home_api_bp
 
 
@@ -166,7 +167,7 @@ def create_app(config_overrides=None):
                areas_api_bp, directory_api_bp, platforms_api_bp,
                audit_api_bp, access_requests_api_bp, access_api_bp,
                access_inventory_api_bp, provisioning_api_bp,
-               home_api_bp):
+               connectors_api_bp, home_api_bp):
         csrf.exempt(bp)
         app.register_blueprint(bp)
 
