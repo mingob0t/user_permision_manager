@@ -183,6 +183,22 @@ describe('usePolling', () => {
     expect(result.current.data).toBe('ok');
   });
 
+  it('DIS-024: durante el reintento tras un fallo conserva el último dato válido', async () => {
+    const load = vi.fn().mockResolvedValue('ok');
+    const { result } = renderHook(() => usePolling(load, { intervalSeconds: 15 }));
+    await avanzar(0);
+    load.mockRejectedValueOnce(new ApiError(500, 'falla'));
+    await avanzar(15 * S);
+    expect(result.current.error).toBe('falla');
+
+    // Reintento en curso: `useAsync` deja `error` en null y `data` en null.
+    load.mockReturnValueOnce(new Promise(() => {}));
+    await avanzar(esperaPolling(15, 1, () => 0));
+    expect(result.current.loading).toBe(true);
+    expect(result.current.error).toBeNull();
+    expect(result.current.data).toBe('ok');
+  });
+
   it('un error con mensaje vacío cuenta como fallo (revisión)', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const load = vi.fn().mockRejectedValue(new Error(''));
