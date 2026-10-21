@@ -47,3 +47,4 @@ _Se completa al aprobar la tarea._
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-19 | DIS-002 (revisión): botón `danger` (`form.tsx:84`, `!bg-error`) texto blanco sobre `#ef4444` = 3.76:1 (falla previa, sin cambio en DIS-002). Proponer `--color-error-solid` + `--color-on-error`, como DIS-001 hizo con `primary-solid`/`on-primary` |
+| 2026-10-20 | Parte del botón primario resuelta en DIS-015 (auditor-accesibilidad): `.nexus-btn-primary` (`components.css`) usa `--color-primary-solid` y `--color-on-primary` (antes `--color-primary` con blanco: obsidian 2,56, rose 3,67, emerald 3,77, violet 4,23); par `nexus-btn-primary` en la prueba de contraste, pasa en los 7 temas. Sigue pendiente: el par `button-text/button-bg` (tokens `--color-button-*`, sin uso en clases ni componentes; falla conocida en emerald, rose y violet), el botón `danger` (3,76:1) y advertencia/hover del secundario |

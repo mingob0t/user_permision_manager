@@ -1,8 +1,8 @@
 import { AppShell } from '@/components/app-shell';
+import { ApprovalsInbox } from '@/components/access/approvals-inbox';
 import { RequireRole } from '@/components/require-role';
-import { EmptyNote } from '@/components/ui';
 
-/** Ruta reservada por FNC-070; el contenido llega con DIS-015. */
+/** Bandeja de aprobaciones (DIS-015): admin de área (sus áreas) y superadmin (todas). */
 export default function Page() {
   return (
     <AppShell>
@@ -10,9 +10,11 @@ export default function Page() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-semibold">Aprobaciones</h1>
-            <p className="mt-1 text-sm text-label">Solicitudes pendientes de las áreas que administras.</p>
+            <p className="mt-1 text-sm text-label">
+              Solicitudes de acceso de tus áreas (todas, si eres superadmin). Aprueba o rechaza con un motivo.
+            </p>
           </div>
-          <EmptyNote message="Esta sección todavía no está disponible." />
+          <ApprovalsInbox />
         </div>
       </RequireRole>
     </AppShell>
