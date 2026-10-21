@@ -46,3 +46,5 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+
+- 2026-10-21 (auditoría de seguridad DIS-019, Baja, previo): `users-list.tsx:137,233,308,322,457` muestran `err.message` del servidor (editar, buscar en directorio, purgar, eliminar). Al dividir el monolito, pasar a mensajes por código como `admin-role-errors.ts`.

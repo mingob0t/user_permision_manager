@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | usuarios |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local en la rama, sin push |
 | **Rama** | `dis/DIS-019-alta-directorio-elevacion` |
