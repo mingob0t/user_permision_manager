@@ -3,6 +3,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Usuarios: alta de cuentas en el directorio corporativo desde "Nuevo usuario" (identificador, correo, nombre, apellidos y áreas; sin contraseña, la maneja el inicio de sesión corporativo) con errores por campo; el superadmin hace admin de área a un usuario eligiendo sus áreas, cambia esas áreas o le quita el rol, con el efecto explicado antes de confirmar. La edición ya no ofrece rol ni contraseña (salvo la cuenta de emergencia) (DIS-019, 2026-10-21).
 - Navegación en móvil: botón "Menú" en la cabecera bajo `md` con panel de las mismas entradas por rol, cierre con Escape, al elegir opción o con clic fuera, foco atrapado y áreas de 48 px (DIS-025, 2026-10-21).
 - Inicio por rol en el Panel: mis solicitudes y mis accesos (usuario), pendientes y resumen de sus áreas (admin de área) o global (superadmin), con cada contador enlazado a su pantalla y refresco periódico (DIS-024, 2026-10-21).
 - API de configuración de conectores solo para el superadmin: `GET`/`PUT`/`DELETE /platforms/<id>/connector` y prueba de conexión sin cambios (`POST .../test`), con lista blanca de campos, hosts de `CONNECTOR_ALLOWED_HOSTS`, `409` con accesos vigentes, auditoría sin secretos y caché de credenciales vaciada al guardar o borrar (FNC-061, 2026-10-20).

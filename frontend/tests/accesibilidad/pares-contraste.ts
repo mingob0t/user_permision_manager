@@ -116,6 +116,15 @@ export const PARES: ParContraste[] = [
   // DIS-025 (auditor-accesibilidad): borde `border-primary` del panel del menú móvil y anillo de
   // foco de sus botones y enlaces; del lado del panel lo mide `foco-primary/panel` y del lado del
   // contenido, `tab-indicador/body-bg` (no textuales, 3:1). Sin par nuevo.
+  // DIS-019: alta en el directorio y elevación a admin, en `.nx-modal-glass` (`--color-panel-fill`).
+  // Textos, pistas, errores, aviso y botones reutilizan pares ya medidos (`label-text/panel`,
+  // `body-text/panel`, `error-text/panel`, `success-text/panel`, `nexus-btn-primary`,
+  // `btn-secondary-*`, `primary-text/primary-10`; anillo `ring-primary` = `foco-primary/panel`).
+  // Nuevo: relleno de la casilla marcada (`.nexus-checkbox:checked`, `--color-primary` sobre panel),
+  // no textual. El borde de la casilla sin marcar (`--color-panel-border`) linda con el panel
+  // (`--color-panel-fill`, fondo real del modal) y falla 3:1 en los 7 temas (1,42–2,02:1, medido por
+  // auditor-accesibilidad): es de `.nexus-checkbox` (compartido) y lo corrige DIS-039.
+  { id: 'checkbox-marcada/panel', texto: '--color-primary', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },

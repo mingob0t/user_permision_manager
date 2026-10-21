@@ -52,3 +52,5 @@ _Se completa al aprobar la tarea._
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-20 | Marcada como requisito antes de staging o prod (auditorías de FNC-056 y FNC-058) |
+
+- 2026-10-21 (auditoría de seguridad DIS-019): `POST /users/directory`, `PUT /users/<id>` y `PUT /users/<id>/managed-areas` sin `escritura_del_portal`; cubrir con el CSRF definitivo.
