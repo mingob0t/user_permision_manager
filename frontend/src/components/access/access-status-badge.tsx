@@ -13,7 +13,7 @@ export const NIVELES: Record<AccessLevel, string> = {
   admin: 'Admin',
 };
 
-const ESTADOS: Record<AccessStatus, { texto: string; tono: Tono }> = {
+export const ESTADOS: Record<AccessStatus, { texto: string; tono: Tono }> = {
   activo: { texto: 'Con acceso', tono: 'success' },
   en_proceso: { texto: 'Acceso en proceso', tono: 'sky' },
   fallido: { texto: 'Acceso fallido', tono: 'error' },

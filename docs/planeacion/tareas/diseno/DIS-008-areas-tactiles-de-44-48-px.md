@@ -47,3 +47,5 @@ _Se completa al aprobar la tarea._
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-19 | DIS-017 (auditor-accesibilidad): botones Editar/Eliminar de la tabla de `platform-admin.tsx` miden 24 px de alto; heredado, no corregido en DIS-017 |
+
+- 2026-10-20 (auditoría DIS-018): en `users-list.tsx` los botones de fila "Editar", "Eliminar" y el nuevo "Accesos" (`px-2 py-1 text-xs`) miden ~28 px; llevarlos juntos a 48 px (`min-h-12` o `Button variant="secondary"`).

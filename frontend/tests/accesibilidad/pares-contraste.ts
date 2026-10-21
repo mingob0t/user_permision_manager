@@ -9,6 +9,7 @@
  * DIS-002: los estados (success, error, warning, info) como texto, con su
  * variante `*-text`, sobre panel y sobre su propio tinte (`bg-success/15`...).
  */
+import { ESTADOS as ESTADOS_ACCESO } from '@/components/access/access-status-badge';
 import { ESTADOS_SOLICITUD } from '@/components/access/request-status-badge';
 import { MIN_NO_TEXTO, MIN_TEXTO } from '../utils/wcag';
 
@@ -90,6 +91,12 @@ export const PARES: ParContraste[] = [
   // `--color-primary`: 2,56–4,23:1 en obsidian, rose, emerald y violet).
   texto('nexus-btn-primary', '--color-on-primary', '--color-primary-solid'),
   texto('btn-secondary-text/btn-secondary-bg', '--color-tab-inactive-text', '--color-surface-container-bg'),
+  // DIS-018: accesos de un usuario. Insignias de estado de acceso (`AccessStatusBadge`) sobre `Card`;
+  // el resto del panel reutiliza pares ya medidos (`body-text/panel`, `label-text/panel`,
+  // `success-text/panel`, `btn-secondary-*`, `nexus-btn-primary`, `primary-text/primary-10`,
+  // `label-text/body-bg`, `body-text/body-bg`; anillo de foco `ring-primary` en la página = `tab-indicador/body-bg`).
+  ...Object.entries(ESTADOS_ACCESO).map(([estado, { tono }]) =>
+    texto(`badge-acceso-${estado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },
