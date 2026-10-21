@@ -8,10 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | usuarios |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | En curso |
 | **Creada** | 2026-10-13 |
-| **Estatus Git** | — |
-| **Rama** | `dis/DIS-018-usuarios-accesos-revocacion` |
+| **Estatus Git** | Rama local |
+| **Rama** | `dis/DIS-018-accesos-usuario-revocacion` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -61,3 +61,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-20 | Aprobada por el orquestador (modo autónomo) y En curso en el worktree `pokemon-wt-d023` |
