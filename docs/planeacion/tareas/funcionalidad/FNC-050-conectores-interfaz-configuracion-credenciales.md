@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | conectores |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local en `fnc/FNC-050-conectores-base`, sin push |
 | **Rama** | `fnc/FNC-050-conectores-base` |
