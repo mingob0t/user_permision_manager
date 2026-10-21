@@ -28,6 +28,10 @@ APP_NAME="${APP_NAME:-nexus}"
 problems=0
 warnings=0
 
+# Revisión de VAULTWARDEN_* y del bind LDAP (FNC-068).
+# shellcheck source=deploy/secretos.sh
+. "$(dirname "${BASH_SOURCE[0]}")/secretos.sh"
+
 # Color solo en terminal: al redirigir a un fichero o a un pipe, texto plano.
 if [[ -t 1 ]]; then
     c_ok=$'\033[32m'; c_warn=$'\033[33m'; c_bad=$'\033[31m'
@@ -264,6 +268,14 @@ if [[ -f .env ]]; then
     grep -qE '^SECRET_KEY=.+' .env \
         && ok "SECRET_KEY definida" \
         || bad "SECRET_KEY sin definir: las sesiones no serían seguras"
+    # Vaultwarden (ADR-005): solo nombres y formato, nunca valores.
+    while read -r nivel texto; do
+        case "$nivel" in
+            OK) ok "$texto" ;;
+            AVISO) warn "$texto" ;;
+            *) bad "$texto" ;;
+        esac
+    done < <(revisar_vaultwarden .env)
 else
     bad ".env ausente — copiar de .env.example y rellenar credenciales"
 fi

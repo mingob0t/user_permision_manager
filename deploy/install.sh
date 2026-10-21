@@ -246,6 +246,15 @@ fi
 # Contiene credenciales de base de datos: solo el usuario del servicio.
 chown "$SVC_USER:$SVC_GROUP" "$PREFIX/.env"
 chmod 600 "$PREFIX/.env"
+# Vaultwarden y bind LDAP (FNC-068): mismas reglas que preflight; los valores
+# los pone una persona en el .env, nunca el instalador.
+# shellcheck source=deploy/secretos.sh
+. "$SRC/deploy/secretos.sh"
+if ! salida_vw="$(revisar_vaultwarden "$PREFIX/.env")"; then
+    printf '%s\n' "$salida_vw" | sed 's/^/    /'
+    die "Corregir las variables de Vaultwarden del .env (ver deploy/README.md)."
+fi
+printf '%s\n' "$salida_vw" | sed 's/^/    /'
 chown -R "$SVC_USER:$SVC_GROUP" "$PREFIX" "$LOGDIR"
 
 # --- 4. Backend --------------------------------------------------------------
