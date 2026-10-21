@@ -39,7 +39,7 @@ app/
     ├── access_requests/ # Solicitudes: models, tipos, catalogo (P1 y estado del actor), services (crear), serializacion, api.py (catalog, POST, mine) (FNC-056); approvals (bandeja, aprobar, rechazar) y rutas inbox/approve/reject (FNC-057); consultas (`mias`, FNC-066)
     ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054); api.py y serializacion.py (FNC-058); inventario e inventario_api (FNC-059)
     ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049); api, consultas, serializacion y reintento (FNC-062)
-    ├── connectors/    # Conectores (FNC-050): base (interfaz), registry (tipos), models (platform_connectors), validacion, credenciales (fuente y caché), provider (proveedor `conector`), consultas, noop (solo dev/pruebas), configuracion (CONNECTOR_*)
+    ├── connectors/    # Conectores (FNC-050): base (interfaz), registry (tipos), models (platform_connectors), validacion, credenciales (fuente y caché), provider (proveedor `conector`), consultas, noop (solo dev/pruebas), configuracion (CONNECTOR_*); api y prueba (FNC-061)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión; `tiene_conector` desde FNC-050) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060); rutas heredadas
     ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
@@ -225,6 +225,17 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 
 - `from`/`to` sin zona: hora local del proceso (como la auditoría), comparadas en UTC; un extremo que desborda al convertir → `400 parametro_invalido` (SEG-062-03).
 - No se envían `idempotency_key`, `locked_by` ni `locked_at`. Área de un trabajo = la de la plataforma al encolar (decisión del orquestador, pendiente de validar en la prueba de concepto).
+
+### 4.3.7 Conectores — `app/modules/connectors/api.py` (`/api/v1`, FNC-061)
+
+| Método y ruta | Protección | Qué hace |
+|---|---|---|
+| `GET /platforms/<id>/connector` | `admin_required` (SEC-CON-11; admin de área y usuario `403`) | Forma `Connector` (solo `credential_ref`, nunca el valor). Plataforma o configuración inexistente → `404`. |
+| `PUT /platforms/<id>/connector` | `admin_required` + `escritura_del_portal` | Crea o reemplaza. Orden: `404` → `400 cuerpo_invalido`/`campo_no_permitido` (lista blanca `type`, `host`, `port`, `params`, `credential_ref`, `active`) → `409 plataforma_sin_conector` → `422 validacion` (`validar_configuracion` con `referencias_de_otras`; host de `CONNECTOR_ALLOWED_HOSTS`) → cambiar `type` con `accesos_vigentes > 0` → `409 plataforma_con_accesos`. Audita `conector_configurado` (antes/después de lo que cambió; nada si no cambia) y llama a `limpiar_cache()` tras el commit. |
+| `DELETE /platforms/<id>/connector` | `admin_required` + `escritura_del_portal` | Cuerpo `{}`. `404`; con `accesos_vigentes > 0` → `409 plataforma_con_accesos`. Audita `conector_eliminado` (antes) y `limpiar_cache()`. |
+| `POST /platforms/<id>/connector/test` | `admin_required` + `escritura_del_portal` | Cuerpo `{}`. `prueba.probar_conexion`: `consultar` del proveedor `conector` con la cuenta del superadmin (no otorga ni revoca), tras vaciar la caché. `200` con `result` `ok`/`error` y mensaje genérico; motivo solo al log. `credential_status` → `ok` o `no_encontrada`. Audita `conector_probado`. |
+
+- Decisiones del orquestador (pendientes de validar en la prueba de concepto): ficha FNC-061.
 
 ### 4.3.6 Inicio — `app/modules/home/api.py` (`/api/v1`, FNC-066)
 
@@ -425,6 +436,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - Contraseñas locales y cuenta de emergencia (FNC-077): `tests/users/test_contrasenas_locales.py`; `peticiones_auth.activar_login_local_de_todas(monkeypatch, entorno)`.
   - Alta, edición y baja de áreas por el admin (FNC-045): `tests/areas/test_alta_y_baja_por_admin.py`.
   - Ejecutor de aprovisionamiento (FNC-049): `tests/provisioning/` (encolado, reintentos, permanentes, reserva, idempotencia, saneo, proveedor LDAP sobre `MOCK_SYNC`, worker y comando). `conftest.py`: `cola_falsa` (cola RQ en el mismo proceso, como `is_async=False`, sin Redis), `proveedor_simulado`, `avisos`.
+  - API de conectores (FNC-061): `tests/connectors/test_api.py` (solo superadmin, 404, 422 por campo, lista blanca, `409` sin conector o con accesos, auditoría, caché, prueba de conexión sin secretos) y 4 casos en la matriz.
   - Conectores (FNC-050): `tests/connectors/` (esquema sin secretos, credenciales y caché, configuración, validación, `noop` otorgar → revocar con el ejecutor, referencia inexistente, credencial fuera de bitácora, auditoría y logs, `tiene_conector`). `conftest.py`: `entorno_conector`, `conector_noop`, `crear_conector`.
   - Accesos otorgados (FNC-054): `tests/access/` (servicio, estados, P5, alcance, unicidad en BD, puntos de extensión y punta a punta con `DirectorioMock` y `cola_falsa`).
   - Plataformas (FNC-046): `tests/platforms/` (tipo, DN, derivación, avisos, 409, auditoría; regresión SEG-24).

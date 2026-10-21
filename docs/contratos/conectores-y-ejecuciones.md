@@ -118,3 +118,4 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | 1 | 2026-10-19 | Aditivo (FNC-049): `status` `cancelado` (un otorgar en espera que una revocación posterior de la misma terna dejó sin efecto; final, no se reintenta) |
 | 1 | 2026-10-15 | Redacción: P10 resuelto, el aviso de fallo respeta `pref_email_notifications` (FNC-048) |
 | 1 | 2026-10-20 | Aclaración (FNC-062): reintento con cuerpo `{}` y casos de `409`; `from`/`to` sin zona en la hora local del proceso, como la auditoría |
+| 1 | 2026-10-20 | Aclaración (FNC-061): `DELETE` y `POST .../test` con cuerpo `{}` (convención de escrituras; sin JSON → `415`; cualquier campo → `400 campo_no_permitido`); `PUT` con campo fuera de la lista → `400 campo_no_permitido`; plataforma o configuración inexistente → `404`; cambiar `type` con accesos vigentes → `409 plataforma_con_accesos`; `test` deja `credential_status` en `ok` o `no_encontrada` |

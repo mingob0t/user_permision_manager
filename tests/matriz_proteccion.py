@@ -269,6 +269,28 @@ def _con_trabajo_fallido(esc, monkeypatch):
     monkeypatch.setattr(queue, 'cola', lambda conexion=None, **_: falsa)
 
 
+def _con_conector_noop(esc, monkeypatch):
+    """Plataforma del escenario con conector `noop` y su credencial ficticia
+    en el entorno de dev (FNC-061)."""
+    from app.modules.core.models import Platform
+    from tests.connectors.conftest import (HOST_PERMITIDO, SECRETO_FICTICIO,
+                                           VARIABLE_CREDENCIAL, crear_conector)
+
+    monkeypatch.setenv('APP_ENV', 'development')
+    monkeypatch.setenv('CONNECTOR_ALLOWED_HOSTS', HOST_PERMITIDO)
+    monkeypatch.setenv(VARIABLE_CREDENCIAL, SECRETO_FICTICIO)
+    plataforma = db.session.get(Platform, esc.plataforma_id)
+    plataforma.integration_type = 'conector'
+    db.session.commit()
+    crear_conector(plataforma)
+
+
+def _conector_noop(esc):
+    from tests.connectors.conftest import HOST_PERMITIDO, REFERENCIA
+    return {'json': {'type': 'noop', 'host': HOST_PERMITIDO, 'port': 443,
+                     'params': {}, 'credential_ref': REFERENCIA}}
+
+
 def _nueva_solicitud(esc):
     return {'json': {'platform_id': esc.plataforma_id, 'level': 'usuario'}}
 
@@ -485,6 +507,20 @@ CASOS = (
          lambda esc: f'{A}/provisioning/jobs/{esc.trabajo_id}/retry',
          solo_superadmin(), _json({}), _con_trabajo_fallido,
          nota='P10: solo el superadmin reintenta; no fallido: 409'),
+    # ---- Conectores (connectors/api.py, FNC-061, SEC-CON-11) ----
+    Caso('GET', f'{A}/platforms/<int:platform_id>/connector',
+         _plataforma('/connector'), solo_superadmin(),
+         preparar=_con_conector_noop, nota='Sin configuración: 404'),
+    Caso('PUT', f'{A}/platforms/<int:platform_id>/connector',
+         _plataforma('/connector'), solo_superadmin(), _conector_noop,
+         _con_conector_noop,
+         nota='El admin de área recibe 403 aunque administre el área'),
+    Caso('DELETE', f'{A}/platforms/<int:platform_id>/connector',
+         _plataforma('/connector'), solo_superadmin(), _json({}),
+         _con_conector_noop, nota='Con accesos vigentes: 409'),
+    Caso('POST', f'{A}/platforms/<int:platform_id>/connector/test',
+         _plataforma('/connector/test'), solo_superadmin(), _json({}),
+         _con_conector_noop, nota='Fallo: 200 con result "error" genérico'),
 )
 
 # Entradas inválidas: con un rol que pasa la protección, la validación
@@ -520,4 +556,7 @@ CASOS_400 = (
     ('GET', f'{A}/access-requests/inbox?per_page=0', _sin_cuerpo),
     ('GET', f'{A}/provisioning/jobs?status=otro', _sin_cuerpo),
     ('GET', f'{A}/provisioning/jobs?per_page=101', _sin_cuerpo),
+    # FNC-061: la lista blanca va antes del 409 de plataforma sin conector.
+    ('PUT', f'{A}/platforms/{{plataforma_id}}/connector',
+     _json({'credential_status': 'ok'})),
 )

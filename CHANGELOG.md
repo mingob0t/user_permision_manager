@@ -3,6 +3,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- API de configuración de conectores solo para el superadmin: `GET`/`PUT`/`DELETE /platforms/<id>/connector` y prueba de conexión sin cambios (`POST .../test`), con lista blanca de campos, hosts de `CONNECTOR_ALLOWED_HOSTS`, `409` con accesos vigentes, auditoría sin secretos y caché de credenciales vaciada al guardar o borrar (FNC-061, 2026-10-20).
 - Conectores: interfaz común, registro de tipos, configuración por plataforma sin secretos (migración `0009`), lista blanca de hosts `CONNECTOR_ALLOWED_HOSTS`, credenciales por referencia en ejecución (entorno en dev; Vaultwarden en FNC-068) y proveedor `conector` del ejecutor con tipo `noop` de prueba (FNC-050, 2026-10-20).
 - Estructura inicial del proyecto (FNC-001, 2026-10-13).
 - ESLint estándar de Next.js en el frontend y línea base de typecheck, lint y build (FNC-024, 2026-10-13).
