@@ -71,6 +71,11 @@ def create_app(config_overrides=None):
     from app.modules.provisioning.configuracion import (
         validar_al_arrancar as validar_aprovisionamiento)
     validar_aprovisionamiento()
+    # Variables CONNECTOR_* inválidas (p. ej. una IP en la lista blanca)
+    # detienen el arranque (FNC-050).
+    from app.modules.connectors.configuracion import (
+        validar_al_arrancar as validar_conectores)
+    validar_conectores()
 
 
 
@@ -171,6 +176,9 @@ def create_app(config_overrides=None):
     # El resultado de cada trabajo actualiza el acceso otorgado (FNC-054).
     from app.modules.access.manejadores import registrar as registrar_accesos
     registrar_accesos()
+    # Proveedor `conector` del ejecutor y tipo `noop` en dev/pruebas (FNC-050).
+    from app.modules.connectors import registrar as registrar_conectores
+    registrar_conectores(app)
 
     # Los blueprints heredados ya no procesan datos: solo redirigen o devuelven
     # 410. Sin exentarlos, el CSRF los intercepta antes y responde un 400 en
