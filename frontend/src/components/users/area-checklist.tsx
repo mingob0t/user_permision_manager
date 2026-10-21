@@ -4,8 +4,9 @@
  * Lista de áreas con casillas (DIS-019): alta en el directorio y áreas que
  * administra un admin de área. `fieldset` con `legend` visible (mismo estilo
  * que la etiqueta de `Field`), pista y error ligados con `aria-describedby`,
- * filas de 48 px y foco visible en la fila (`.nexus-checkbox` solo trae un
- * halo tenue y `Checkbox` no acepta clases).
+ * foco visible en la fila (`.nexus-checkbox` solo trae un halo tenue y
+ * `Checkbox` no acepta clases) y área táctil de 48 px: la `label` de cada
+ * casilla ocupa toda la fila (`[&>label]:min-h-12 [&>label]:w-full`).
  *
  * Estados: carga, error y vacío. No llama a la API: recibe las áreas.
  */
@@ -61,7 +62,7 @@ export function AreaChecklist({
           {areas.map((area) => (
             <li
               key={area.id}
-              className="flex min-h-12 items-center rounded-lg px-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary"
+              className="flex min-h-12 items-center rounded-lg px-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary [&>label]:min-h-12 [&>label]:w-full"
             >
               <Checkbox
                 id={`${id}-${area.id}`}

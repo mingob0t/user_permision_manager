@@ -113,6 +113,16 @@ Salida de `impacto.py` (contra `develop`):
 | `npx next build` | salida 0 (`/users` 11.7 kB) |
 | `grep` de `style=`, `<style`, `.style.`, `style={{`, `#hex`, `rgb(`, IPs y `text-red/white/black/gray` en los archivos tocados | sin coincidencias |
 
+### Correcciones del auditor-accesibilidad (2026-10-21)
+| # | Hallazgo | Corrección | Prueba |
+|---|---|---|---|
+| 1 | AA 3.3.2: obligatorios sin marcar en el alta | `required` y `aria-required="true"` en Identificador, Correo, Nombre y Apellidos; frase "Todos los campos son obligatorios salvo las áreas." (`text-label`) al inicio | "campos obligatorios marcados (AA 3.3.2)…" |
+| 2 | Área táctil de la casilla ≈ 20 px | `[&>label]:min-h-12 [&>label]:w-full` en cada `li` de `AreaChecklist`; comentario de cabecera corregido | "cada casilla de área ocupa la fila…" |
+| 3 | `Modal` re-enfoca su panel si cambia `onClose` (función nueva por render) | `cancelarRol` y `cerrarAlta` con `useCallback` en `users-list.tsx` | "el diálogo no pierde el foco cuando la pantalla se vuelve a renderizar" (falla sin la corrección, verificado) |
+| 4 | Comentario del par de la casilla con fondo equivocado | `pares-contraste.ts`: el borde linda con `--color-panel-fill`; 1,42–2,02:1 anotado en DIS-039; DIS-031: `describedBy` para los diálogos de rol y foco solo al montar | — |
+
+- Tras las correcciones: typecheck 0, lint 0, eslint de pruebas 0, `npx vitest run` 0 (853 passed + 25 expected fail, 878), `npx next build` 0; grep de estilos y colores sin coincidencias
+
 - Fallas de contraste conocidas: 25 (sin cambio). Par nuevo `checkbox-marcada/panel` pasa en los 7 temas
 - **No verificado en navegador**: tema claro y oscuro, móvil y escritorio y estados no se vieron en pantalla (no se levantó la app con backend). Solo pruebas jsdom y medición de tokens
 - Sin `revisor`, `tester`, `auditor-accesibilidad` ni `auditor-seguridad` (instrucción del orquestador); el cambio toca datos de usuarios y roles: pendiente `auditor-seguridad` en modo cambio y `auditor-accesibilidad` antes de cerrar
@@ -123,3 +133,4 @@ Salida de `impacto.py` (contra `develop`):
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-21 | Aprobada en modo autónomo (autorizado por el dueño) y En curso |
 | 2026-10-21 | Implementada: alta en el directorio, Hacer/Quitar admin y áreas administradas (solo superadmin), Editar sin rol ni contraseña; 33 pruebas nuevas (+1 en users-list); typecheck, lint, Vitest y build en 0; En revisión. Genera DIS-039 y DIS-040 |
+| 2026-10-21 | Corregidos 4 hallazgos del auditor-accesibilidad (obligatorios marcados, casillas de 48 px, foco estable con `useCallback`, comentario del par y fichas DIS-031/DIS-039); 3 pruebas nuevas; todo en 0 |

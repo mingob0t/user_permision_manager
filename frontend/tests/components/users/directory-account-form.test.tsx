@@ -86,6 +86,25 @@ describe('DirectoryAccountForm', () => {
     expect(document.querySelector('input[type="password"]')).toBeNull();
   });
 
+  it('campos obligatorios marcados (AA 3.3.2) y aviso de que las áreas son la excepción', () => {
+    montar();
+    for (const etiqueta of ['Identificador', 'Correo', 'Nombre', 'Apellidos']) {
+      const campo = screen.getByLabelText(etiqueta) as HTMLInputElement;
+      expect(campo.required).toBe(true);
+      expect(campo.getAttribute('aria-required')).toBe('true');
+    }
+    expect(screen.getByText('Todos los campos son obligatorios salvo las áreas.')).toBeTruthy();
+    expect((screen.getByLabelText('Finanzas') as HTMLInputElement).required).toBe(false);
+  });
+
+  it('cada casilla de área ocupa la fila: área táctil de 48 px en la label', () => {
+    montar();
+    const fila = screen.getByLabelText('Finanzas').closest('li')!;
+    expect(fila.className).toContain('[&>label]:min-h-12');
+    expect(fila.className).toContain('[&>label]:w-full');
+    expect(fila.querySelector(':scope > label')).toBeTruthy();
+  });
+
   it('envía solo los campos del contrato, recortados, y entrega la cuenta creada', async () => {
     const { onCreated } = montar();
     llenar({ uid: ' ana.ruiz ', nombre: ' Ana ' });

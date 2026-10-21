@@ -112,6 +112,8 @@ export function DirectoryAccountForm({
             id={IDS[campo]}
             value={form[campo]}
             onChange={(event) => cambiar(campo, event.target.value)}
+            required
+            aria-required="true"
             {...extra}
             {...describedBy([errorId, fields[campo]], [pistaId, true])}
           />
@@ -145,6 +147,7 @@ export function DirectoryAccountForm({
       }
     >
       <form id={FORM_ID} onSubmit={submit} noValidate aria-busy={sending} className="space-y-5">
+        <p className="text-sm text-label">Todos los campos son obligatorios salvo las áreas.</p>
         <p className="text-sm text-label">
           La cuenta se crea en el directorio corporativo con rol Usuario. La persona define su
           contraseña al entrar por el inicio de sesión corporativo; el portal no la pide.

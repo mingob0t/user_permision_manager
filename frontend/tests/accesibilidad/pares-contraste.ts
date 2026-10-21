@@ -121,8 +121,9 @@ export const PARES: ParContraste[] = [
   // `body-text/panel`, `error-text/panel`, `success-text/panel`, `nexus-btn-primary`,
   // `btn-secondary-*`, `primary-text/primary-10`; anillo `ring-primary` = `foco-primary/panel`).
   // Nuevo: relleno de la casilla marcada (`.nexus-checkbox:checked`, `--color-primary` sobre panel),
-  // no textual. El borde de la casilla sin marcar (`--color-panel-border` sobre `--color-input-bg`)
-  // falla 3:1 en los 7 temas: es de `.nexus-checkbox` (compartido) y lo corrige DIS-039.
+  // no textual. El borde de la casilla sin marcar (`--color-panel-border`) linda con el panel
+  // (`--color-panel-fill`, fondo real del modal) y falla 3:1 en los 7 temas (1,42–2,02:1, medido por
+  // auditor-accesibilidad): es de `.nexus-checkbox` (compartido) y lo corrige DIS-039.
   { id: 'checkbox-marcada/panel', texto: '--color-primary', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },

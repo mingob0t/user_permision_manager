@@ -2,7 +2,7 @@
 
 /** Usuarios: alta, edición, baja y asignación de áreas y plataformas. */
 
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import type {
@@ -428,10 +428,13 @@ export function UsersList() {
     setRoleOf({ user, action });
   }
 
-  function cancelarRol() {
+  // Estables (`useCallback`): `Modal` re-ejecuta su efecto, y enfoca su panel,
+  // cada vez que cambia `onClose`; con una función nueva por render robaría el foco.
+  const cancelarRol = useCallback(() => {
     setRoleOf(null);
     roleTrigger.current?.focus();
-  }
+  }, []);
+  const cerrarAlta = useCallback(() => setCreatingAccount(false), []);
 
   function anunciar(mensaje: string) {
     setCreatingAccount(false);
@@ -634,7 +637,7 @@ export function UsersList() {
           areasLoading={isAdmin && areas.loading}
           areasError={isAdmin && areas.error ? 'No se pudieron cargar las áreas.' : null}
           areasRequired={!isAdmin}
-          onClose={() => setCreatingAccount(false)}
+          onClose={cerrarAlta}
           onCreated={(created) => anunciar(`Se creó la cuenta de ${created.name || created.email}.`)}
         />
       ) : null}

@@ -214,6 +214,19 @@ describe('UsersList: acciones de rol', () => {
     expect(screen.queryByRole('button', { name: 'Quitar admin de área a Jefa' })).toBeNull();
   });
 
+  it('el diálogo no pierde el foco cuando la pantalla se vuelve a renderizar', async () => {
+    let resolverAreas: (v: AreaRef[]) => void = () => {};
+    vi.mocked(api.areas).mockReturnValue(new Promise((r) => { resolverAreas = r; }) as never);
+    render(<UsersList />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Hacer admin de área a Ana Ruiz' }));
+    const cancelar = within(screen.getByRole('dialog')).getByText('Cancelar');
+    cancelar.focus();
+    // Llegan las áreas: `UsersList` se vuelve a renderizar con el diálogo abierto.
+    resolverAreas(AREAS);
+    expect(await screen.findByLabelText('Finanzas')).toBeTruthy();
+    expect(document.activeElement).toBe(cancelar);
+  });
+
   it('Hacer admin: aviso con foco y recarga; Cancelar devuelve el foco al botón', async () => {
     render(<UsersList />);
     const boton = await screen.findByRole('button', { name: 'Hacer admin de área a Ana Ruiz' });
