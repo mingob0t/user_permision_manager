@@ -64,12 +64,22 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py` (2026-10-21):
 - [x] Bajo `md` se navega a todas las entradas del rol (prueba por rol: mismas entradas que la barra lateral)
 - [ ] Criterios comunes web (FNC-037): pruebas en verde; temas, AA medido y navegador sin verificar
 
+## Correcciones del auditor-accesibilidad (2026-10-21)
+| # | Hallazgo | Corrección |
+|---|---|---|
+| A | Borde `panel-border` del panel entre 1,30 y 2,09:1: no se distingue del contenido | `border-r-2 border-primary` (3,45–6,91:1 en los 7 temas); el par ya existe (`foco-primary/panel` y `tab-indicador/body-bg`), se anota en `pares-contraste.ts` sin duplicarlo |
+| B | Sin foco visible en Menú, Cerrar y enlaces móviles | `outline-none focus-visible:ring-2 focus-visible:ring-primary` (convención del proyecto); en los enlaces solo con `touch` |
+| C | Al cruzar `md` con el menú abierto el foco queda atrapado | `matchMedia('(min-width: 768px)')`: al entrar en `md` se cierra y el foco vuelve al botón |
+
+- Pruebas nuevas: cierre al cruzar `md` (con `matchMedia` simulado y oyente retirado) y foco visible y borde (escritorio sin `focus-visible:ring`)
+
 ## Verificación (2026-10-21, en `frontend/`)
 | Comando | Resultado |
 |---|---|
 | `npm run typecheck` | salida 0 |
 | `npm run lint` | salida 0, sin avisos |
 | `npx vitest run` | salida 0; 24 archivos, 802 passed + 25 expected fail (las 25 conocidas, sin aumento) |
+| Tras las correcciones A–C: typecheck, lint, `npx vitest run`, `npm run build` | 0, 0, 0 (804 passed + 25 expected fail), 0 |
 | `npm run build` | salida 0 |
 | `grep` de `style=`, `<style`, `.style.`, `style={{`, hex, `rgb(`, `white`/`black`, IPs en los dos componentes | sin coincidencias |
 
@@ -89,3 +99,4 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py` (2026-10-21):
 | 2026-10-19 | DIS-001 (captura de `/platforms` a 390 px con Chrome sin interfaz): el contenido se corta a la derecha (buscador y tarjetas); no viene de los tokens, sin investigar la causa |
 | 2026-10-21 | Aprobada en modo autónomo y En curso (rama `dis/DIS-025-navegacion-movil`) |
 | 2026-10-21 | `MobileMenu` y pruebas; verificación en verde; genera DIS-038 (velo y bloqueo de scroll); el corte a 390 px de `/platforms` no es de esta tarea; En revisión |
+| 2026-10-21 | auditor-accesibilidad: corregidos borde del panel, foco visible y cierre al cruzar `md`; sigue En revisión |

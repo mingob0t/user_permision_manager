@@ -1,7 +1,7 @@
 /**
  * DIS-025: menú de navegación en móvil (botón y panel de `AppShell`).
  */
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Session } from '@/lib/types';
 
@@ -176,5 +176,41 @@ describe('Menú móvil', () => {
     }
     expect(screen.getByRole('button', { name: 'Menú' }).className).toContain('min-h-12');
     expect(within(panel).getByRole('button', { name: 'Cerrar' }).className).toContain('min-h-12');
+  });
+
+  it('se cierra si la ventana cruza md con el menú abierto', async () => {
+    const oyentes: ((e: { matches: boolean }) => void)[] = [];
+    vi.stubGlobal('matchMedia', (consulta: string) => ({
+      matches: false,
+      media: consulta,
+      addEventListener: (_: string, fn: (e: { matches: boolean }) => void) => oyentes.push(fn),
+      removeEventListener: (_: string, fn: (e: { matches: boolean }) => void) => {
+        oyentes.splice(oyentes.indexOf(fn), 1);
+      },
+    }));
+    const boton = await montar();
+    abrir(boton);
+    expect(oyentes).toHaveLength(1);
+    act(() => oyentes[0]({ matches: true }));
+    expect(boton.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(boton);
+    expect(oyentes).toHaveLength(0);
+  });
+
+  it('botones y enlaces del menú móvil tienen foco visible; la barra lateral no cambia', async () => {
+    const panel = abrir(await montar());
+    const controles = [
+      screen.getByRole('button', { name: 'Menú' }),
+      within(panel).getByRole('button', { name: 'Cerrar' }),
+      ...within(panel).getAllByRole('link'),
+    ];
+    for (const control of controles) {
+      expect(control.className).toContain('focus-visible:ring-2');
+      expect(control.className).toContain('focus-visible:ring-primary');
+    }
+    for (const enlace of within(document.querySelector('aside')!).getAllByRole('link')) {
+      expect(enlace.className).not.toContain('focus-visible:ring');
+    }
+    expect(panel.className).toContain('border-primary');
   });
 });
