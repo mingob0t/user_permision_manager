@@ -12,7 +12,7 @@
  *   actualiza con la respuesta y el aviso (`status`) recibe el foco.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { provisioningApi } from '@/lib/access/provisioning';
 import type { Job, JobDetail } from '@/lib/access/types';
 import { usePolling } from '@/lib/use-polling';
@@ -121,7 +121,18 @@ export function JobsLog() {
   }
 
   const data = lista.data;
-  const recargando = lista.loading && data !== null;
+  // "Recargando…" solo tras pulsar "Recargar": el refresco automático no se anuncia.
+  const [recargaManual, setRecargaManual] = useState(false);
+  useEffect(() => {
+    if (!lista.loading) setRecargaManual(false);
+  }, [lista.loading]);
+  const recargando = recargaManual && lista.loading && data !== null;
+
+  function recargar() {
+    if (lista.loading) return;
+    setRecargaManual(true);
+    lista.refresh();
+  }
 
   return (
     <section aria-labelledby="ejecuciones-titulo" className="space-y-4">
@@ -154,7 +165,7 @@ export function JobsLog() {
         </p>
         <Button
           variant="secondary"
-          onClick={() => { if (!lista.loading) lista.refresh(); }}
+          onClick={recargar}
           aria-disabled={lista.loading || undefined}
           className="aria-disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary"
         >

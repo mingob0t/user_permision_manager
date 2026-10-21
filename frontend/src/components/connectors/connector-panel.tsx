@@ -147,19 +147,26 @@ export function ConnectorPanel({
         </Button>
       </div>
 
+      {/* Dos regiones vivas fijas: el éxito se anuncia con `status` y el fallo con `alert`. */}
       <div
-        role="status"
         ref={avisoRef}
         tabIndex={-1}
         className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
-        {aviso ? (
-          <Card>
-            <p className={`text-sm font-bold ${aviso.tono === 'exito' ? 'text-success-text' : 'text-error-text'}`}>
-              {aviso.texto}
-            </p>
-          </Card>
-        ) : null}
+        <div role="status">
+          {aviso?.tono === 'exito' ? (
+            <Card>
+              <p className="text-sm font-bold text-success-text">{aviso.texto}</p>
+            </Card>
+          ) : null}
+        </div>
+        <div role="alert">
+          {aviso?.tono === 'error' ? (
+            <Card>
+              <p className="text-sm font-bold text-error-text">{aviso.texto}</p>
+            </Card>
+          ) : null}
+        </div>
       </div>
 
       {carga.loading && !estado ? <Spinner label="Cargando el conector…" /> : null}

@@ -166,6 +166,30 @@ describe('lista', () => {
   });
 });
 
+describe('anuncio de recarga', () => {
+  it('"Recargando…" solo tras pulsar Recargar, no en el refresco automático', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    jobs.mockResolvedValue(pagina([{ ...FALLIDA, status: 'reintentando' }]));
+    render(<JobsLog />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByText('1 ejecución')).toBeTruthy();
+
+    let resolver: (v: Paginated<Job>) => void = () => {};
+    jobs.mockImplementationOnce(() => new Promise((r) => { resolver = r; }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(16_000); });
+    expect(jobs).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText('Recargando…')).toBeNull();
+    await act(async () => { resolver(pagina([{ ...FALLIDA, status: 'reintentando' }])); });
+
+    jobs.mockImplementationOnce(() => new Promise((r) => { resolver = r; }));
+    fireEvent.click(screen.getByRole('button', { name: 'Recargar' }));
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(screen.getByText('Recargando…')).toBeTruthy();
+    await act(async () => { resolver(pagina([FALLIDA])); });
+    expect(screen.queryByText('Recargando…')).toBeNull();
+  });
+});
+
 describe('detalle', () => {
   it('muestra los intentos como texto y devuelve el foco al cerrar', async () => {
     const ul = await lista();

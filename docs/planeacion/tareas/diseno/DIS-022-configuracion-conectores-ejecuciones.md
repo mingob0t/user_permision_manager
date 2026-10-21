@@ -108,6 +108,17 @@
 - **No verificado en navegador** (tema claro y oscuro, móvil y escritorio): no se levantó la app con backend ni hubo captura. Las clases son las mismas de pantallas ya revisadas
 - Sin revisor ni auditores (instrucción del orquestador); pendientes revisor y auditor-accesibilidad antes de cerrar
 
+## Correcciones del auditor-accesibilidad (2026-10-21; veredicto: aprobado con 3 observaciones)
+| # | Observación | Corrección | Prueba |
+|---|---|---|---|
+| 1 | Con solo `fields.params` el foco no se movía | `ORDEN` incluye `params` → `fieldset` `conector-params` (`tabIndex=-1`, anillo de foco) | `connectors-admin.test.tsx`: "422 solo en params" |
+| 2 | "Recargando…" se anunciaba en cada refresco automático | Solo tras pulsar "Recargar" (`recargaManual`) | `jobs-log.test.tsx`: "anuncio de recarga" |
+| 3 | El fallo de "Probar conexión" iba en `role="status"` | Regiones fijas: éxito en `status`, fallo en `alert` | `connectors-admin.test.tsx`: "probar conexión" |
+
+- typecheck 0, lint 0 (y `eslint tests` 0), `next build` 0
+- Vitest: la primera corrida salió 1 por la prueba intermitente conocida `areas-list.test.tsx` "409 rol_no_admin" (DIS-040, fuera de alcance); la segunda salió 0: 985 passed + 25 expected fail (las 25 conocidas)
+- No comprobé que las pruebas nuevas fallen sin las correcciones. Sigue sin verificarse en el navegador
+
 ## Impacto en elementos compartidos (`impacto.py`, contra `develop`)
 | Elemento modificado | Tipo | Definido en | Usado en (fuera de la tarea) | Áreas afectadas | ¿Validado? |
 |---|---|---|---|---|---|
@@ -124,3 +135,4 @@
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-21 | Aprobada y En curso (modo autónomo autorizado por el dueño) |
 | 2026-10-21 | Implementada; En revisión. Genera DIS-041 y DIS-042 |
+| 2026-10-21 | auditor-accesibilidad aprobado; corregidas sus 3 observaciones (foco en parámetros, anuncio de recarga, alerta en prueba fallida) |

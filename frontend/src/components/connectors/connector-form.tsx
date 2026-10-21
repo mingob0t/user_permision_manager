@@ -33,8 +33,11 @@ const IDS: Record<Exclude<CampoConector, 'params' | 'active'>, string> = {
   port: `${PREFIJO}-puerto`,
   credential_ref: `${PREFIJO}-credencial`,
 };
+/** `fieldset` de los parámetros: recibe el foco si el servidor marca `params` (DIS-022). */
+export const PARAMS_FIELDSET_ID = `${PREFIJO}-params`;
 const ORDEN: [CampoConector, string][] = [
   ['type', IDS.type], ['host', IDS.host], ['port', IDS.port], ['credential_ref', IDS.credential_ref],
+  ['params', PARAMS_FIELDSET_ID],
 ];
 const PARAMS_ERROR_ID = `${PREFIJO}-params-error`;
 
@@ -170,7 +173,12 @@ export function ConnectorForm({
         `Nombre del ítem en el gestor de secretos, por ejemplo equipo/plataforma-api. Hasta ${REFERENCIA_MAX} caracteres. Nunca escribas aquí la contraseña.`,
         { maxLength: REFERENCIA_MAX, autoCapitalize: 'none' })}
 
-      <fieldset className="space-y-3" aria-describedby={fields.params ? PARAMS_ERROR_ID : undefined}>
+      <fieldset
+        id={PARAMS_FIELDSET_ID}
+        tabIndex={-1}
+        className="space-y-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        aria-describedby={fields.params ? PARAMS_ERROR_ID : undefined}
+      >
         <legend className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-label">
           Parámetros del tipo
         </legend>

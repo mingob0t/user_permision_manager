@@ -219,16 +219,32 @@ describe('panel del conector', () => {
     expect(within(panel).getByLabelText('Host *').getAttribute('aria-invalid')).toBe('true');
   });
 
+  it('422 solo en params: mensaje propio y foco en el fieldset de parámetros', async () => {
+    mocks.save.mockRejectedValue(new ApiError(422, 'srv', {
+      code: 'validacion', fields: { 'params.base_path': 'srv' },
+    }));
+    const panel = await abrir();
+    await within(panel).findByText('erp.ejemplo.local:443');
+    fireEvent.click(within(panel).getByRole('button', { name: 'Guardar conector' }));
+    expect(await within(panel).findByText(MENSAJES_CAMPO.params)).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(
+      within(panel).getByRole('group', { name: 'Parámetros del tipo' })));
+  });
+
   it('probar conexión muestra un texto propio y recarga el estado de la credencial', async () => {
     mocks.test.mockResolvedValueOnce({ status: 'success', result: 'ok', message: 'servidor' });
     const panel = await abrir();
     fireEvent.click(await within(panel).findByRole('button', { name: 'Probar conexión' }));
     expect(await within(panel).findByText(PRUEBA_OK)).toBeTruthy();
+    expect(within(panel).getByText(PRUEBA_OK).closest('[role]')?.getAttribute('role')).toBe('status');
     await waitFor(() => expect(mocks.get).toHaveBeenCalledTimes(2));
 
     mocks.test.mockResolvedValueOnce({ status: 'success', result: 'error', message: 'detalle interno' });
     fireEvent.click(within(panel).getByRole('button', { name: 'Probar conexión' }));
     expect(await within(panel).findByText(PRUEBA_ERROR)).toBeTruthy();
+    // El fallo se anuncia como alerta; el éxito anterior ya no está.
+    expect(within(panel).getByText(PRUEBA_ERROR).closest('[role]')?.getAttribute('role')).toBe('alert');
+    expect(within(panel).queryByText(PRUEBA_OK)).toBeNull();
     expect(within(panel).queryByText('detalle interno')).toBeNull();
   });
 
