@@ -83,7 +83,7 @@
 - Pruebas nuevas (`tests/connectors/test_destino_seguro.py`, `test_api_http.py`, `test_api_http_proveedor.py`, `test_api_http_tls.py`): 149 pasaron, sin red real (DNS y transporte falsos; el TLS contra un servidor local en loopback con certificado propio)
 - Fallaron primero (ImportError) y luego pasaron; además, cada control se rompió a propósito y la prueba lo detectó: IP no públicas permitidas, valor sin codificar en la ruta, `CERT_NONE` y sin `check_hostname`, redirecciones sin bloquear
 - Ajustadas 2 pruebas existentes que usaban `api` como tipo sin implementar: ahora `ssh`
-- `pytest` completo: 1906 passed, 15 xfailed, salida 0
+- `pytest` completo: 1906 passed, 15 xfailed, salida 0; tras las correcciones de la auditoría: 1924 passed, 15 xfailed, salida 0 (una corrida intermedia tuvo 5 fallos en `tests/users/test_roles_y_areas_administradas.py` que pasaron aislados y en la corrida siguiente; no se reprodujeron)
 - No verificado: plataforma real, servidor TLS con CA del sistema, comportamiento de Vaultwarden (FNC-068)
 - Sin revisor ni auditor-seguridad (requerido por la ficha: lo lanza el orquestador)
 
@@ -95,6 +95,13 @@
 - También compartidos, aditivos: `MENSAJES` y 7 motivos nuevos en `provisioning/saneo.py` (los lee `mensaje_de_error`, usado por `ejecucion.py` y la API de ejecuciones FNC-062)
 - Visible para quien valide: `PUT /platforms/<id>/connector` con `type: "api"` ahora se acepta (antes `422`); contrato 1.2
 
+## Correcciones de la auditoría de seguridad (aprobada con 3 hallazgos, 2026-10-21)
+- Media: recorrido de ruta remota (correo `..` salía como `POST /u/..`). Ningún valor de plantilla (`{correo}`, `{nivel}`, `{plataforma}`) puede estar vacío, ser `.` ni `..` ni tener un segmento así (separado por `/` o `\`), y `{correo}` debe tener `@` con texto a ambos lados; si no, permanente `valor_no_valido` (motivo nuevo en `saneo.py`, contrato 1.2). Regresión: falló antes (12 pruebas)
+- Baja: `fec0::/10` (site-local) se aceptaba; ahora `ip_permitida` lo rechaza (prueba que falló antes)
+- Baja: solo se prueba otra IP si falla la conexión TCP (`ErrorConexion`, del transporte); tras enviar (tiempo agotado, reinicio, HTTP) no se reintenta, para no duplicar escrituras. Regresión: falló antes
+- Baja, no hecho: el tiempo de espera sigue siendo por operación de red (conexión, envío y cada lectura), no del total de la petición; cubrir el total exige un límite propio de tiempo en el transporte. Lo acota el tiempo de intento del ejecutor (RQ). Anotado en `http_transporte.py`
+- Validación del formato del correo de `POST /users` (anterior a FNC-051): anotada en la ficha de FNC-078, sin tarea nueva
+
 ## Tareas creadas
 - FNC-106: redes internas autorizadas por despliegue (CIDR)
 
@@ -104,3 +111,4 @@
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Recomendaciones de auditor-seguridad sobre FNC-050 agregadas (sección «Requisitos de seguridad heredados de FNC-050») |
 | 2026-10-21 | Implementada: `api_http.py`, `destino_seguro.py`, `http_transporte.py`, variable `CONNECTOR_HTTP_CA_FILE`, contrato 1.2; En revisión (pendiente revisor y auditor-seguridad) |
+| 2026-10-21 | Corregidos los 3 hallazgos del auditor-seguridad (recorrido de ruta, site-local, reintento tras enviar) |

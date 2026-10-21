@@ -13,7 +13,8 @@ from app.modules.connectors.api_http import (TIPO, ConectorApi,
                                              validar_params)
 from app.modules.connectors.base import Destino, SolicitudConector
 from app.modules.connectors.credenciales import Credencial
-from app.modules.connectors.http_transporte import RespuestaHttp
+from app.modules.connectors.http_transporte import (ErrorConexion,
+                                                    RespuestaHttp)
 from app.modules.connectors.tipos import TIPO_API
 from app.modules.connectors.validacion import validar_configuracion
 from app.modules.provisioning.saneo import MENSAJES
@@ -224,7 +225,7 @@ def test_secreto_con_salto_de_linea_no_se_envia():
 # --------------------------------------------------------------------------- #
 
 MALICIOSAS = ['a"b@x.mx', "a'b@x.mx", 'a;b@x.mx', 'a\r\nHost: evil@x.mx',
-              'a\nb@x.mx', '../../admin', 'a/b@x.mx', 'a?x=1&y=2@x.mx',
+              'a\nb@x.mx', 'a/b@x.mx', 'a?x=1&y=2@x.mx',
               'a#b@x.mx', '{nivel}@x.mx', '%0d%0a@x.mx', 'a b@x.mx',
               'x"}, "rol": "admin", "z": {"@x.mx']
 
@@ -249,13 +250,32 @@ def test_entrada_maliciosa_no_altera_la_ruta_ni_el_cuerpo(cuenta):
     assert not any(c in consultar['ruta'] for c in '\r\n ;"')
 
 
+@pytest.mark.parametrize('cuenta', ['..', '.', '@', 'sin-arroba', 'a/../..',
+                                    '../x@y.mx', 'a\\..\\b@x.mx', ''])
+def test_valores_que_recorren_la_ruta_o_sin_arroba_se_rechazan(cuenta):
+    api, transporte = conector()
+    for operacion in (api.otorgar, api.revocar, api.consultar):
+        resultado = operacion(solicitud(cuenta=cuenta))
+        assert resultado.resultado == RESULTADO_ERROR_PERMANENTE
+        assert resultado.motivo == 'valor_no_valido'
+    assert transporte.llamadas == []
+
+
+@pytest.mark.parametrize('nivel', ['..', '.', 'a/../b', ''])
+def test_nivel_con_segmento_de_recorrido_se_rechaza(nivel):
+    api, transporte = conector()
+    resultado = api.revocar(solicitud(nivel=nivel))
+    assert resultado.motivo == 'valor_no_valido'
+    assert transporte.llamadas == []
+
+
 def test_el_nivel_y_la_plataforma_tambien_se_codifican():
     valores = params(revocar={'metodo': 'DELETE',
                               'ruta': '/p/{plataforma}/n/{nivel}/{correo}'})
     api, transporte = conector(200, valores=valores)
-    api.revocar(solicitud(nivel='a/../b'))
+    api.revocar(solicitud(nivel='a b/c'))
     assert transporte.llamadas[0]['ruta'] == (
-        '/api/v1/p/7/n/a%2F..%2Fb/ana.ruiz%40pruebas.local')
+        '/api/v1/p/7/n/a%20b%2Fc/ana.ruiz%40pruebas.local')
 
 
 def test_la_plantilla_no_ejecuta_formato_ni_expresiones():
@@ -330,10 +350,20 @@ def test_dns_caido_es_transitorio():
 
 def test_conexion_rechazada_prueba_la_siguiente_ip_validada():
     otra = '.'.join(('1', '1', '1', '1'))
-    api, transporte = conector(ConnectionRefusedError(), 200,
+    api, transporte = conector(ErrorConexion(), 200,
                                direcciones=(PUBLICA, otra))
     assert api.otorgar(solicitud()).resultado == RESULTADO_EXITOSO
     assert [c['ip'] for c in transporte.llamadas] == [PUBLICA, otra]
+
+
+@pytest.mark.parametrize('falla', [TimeoutError(), ConnectionResetError(),
+                                   OSError('x')])
+def test_tras_enviar_la_peticion_no_se_reintenta_en_otra_ip(falla):
+    otra = '.'.join(('1', '1', '1', '1'))
+    api, transporte = conector(falla, 200, direcciones=(PUBLICA, otra))
+    resultado = api.otorgar(solicitud())
+    assert resultado.resultado == RESULTADO_ERROR_TRANSITORIO
+    assert len(transporte.llamadas) == 1
 
 
 def test_tiempo_agotado_y_red_son_transitorios():
@@ -369,7 +399,7 @@ def test_el_detalle_nunca_lleva_el_cuerpo_ni_la_credencial():
 
 
 def test_motivos_nuevos_tienen_mensaje_en_el_catalogo():
-    for motivo in ('destino_no_permitido', 'tls_no_valido', 'http_rechazado',
+    for motivo in ('destino_no_permitido', 'valor_no_valido', 'tls_no_valido', 'http_rechazado',
                    'http_transitorio', 'red_no_disponible',
                    'redireccion_no_permitida'):
         assert motivo in MENSAJES

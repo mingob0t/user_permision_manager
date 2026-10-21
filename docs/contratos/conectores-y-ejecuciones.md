@@ -58,7 +58,7 @@ Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`.
 - Ejemplo: `{"base_path": "/api/v1", "auth": {"esquema": "bearer"}, "otorgar": {"metodo": "POST", "ruta": "/usuarios", "cuerpo": {"email": "{correo}", "rol": "{nivel}"}}, "revocar": {"metodo": "DELETE", "ruta": "/usuarios/{correo}"}, "consultar": {"metodo": "GET", "ruta": "/usuarios", "consulta": {"email": "{correo}"}}}`.
 - Salida: solo HTTPS; el host resuelve a IP públicas y se conecta a la IP validada; sin redirecciones; TLS validado (CA del sistema o `CONNECTOR_HTTP_CA_FILE`).
 - Estados: 2xx éxito; `sin_cambios` (por defecto `[404, 410]` al revocar); 408, 425, 429, 500, 502, 503 y 504 transitorios; 3xx y el resto, permanentes. `consultar`: 2xx presente, 404 ausente.
-- Motivos nuevos en la bitácora (mensaje genérico; detalle solo `HTTP <estado>`): `configuracion_invalida`, `destino_no_permitido`, `tls_no_valido`, `http_rechazado`, `http_transitorio`, `red_no_disponible`, `redireccion_no_permitida`.
+- Motivos nuevos en la bitácora (mensaje genérico; detalle solo `HTTP <estado>`): `configuracion_invalida`, `valor_no_valido` (cuenta o nivel vacíos, `.`/`..` o con segmento así; `{correo}` sin `@`), `destino_no_permitido`, `tls_no_valido`, `http_rechazado`, `http_transitorio`, `red_no_disponible`, `redireccion_no_permitida`.
 
 ## `DELETE /platforms/<id>/connector`
 - `409 plataforma_con_accesos` si hay accesos vigentes. Respuesta `{"status": "success"}`. Auditoría `conector_eliminado`.
@@ -137,4 +137,4 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | 1 | 2026-10-20 | Aclaración (FNC-062): reintento con cuerpo `{}` y casos de `409`; `from`/`to` sin zona en la hora local del proceso, como la auditoría |
 | 1 | 2026-10-20 | Aclaración (FNC-061): `DELETE` y `POST .../test` con cuerpo `{}` (convención de escrituras; sin JSON → `415`; cualquier campo → `400 campo_no_permitido`); `PUT` con campo fuera de la lista → `400 campo_no_permitido`; plataforma o configuración inexistente → `404`; cambiar `type` con accesos vigentes → `409 plataforma_con_accesos`; `test` deja `credential_status` en `ok` o `no_encontrada` |
 | 1.1 | 2026-10-21 | Aclaración (FNC-061, auditor-seguridad): `POST .../test` exige cuerpo `{}` (sin Content-Type JSON → `415`) y actualiza `credential_status`; error aditivo `409 conector_concurrente` en el `PUT` que crea |
-| 1.2 | 2026-10-21 | Aditivo (FNC-051): esquema de `params` del tipo `api` (`422 fields.params.<campo>`) y 7 motivos nuevos en la bitácora de ejecuciones |
+| 1.2 | 2026-10-21 | Aditivo (FNC-051): esquema de `params` del tipo `api` (`422 fields.params.<campo>`) y 8 motivos nuevos en la bitácora de ejecuciones (incluye `valor_no_valido`, auditoría) |

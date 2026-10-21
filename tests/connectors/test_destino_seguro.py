@@ -31,6 +31,7 @@ NO_PUBLICAS = [
     ip(100, 64, 0, 1),                                         # CGNAT
     ip(240, 0, 0, 1),                                          # reservada
     ip(192, 0, 2, 10),                                         # documentación
+    'fec0::1', 'fec0::' + 'ffff',                                # site-local
     'fc00::1',                                                 # ULA
     '::ffff:' + ip(10, 0, 0, 5),                               # IPv4 mapeada
     '::ffff:' + ip(127, 0, 0, 1),

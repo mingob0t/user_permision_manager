@@ -5,7 +5,7 @@
   eso se resuelve aquí y **se conecta a la IP validada**, sin volver a
   resolver.
 - Se rechaza el destino si **alguna** dirección resuelta no es pública:
-  privada, de loopback, *link-local*, multicast, sin especificar, reservada o
+  privada, de loopback, *link-local*, *site-local* (`fec0::/10`), multicast, sin especificar, reservada o
   compartida (CGNAT), en IPv4 e IPv6; también las IPv4 incrustadas en
   IPv4-mapeada, NAT64 (`64:ff9b::/96`) y 6to4.
 - Un fallo de DNS es transitorio (`ErrorResolucion`); una dirección no
@@ -47,9 +47,10 @@ def ip_permitida(direccion):
     incrustada = _incrustada(ip)
     if incrustada is not None and not ip_permitida(incrustada):
         return False
+    site_local = ip.version == 6 and ip.is_site_local  # fec0::/10
     return not (ip.is_multicast or ip.is_unspecified or ip.is_loopback
                 or ip.is_link_local or ip.is_reserved or ip.is_private
-                or not ip.is_global)
+                or site_local or not ip.is_global)
 
 
 def resolver_seguro(host, puerto, getaddrinfo=socket.getaddrinfo):

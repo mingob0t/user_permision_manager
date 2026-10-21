@@ -28,6 +28,10 @@ Plantillas sin inyección:
 - La ruta de la plantilla admite solo `[A-Za-z0-9._~/:-]`, sin segmentos `..`.
 - Los `params` guardados se revalidan en cada operación.
 
+Los valores no pueden ser vacíos ni recorrer la ruta remota (`.`, `..`, segmentos así) y `{correo}` debe
+tener `@`: si no, permanente `valor_no_valido`. Solo se prueba otra IP si falla la conexión TCP;
+tras enviar no se reintenta.
+
 Estados HTTP: 2xx éxito (`presente` al consultar); 404 al consultar = ausente;
 estados de `sin_cambios` → `sin_cambios`; 408, 425, 429, 500, 502, 503 y 504
 transitorios; 3xx permanente (nunca se sigue una redirección); el resto,
@@ -47,7 +51,8 @@ from app.modules.connectors.base import Conector
 from app.modules.connectors.destino_seguro import (DestinoNoPermitido,
                                                    ErrorResolucion,
                                                    resolver_seguro)
-from app.modules.connectors.http_transporte import (TransporteHttps,
+from app.modules.connectors.http_transporte import (ErrorConexion,
+                                                    TransporteHttps,
                                                     crear_contexto)
 from app.modules.connectors.registry import TipoConector
 from app.modules.connectors.tipos import TIPO_API
@@ -59,7 +64,7 @@ from app.modules.provisioning.saneo import (MOTIVO_CONFIGURACION_INVALIDA,
                                             MOTIVO_HTTP_RECHAZADO,
                                             MOTIVO_HTTP_TRANSITORIO,
                                             MOTIVO_RED, MOTIVO_REDIRECCION,
-                                            MOTIVO_TLS)
+                                            MOTIVO_TLS, MOTIVO_VALOR_NO_VALIDO)
 from app.modules.provisioning.tipos import (OPERACION_OTORGAR,
                                             OPERACION_REVOCAR,
                                             RESULTADO_EXITOSO,
@@ -274,6 +279,23 @@ def _en_cuerpo(valor, valores):
     return valor
 
 
+def _valores_seguros(solicitud):
+    """`False` si algún valor de plantilla puede recorrer la ruta remota.
+
+    - Ningún valor es `.` ni `..` ni tiene un segmento así (separado por `/`
+      o `\\`; codificado queda como un solo segmento, pero el servidor remoto
+      puede decodificarlo), ni queda vacío.
+    - `{correo}` debe tener `@` con texto a ambos lados.
+    """
+    valores = (solicitud.cuenta, solicitud.nivel, str(solicitud.plataforma_id))
+    for valor in valores:
+        segmentos = re.split(r'[/\\]', valor)
+        if not valor or any(s in ('.', '..') for s in segmentos):
+            return False
+    local, arroba, dominio = solicitud.cuenta.partition('@')
+    return bool(local and arroba and dominio)
+
+
 def _con_control(texto):
     return any(ord(c) < 32 or ord(c) == 127 for c in texto)
 
@@ -345,14 +367,12 @@ class ConectorApi(Conector):
                     ip, self.destino.host, self.destino.puerto, metodo, ruta,
                     cabeceras, cuerpo, self.destino.tiempo_espera,
                     contexto).estado
-            except (ssl.SSLEOFError, ssl.SSLZeroReturnError):
-                continue
+            except (ssl.SSLEOFError, ssl.SSLZeroReturnError, ErrorConexion):
+                continue  # el saludo TLS o la conexión fallaron: aún no se envió
             except ssl.SSLError:
                 return permanente(MOTIVO_TLS)
-            except OSError:
-                continue
-            except http.client.HTTPException:
-                break
+            except (OSError, http.client.HTTPException):
+                break  # ya se pudo haber enviado: no se duplica la escritura
         return transitorio(MOTIVO_RED)
 
     def _llamar(self, nombre, solicitud):
@@ -360,6 +380,8 @@ class ConectorApi(Conector):
         params = dict(self.destino.params)
         if validar_params(params):
             return None, permanente(MOTIVO_CONFIGURACION_INVALIDA)
+        if not _valores_seguros(solicitud):
+            return None, permanente(MOTIVO_VALOR_NO_VALIDO)
         metodo, ruta, cabeceras, cuerpo = self._peticion(nombre, params,
                                                          solicitud)
         auth = self._cabecera_auth(params['auth'])

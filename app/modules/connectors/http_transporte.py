@@ -5,6 +5,8 @@
   certificado contra el **nombre del host** (SNI y `check_hostname`), con
   `CERT_REQUIRED` y TLS 1.2 como mínimo; la CA del sistema o la de
   `CONNECTOR_HTTP_CA_FILE`. Nunca se desactiva la verificación.
+- El tiempo de espera es por operación de red (conexión, envío y cada
+  lectura), no del total de la petición.
 - No sigue redirecciones: devuelve el estado tal cual y quien llama decide.
 - No lee el cuerpo de la respuesta: solo el estado (no se guarda ni se
   registra nada que venga del servidor remoto).
@@ -13,6 +15,11 @@ import http.client
 import socket
 import ssl
 from dataclasses import dataclass
+
+
+class ErrorConexion(OSError):
+    """No se pudo abrir la conexión TCP (aún no se envió nada): único caso
+    en que el conector prueba otra IP; después de enviar no se reintenta."""
 
 
 @dataclass(frozen=True)
@@ -38,7 +45,11 @@ class _ConexionFijada(http.client.HTTPSConnection):
         self._ip = ip
 
     def connect(self):
-        conexion = socket.create_connection((self._ip, self.port), self.timeout)
+        try:
+            conexion = socket.create_connection((self._ip, self.port),
+                                                self.timeout)
+        except OSError as exc:
+            raise ErrorConexion(str(exc)) from None
         try:
             self.sock = self._context.wrap_socket(conexion,
                                                   server_hostname=self.host)
