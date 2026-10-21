@@ -40,28 +40,30 @@
 | Archivo | Cambio |
 |---|---|
 | `frontend/src/app/requests/page.tsx` | Monta `MyRequestsView`; sin `RequireRole` (ver decisión 1) |
-| `frontend/src/components/access/my-requests-view.tsx` | Nuevo: pestañas "Mis solicitudes" / "Mis accesos" (`tablist`, `aria-controls`, `tabpanel`); superadmin con estado vacío explicado |
+| `frontend/src/components/access/my-requests-view.tsx` | Nuevo: pestañas "Mis solicitudes" / "Mis accesos" (`tablist`, `aria-controls`, `tabpanel` con `tabIndex=0`; *roving tabindex* y ←/→/Inicio/Fin según WAI-ARIA, `destinoPorTecla`; `min-h-12` = 48 px); superadmin con estado vacío explicado |
 | `frontend/src/components/access/my-requests.tsx` | Nuevo: `GET /access-requests/mine` con `usePolling`, filtro por estado, paginación, motivo de rechazo, justificación, decisión y estado del acceso |
 | `frontend/src/components/access/my-access.tsx` | Nuevo: `GET /me/access` (`vigente` por defecto) con `usePolling`, filtro, paginación, origen y estado explicado (`EXPLICACION_ESTADO`) |
 | `frontend/src/components/access/responsive-list.tsx` | Nuevo, reutilizable: `ResponsiveList`, `ResponsiveRow`, `ETIQUETA_CELDA` (tabla en `md`, lista en móvil) |
-| `frontend/src/components/access/list-pager.tsx` | Nuevo, reutilizable: `ListPager`, `totalPaginas` para `Paginated` |
+| `frontend/src/components/access/list-pager.tsx` | Nuevo, reutilizable: `ListPager`, `totalPaginas` para `Paginated`; la región viva (`sr-only`) anuncia solo "Página N", no el total, para no hablar en cada refresco |
 | `frontend/src/components/access/request-status-badge.tsx` | Nuevo, reutilizable: `RequestStatusBadge`, `ESTADOS_SOLICITUD` |
 | `frontend/src/components/access/fecha.ts` | Nuevo: `formatearFecha`, `LOCALE_FECHAS` (`es-MX`) |
 | `frontend/src/components/access/request-errors.ts` | Agrega `describeListError` y `listLoadError` (conserva el estado HTTP para que `usePolling` se detenga con 401); lo existente sin cambios |
 | `frontend/src/components/ui.tsx` | `EmptyNote`: `text-label/60` → `/85` (AA; ver decisión 5) |
-| `frontend/tests/components/access/my-requests-view.test.tsx` | Nuevo: 16 pruebas |
-| `frontend/tests/accesibilidad/pares-contraste.ts` | Par `empty-note/panel` (`alfaTexto` 0,85) |
+| `frontend/tests/components/access/my-requests-view.test.tsx` | Nuevo: 19 pruebas (incluye teclado de pestañas y región viva) |
+| `frontend/tests/accesibilidad/pares-contraste.ts` | Pares `empty-note/panel` (`alfaTexto` 0,85), `label-text/body-bg` (subtítulo, paginación, pestaña inactiva), `tab-indicador/body-bg` (3:1) y `badge-solicitud-<estado>`; la pestaña activa ya estaba en `primary-text/body-bg` |
 
 ## Decisiones del orquestador (pendientes de validar en la prueba de concepto)
 | # | Decisión | Motivo |
 |---|---|---|
 | 1 | `/requests` ya no usa `RequireRole requester`: el superadmin que entra por URL ve "Como superadmin tienes acceso a todas las plataformas…" en vez de "sin permiso"; sin llamadas a la API | Pedido del orquestador; los contratos responden 200 vacío al superadmin, así que no se expone nada |
 | 2 | Una sola entrada de menú ("Mis solicitudes", sin cambio en `app-shell.tsx`) con dos pestañas; el superadmin sigue sin verla | REQUERIMIENTOS (Pantallas por rol): Mis solicitudes para usuario y admin; "Mis accesos" no es pantalla propia (va en Inicio) |
-| 3 | El refresco con `usePolling` corre siempre al intervalo del usuario, no solo "mientras haya `pendiente`/`en_proceso`" como dice la tabla Refresco de los contratos | `usePolling` no tiene opción para pausarse por datos; cambiarlo es otro elemento compartido. Propuesta DIS-033 |
+| 3 | El refresco con `usePolling` corre siempre al intervalo del usuario, no solo "mientras haya `pendiente`/`en_proceso`" como dice la tabla Refresco de los contratos | `usePolling` no tiene opción para pausarse por datos; cambiarlo es otro elemento compartido. Propuesta DIS-033 (incluye la opción de pausa en `usePolling`, que es frontend; sin tarea FNC aparte) |
 | 4 | Mis accesos abre en `vigente` (por defecto del contrato) con filtro por cada estado; Mis solicitudes abre en "Todas" | Contratos |
 | 5 | `EmptyNote` (compartido, 17 archivos) sube el texto de `/60` (2,88–3,35:1) a `/85` (5,16–6,63:1 en los 7 temas) | AA exigido; mismo criterio que el placeholder de DIS-013 |
 | 6 | Fechas con `Intl` `es-MX`, estilo medio, zona del navegador | No había formateador de fechas en el frontend |
 | 7 | Sin "cancelar solicitud" ni "revocar" | Fuera de alcance de la ficha |
+| 8 | La "tabla responsive" es una lista (`ul` de `dl`, `dt` visibles en móvil y `sr-only` en `md`, cabecera visual `aria-hidden`), no una `table` con `th scope` | Un solo marcado para móvil y escritorio sin duplicar filas; cada valor queda asociado a su etiqueta. Aprobado por auditor-accesibilidad; pendiente de validar en la prueba de concepto |
+| 9 | Pestañas con activación automática (la flecha mueve el foco y selecciona); las de Ajustes no se tocan | Patrón WAI-ARIA pedido por auditor-accesibilidad; Ajustes → Propuesta DIS-034 |
 
 ## Reutilización
 - `access-status-badge.tsx` (DIS-013)
@@ -91,19 +93,20 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py`:
 |---|---|
 | `npm run typecheck` | salida 0 |
 | `npm run lint` | salida 0, sin avisos |
-| `npx eslint tests/components/access/my-requests-view.test.tsx` | salida 0 |
-| `npx vitest run` | salida 0: 16 archivos, 537 passed + 25 expected fail (antes 507 + 25; +16 de pantallas y +14 del par `empty-note/panel` y colores literales; las 25 conocidas sin cambio) |
+| `npx eslint tests/components/access/my-requests-view.test.tsx tests/accesibilidad/pares-contraste.ts` | salida 0 |
+| `npx vitest run` | salida 0: 16 archivos, 575 passed + 25 expected fail (antes 507 + 25; pruebas de pantallas, pares de contraste nuevos y colores literales; las 25 conocidas sin cambio) |
 | `npx vitest run tests/accesibilidad` con `alfaTexto` 0,6 | `empty-note/panel` falla en los temas (regresión comprobada); con 0,85 pasa |
 | `grep` de `style=`, `<style`, `.style.`, `#hex`, `rgb(`, IPs en los archivos nuevos | sin coincidencias |
 
 - **No verificado en navegador:** temas claro y oscuro, móvil y escritorio. Sin backend ni sesión en el worktree; contraste medido con la fórmula en los tokens, no en pantalla
-- Sin revisor, tester ni auditores (por instrucción del orquestador)
+- auditor-accesibilidad (lanzado por el orquestador): aprobado; sus 5 correcciones aplicadas en esta tarea
+- Sin revisor ni tester (por instrucción del orquestador)
 
 ## Impacto cruzado
 - Origen ← FNC-037
 - Depende de → FNC-036, FNC-024, FNC-025, FNC-069, FNC-070, FNC-071, FNC-056, FNC-058, DIS-013
 - Contrato → docs/contratos/solicitudes.md 1.1 y accesos.md 1.1
-- Genera → DIS-033 (Propuesta)
+- Genera → DIS-033, DIS-034 (Propuesta)
 
 ## Riesgos y reversión
 - Puede avanzar con los datos simulados de FNC-069; se integra después del backend.
@@ -115,3 +118,4 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py`:
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Aprobada en modo autónomo por el orquestador; En curso en el worktree `pokemon-wt-d023` |
 | 2026-10-20 | Implementada; En revisión. Propuesta DIS-033 |
+| 2026-10-20 | Correcciones de auditor-accesibilidad: teclado y 48 px en pestañas, región viva de la paginación, pares de contraste, decisión 8; DIS-033 sin FNC aparte; Propuesta DIS-034 |

@@ -88,6 +88,34 @@ describe('MyRequestsView', () => {
   });
 });
 
+describe('Pestañas con teclado (WAI-ARIA)', () => {
+  it('roving tabindex: solo la pestaña activa entra en el orden de Tab', () => {
+    render(<MyRequestsView />);
+    expect(screen.getByRole('tab', { name: 'Mis solicitudes' }).tabIndex).toBe(0);
+    expect(screen.getByRole('tab', { name: 'Mis accesos' }).tabIndex).toBe(-1);
+    expect(screen.getByRole('tabpanel').tabIndex).toBe(0);
+  });
+
+  it('flechas, Inicio y Fin mueven el foco y seleccionan', () => {
+    render(<MyRequestsView />);
+    const solicitudes = screen.getByRole('tab', { name: 'Mis solicitudes' });
+    const accesos = screen.getByRole('tab', { name: 'Mis accesos' });
+    fireEvent.keyDown(solicitudes, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(accesos);
+    expect(accesos.getAttribute('aria-selected')).toBe('true');
+    expect(accesos.tabIndex).toBe(0);
+    fireEvent.keyDown(accesos, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(solicitudes);
+    fireEvent.keyDown(solicitudes, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(accesos);
+    fireEvent.keyDown(accesos, { key: 'Home' });
+    expect(document.activeElement).toBe(solicitudes);
+    fireEvent.keyDown(solicitudes, { key: 'End' });
+    expect(document.activeElement).toBe(accesos);
+    expect(screen.getByRole('tabpanel', { name: 'Mis accesos' })).toBeTruthy();
+  });
+});
+
 describe('Mis solicitudes', () => {
   it('muestra estado, motivo de rechazo y el estado del acceso aprobado', async () => {
     render(<MyRequestsView />);
@@ -122,6 +150,15 @@ describe('Mis solicitudes', () => {
     fireEvent.click(within(nav).getByRole('button', { name: 'Siguiente' }));
     await waitFor(() =>
       expect(requestsApi.mine).toHaveBeenLastCalledWith({ status: undefined, page: 2 }));
+  });
+
+  it('la región viva anuncia solo la página, no el total', async () => {
+    vi.mocked(requestsApi.mine).mockResolvedValue(pagina([RECHAZADA], { total: 30 }));
+    render(<MyRequestsView />);
+    const nav = await screen.findByRole('navigation', { name: 'Páginas de mis solicitudes' });
+    const vivas = nav.querySelectorAll('[aria-live]');
+    expect(vivas).toHaveLength(1);
+    expect(vivas[0].textContent).toBe('Página 1');
   });
 
   it('sin una segunda página no muestra la paginación', async () => {

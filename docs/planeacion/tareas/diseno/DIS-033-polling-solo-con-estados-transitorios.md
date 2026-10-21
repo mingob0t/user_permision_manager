@@ -16,9 +16,10 @@
 - DIS-014 refresca siempre al intervalo del usuario: `usePolling` no tiene opción para pausarse según los datos
 
 ## Objetivo
+- `usePolling` admite pausarse según los datos
 - `MyRequests` y `MyAccess` consultan periódicamente solo con estados transitorios en la página mostrada
 
 ## Impacto cruzado
 - Origen ← DIS-014
-- Requiere una opción `enabled` (o equivalente) en `usePolling` (`lib/use-polling.ts`, carril FNC): tarea FNC vinculada, número a asignar por el orquestador
+- Incluye la opción de pausa (`enabled` o equivalente) en `usePolling` (`lib/use-polling.ts`): es frontend, va en esta misma tarea sin FNC aparte (decisión del orquestador)
 - Elemento compartido: `usePolling` (DIS-015, DIS-018, DIS-022, DIS-024)

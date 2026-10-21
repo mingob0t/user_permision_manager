@@ -1,6 +1,6 @@
 /**
  * Paginación de una lista paginada del contrato (`Paginated`, DIS-014):
- * "Anterior" y "Siguiente" con la página actual anunciada. Sin otra página,
+ * "Anterior" y "Siguiente"; se anuncia solo el cambio de página. Sin otra página,
  * no se muestra.
  */
 
@@ -32,9 +32,9 @@ export function ListPager({
       <Button variant="secondary" disabled={page <= 1} onClick={() => onChange(page - 1)}>
         Anterior
       </Button>
-      <p className="text-sm text-label" aria-live="polite">
-        Página {page} de {paginas} · {total} en total
-      </p>
+      <p className="text-sm text-label">Página {page} de {paginas} · {total} en total</p>
+      {/* Solo la página: un refresco que cambie el total no se anuncia. */}
+      <span className="sr-only" aria-live="polite">Página {page}</span>
       <Button variant="secondary" disabled={page >= paginas} onClick={() => onChange(page + 1)}>
         Siguiente
       </Button>
