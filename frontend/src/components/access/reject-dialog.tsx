@@ -89,7 +89,10 @@ export function RejectDialog({
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={sending || !valido}
+            disabled={!valido}
+            // Mientras se envía: `aria-disabled` para que el foco no caiga en `body`.
+            aria-disabled={sending || undefined}
+            className="aria-disabled:opacity-40"
             aria-describedby={PISTA_ID}
           >
             {sending ? 'Rechazando…' : 'Rechazar'}

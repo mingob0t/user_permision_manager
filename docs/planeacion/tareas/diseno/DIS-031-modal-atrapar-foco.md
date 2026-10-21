@@ -18,6 +18,7 @@
 ## Objetivo
 - Ciclo de foco dentro del diálogo y foco de regreso al elemento que lo abrió, en el componente compartido
 - Foco inicial en el primer campo del diálogo (hoy va al panel) (auditor-accesibilidad, DIS-013)
+- `Modal` acepta `describedBy` (`aria-describedby` del `role="dialog"`), para ligar el texto que explica la acción, p. ej. la confirmación de aprobar (auditor-accesibilidad, DIS-015)
 
 ## Impacto en elementos compartidos
 | Elemento | Usado en |
@@ -26,3 +27,9 @@
 
 ## Impacto cruzado
 - Origen ← DIS-013
+
+## Bitácora
+| Fecha | Nota |
+|---|---|
+
+| 2026-10-20 | DIS-015 (auditor-accesibilidad): agregar `describedBy` a `Modal` |

@@ -47,7 +47,10 @@
 | `frontend/src/components/access/reject-dialog.tsx` | Nuevo: motivo obligatorio 10–500 (recortado) con pista/contador ligada al campo y al botón; envío deshabilitado sin motivo válido; 422 con foco al campo |
 | `frontend/src/components/access/request-errors.ts` | Agrega `MOTIVO_MIN`, `MOTIVO_MAX`, `MENSAJE_MOTIVO`, `MENSAJES_DECISION`, `describeDecisionError`; lo existente sin cambios |
 | `frontend/tests/components/access/approvals-inbox.test.tsx` | Nuevo: 16 pruebas |
-| `frontend/tests/accesibilidad/pares-contraste.ts` | Pares `body-text/panel` y `btn-secondary-text/btn-secondary-bg` (pasan en los 7 temas) |
+| `frontend/tests/accesibilidad/pares-contraste.ts` | Pares `body-text/panel`, `btn-secondary-text/btn-secondary-bg` y `nexus-btn-primary` (pasan en los 7 temas) |
+| `frontend/src/styles/components.css` | `.nexus-btn-primary` (compartido): fondo `--color-primary` → `--color-primary-solid` y texto `white` → `--color-on-primary` (auditor-accesibilidad: fallaba en obsidian 2,56, rose 3,67, emerald 3,77 y violet 4,23) |
+| `frontend/src/components/access/approve-dialog.tsx`, `reject-dialog.tsx` | Mientras se envía, `aria-disabled` (no `disabled`): el foco se queda en el botón y vuelve a estar ahí si falla |
+| `frontend/src/components/access/approvals-inbox.tsx` | Al cerrar el diálogo, si el botón de la fila ya no existe, el foco va al filtro de estado |
 
 ## Decisiones del orquestador (pendientes de validar en la prueba de concepto)
 | # | Decisión | Motivo |
@@ -80,7 +83,12 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py`:
 | `message` | función/componente | `frontend/src/components/access/request-errors.ts` | `app/…` (+70) | app, frontend, tests… | ☐ (falso positivo: nombre de propiedad) |
 | `tinte` | función | `frontend/tests/accesibilidad/pares-contraste.ts` | `styles/tokens.css` | frontend/src | ☐ (sin cambio: se agregaron dos pares) |
 
-- Ningún elemento compartido modificado en su comportamiento; solo adiciones a `request-errors.ts` y `pares-contraste.ts`
+- Segunda pasada de `impacto.py` (tras las correcciones de auditor-accesibilidad): además de los anteriores, `Fila`, `abrir`, `aprobar`, `cerrarAviso`, `decidida` y `fila` (falsos positivos: funciones locales con el mismo nombre en otros módulos) y **`nexus-btn-primary`** (clase CSS, `components.css`, usada por `Button` de `form.tsx`)
+- **Compartido modificado: `.nexus-btn-primary`** (botón primario de `Button`, variante por defecto). Cambia el fondo a `--color-primary-solid` y el texto a `--color-on-primary`:
+  - claro, oscuro y obsidian: el fondo no cambia (`primary-solid` = `primary`); en obsidian el texto pasa de blanco a casi negro (9 9 11)
+  - emerald, rose y violet: fondo más oscuro (Emerald-700, Rose-600, Violet-600), texto blanco
+  - `danger` (`!bg-error`) conserva su fondo; en obsidian su texto pasa a casi negro
+- Pantallas a validar (usan `Button` primario): Login, Catálogo/Plataformas (solicitar), Mis solicitudes y accesos (paginación), Aprobaciones, Áreas (alta, edición, administradores), Administrar plataformas (formulario, aviso), Usuarios, Notificaciones, Ajustes, y todos los `ConfirmDialog` (botón `danger`)
 
 ## Criterios de aceptación
 - [x] Rechazar sin motivo no habilita el envío y lo explica (pista ligada al campo y al botón)
@@ -94,17 +102,18 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py`:
 | `npm run lint` | salida 0, sin avisos |
 | `npx eslint tests/components/access/approvals-inbox.test.tsx tests/accesibilidad/pares-contraste.ts` | salida 0 |
 | `npx vitest run` | salida 0: 17 archivos, 608 passed + 25 expected fail (antes 575 + 25; las 25 conocidas sin cambio) |
+| Correcciones de auditor-accesibilidad: `npm run typecheck` / `npm run lint` / `npx vitest run` | salida 0 / 0 / 0: 618 passed + 25 expected fail (3 pruebas de foco y 7 celdas `nexus-btn-primary`). Las fallas conocidas siguen en 25: `button-text/button-bg` mide los tokens `--color-button-*`, que no cambian (DIS-004) |
 | `npx vitest run tests/accesibilidad` | 415 passed + 25 expected fail; pares nuevos pasan en los 7 temas |
 | `grep` de `style=`, `<style`, `.style.`, `#hex`, `rgb(`, IPs en los archivos nuevos y modificados | sin coincidencias |
 
 - **No verificado en navegador:** temas claro y oscuro, móvil y escritorio. Sin backend ni sesión en el worktree; contraste medido con la fórmula sobre los tokens
-- Sin revisor, tester ni auditores (por instrucción del orquestador)
+- Sin revisor ni tester (por instrucción del orquestador). auditor-accesibilidad (lanzado por el orquestador): 1 bloqueante (botón primario) y 2 de foco, corregidos; nota para DIS-031 (`Modal` con `describedBy`)
 
 ## Impacto cruzado
 - Origen ← FNC-037
 - Depende de → FNC-036, FNC-024, FNC-025, FNC-069, FNC-070, FNC-071, FNC-057
 - Contrato → docs/contratos/solicitudes.md 1.1
-- Relacionada → DIS-004 (contraste del botón `danger`, decisión 4)
+- Relacionada → DIS-004 (contraste del botón `danger`, decisión 4; parte del primario resuelta aquí), DIS-031 (`Modal` con `describedBy`)
 
 ## Riesgos y reversión
 - Puede avanzar con los datos simulados de FNC-069; se integra después del backend.
@@ -116,3 +125,4 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py`:
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Aprobada en modo autónomo por el orquestador; En curso en el worktree `pokemon-wt-d023` |
 | 2026-10-20 | Implementada; En revisión. Sin tareas nuevas |
+| 2026-10-20 | Correcciones de auditor-accesibilidad: `.nexus-btn-primary` a `primary-solid`/`on-primary` (compartido), `aria-disabled` al enviar, foco al filtro si el disparador ya no existe; notas en DIS-004 y DIS-031 |

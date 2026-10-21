@@ -193,6 +193,54 @@ describe('ApprovalsInbox: aprobar', () => {
   });
 });
 
+describe('ApprovalsInbox: foco (auditor-accesibilidad)', () => {
+  it('mientras se aprueba el botón queda `aria-disabled` con el foco; si falla, el foco sigue ahí', async () => {
+    let fallar: (e: unknown) => void = () => {};
+    vi.mocked(requestsApi.approve).mockReturnValue(new Promise((_, rej) => { fallar = rej; }));
+    render(<ApprovalsInbox />);
+    fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
+      .getByRole('button', { name: /^Aprobar/ }));
+    const boton = within(screen.getByRole('dialog')).getByRole('button', { name: 'Aprobar' }) as HTMLButtonElement;
+    boton.focus();
+    fireEvent.click(boton);
+    const enviando = within(screen.getByRole('dialog')).getByRole('button', { name: 'Aprobando…' }) as HTMLButtonElement;
+    expect(enviando.disabled).toBe(false);
+    expect(enviando.getAttribute('aria-disabled')).toBe('true');
+    expect(document.activeElement).toBe(enviando);
+    fireEvent.click(enviando);
+    expect(requestsApi.approve).toHaveBeenCalledTimes(1);
+    fallar(new ApiError(409, 'x', { code: 'nivel_vigente' }));
+    expect(await screen.findByText(MENSAJES_DECISION.nivel_vigente)).toBeTruthy();
+    expect(document.activeElement).toBe(boton);
+  });
+
+  it('mientras se rechaza el botón queda `aria-disabled` con el foco', async () => {
+    vi.mocked(requestsApi.reject).mockReturnValue(new Promise(() => {}));
+    render(<ApprovalsInbox />);
+    fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
+      .getByRole('button', { name: /^Rechazar/ }));
+    const dialogo = screen.getByRole('dialog');
+    fireEvent.change(within(dialogo).getByLabelText('Motivo del rechazo'), { target: { value: MOTIVO } });
+    const boton = within(dialogo).getByRole('button', { name: 'Rechazar' }) as HTMLButtonElement;
+    boton.focus();
+    fireEvent.click(boton);
+    const enviando = await within(dialogo).findByRole('button', { name: 'Rechazando…' }) as HTMLButtonElement;
+    expect(enviando.disabled).toBe(false);
+    expect(enviando.getAttribute('aria-disabled')).toBe('true');
+    expect(document.activeElement).toBe(enviando);
+  });
+
+  it('al cerrar, si el botón de la fila ya no existe, el foco va al filtro de estado', async () => {
+    render(<ApprovalsInbox />);
+    const boton = within(await screen.findByRole('listitem', { name: FILA_ANA }))
+      .getByRole('button', { name: /^Aprobar/ });
+    fireEvent.click(boton);
+    boton.remove();
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancelar' }));
+    expect(document.activeElement).toBe(screen.getByLabelText('Filtrar la bandeja por estado'));
+  });
+});
+
 describe('ApprovalsInbox: rechazar', () => {
   async function abrirRechazo() {
     render(<ApprovalsInbox />);

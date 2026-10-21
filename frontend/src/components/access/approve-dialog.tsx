@@ -63,7 +63,8 @@ export function ApproveDialog({
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={aprobar} disabled={sending}>
+          {/* `aria-disabled` mientras se envía: el foco se queda en el botón (con `disabled` caería en `body`). */}
+          <Button onClick={aprobar} aria-disabled={sending || undefined} className="aria-disabled:opacity-40">
             {sending ? 'Aprobando…' : 'Aprobar'}
           </Button>
         </>

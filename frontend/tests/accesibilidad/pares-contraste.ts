@@ -86,6 +86,9 @@ export const PARES: ParContraste[] = [
   // `.nx-modal-glass`, ambos `--color-panel-fill`) y botón secundario ("Rechazar", "Cancelar":
   // `.nexus-btn-secondary`, `--color-tab-inactive-text` sobre `--color-surface-container-bg`).
   texto('body-text/panel', '--color-body-text', '--color-panel-fill'),
+  // DIS-015 (auditor-accesibilidad): `.nexus-btn-primary` de `components.css` (antes blanco sobre
+  // `--color-primary`: 2,56–4,23:1 en obsidian, rose, emerald y violet).
+  texto('nexus-btn-primary', '--color-on-primary', '--color-primary-solid'),
   texto('btn-secondary-text/btn-secondary-bg', '--color-tab-inactive-text', '--color-surface-container-bg'),
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },

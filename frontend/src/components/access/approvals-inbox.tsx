@@ -197,7 +197,10 @@ export function ApprovalsInbox() {
   // Estable: `Modal` reinstala su efecto (y el foco) si cambia `onClose`.
   const cerrar = useCallback(() => {
     setDecision(null);
-    disparador.current?.focus();
+    // Si la fila cambió (refresco), el botón ya no existe: el foco va al filtro.
+    const boton = disparador.current;
+    if (boton?.isConnected) boton.focus();
+    else document.getElementById(FILTRO_ESTADO_ID)?.focus();
   }, []);
 
   const refrescar = lista.refresh;
