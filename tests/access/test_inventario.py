@@ -118,7 +118,7 @@ def test_busca_por_nombre_o_correo(escena, inventario, cliente_como):
 
 
 @pytest.mark.parametrize('consulta', [
-    {'status': 'otro'}, {'level': 'otro'}, {'origin': 'otro'},
+    {'status': 'otro'}, {'level': 'otro'}, {'origin': 'heredado'},
     {'area_id': 'x'}, {'q': 'a' * 101}, {'page': '0'},
     {'q': 'a\x00b'}, {'q': 'a\x1bb'},  # SEG-FNC059-01
     {'per_page': str(ACCESS_INVENTORY_PAGE_SIZE_MAX + 1)},

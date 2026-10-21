@@ -21,13 +21,10 @@ NIVELES = (NIVEL_USUARIO, NIVEL_ADMIN)
 # Orden de los niveles: solo se sube (solicitudes.md, `requestable_levels`).
 RANGO_NIVEL = {NIVEL_USUARIO: 1, NIVEL_ADMIN: 2}
 
-# Origen. `heredado` (contrato `accesos.md` 1.2, FNC-065): lo crea solo la
-# migración 0010 a partir de `user_platforms`; nada otorga con ese origen.
+# Origen (P4: sin `heredado`; los accesos de NEXUS se descartan).
 ORIGEN_SOLICITUD = 'solicitud'
 ORIGEN_ADMIN_DE_AREA = 'admin_de_area'
-ORIGEN_HEREDADO = 'heredado'
-ORIGENES = (ORIGEN_SOLICITUD, ORIGEN_ADMIN_DE_AREA, ORIGEN_HEREDADO)
-ORIGENES_OTORGABLES = (ORIGEN_SOLICITUD, ORIGEN_ADMIN_DE_AREA)
+ORIGENES = (ORIGEN_SOLICITUD, ORIGEN_ADMIN_DE_AREA)
 
 # Motivo que el sistema pone al acceso reemplazado al subir de nivel.
 MOTIVO_REEMPLAZO = 'reemplazado_por_nivel_superior'

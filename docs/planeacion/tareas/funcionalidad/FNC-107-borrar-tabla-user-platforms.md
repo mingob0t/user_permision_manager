@@ -16,15 +16,15 @@
 | **Requiere auditor-seguridad** | No |
 
 ## Contexto
-- FNC-065 migró `user_platforms` a accesos `heredado`, retiró los endpoints y dejó la tabla obsoleta sin borrar
-- Tras un periodo sin incidencias se borra (el downgrade de 0010 no restaura filas: hay que respaldar antes)
+- FNC-065 retiró los endpoints y dejó la tabla obsoleta sin borrar ni migrar (P4: sus filas se descartan)
+- Tras un periodo sin incidencias se borra (el downgrade no restaura filas: hay que respaldar antes)
 
 ## Objetivo
 - Quitar la tabla, la relación `User.platforms` (`platform_users`) y su uso en fábricas y pruebas
 
 ## Alcance
 - **Incluye:** migración con respaldo de las filas en el downgrade, modelos, `tests/fabricas.py`, documentación
-- **No incluye:** tocar los accesos `heredado`
+- **No incluye:** migrar sus filas a accesos (P4)
 
 ## Impacto cruzado
 - Origen ← FNC-065; depende de FNC-065 y de la validación del dueño en la prueba de concepto
