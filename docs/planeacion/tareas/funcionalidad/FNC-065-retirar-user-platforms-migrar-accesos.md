@@ -64,7 +64,18 @@
 | `Platform.to_dict` | Serialización | Sin cambio (ya no exponía `user_ids`) | Sí |
 | `api/helpers.endpoint_retirado` | Respuesta (nueva) | `api/crud.py`, `platforms/api.py` | Sí |
 
-IMPACTO_AQUI
+Salida de `impacto.py` (contra `develop`):
+
+| Elemento modificado | Tipo | Definido en | Usado en (fuera de la tarea) | Áreas afectadas | ¿Validado? |
+|---|---|---|---|---|---|
+| `_rutas` | función | `tests/access/test_endpoints_retirados.py` | `tests/test_guardia_rutas.py` | tests | ☐ |
+| `datos` | función | `tests/test_auditoria_crud.py` | `app/__init__.py`, `app/modules/access/api.py`, ... (+76) | casi todo `app` y `tests` | ☐ |
+| `escena` | función | `tests/access/test_endpoints_retirados.py` | `tests/access/conftest.py`, `test_api.py`, ... (+9) | tests/access, tests/access_requests, tests/areas, tests/home, tests/provisioning, tests/users | ☐ |
+| `scoped_platforms` | función | `app/authz.py` | `app/modules/api/routes.py` | app/modules | ☐ |
+
+- `_rutas`, `datos`, `escena`: falsos positivos (nombres comunes de fixtures o funciones locales de prueba; cada archivo usa el suyo).
+- `scoped_platforms`: solo cambió el docstring de `authz.py`; sin cambio de comportamiento.
+- No lo detecta la herramienta: los dos endpoints retirados (sin llamadas en `frontend/src`).
 
 ## Criterios de aceptación
 - [x] ~~Conteo de filas migradas~~ No aplica: P4 descarta las filas (sin migración)
@@ -84,7 +95,7 @@ IMPACTO_AQUI
 | Comando | Resultado real |
 |---|---|
 | `pytest tests/access/test_endpoints_retirados.py` con los endpoints viejos | 2 failed (respondían 200 y escribían); con el 410, 4 passed |
-| `venv/bin/python -m pytest -q` (completo, final) | PYTEST_AQUI |
+| `venv/bin/python -m pytest -q` (completo, final) | 1746 passed, 15 xfailed (1761 recogidas); código de salida 0 (9 min 43 s). Un pytest previo, tras quitar el origen `heredado`, dio 5 failed por pruebas de `PUT /users/<id>/platforms` en `tests/users/test_roles_y_areas_administradas.py`; se retiraron esas 5 y el resto quedó en verde |
 
 No verificado:
 - Pantallas web: ninguna llama a los endpoints retirados.
