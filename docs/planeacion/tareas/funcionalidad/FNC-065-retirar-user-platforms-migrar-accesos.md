@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | accesos |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | — |
 | **Rama** | `fnc/FNC-065-retirar-user-platforms` |
