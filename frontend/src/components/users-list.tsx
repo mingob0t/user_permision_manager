@@ -4,19 +4,25 @@
 
 import { useRef, useState } from 'react';
 import { api } from '@/lib/api';
-import { usersApi } from '@/lib/access/users';
 import { useAsync } from '@/lib/use-async';
 import type {
-  Area, DirectoryUser, InactiveUser, ManagedUser, Platform, Role, UserInput,
+  Area, DirectoryUser, InactiveUser, ManagedUser, Platform, UserInput,
 } from '@/lib/types';
-import { Button, Checkbox, ConfirmDialog, Field, Modal, Select, TextInput } from './form';
+import { Button, Checkbox, ConfirmDialog, Field, Modal, TextInput } from './form';
 import { useSession } from './session-provider';
 import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
 import { UserAccessPanel } from './users/user-access-panel';
+import { DirectoryAccountForm } from './users/directory-account-form';
+import { AdminAreasDialog, RemoveAdminDialog } from './users/admin-role-dialog';
 
 /** El alta de cuentas que ya existen en el directorio llega con FNC-079. */
 const DIRECTORY_IMPORT_PENDING =
   'El alta de cuentas del directorio aún no está disponible en el portal.';
+
+/** Acciones de rol (DIS-019): 48 px y foco visible; mismo aspecto que las demás de la fila. */
+const ACCION_ROL =
+  'min-h-12 rounded px-2 py-1 text-xs text-primary-text outline-none hover:bg-primary/10 ' +
+  'focus-visible:ring-2 focus-visible:ring-primary';
 
 const ROLE_LABELS: Record<string, string> = {
   administrador: 'Admin global',
@@ -81,26 +87,23 @@ function UserForm({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const { session } = useSession();
-  const isAdmin = session?.permissions.is_admin ?? false;
-
+  // DIS-019: el rol y las áreas administradas ya no se editan aquí (acciones
+  // "Hacer admin" / "Quitar admin" del superadmin). La contraseña solo se
+  // ofrece para la cuenta de emergencia (superadmin local, contrato v2).
+  const conContrasena = user?.role === 'administrador' && user.auth_source === 'local';
   const [form, setForm] = useState<UserInput>(
     user
-      ? { name: user.name, role: user.role, is_active: user.is_active }
+      ? { name: user.name, is_active: user.is_active }
       : {
           email: prefill?.email ?? prefill?.account ?? '',
           name: prefill?.name ?? '',
           role: 'usuario',
           is_active: true,
-          password: '',
           // `auth_source` lo fija el servidor (FNC-044): no se envía.
         },
   );
   const [areaIds, setAreaIds] = useState<number[]>(
     (user?.areas ?? []).map((a) => a.id),
-  );
-  const [managedIds, setManagedIds] = useState<number[]>(
-    (user?.managed_areas ?? []).map((a) => a.id),
   );
   const [platformIds, setPlatformIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
@@ -122,18 +125,12 @@ function UserForm({
     try {
       if (user) {
         await api.updateUser(user.id, form);
-        if (isAdmin && form.role === 'admin_area') {
-          await usersApi.setManagedAreas(user.id, managedIds);
-        }
         await api.setUserAreas(user.id, areaIds);
         if (platformIds.length > 0) {
           await api.setUserPlatforms(user.id, platformIds);
         }
       } else {
-        const created = await api.createUser({ ...form, area_ids: areaIds });
-        if (isAdmin && form.role === 'admin_area' && managedIds.length > 0) {
-          await usersApi.setManagedAreas(created.id, managedIds);
-        }
+        await api.createUser({ ...form, area_ids: areaIds });
       }
       onSaved();
     } catch (err) {
@@ -175,31 +172,18 @@ function UserForm({
         />
       </Field>
 
-      <Field
-        label="Contraseña"
-        hint={user ? 'Vacío conserva la actual.' : 'Si se deja vacío se usa la inicial por defecto.'}
-      >
-        <TextInput
-          type="password" autoComplete="new-password"
-          value={form.password ?? ''}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-        />
-      </Field>
-
-      <Field
-        label="Rol"
-        hint={isAdmin ? undefined : 'Solo un administrador global puede asignar ese rol.'}
-      >
-        <Select
-          value={form.role ?? 'usuario'}
-          onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
+      {conContrasena ? (
+        <Field
+          label="Contraseña"
+          hint="Solo la cuenta de emergencia tiene contraseña en el portal. Vacío conserva la actual."
         >
-          <option value="usuario">Usuario</option>
-          <option value="admin_area">Administrador de área</option>
-          {/* El backend rechaza este rol si quien lo pide no es superadmin. */}
-          {isAdmin ? <option value="administrador">Administrador global</option> : null}
-        </Select>
-      </Field>
+          <TextInput
+            type="password" autoComplete="new-password"
+            value={form.password ?? ''}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
+        </Field>
+      ) : null}
 
       <Field label="Áreas a las que pertenece">
         <TagPicker
@@ -207,16 +191,6 @@ function UserForm({
           empty="No hay áreas en tu alcance."
         />
       </Field>
-
-      {/* Solo el superadmin asigna áreas administradas (FNC-044). */}
-      {isAdmin && form.role === 'admin_area' ? (
-        <Field label="Áreas que administra" hint="Solo entre las de tu alcance.">
-          <TagPicker
-            options={areas} selected={managedIds} onChange={setManagedIds}
-            empty="No hay áreas en tu alcance."
-          />
-        </Field>
-      ) : null}
 
       {user ? (
         <Field label="Plataformas asignadas" hint="Vacío deja las actuales sin cambios.">
@@ -436,8 +410,37 @@ export function UsersList() {
   // DIS-018: accesos del usuario; al cerrar, el foco vuelve a su botón.
   const [accessOf, setAccessOf] = useState<ManagedUser | null>(null);
   const accessTrigger = useRef<HTMLButtonElement | null>(null);
+  // DIS-019: alta en el directorio y acciones de rol (solo superadmin); el
+  // resultado se anuncia en una región `status` que recibe el foco.
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [roleOf, setRoleOf] = useState<{ user: ManagedUser; action: 'areas' | 'quitar' } | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const avisoRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = session?.permissions.is_admin ?? false;
+  // El superadmin asigna cualquier área; el admin de área, solo las suyas.
+  const assignableAreas = isAdmin ? (areas.data ?? []) : (session?.managed_areas ?? []);
+
+  const roleTrigger = useRef<HTMLButtonElement | null>(null);
+
+  function abrirRol(trigger: HTMLButtonElement, user: ManagedUser, action: 'areas' | 'quitar') {
+    roleTrigger.current = trigger;
+    setRoleOf({ user, action });
+  }
+
+  function cancelarRol() {
+    setRoleOf(null);
+    roleTrigger.current?.focus();
+  }
+
+  function anunciar(mensaje: string) {
+    setCreatingAccount(false);
+    setRoleOf(null);
+    setAviso(mensaje);
+    users.reload();
+    // Tras desmontar el diálogo, el foco va al aviso.
+    setTimeout(() => avisoRef.current?.focus(), 0);
+  }
 
   async function remove() {
     if (!removing) return;
@@ -476,8 +479,19 @@ export function UsersList() {
               </Button>
             </>
           ) : null}
-          <Button onClick={() => setCreating(true)}>Nuevo usuario</Button>
+          <Button onClick={() => setCreatingAccount(true)}>Nuevo usuario</Button>
         </div>
+      </div>
+
+      <div role="status" ref={avisoRef} tabIndex={-1} className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        {aviso ? (
+          <Card>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-bold text-success-text">{aviso}</p>
+              <Button variant="secondary" onClick={() => setAviso(null)}>Cerrar aviso</Button>
+            </div>
+          </Card>
+        ) : null}
       </div>
 
       {showPurge ? <PurgePanel onDone={users.reload} /> : null}
@@ -538,7 +552,7 @@ export function UsersList() {
                   ) : null}
                 </div>
 
-                <div className="mt-3 flex gap-1 border-t border-panel-border pt-3">
+                <div className="mt-3 flex flex-wrap gap-1 border-t border-panel-border pt-3">
                   <button
                     type="button"
                     onClick={() => setEditing(user)}
@@ -564,6 +578,37 @@ export function UsersList() {
                   >
                     Eliminar
                   </button>
+                  {/* DIS-019: acciones de rol solo para el superadmin. */}
+                  {isAdmin && user.role === 'usuario' ? (
+                    <button
+                      type="button"
+                      onClick={(event) => abrirRol(event.currentTarget, user, 'areas')}
+                      aria-label={`Hacer admin de área a ${user.name}`}
+                      className={ACCION_ROL}
+                    >
+                      Hacer admin
+                    </button>
+                  ) : null}
+                  {isAdmin && user.role === 'admin_area' ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(event) => abrirRol(event.currentTarget, user, 'areas')}
+                        aria-label={`Áreas que administra ${user.name}`}
+                        className={ACCION_ROL}
+                      >
+                        Áreas admin
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => abrirRol(event.currentTarget, user, 'quitar')}
+                        aria-label={`Quitar admin de área a ${user.name}`}
+                        className={ACCION_ROL}
+                      >
+                        Quitar admin
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               </Card>
             ))}
@@ -580,6 +625,38 @@ export function UsersList() {
             setDirectory(false);
             setCreating(true);
           }}
+        />
+      ) : null}
+
+      {creatingAccount ? (
+        <DirectoryAccountForm
+          areas={assignableAreas}
+          areasLoading={isAdmin && areas.loading}
+          areasError={isAdmin && areas.error ? 'No se pudieron cargar las áreas.' : null}
+          areasRequired={!isAdmin}
+          onClose={() => setCreatingAccount(false)}
+          onCreated={(created) => anunciar(`Se creó la cuenta de ${created.name || created.email}.`)}
+        />
+      ) : null}
+
+      {roleOf?.action === 'areas' ? (
+        <AdminAreasDialog
+          user={roleOf.user}
+          areas={areas.data ?? []}
+          areasLoading={areas.loading}
+          areasError={areas.error ? 'No se pudieron cargar las áreas.' : null}
+          onClose={cancelarRol}
+          onSaved={anunciar}
+          onStale={users.reload}
+        />
+      ) : null}
+
+      {roleOf?.action === 'quitar' ? (
+        <RemoveAdminDialog
+          user={roleOf.user}
+          onClose={cancelarRol}
+          onSaved={anunciar}
+          onStale={users.reload}
         />
       ) : null}
 
