@@ -124,7 +124,8 @@ def scoped_platforms(user=None):
 
     Un acceso solo cuenta si la plataforma es de un área a la que la cuenta
     pertenece (`user_areas`, P1). Otros estados del acceso no dan
-    visibilidad. `user_platforms` no interviene (P4; se retira en FNC-065).
+    visibilidad. `user_platforms` (obsoleta desde FNC-065, P4: se descarta) no
+    interviene.
     El catálogo para solicitar es otro: `access_requests/catalogo.py`.
     """
     from app import db

@@ -106,7 +106,7 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 ## Endpoints retirados en v1
 | Endpoint | Motivo | Tarea |
 |---|---|---|
-| `PUT /platforms/<id>/users` | P4: los accesos de NEXUS (`user_platforms`) se descartan; el acceso sale de solicitudes | FNC-065 |
+| `PUT /platforms/<id>/users` | P4: los accesos de NEXUS (`user_platforms`) se descartan; el acceso sale de solicitudes. Responde `410 endpoint_retirado` con `use: "POST /access-requests"` (cambio aditivo, FNC-065) | FNC-065 |
 | `PUT /users/<id>/platforms` | Igual | FNC-065 |
 
 ## Por confirmar (valor más seguro aplicado)
@@ -125,3 +125,4 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 | accesos 1.1 | 2026-10-20 | Acceso automático del admin creador: nivel `usuario`, no `admin` (P6; FNC-054) |
 | plataformas-integracion 1.1, areas-y-roles 2.1 | 2026-10-20 | Accesos automáticos de los admins: cambio de área con resincronización y efecto de asignar o quitar áreas (FNC-055) |
 | solicitudes 1.1 | 2026-10-20 | Justificación opcional (decisión del dueño); detalles del catálogo y `409 estado_invalido` (FNC-056) |
+| endpoints retirados | 2026-10-21 | `PUT /platforms/<id>/users` y `PUT /users/<id>/platforms` responden `410 endpoint_retirado` (aditivo; sin cambio de versión de los contratos; FNC-065) |

@@ -51,6 +51,9 @@
 - "Mis plataformas" según los accesos otorgados: `GET /platforms`, `/favorites`, visitas, favoritos y `/stats` muestran a un usuario solo las plataformas con un acceso `activo` de sus áreas; el admin de área ve las de sus áreas y las de sus accesos activos; el superadmin, todas. Otros estados no dan visibilidad (FNC-063, 2026-10-20).
 - Resumen del inicio por rol `GET /home/summary`: el usuario recibe sus accesos y solicitudes por estado; el admin de área, además, pendientes por aprobar, accesos fallidos y totales de sus áreas; el superadmin, los globales. `GET /stats` no cambia (FNC-066, 2026-10-20).
 
+### Retirado
+- `PUT /platforms/<id>/users` y `PUT /users/<id>/platforms` (asignación directa de plataformas) responden `410 endpoint_retirado` con `use: POST /access-requests` y ya no escriben; `user_platforms` queda obsoleta, sin borrar ni migrar (P4: sus filas se descartan). Quien veía una plataforma solo por esa tabla ya no la ve (FNC-063) y debe solicitar acceso (FNC-065, 2026-10-21).
+
 ### Corregido
 - Web: borrar un conector envía el cuerpo `{}` que exige el contrato 1.1 (antes el servidor respondía `415`) (DIS-022, 2026-10-21).
 - Botón primario con contraste AA en los temas obsidian, rose, emerald y violet: `.nexus-btn-primary` usa `--color-primary-solid` y `--color-on-primary` (DIS-015, 2026-10-20).
