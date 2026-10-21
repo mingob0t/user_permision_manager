@@ -34,9 +34,9 @@ export function PlatformCatalog() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Plataformas</h1>
+        <h2 className="text-xl font-semibold">Mis plataformas</h2>
         <p className="mt-1 text-sm text-label">
-          Accesos a los sistemas de tus áreas.
+          Abre los sistemas a los que ya tienes acceso.
         </p>
       </div>
 
