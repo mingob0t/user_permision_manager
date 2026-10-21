@@ -124,4 +124,5 @@
 | DIS-033 | Mis solicitudes y mis accesos: refrescar solo con estados transitorios | web | 3 | solicitudes | Baja | Propuesta | 2026-10-20 | | | — | Origen: DIS-014; incluye la opción de pausa en `usePolling` (frontend, sin FNC aparte) |
 | DIS-034 | Pestañas de Ajustes sin navegación con flechas | web | 3 | ajustes | Media | Propuesta | 2026-10-20 | | | — | Origen: DIS-014 (auditor-accesibilidad) |
 | FNC-080 | Unicidad de los grupos LDAP de plataformas ante altas concurrentes | backend | 5 | platforms | Baja | Propuesta | 2026-10-19 | | | — | Origen: re-auditoría de FNC-046 |
+| FNC-105 | Validar el rango de los ids de ruta en la API v1 (OverflowError → 404) | backend | 5 | api | Media | Propuesta | 2026-10-21 | | | — | Origen: auditoría de FNC-061; convertidor de ruta común |
 | FNC-100 | Inicio: fallos de aprovisionamiento visibles por rol (`failed_jobs`) | backend | 3 | estadisticas | Baja | Propuesta | 2026-10-20 | | | — | Origen: FNC-066; depende de FNC-062 |

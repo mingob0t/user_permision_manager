@@ -22,13 +22,16 @@ Orden en `PUT`:
    `CONNECTOR_ALLOWED_HOSTS`, SEC-CON-07).
 5. Cambiar el `type` con accesos vigentes → `409 plataforma_con_accesos`.
 6. Guardado y auditoría (`conector_configurado`, antes y después de lo que
-   cambió) en la misma transacción; después, `limpiar_cache()` (B4).
+   cambió) en la misma transacción; después, `limpiar_cache()` (B4). Si otra
+   petición creó la configuración a la vez (restricción única) →
+   `409 conector_concurrente`.
 
 Nunca se guarda ni devuelve el valor de una credencial: solo `credential_ref`
 (y en la auditoría el saneo la omite).
 """
 from flask import Blueprint, jsonify
 from flask_login import current_user, login_required
+from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.authz import admin_required
@@ -56,6 +59,9 @@ PLATAFORMA_SIN_CONECTOR = ('La plataforma no usa conector.', 409,
                            'plataforma_sin_conector')
 PLATAFORMA_CON_ACCESOS = ('Hay accesos vigentes con este conector.', 409,
                           'plataforma_con_accesos')
+
+CONECTOR_CONCURRENTE = ('Otra petición configuró este conector a la vez; '
+                        'vuelve a intentarlo.', 409, 'conector_concurrente')
 
 RESULTADO_OK = 'ok'
 RESULTADO_ERROR = 'error'
@@ -112,6 +118,29 @@ def get_connector(platform_id):
     return _respuesta(configuracion)
 
 
+def _guardar(plataforma, configuracion, limpio):
+    """Crea o reemplaza la configuración y audita, en una transacción."""
+    antes = _estado(configuracion)
+    if configuracion is None:
+        configuracion = PlatformConnector(platform_id=plataforma.id)
+        db.session.add(configuracion)
+    for campo, valor in limpio.items():
+        setattr(configuracion, campo, valor)
+    despues = _estado(configuracion)
+    # Sin cambios no hay evento (como en plataformas, FNC-046).
+    if antes != despues:
+        add_audit_log(Evento.CONECTOR_CONFIGURADO, status='success',
+                      module=MODULO_AUDITORIA, target=plataforma.name,
+                      platform_id=plataforma.id, area_id=plataforma.area_id,
+                      before={k: v for k, v in antes.items()
+                              if despues.get(k) != v} or None,
+                      after={k: v for k, v in despues.items()
+                             if antes.get(k) != v},
+                      commit=False)
+    db.session.commit()
+    return configuracion
+
+
 @connectors_api_bp.route('/platforms/<int:platform_id>/connector',
                          methods=['PUT'])
 @login_required
@@ -138,24 +167,16 @@ def put_connector(platform_id):
             and accesos_vigentes(plataforma) > 0):
         return error_response(*PLATAFORMA_CON_ACCESOS)
 
-    antes = _estado(configuracion)
-    if configuracion is None:
-        configuracion = PlatformConnector(platform_id=plataforma.id)
-        db.session.add(configuracion)
-    for campo, valor in limpio.items():
-        setattr(configuracion, campo, valor)
-    despues = _estado(configuracion)
-    # Sin cambios no hay evento (como en plataformas, FNC-046).
-    if antes != despues:
-        add_audit_log(Evento.CONECTOR_CONFIGURADO, status='success',
-                      module=MODULO_AUDITORIA, target=plataforma.name,
-                      platform_id=plataforma.id, area_id=plataforma.area_id,
-                      before={k: v for k, v in antes.items()
-                              if despues.get(k) != v} or None,
-                      after={k: v for k, v in despues.items()
-                             if antes.get(k) != v},
-                      commit=False)
-    db.session.commit()
+    try:
+        configuracion = _guardar(plataforma, configuracion, limpio)
+    except IntegrityError:
+        # Otra petición creó la configuración entre la lectura y el guardado
+        # (`uq_platform_connectors_platform_id`).
+        db.session.rollback()
+        if not PlatformConnector.query.filter_by(
+                platform_id=platform_id).count():
+            raise
+        return error_response(*CONECTOR_CONCURRENTE)
     limpiar_cache()
     return _respuesta(configuracion)
 

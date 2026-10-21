@@ -349,3 +349,25 @@ def test_prueba_con_host_fuera_de_la_lista_falla(plataforma, superadmin,
     assert respuesta.get_json()['result'] == 'error'
     assert PlatformConnector.query.one().credential_status == \
         CREDENCIAL_SIN_VERIFICAR
+
+
+# --------------------------------------------------------------------------- #
+# Carrera al crear (auditor-seguridad de FNC-061)
+# --------------------------------------------------------------------------- #
+
+def test_put_concurrente_que_crea_la_misma_configuracion_responde_409(
+        plataforma, superadmin, monkeypatch, espia_cache):
+    """Otra petición crea la configuración entre la lectura y el guardado:
+    la restricción única da 409 y no 500, sin dejar la sesión rota."""
+    crear_conector(plataforma, port=8443)
+    # La petición no ve la configuración que la otra ya guardó.
+    monkeypatch.setattr(api_conectores, 'configuracion_de', lambda _id: None)
+
+    respuesta = superadmin.put(ruta(plataforma.id), json=CUERPO_VALIDO)
+
+    assert respuesta.status_code == 409, respuesta.get_data(as_text=True)
+    assert respuesta.get_json()['code'] == 'conector_concurrente'
+    assert PlatformConnector.query.count() == 1
+    assert PlatformConnector.query.one().port == 8443
+    assert eventos('conector_configurado') == []
+    assert espia_cache == []

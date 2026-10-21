@@ -60,6 +60,7 @@
 | Cuenta de la prueba | `consultar` con la cuenta del superadmin que prueba, nivel `usuario`, operación `otorgar` (enumerada); no otorga ni revoca | SEC-CON-03: solo datos del servidor |
 | Caché | `limpiar_cache()` tras el commit de `PUT`/`DELETE` y antes de `test` | B4; la prueba debe reflejar el gestor actual |
 | Auditoría | Antes y después solo de lo que cambió; `credential_ref` queda `[omitido]` por el saneo (`credential` es fragmento sensible) | No se evade el saneo; el valor nunca se guarda |
+| Carrera al crear | `IntegrityError` → rollback y `409 conector_concurrente` (código nuevo, aditivo, en el contrato 1.1) | Ningún código del contrato describía el caso; `plataforma_con_accesos` sería engañoso |
 | Respuesta del `PUT` | `200` al crear y al reemplazar | Contrato |
 
 ## Reutilización
@@ -103,4 +104,6 @@ No verificado: Vaultwarden real (stub hasta FNC-068); tipos `api`, `ssh`, `bd` (
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Recomendaciones de auditor-seguridad sobre FNC-050 agregadas (sección «Requisitos de seguridad heredados de FNC-050») |
 | 2026-10-20 | En curso: API, prueba de conexión, pruebas y matriz |
+| 2026-10-21 | auditor-seguridad aprobó. Corrección: carrera al crear (restricción única) → `409 conector_concurrente` con regresión que primero falló; contrato 1.1 (test exige `{}`, actualiza `credential_status`); creada FNC-105 (ids de ruta fuera de rango dan 500) |
+| 2026-10-21 | Suite completa tras la corrección: 1757 passed, 15 xfailed, salida 0 (tests/connectors: 135 passed). `impacto.py` marca 8 nombres (`_cuerpo_vacio`, `_estado`, `_guardar`, `_respuesta`, `eventos`, `plataforma`, `ruta`, `superadmin`): son helpers privados de `connectors/api.py` y `test_api.py` que coinciden por nombre con palabras comunes; falsos positivos, sin elementos compartidos modificados |
 | 2026-10-21 | En revisión: suite completa 1756 passed, 15 xfailed, salida 0; pendientes revisor y auditor-seguridad |

@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1 (2026-10-14) |
+| Versión | 1.1 (2026-10-21) |
 | Proveedor | backend (FNC-061, FNC-062; base FNC-049, FNC-050) |
 | Consumidores | web (FNC-069; pantallas DIS-022, DIS-018) |
 | Solicitudes | — |
@@ -49,11 +49,12 @@ Conectores: solo superadmin (SEC-CON-11).
 - `409 plataforma_con_accesos` si hay accesos vigentes. Respuesta `{"status": "success"}`. Auditoría `conector_eliminado`.
 
 ## `POST /platforms/<id>/connector/test`
-- Sin cuerpo. Ejecuta `consultar` sin cambios. Respuesta `200`:
+- Cuerpo JSON `{}` (`Content-Type: application/json`, convención de escrituras; sin JSON → `415`; cualquier campo → `400 campo_no_permitido`). Ejecuta `consultar` sin cambios. Respuesta `200`:
 ```json
 { "status": "success", "result": "ok", "message": "Conexión correcta." }
 ```
 - Fallo: `200` con `"result": "error"` y mensaje genérico ("No se pudo conectar con la plataforma."); el detalle solo al log. Auditoría `conector_probado`.
+- Actualiza `credential_status`: `ok` si la prueba tiene éxito; `no_encontrada` si la referencia no existe en el gestor; cualquier otro fallo no lo cambia.
 
 ## `GET /provisioning/jobs`
 | Parámetro | Tipo |
@@ -94,6 +95,7 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 |---|---|---|
 | 409 | `plataforma_sin_conector` | La plataforma no usa conector. |
 | 409 | `plataforma_con_accesos` | Hay accesos vigentes con este conector. |
+| 409 | `conector_concurrente` | Otra petición configuró este conector a la vez; vuelve a intentarlo. (`PUT` que crea; la restricción única de la plataforma) |
 | 409 | `estado_invalido` | Solo se reintenta una ejecución fallida. |
 | 422 | `validacion` | `fields.host`: "Usa un nombre de host autorizado." · `fields.params.<campo>` según el tipo |
 
@@ -119,3 +121,4 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | 1 | 2026-10-15 | Redacción: P10 resuelto, el aviso de fallo respeta `pref_email_notifications` (FNC-048) |
 | 1 | 2026-10-20 | Aclaración (FNC-062): reintento con cuerpo `{}` y casos de `409`; `from`/`to` sin zona en la hora local del proceso, como la auditoría |
 | 1 | 2026-10-20 | Aclaración (FNC-061): `DELETE` y `POST .../test` con cuerpo `{}` (convención de escrituras; sin JSON → `415`; cualquier campo → `400 campo_no_permitido`); `PUT` con campo fuera de la lista → `400 campo_no_permitido`; plataforma o configuración inexistente → `404`; cambiar `type` con accesos vigentes → `409 plataforma_con_accesos`; `test` deja `credential_status` en `ok` o `no_encontrada` |
+| 1.1 | 2026-10-21 | Aclaración (FNC-061, auditor-seguridad): `POST .../test` exige cuerpo `{}` (sin Content-Type JSON → `415`) y actualiza `credential_status`; error aditivo `409 conector_concurrente` en el `PUT` que crea |
