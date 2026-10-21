@@ -3,6 +3,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Credenciales de conectores desde Vaultwarden en staging y producción (cuenta de servicio de solo lectura de una colección, descifrado en la app, TLS validado y falla cerrado), contraseña de bind LDAP opcional desde el mismo gestor con `LDAP_BIND_PASSWORD_REF`, revisión de `VAULTWARDEN_*` en `preflight.sh` e `install.sh` y procedimiento de alta y rotación en `docs/operacion/SECRETOS.md` (FNC-068, 2026-10-21).
 - Conectores (`/admin/connectors`, superadmin): plataformas con conector, configuración por referencia de credencial (sin contraseñas), prueba de conexión y borrado confirmado; bitácora de ejecuciones con filtros, detalle de intentos y reintento confirmado de las fallidas, que se refresca sola solo mientras hay ejecuciones en curso (DIS-022, 2026-10-21).
 - Usuarios: alta de cuentas en el directorio corporativo desde "Nuevo usuario" (identificador, correo, nombre, apellidos y áreas; sin contraseña, la maneja el inicio de sesión corporativo) con errores por campo; el superadmin hace admin de área a un usuario eligiendo sus áreas, cambia esas áreas o le quita el rol, con el efecto explicado antes de confirmar. La edición ya no ofrece rol ni contraseña (salvo la cuenta de emergencia) (DIS-019, 2026-10-21).
 - Navegación en móvil: botón "Menú" en la cabecera bajo `md` con panel de las mismas entradas por rol, cierre con Escape, al elegir opción o con clic fuera, foco atrapado y áreas de 48 px (DIS-025, 2026-10-21).

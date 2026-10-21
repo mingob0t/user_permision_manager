@@ -3,8 +3,10 @@
 - La BD guarda solo la **referencia** (`credential_ref`); el valor se pide a
   un `ProveedorDeSecretos` en cada ejecución (SEC-CON-02).
 - Fuente según `APP_ENV`: `development` → variables de entorno (`.env` de
-  dev); cualquier otro valor o vacío → Vaultwarden. Hoy Vaultwarden es un
-  *stub* que responde «no configurado»: la API real es FNC-068.
+  dev); cualquier otro valor o vacío → Vaultwarden (`app.modules.secretos`,
+  FNC-068): ítem *login* cuyo nombre es la referencia, en la colección
+  `VAULTWARDEN_COLLECTION_ID`. Sin `VAULTWARDEN_*` falla cerrado
+  («no configurado»).
 - Entorno: la referencia `pokemon/contabilidad-api` se lee de
   `CONNECTOR_CREDENTIAL_POKEMON_CONTABILIDAD_API` (y el usuario opcional de
   `…__USUARIO`).
@@ -13,7 +15,11 @@
   dos referencias distintas no pueden dar la misma variable
   (`pokemon/erp-api` y `pokemon/erp_api`): `referencias_en_conflicto`.
 - Caché breve en memoria (`CONNECTOR_CREDENTIAL_CACHE_SECONDS`) por fuente y
-  referencia; los fallos no se guardan.
+  referencia, de a lo más `MAXIMO_EN_CACHE` entradas; los fallos no se
+  guardan. Al rotar una credencial: `limpiar_cache()` (por proceso) o esperar
+  la vida de la caché (B4 de FNC-050).
+- `resolver_en_gestor()`: siempre Vaultwarden (bind LDAP con
+  `LDAP_BIND_PASSWORD_REF`, FNC-068).
 - Nunca se registra ni se representa el valor (`repr` lo oculta). Los errores
   no llevan la referencia ni el valor hacia afuera.
 """
@@ -36,6 +42,8 @@ _NO_ALFANUMERICO = re.compile(r'[^A-Z0-9]')
 
 FUENTE_ENTORNO = 'entorno'
 FUENTE_VAULTWARDEN = 'vaultwarden'
+# Tope de entradas de la caché (una por referencia en uso).
+MAXIMO_EN_CACHE = 128
 
 
 class ErrorDeCredencial(Exception):
@@ -117,12 +125,31 @@ class ProveedorSecretosEntorno(ProveedorDeSecretos):
 
 
 class ProveedorSecretosVaultwarden(ProveedorDeSecretos):
-    """Vaultwarden (ADR-005, alternativa A). *Stub* hasta FNC-068."""
+    """Vaultwarden (ADR-005, alternativa A; FNC-068).
+
+    Sin `cliente`, usa el compartido del proceso (`VAULTWARDEN_*`). Los errores
+    del gestor se traducen sin la referencia ni el valor.
+    """
 
     fuente = FUENTE_VAULTWARDEN
 
+    def __init__(self, cliente=None):
+        self._cliente = cliente
+
     def obtener(self, referencia):
-        raise GestorNoConfigurado('Vaultwarden aún no está integrado (FNC-068).')
+        from app.modules.secretos import vaultwarden
+        try:
+            cliente = self._cliente or vaultwarden.cliente_del_entorno()
+            item = cliente.leer(referencia)
+        except vaultwarden.SecretoNoEncontrado:
+            raise CredencialNoEncontrada(
+                'Sin ítem único en Vaultwarden para la referencia.') from None
+        except vaultwarden.GestorCaido:
+            raise GestorNoDisponible('Vaultwarden no responde.') from None
+        except vaultwarden.GestorMalConfigurado as exc:
+            raise GestorNoConfigurado(
+                f'Vaultwarden no configurado o rechazado: {exc}') from None
+        return Credencial(secreto=item.secreto, usuario=item.usuario)
 
 
 def proveedor_de_secretos(entorno=None):
@@ -159,8 +186,17 @@ class ResolvedorCredenciales:
         vida = self._vida()
         if vida > 0:
             with self._candado:
+                self._acotar(momento)
                 self._cache[clave] = (momento + vida, credencial)
         return credencial
+
+    def _acotar(self, momento):
+        """Quita las vencidas y, si sigue llena, la que vence antes."""
+        for clave in [c for c, (vence, _) in self._cache.items()
+                      if vence <= momento]:
+            del self._cache[clave]
+        while len(self._cache) >= MAXIMO_EN_CACHE:
+            del self._cache[min(self._cache, key=lambda c: self._cache[c][0])]
 
     def limpiar(self):
         with self._candado:
@@ -173,6 +209,11 @@ _RESOLVEDOR = ResolvedorCredenciales()
 def resolver_credencial(referencia):
     """Credencial de `referencia` desde la fuente del despliegue."""
     return _RESOLVEDOR.resolver(proveedor_de_secretos(), referencia)
+
+
+def resolver_en_gestor(referencia):
+    """Credencial de `referencia` siempre desde Vaultwarden (con la caché)."""
+    return _RESOLVEDOR.resolver(ProveedorSecretosVaultwarden(), referencia)
 
 
 def limpiar_cache():

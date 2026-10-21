@@ -18,8 +18,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 from ldap3 import BASE, SUBTREE, SYNC, Connection, Server, Tls
-from ldap3.core.exceptions import (LDAPException, LDAPInvalidDnError,
-                                   LDAPNoSuchObjectResult,
+from ldap3.core.exceptions import (LDAPCommunicationError, LDAPException,
+                                   LDAPInvalidDnError, LDAPNoSuchObjectResult,
                                    LDAPSizeLimitExceededResult,
                                    LDAPStartTLSError)
 from ldap3.core.exceptions import LDAPInvalidCredentialsResult
@@ -137,14 +137,40 @@ class ClienteDirectorio:
         """
         if con_detalle:
             detalle = str(exc)
-            contrasena = self.configuracion.bind_password
-            if contrasena:
-                detalle = detalle.replace(contrasena, '***')
+            for contrasena in (self.configuracion.bind_password,
+                               getattr(self, '_contrasena_gestor', '')):
+                if contrasena:
+                    detalle = detalle.replace(contrasena, '***')
         else:
             detalle = getattr(exc, 'description', None) or '-'
         logger.error('Directorio: fallo en %s (%s): %s', operacion,
                      type(exc).__name__, detalle)
         return ErrorDirectorio(MENSAJE_ERROR, causa=exc)
+
+    def _contrasena_bind(self):
+        """Contraseña de la cuenta de servicio: del entorno o, con
+        `LDAP_BIND_PASSWORD_REF`, de Vaultwarden (FNC-068).
+
+        Si el gestor no responde, el error se clasifica como transitorio
+        (`LDAPCommunicationError`); cualquier otro fallo, permanente. El log
+        lleva solo el tipo, nunca la referencia ni el valor.
+        """
+        cfg = self.configuracion
+        if not cfg.bind_password_ref:
+            return cfg.bind_password
+        from app.modules.connectors import credenciales
+        try:
+            contrasena = credenciales.resolver_en_gestor(
+                cfg.bind_password_ref).secreto
+        except credenciales.ErrorDeCredencial as exc:
+            logger.error('Directorio: sin contraseña de bind del gestor (%s).',
+                         type(exc).__name__)
+            causa = (LDAPCommunicationError('gestor de secretos no disponible')
+                     if isinstance(exc, credenciales.GestorNoDisponible)
+                     else None)
+            raise ErrorDirectorio(MENSAJE_ERROR, causa=causa) from None
+        self._contrasena_gestor = contrasena
+        return contrasena
 
     @contextmanager
     def conexion_servicio(self, solo_lectura=True):
@@ -154,10 +180,11 @@ class ClienteDirectorio:
         `ldap://` negocia StartTLS antes de enviar la credencial.
         """
         cfg = self.configuracion
+        contrasena = self._contrasena_bind()
         conexion = None
         try:
             conexion = Connection(
-                self._servidor(), user=cfg.bind_dn, password=cfg.bind_password,
+                self._servidor(), user=cfg.bind_dn, password=contrasena,
                 client_strategy=ESTRATEGIA, receive_timeout=cfg.tiempo_espera,
                 auto_referrals=False, raise_exceptions=True,
                 read_only=solo_lectura)
