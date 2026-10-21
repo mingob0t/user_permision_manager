@@ -1524,8 +1524,8 @@ input[name="db_engine"]:checked + label .w-5.h-5 .bg-primary {
 }
 
 .nexus-btn-primary {
-    background: rgb(var(--color-primary)) !important;
-    color: white !important;
+    background: rgb(var(--color-primary-solid)) !important;
+    color: rgb(var(--color-on-primary)) !important;
     box-shadow: 0 10px 20px -5px rgb(var(--color-primary) / 0.3) !important;
 }
 
