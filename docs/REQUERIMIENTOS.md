@@ -62,6 +62,7 @@ Portal para gestionar el acceso a plataformas internas agrupadas por **áreas**.
 | Áreas | — | Las suyas | Todas y asignar admins |
 | Plataformas | — | Las de sus áreas | Todas |
 | Usuarios y accesos | — | Con acceso a sus áreas; revocar | Todos; crear cuentas; elevar a admin |
+| Inventario de permisos | — | Sus áreas | Todo |
 | Auditoría | Sus registros | Sus áreas | Todo |
 | Configuración (SMTP, LDAP, conectores) | — | — | Sí |
 

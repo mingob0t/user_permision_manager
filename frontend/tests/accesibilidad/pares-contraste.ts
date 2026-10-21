@@ -97,6 +97,13 @@ export const PARES: ParContraste[] = [
   // `label-text/body-bg`, `body-text/body-bg`; anillo de foco `ring-primary` en la página = `tab-indicador/body-bg`).
   ...Object.entries(ESTADOS_ACCESO).map(([estado, { tono }]) =>
     texto(`badge-acceso-${estado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
+  // DIS-021: inventario. Filtros y buscador fuera de `Card`, sobre el fondo de página: texto del
+  // control (`text-body-text`) y placeholder (`text-label/85`) sobre `bg-surface-container/30`
+  // compuesto sobre `--color-body-bg`. Las filas reutilizan pares ya medidos.
+  { ...texto('input-text/input-sobre-body-bg', '--color-body-text', '--color-surface-container-bg', '--color-body-bg'),
+    alfaFondo: 0.3 },
+  { ...texto('placeholder/input-sobre-body-bg', '--color-label-text', '--color-surface-container-bg', '--color-body-bg'),
+    alfaFondo: 0.3, alfaTexto: 0.85 },
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },

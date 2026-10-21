@@ -26,7 +26,7 @@ const NAV: NavItem[] = [
   { href: '/admin/platforms', label: 'Administrar plataformas', requires: 'any_admin' },
   { href: '/areas', label: 'Áreas', requires: 'any_admin' },
   { href: '/users', label: 'Usuarios', requires: 'any_admin' },
-  { href: '/inventory', label: 'Inventario' },
+  { href: '/inventory', label: 'Inventario', requires: 'any_admin' },
   { href: '/audit', label: 'Auditoría' },
   { href: '/admin/connectors', label: 'Conectores', requires: 'admin' },
   { href: '/settings', label: 'Ajustes' },
