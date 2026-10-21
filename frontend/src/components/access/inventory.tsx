@@ -90,6 +90,12 @@ export function Inventory() {
   }
 
   const data = lista.data;
+  const recargando = lista.loading && data !== null;
+
+  /** Mientras carga se ignora el clic. */
+  function recargar() {
+    if (!lista.loading) lista.reload();
+  }
 
   return (
     <div className="space-y-4">
@@ -103,14 +109,18 @@ export function Inventory() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-label" aria-live="polite">
-          {data ? `${data.total} ${data.total === 1 ? 'acceso' : 'accesos'}` : ''}
+          {recargando
+            ? 'Recargando…'
+            : data ? `${data.total} ${data.total === 1 ? 'acceso' : 'accesos'}` : ''}
         </p>
+        {/* `aria-disabled` mientras carga: el foco se queda en el botón (con `disabled` caería en `body`). */}
         <Button
           variant="secondary"
-          onClick={lista.reload}
-          disabled={lista.loading}
+          onClick={recargar}
+          aria-disabled={lista.loading || undefined}
+          className="aria-disabled:opacity-40"
         >
-          {lista.loading && data ? 'Recargando…' : 'Recargar'}
+          Recargar
         </Button>
       </div>
 
@@ -125,7 +135,10 @@ export function Inventory() {
 
       {data ? (
         data.items.length === 0 ? (
-          <EmptyNote message={hayFiltros(filtros) ? VACIO_CON_FILTROS : VACIO_SIN_FILTROS} />
+          // Anunciado: el vacío suele llegar tras cambiar un filtro.
+          <div role="status">
+            <EmptyNote message={hayFiltros(filtros) ? VACIO_CON_FILTROS : VACIO_SIN_FILTROS} />
+          </div>
         ) : (
           <>
             <InventoryTable items={data.items} />

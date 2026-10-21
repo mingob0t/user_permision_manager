@@ -13,7 +13,7 @@
 import { useState } from 'react';
 import type { AccessLevel, AccessOrigin, InventoryParams } from '@/lib/access/types';
 import type { AreaRef } from '@/lib/types';
-import { Button, Select, TextInput } from '../form';
+import { Button, Field, Select, TextInput } from '../form';
 import { NIVELES } from './access-status-badge';
 import { FILTROS } from './my-access';
 
@@ -110,64 +110,69 @@ export function InventoryFilters({
       </form>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Select
-          id={FILTRO_AREA_ID}
-          value={filtros.areaId ?? ''}
-          onChange={(event) => {
-            const areaId = event.target.value ? Number(event.target.value) : null;
-            const sigue = plataformas.some(
-              (p) => p.id === filtros.platformId && (areaId === null || p.area_id === areaId));
-            onChange({ areaId, platformId: sigue ? filtros.platformId : null });
-          }}
-          aria-label="Filtrar el inventario por área"
-        >
-          <option value="">{esSuperadmin ? 'Todas las áreas' : 'Todas mis áreas'}</option>
-          {areas.map((area) => (
-            <option key={area.id} value={area.id}>{area.name}</option>
-          ))}
-        </Select>
-        <Select
-          value={filtros.platformId ?? ''}
-          onChange={(event) =>
-            onChange({ platformId: event.target.value ? Number(event.target.value) : null })}
-          aria-label="Filtrar el inventario por plataforma"
-        >
-          <option value="">Todas las plataformas</option>
-          {visibles.map((plataforma) => (
-            <option key={plataforma.id} value={plataforma.id}>{plataforma.name}</option>
-          ))}
-        </Select>
-        <Select
-          value={filtros.status}
-          onChange={(event) => onChange({ status: event.target.value as FiltroEstado })}
-          aria-label="Filtrar el inventario por estado"
-        >
-          {FILTROS.map((filtro) => (
-            <option key={filtro.valor} value={filtro.valor}>{filtro.texto}</option>
-          ))}
-        </Select>
-        <Select
-          value={filtros.level ?? ''}
-          onChange={(event) =>
-            onChange({ level: (event.target.value || null) as AccessLevel | null })}
-          aria-label="Filtrar el inventario por nivel"
-        >
-          <option value="">Todos los niveles</option>
-          {(Object.keys(NIVELES) as AccessLevel[]).map((nivel) => (
-            <option key={nivel} value={nivel}>{NIVELES[nivel]}</option>
-          ))}
-        </Select>
-        <Select
-          value={filtros.origin ?? ''}
-          onChange={(event) =>
-            onChange({ origin: (event.target.value || null) as AccessOrigin | null })}
-          aria-label="Filtrar el inventario por origen"
-        >
-          <option value="">Todos los orígenes</option>
-          {(Object.keys(ORIGENES_INVENTARIO) as AccessOrigin[]).map((origen) => (
-            <option key={origen} value={origen}>{ORIGENES_INVENTARIO[origen]}</option>
-          ))}
-        </Select>
+        <Field label="Área">
+          <Select
+            id={FILTRO_AREA_ID}
+            value={filtros.areaId ?? ''}
+            onChange={(event) => {
+              const areaId = event.target.value ? Number(event.target.value) : null;
+              const sigue = plataformas.some(
+                (p) => p.id === filtros.platformId && (areaId === null || p.area_id === areaId));
+              onChange({ areaId, platformId: sigue ? filtros.platformId : null });
+            }}
+          >
+            <option value="">{esSuperadmin ? 'Todas las áreas' : 'Todas mis áreas'}</option>
+            {areas.map((area) => (
+              <option key={area.id} value={area.id}>{area.name}</option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Plataforma">
+          <Select
+            value={filtros.platformId ?? ''}
+            onChange={(event) =>
+              onChange({ platformId: event.target.value ? Number(event.target.value) : null })}
+          >
+            <option value="">Todas las plataformas</option>
+            {visibles.map((plataforma) => (
+              <option key={plataforma.id} value={plataforma.id}>{plataforma.name}</option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Estado">
+          <Select
+            value={filtros.status}
+            onChange={(event) => onChange({ status: event.target.value as FiltroEstado })}
+          >
+            {FILTROS.map((filtro) => (
+              <option key={filtro.valor} value={filtro.valor}>{filtro.texto}</option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Nivel">
+          <Select
+            value={filtros.level ?? ''}
+            onChange={(event) =>
+              onChange({ level: (event.target.value || null) as AccessLevel | null })}
+          >
+            <option value="">Todos los niveles</option>
+            {(Object.keys(NIVELES) as AccessLevel[]).map((nivel) => (
+              <option key={nivel} value={nivel}>{NIVELES[nivel]}</option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Origen">
+          <Select
+            value={filtros.origin ?? ''}
+            onChange={(event) =>
+              onChange({ origin: (event.target.value || null) as AccessOrigin | null })}
+          >
+            <option value="">Todos los orígenes</option>
+            {(Object.keys(ORIGENES_INVENTARIO) as AccessOrigin[]).map((origen) => (
+              <option key={origen} value={origen}>{ORIGENES_INVENTARIO[origen]}</option>
+            ))}
+          </Select>
+        </Field>
       </div>
     </div>
   );

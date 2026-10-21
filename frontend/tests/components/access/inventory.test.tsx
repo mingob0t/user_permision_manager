@@ -121,21 +121,21 @@ describe('Inventory: filtros', () => {
   it('admin: áreas propias, plataformas de su alcance y acotadas al área', async () => {
     render(<Inventory />);
     await screen.findByRole('listitem', { name: 'Acceso de Ana Ruiz a Contabilidad' });
-    expect(opciones('Filtrar el inventario por área')).toEqual(['Todas mis áreas', 'Finanzas']);
+    expect(opciones('Área')).toEqual(['Todas mis áreas', 'Finanzas']);
     expect(api.areas).not.toHaveBeenCalled();
-    await waitFor(() => expect(opciones('Filtrar el inventario por plataforma'))
+    await waitFor(() => expect(opciones('Plataforma'))
       .toEqual(['Todas las plataformas', 'Contabilidad', 'Wiki']));
   });
 
   it('superadmin: todas las áreas y todas las plataformas', async () => {
     esSuperadmin = true;
     render(<Inventory />);
-    await waitFor(() => expect(opciones('Filtrar el inventario por área'))
+    await waitFor(() => expect(opciones('Área'))
       .toEqual(['Todas las áreas', 'Finanzas', 'Ventas']));
-    await waitFor(() => expect(opciones('Filtrar el inventario por plataforma'))
+    await waitFor(() => expect(opciones('Plataforma'))
       .toEqual(['Todas las plataformas', 'Contabilidad', 'Wiki', 'CRM']));
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por área'), { target: { value: '5' } });
-    expect(opciones('Filtrar el inventario por plataforma')).toEqual(['Todas las plataformas', 'CRM']);
+    fireEvent.change(screen.getByLabelText('Área'), { target: { value: '5' } });
+    expect(opciones('Plataforma')).toEqual(['Todas las plataformas', 'CRM']);
   });
 
   it('cada filtro llega al contrato y vuelve a la página 1', async () => {
@@ -145,12 +145,12 @@ describe('Inventory: filtros', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
     await waitFor(() => expect(inventoryApi.list).toHaveBeenLastCalledWith({ ...BASE, page: 2 }));
 
-    await waitFor(() => expect(opciones('Filtrar el inventario por plataforma')).toContain('Wiki'));
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por área'), { target: { value: '3' } });
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por plataforma'), { target: { value: '14' } });
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por nivel'), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por origen'), { target: { value: 'admin_de_area' } });
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por estado'), { target: { value: 'fallido' } });
+    await waitFor(() => expect(opciones('Plataforma')).toContain('Wiki'));
+    fireEvent.change(screen.getByLabelText('Área'), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('Plataforma'), { target: { value: '14' } });
+    fireEvent.change(screen.getByLabelText('Nivel'), { target: { value: 'admin' } });
+    fireEvent.change(screen.getByLabelText('Origen'), { target: { value: 'admin_de_area' } });
+    fireEvent.change(screen.getByLabelText('Estado'), { target: { value: 'fallido' } });
     await waitFor(() => expect(inventoryApi.list).toHaveBeenLastCalledWith({
       ...BASE, status: 'fallido', area_id: 3, platform_id: 14, level: 'admin', origin: 'admin_de_area',
     }));
@@ -159,9 +159,9 @@ describe('Inventory: filtros', () => {
   it('cambiar de área quita la plataforma que no le pertenece', async () => {
     esSuperadmin = true;
     render(<Inventory />);
-    await waitFor(() => expect(opciones('Filtrar el inventario por plataforma')).toContain('CRM'));
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por plataforma'), { target: { value: '20' } });
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por área'), { target: { value: '3' } });
+    await waitFor(() => expect(opciones('Plataforma')).toContain('CRM'));
+    fireEvent.change(screen.getByLabelText('Plataforma'), { target: { value: '20' } });
+    fireEvent.change(screen.getByLabelText('Área'), { target: { value: '3' } });
     await waitFor(() => expect(inventoryApi.list).toHaveBeenLastCalledWith({ ...BASE, area_id: 3 }));
   });
 
@@ -188,7 +188,7 @@ describe('Inventory: estados', () => {
     vi.mocked(inventoryApi.list).mockResolvedValue(pagina([]));
     render(<Inventory />);
     expect(await screen.findByText(VACIO_SIN_FILTROS)).toBeTruthy();
-    fireEvent.change(screen.getByLabelText('Filtrar el inventario por nivel'), { target: { value: 'usuario' } });
+    fireEvent.change(screen.getByLabelText('Nivel'), { target: { value: 'usuario' } });
     expect(await screen.findByText(VACIO_CON_FILTROS)).toBeTruthy();
   });
 
@@ -213,6 +213,37 @@ describe('Inventory: estados', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Recargar' }));
     await waitFor(() => expect(inventoryApi.list).toHaveBeenCalledTimes(2));
     expect(inventoryApi.list).toHaveBeenLastCalledWith(BASE);
+  });
+
+  it('Recargar conserva el foco mientras carga, lo anuncia e ignora otro clic', async () => {
+    render(<Inventory />);
+    await screen.findByRole('listitem', { name: 'Acceso de Ana Ruiz a Contabilidad' });
+    let terminar: (valor: Paginated<Access>) => void = () => {};
+    vi.mocked(inventoryApi.list).mockReturnValueOnce(new Promise((r) => { terminar = r; }));
+    const boton = screen.getByRole('button', { name: 'Recargar' });
+    boton.focus();
+    fireEvent.click(boton);
+    await waitFor(() => expect(boton.getAttribute('aria-disabled')).toBe('true'));
+    expect(boton.hasAttribute('disabled')).toBe(false);
+    expect(document.activeElement).toBe(boton);
+    expect(screen.getByText('Recargando…').getAttribute('aria-live')).toBe('polite');
+    fireEvent.click(boton);
+    expect(inventoryApi.list).toHaveBeenCalledTimes(2);
+    terminar(pagina([ANA, LUIS]));
+    await waitFor(() => expect(boton.getAttribute('aria-disabled')).toBeNull());
+    expect(document.activeElement).toBe(boton);
+  });
+
+  it('vacío con filtros en role="status" y error en role="alert"', async () => {
+    vi.mocked(inventoryApi.list).mockResolvedValue(pagina([]));
+    render(<Inventory />);
+    fireEvent.change(screen.getByLabelText('Nivel'), { target: { value: 'admin' } });
+    const vacio = await screen.findByText(VACIO_CON_FILTROS);
+    expect(vacio.closest('[role="status"]')).toBeTruthy();
+    vi.mocked(inventoryApi.list).mockRejectedValueOnce(new ApiError(500, 'x'));
+    fireEvent.click(screen.getByRole('button', { name: 'Recargar' }));
+    expect((await screen.findByRole('alert')).textContent)
+      .toBe('No se pudieron cargar los accesos del inventario.');
   });
 });
 

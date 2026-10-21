@@ -42,7 +42,7 @@
 | `frontend/src/components/access/inventory-table.tsx` | Nuevo: filas en `ResponsiveList` |
 | `frontend/src/app/inventory/page.tsx` | Contenido y guarda `any_admin` |
 | `frontend/src/components/app-shell.tsx` | Compartido: `/inventory` con `requires: 'any_admin'` (1 línea) |
-| `frontend/tests/components/access/inventory.test.tsx` | Nuevo: 15 pruebas |
+| `frontend/tests/components/access/inventory.test.tsx` | Nuevo: 17 pruebas |
 | `frontend/tests/components/navegacion-por-rol.test.tsx` | Menú esperado: Inventario solo para admins |
 | `frontend/tests/accesibilidad/pares-contraste.ts` | 2 pares nuevos (filtros sobre el fondo de página) |
 
@@ -81,7 +81,7 @@ Salida de `impacto.py` (contra `develop`). Todas las filas son coincidencias de 
 ## Decisiones del orquestador (pendientes de validar en la prueba de concepto)
 | # | Decisión | Motivo |
 |---|---|---|
-| 1 | Menú y ruta solo para admin de área y superadmin (`any_admin`) | Encargo del orquestador; el backend responde 403 al usuario. "Pantallas por rol" de REQUERIMIENTOS no tiene fila de Inventario: falta agregarla |
+| 1 | Menú y ruta solo para admin de área y superadmin (`any_admin`) | Encargo del orquestador; el backend responde 403 al usuario. Fila agregada en "Pantallas por rol" de REQUERIMIENTOS |
 | 2 | Ocho datos en cinco columnas (usuario; plataforma y área; nivel y origen; desde y aprobó; estado), cada uno con su `dt` | Ocho columnas no caben en `md` con el menú lateral; mismo agrupamiento que Mis accesos |
 | 3 | Sin refresco periódico; botón "Recargar" | Contrato `accesos.md`, sección Refresco |
 | 4 | Usuario: búsqueda `q` por nombre o correo, aplicada al enviar; `user_id` no se expone | Evita una petición por tecla; no hay selector de usuarios con alcance por área |
@@ -98,9 +98,10 @@ Salida de `impacto.py` (contra `develop`). Todas las filas son coincidencias de 
 | `npx tsc --noEmit -p .` | Salida 0 |
 | `npx eslint src tests` y `npx next lint` | Salida 0, sin avisos |
 | `npx vitest run` | Salida 0: 19 archivos, 723 passed + 25 expected fail (las 25 conocidas, sin aumento) |
+| Tras las correcciones de accesibilidad: `npx tsc --noEmit -p .`, `npx eslint src tests`, `npx vitest run` | Ver la bitácora del 2026-10-20 (correcciones) |
 | `grep` de `style=`, `<style`, `.style.`, `#hex`, `rgb(`, IPs en los archivos nuevos | Sin coincidencias |
 
-- Pruebas nuevas: `inventory.test.tsx` (15) y 14 de contraste (2 pares × 7 temas), en verde.
+- Pruebas nuevas: `inventory.test.tsx` (17) y 14 de contraste (2 pares × 7 temas), en verde.
 - No verificado: navegador (temas claro y oscuro, móvil y escritorio). Sin revisor ni auditores (por instrucción).
 
 ## Impacto cruzado
@@ -118,3 +119,4 @@ Salida de `impacto.py` (contra `develop`). Todas las filas son coincidencias de 
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Aprobada por el orquestador (modo autónomo) y En curso en el worktree `pokemon-wt-d023` |
 | 2026-10-20 | Implementada: `inventory.tsx`, `inventory-filters.tsx`, `inventory-table.tsx`, página con guarda y menú `any_admin`; 15 pruebas y 14 de contraste. En revisión |
+| 2026-10-20 | auditor-accesibilidad aprobado sin fallas nuevas; correcciones: "Recargar" con `aria-disabled` (conserva el foco, ignora el clic al cargar, "Recargando…" en la región viva), filtros con `Field` (etiqueta visible), vacío con filtros en `role="status"` (errores ya en `role="alert"` de `ErrorNote`), fila en "Pantallas por rol" de REQUERIMIENTOS. typecheck 0, lint 0, Vitest 725 passed + 25 expected fail (salida 0) |
