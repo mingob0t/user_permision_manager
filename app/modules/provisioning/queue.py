@@ -131,6 +131,13 @@ def _instalar_eventos():
 _instalar_eventos()
 
 
+def despertar_tras_commit(trabajo_id):
+    """Avisa al worker por `trabajo_id` cuando la transacción actual haga
+    `commit` (nada si se revierte). Lo usan `encolar` y el reintento manual
+    (FNC-062)."""
+    db.session.info.setdefault(CLAVE_SESION, set()).add(trabajo_id)
+
+
 # --------------------------------------------------------------------------- #
 # Encolado
 # --------------------------------------------------------------------------- #
@@ -211,5 +218,5 @@ def encolar(operacion, usuario_id, plataforma, nivel, clave_idempotencia,
         next_attempt_at=None, created_at=momento, updated_at=momento)
     db.session.add(trabajo)
     db.session.flush()
-    db.session.info.setdefault(CLAVE_SESION, set()).add(trabajo.id)
+    despertar_tras_commit(trabajo.id)
     return trabajo

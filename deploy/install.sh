@@ -6,8 +6,8 @@
 #                            [--domain nexus.example.com] [--python /usr/bin/python3.11]
 #                            [--proxy http://proxy:3128] [--no-proxy localhost,10.0.0.0/8]
 #
-# --name define el nombre del despliegue: unidades NOMBRE-backend y
-# NOMBRE-frontend, prefijo /opt/NOMBRE, registros /var/log/NOMBRE y
+# --name define el nombre del despliegue: unidades NOMBRE-backend,
+# NOMBRE-frontend y NOMBRE-worker, prefijo /opt/NOMBRE, registros /var/log/NOMBRE y
 # /etc/nginx/conf.d/NOMBRE.conf. Se puede ajustar cada uno por separado con
 # --prefix y --logdir. --title cambia solo el texto descriptivo.
 #
@@ -24,7 +24,7 @@
 #   2. Comprobación del usuario de servicio (solo lo crea con --create-user)
 #   3. Copia del proyecto al prefijo y permisos
 #   4. venv del backend y build del frontend
-#   5. Unidades systemd
+#   5. Unidades systemd (backend, frontend y worker de aprovisionamiento)
 #   6. nginx como reverse proxy, con SELinux y firewalld
 #
 # No toca la base de datos: las migraciones de utils/migrations se aplican a mano.
@@ -82,6 +82,8 @@ done
 : "${APP_TITLE:=$(tr '[:lower:]' '[:upper:]' <<< "${APP_NAME:0:1}")${APP_NAME:1}}"
 BACKEND_UNIT="${APP_NAME}-backend"
 FRONTEND_UNIT="${APP_NAME}-frontend"
+# Worker de aprovisionamiento (FNC-049, FNC-067): exige Redis con contraseña.
+WORKER_UNIT="${APP_NAME}-worker"
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -298,18 +300,23 @@ render() {
 
 render "$PREFIX/deploy/backend.service.tmpl"  > "/etc/systemd/system/${BACKEND_UNIT}.service"
 render "$PREFIX/deploy/frontend.service.tmpl" > "/etc/systemd/system/${FRONTEND_UNIT}.service"
-note "instaladas ${BACKEND_UNIT}.service y ${FRONTEND_UNIT}.service"
+render "$PREFIX/deploy/worker.service.tmpl"   > "/etc/systemd/system/${WORKER_UNIT}.service"
+note "instaladas ${BACKEND_UNIT}.service, ${FRONTEND_UNIT}.service y ${WORKER_UNIT}.service"
 
 # Un marcador sin sustituir dejaría la unidad inservible.
 if grep -l "@[A-Z_]*@" "/etc/systemd/system/${BACKEND_UNIT}.service" \
-        "/etc/systemd/system/${FRONTEND_UNIT}.service" 2>/dev/null; then
+        "/etc/systemd/system/${FRONTEND_UNIT}.service" \
+        "/etc/systemd/system/${WORKER_UNIT}.service" 2>/dev/null; then
     die "quedaron marcadores sin sustituir en las unidades"
 fi
 
 systemctl daemon-reload
-systemctl enable --now "$BACKEND_UNIT" "$FRONTEND_UNIT"
+# Si una instalación previa agotó los reinicios del worker (StartLimitBurst),
+# se limpia ese estado para que vuelva a arrancar; sin efecto si no lo hay.
+systemctl reset-failed "$WORKER_UNIT" >/dev/null 2>&1 || true
+systemctl enable --now "$BACKEND_UNIT" "$FRONTEND_UNIT" "$WORKER_UNIT"
 sleep 3
-for unit in "$BACKEND_UNIT" "$FRONTEND_UNIT"; do
+for unit in "$BACKEND_UNIT" "$FRONTEND_UNIT" "$WORKER_UNIT"; do
     systemctl is-active --quiet "$unit" \
         && note "$unit activo" \
         || { journalctl -u "$unit" -n 20 --no-pager; die "$unit no arrancó"; }
@@ -354,10 +361,11 @@ Instalación terminada.
 
   backend    ${PREFIX} (127.0.0.1:5001)
   frontend   ${PREFIX}/frontend (127.0.0.1:3000)
+  worker     ${WORKER_UNIT} (no escucha; journalctl -u ${WORKER_UNIT} -f)
   registros  /var/log/nexus, journalctl -u nexus-backend -f
 
 Pendiente:
-  1. Migraciones, si es una actualización:
+  1. Migraciones, si es una actualización (después reiniciar backend y worker):
        cd ${PREFIX} && mysql -u USUARIO -p BASE < utils/migrations/00X_*.sql
   2. Certificados y server_name en /etc/nginx/conf.d/nexus.conf
   3. Comprobar:  curl -s localhost:5001/api/v1/auth/context

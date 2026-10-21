@@ -1,11 +1,12 @@
 # Despliegue
 
-Dos servicios tras un reverse proxy:
+Dos servicios tras un reverse proxy y un worker en segundo plano:
 
 | Servicio | Escucha | Sirve |
 |---|---|---|
 | `<nombre>-backend` (Flask/Gunicorn) | 127.0.0.1:5001 | API `/api/v1` |
 | `<nombre>-frontend` (Next.js) | 127.0.0.1:3000 | La interfaz |
+| `<nombre>-worker` (`flask provisioning worker`, RQ) | no escucha | Otorgar y revocar accesos con reintentos (FNC-049, ADR-003) |
 
 `<nombre>` lo define `--name` (por defecto `nexus`).
 
@@ -29,7 +30,9 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 - Cabeceras de compilación (`gcc`, `openssl-devel`, `libffi-devel`,
   `openldap-devel`), que `cryptography` y `ldap3` necesitan si no hay rueda
   binaria para la plataforma
-- Conectividad real con la base de datos y con Redis, leyendo `.env`
+- Conectividad real con la base de datos y con Redis, leyendo `.env`; Redis
+  es **obligatorio** (lo exige el worker), `REDIS_HOST` debe ser un nombre de
+  host y `REDIS_PASS` debe tener valor (no se imprime)
 - Que `SECRET_KEY` esté definida
 - Puertos 5001 y 3000 libres
 - nginx, SELinux (`httpd_can_network_connect`) y firewalld
@@ -48,7 +51,7 @@ sudo ./deploy/install.sh --name portal --domain portal.ejemplo.com
 
 | Qué | Valor |
 |---|---|
-| Unidades systemd | `portal-backend`, `portal-frontend` |
+| Unidades systemd | `portal-backend`, `portal-frontend`, `portal-worker` |
 | Prefijo | `/opt/portal` |
 | Registros | `/var/log/portal` |
 | Config de nginx | `/etc/nginx/conf.d/portal.conf` |
@@ -157,12 +160,42 @@ cp -r frontend/.next/static frontend/.next/standalone/.next/static
 `server.js` resuelve esas rutas relativas a su propio directorio, por eso la
 unidad systemd usa `WorkingDirectory=.../.next/standalone`.
 
+### Worker de aprovisionamiento
+
+Plantilla `deploy/worker.service.tmpl` → unidad `<nombre>-worker`
+(FNC-067). Corre `venv/bin/flask --app run:app provisioning worker` con la
+misma cuenta de servicio y el mismo `.env` que el backend.
+
+| Aspecto | Valor |
+|---|---|
+| Requisitos | MySQL migrado, Redis con `requirepass` y `REDIS_PASS` en el `.env` (SEG-29); sin ellos sale con código 1 |
+| Redis | En el mismo servidor, escuchando **solo en loopback** y con `REDIS_HOST=localhost` (SEC-CFG-08) |
+| Orden de arranque | Después de la red, `mysql.service` y `redis.service` (si están en el mismo servidor) |
+| Reinicio | `Restart=on-failure` cada 30 s; tras 10 fallos en 15 min queda en `failed` |
+| Apagado | `SIGTERM` termina el intento en curso; `TimeoutStopSec=630` (600 s máx. de intento + 30 s de margen) y después `SIGKILL` |
+| Registros | journald: `journalctl -u <nombre>-worker -f` |
+| Endurecimiento | Sin privilegios ni capacidades, `ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `PrivateDevices`, kernel y cgroups protegidos, solo familias `AF_UNIX`/`AF_INET`/`AF_INET6`; no escribe en disco |
+
+**Redis remoto (excepción):** solo con TLS hacia Redis y aprobación del dueño
+registrada. La app aún no habla TLS con Redis, así que hoy no se admite: hace
+falta antes una tarea de backend. Una conexión en claro por la red expondría
+`REDIS_PASS` y los mensajes de la cola.
+
+Tras agotar los reinicios:
+
+```bash
+sudo systemctl reset-failed nexus-worker && sudo systemctl start nexus-worker
+```
+
+Reversión: `sudo systemctl disable --now nexus-worker` (los trabajos quedan en
+la BD y se retoman al volver a arrancarlo).
+
 ### Servicios
 
 ```bash
 sudo cp deploy/nexus-*.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now nexus-backend nexus-frontend
+sudo systemctl enable --now nexus-backend nexus-frontend nexus-worker
 ```
 
 ### Nginx
@@ -177,7 +210,8 @@ Rellenar `server_name` y las rutas de los certificados.
 ## Migraciones
 
 No las aplica el instalador. Desde FNC-039 se usa Alembic: respaldo,
-`venv/bin/alembic upgrade head` y reinicio del servicio. Una BD existente se
+`venv/bin/alembic upgrade head` y reinicio del backend y del worker
+(`sudo systemctl restart nexus-backend nexus-worker`). Una BD existente se
 marca una vez con `venv/bin/alembic stamp 0001` (ver `docs/backend/README.md` §7).
 
 Histórico (anterior a Alembic; ya incluido en la línea base `0001`):

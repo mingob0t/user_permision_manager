@@ -38,7 +38,7 @@ app/
     ├── core/          # Modelos Area/Platform; rutas heredadas
     ├── access_requests/ # Solicitudes: models, tipos, catalogo (P1 y estado del actor), services (crear), serializacion, api.py (catalog, POST, mine) (FNC-056); approvals (bandeja, aprobar, rechazar) y rutas inbox/approve/reject (FNC-057); consultas (`mias`, FNC-066)
     ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054); api.py y serializacion.py (FNC-058); inventario e inventario_api (FNC-059)
-    ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049)
+    ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049); api, consultas, serializacion y reintento (FNC-062)
     ├── connectors/    # Conectores (FNC-050): base (interfaz), registry (tipos), models (platform_connectors), validacion, credenciales (fuente y caché), provider (proveedor `conector`), consultas, noop (solo dev/pruebas), configuracion (CONNECTOR_*)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión; `tiene_conector` desde FNC-050) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060); rutas heredadas
@@ -215,7 +215,18 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 - Un filtro fuera de alcance da lista vacía (los filtros se suman al alcance, como en la auditoría). Valor inválido → `400 parametro_invalido`.
 - Consulta en `access/inventario.py` (`visibles`, `filtrar`, `ordenados`); forma `Access` con `access.serializacion.accesos_publicos` (FNC-058).
 
-### 4.3.5 Inicio — `app/modules/home/api.py` (`/api/v1`, FNC-066)
+### 4.3.5 Ejecuciones — `app/modules/provisioning/api.py` (`/api/v1/provisioning`, FNC-062)
+
+| Método y ruta | Protección | Qué hace |
+|---|---|---|
+| `GET /provisioning/jobs` | `any_admin_required` (usuario `403`) | Bitácora paginada (`created_at` desc), sin `attempts`. Superadmin todo; admin solo trabajos con `area_id` de sus áreas. Filtros `status`, `operation`, `provider`, `area_id`, `platform_id`, `user_id`, `access_id`, `from`, `to`. |
+| `GET /provisioning/jobs/<id>` | `any_admin_required` | Detalle con `attempts` (error saneado otra vez al salir, SEC-CON-10); ajeno o inexistente → `404`. |
+| `POST /provisioning/jobs/<id>/retry` | `admin_required` (P10) + `escritura_del_portal` | Cuerpo `{}` (otro campo → `400`). Solo desde `fallido`: `reintento.reintentar` (reabre trabajo y acceso con `UPDATE` condicional, auditoría `ejecucion_reintentada`, aviso al worker tras el commit). No fallido, simultáneo, con revocación posterior, sin acceso o un otorgar que ya no pasa `rules.validar_otorgamiento` (cuenta borrada, inactiva, superadmin o fuera del área) → `409 estado_invalido`. |
+
+- `from`/`to` sin zona: hora local del proceso (como la auditoría), comparadas en UTC; un extremo que desborda al convertir → `400 parametro_invalido` (SEG-062-03).
+- No se envían `idempotency_key`, `locked_by` ni `locked_at`. Área de un trabajo = la de la plataforma al encolar (decisión del orquestador, pendiente de validar en la prueba de concepto).
+
+### 4.3.6 Inicio — `app/modules/home/api.py` (`/api/v1`, FNC-066)
 
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
@@ -291,10 +302,10 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - Proveedores (`providers.py`): `Provisioner` con `otorgar`/`revocar`/`consultar(Operacion)` → `ResultadoProveedor` (SEC-CON-01); `registrar_proveedor(tipo, fabrica)`. `ldap` registrado en el módulo; `conector` lo registra `connectors.registrar(app)` en `create_app()` (FNC-050).
 - `ProveedorLdap`: grupo del nivel de la plataforma, bajo `LDAP_GROUPS_BASE_DN` (SEC-LDAP-04); persona con `ClienteDirectorio.buscar_por_correo` (filtro exacto `(mail=…)`, cualquier valor; varias → `persona_ambigua`); usa `EscritorDirectorio`.
 - Mensajes RQ en JSON (`SERIALIZADOR_RQ`); el worker descarta sin ejecutar todo mensaje que no sea `ejecutar_trabajo(<int>)`. Despertar desde la web: tiempo de espera de 0,5 s.
-- Reintento manual (FNC-062): `ejecucion.reabrir(trabajo, cfg)` sube `max_attempts`.
+- Reintento manual (FNC-062): `ejecucion.reabrir(trabajo, cfg)` sube `max_attempts` con `UPDATE … WHERE status = 'fallido'` (un segundo reintento simultáneo → `EstadoInvalido`); `queue.despertar_tras_commit(id)` avisa al worker tras el commit.
 - Worker: `flask provisioning worker` (§6). `SimpleWorker` de RQ sin *fork*; cada vuelta barre la BD (vencidos y reservas vencidas) y trabaja hasta quedar ocioso `PROVISIONING_POLL_INTERVAL_SECONDS`. `SIGTERM`/`SIGINT`: termina el intento y sale.
 - Exige `REDIS_PASS` y `REDIS_HOST` como nombre de host; variables `PROVISIONING_*` validadas en `create_app()`.
-- API de ejecuciones y reintento manual: FNC-062. Unidad systemd: FNC-067.
+- API de ejecuciones y reintento manual: §4.3.5 (FNC-062). Unidad systemd: FNC-067.
 
 ### Conectores (`app/modules/connectors/`, FNC-050, ADR-005)
 - Un conector es el proveedor `conector` del ejecutor (FNC-049): `ProveedorConector` (`provider.py`) carga `platform_connectors`, revalida el host y resuelve la credencial en cada operación.
@@ -307,7 +318,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 
 ### Accesos otorgados (`app/modules/access/`, FNC-054)
 - `services.otorgar(usuario, plataforma, nivel, origen, actor=None, request_id=None)` y `services.revocar(acceso, actor=None, motivo=None)`: cambian el acceso, encolan (`acceso-<id>-otorgar|revocar`) y auditan (`acceso_otorgado`, `acceso_revocado`) **sin commit**; `actor=None` = sistema (FNC-055).
-- Estados (contrato `accesos.md`): `en_proceso` → `activo`/`fallido`; `activo` → `revocando` → `revocado`/`fallo_revocacion`; reintento `fallido` → `en_proceso` y `fallo_revocacion` → `revocando` (`services.reabrir_acceso`, FNC-062). Revocar solo desde `activo`.
+- Estados (contrato `accesos.md`): `en_proceso` → `activo`/`fallido`; `activo` → `revocando` → `revocado`/`fallo_revocacion`; reintento `fallido` → `en_proceso` y `fallo_revocacion` → `revocando` (`services.reabrir_acceso`, FNC-062, con `UPDATE` condicional sobre el estado fallido). Revocar solo desde `activo`.
 - P5: subir a `admin` pasa el `usuario` (debe estar `activo`) a `revocando` con `reemplazado_por_nivel_superior`; mismo nivel o inferior → `nivel_vigente`.
 - Reglas (`rules.py`): por solicitud, quien otorga administra la plataforma y la cuenta (`can_manage_user`) y la cuenta es del área (P1); `admin_de_area` solo el sistema, nivel `usuario`, a un admin del área; superadmin → `acceso_por_defecto`; propio → `operacion_propia`; un admin no revoca accesos `admin_de_area` ni de otros admins (404).
 - Errores: `ErrorDeAcceso` con `respuesta` = (mensaje, HTTP, `code`, `fields`) para `error_response`.
