@@ -12,7 +12,7 @@
 | Descartado | CLI `bw` (sesión desbloqueada, Node en el servidor; ADR-005 B) y SDK de Bitwarden (no compatible con Vaultwarden) |
 | Credencial de arranque | `VAULTWARDEN_CLIENT_SECRET` y `VAULTWARDEN_MASTER_PASSWORD` en el `.env` del servidor (600, cuenta de servicio, `EnvironmentFile`). systemd 239 (Rocky 8) no tiene `LoadCredential=` |
 | Lectura | Ítem tipo *login* cuyo **nombre** es la referencia, en `VAULTWARDEN_COLLECTION_ID`; secreto = contraseña, usuario = nombre de usuario |
-| Fallos | Sin ítem o con dos del mismo nombre → `credencial_no_encontrada`; caído → `gestor_no_disponible` (se reintenta); credencial de arranque, TLS o datos rechazados → `gestor_no_configurado` |
+| Fallos | Sin ítem o con dos legibles del mismo nombre → `credencial_no_encontrada` (uno ilegible se ignora); caído → `gestor_no_disponible` (se reintenta); credencial de arranque, TLS o datos rechazados → `gestor_no_configurado` |
 | Red | Solo `https` con nombre de host, TLS 1.2+ validado, sin proxies ni redirecciones, `VAULTWARDEN_TIMEOUT_SECONDS` por operación, respuesta ≤ 8 MiB |
 | Caché | Credenciales: `CONNECTOR_CREDENTIAL_CACHE_SECONDS` (≤ 128 entradas, por proceso). Sesión: hasta que vence el token |
 
@@ -36,6 +36,7 @@
 1. Ítem *login* `pokemon/<entorno>/LDAP_BIND_PASSWORD` con la contraseña de la cuenta de servicio de OpenLDAP.
 2. En el `.env`: `LDAP_BIND_PASSWORD_REF=pokemon/<entorno>/LDAP_BIND_PASSWORD` y `LDAP_BIND_PASSWORD` **vacía** (las dos = la app no arranca).
 3. Ajustes → Directorio → Probar conexión.
+4. Esa referencia queda reservada: un conector no puede usarla (se rechaza al guardar y al ejecutar).
 
 ## Rotación
 

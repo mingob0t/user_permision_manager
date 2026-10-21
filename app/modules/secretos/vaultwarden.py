@@ -24,6 +24,7 @@ respuestas de a lo más `TAMANO_MAXIMO_RESPUESTA`. Falla cerrado: cualquier
 duda es un error. Los errores y los logs llevan solo el tipo y el estado
 HTTP, nunca cuerpos, tokens, claves ni valores.
 """
+import http.client
 import json
 import logging
 import ssl
@@ -130,7 +131,9 @@ class TransporteHttps:
         except urllib.error.HTTPError as exc:
             exc.close()
             return Respuesta(exc.code, b'')
-        except (urllib.error.URLError, OSError, ValueError) as exc:
+        except (urllib.error.URLError, OSError, ValueError,
+                http.client.HTTPException) as exc:
+            # `IncompleteRead`, `BadStatusLine`: conexión cortada (B1).
             # `urllib` envuelve el error de TLS en `URLError.reason`.
             causa = getattr(exc, 'reason', exc)
             if isinstance(causa, ssl.SSLCertVerificationError):
@@ -213,6 +216,11 @@ class ClienteVaultwarden:
             datos = json.loads(respuesta.cuerpo)
         except (ValueError, UnicodeDecodeError):
             raise GestorCaido(f'Vaultwarden: {operacion} sin JSON válido.') \
+                from None
+        except RecursionError:
+            # Anidado anómalo: no es un corte de red, no se reintenta (B1).
+            raise GestorMalConfigurado(
+                f'Vaultwarden: {operacion} con JSON demasiado anidado.') \
                 from None
         if not isinstance(datos, dict):
             raise GestorMalConfigurado(f'Vaultwarden: {operacion} inesperado.')
@@ -359,19 +367,42 @@ class ClienteVaultwarden:
                            'pudieron descifrar.', ilegibles)
         if not encontrados:
             raise SecretoNoEncontrado('Sin ítem para la referencia.')
-        if len(encontrados) > 1:
+        # Solo cuentan los ítems legibles y con contraseña: uno ilegible con
+        # el mismo nombre no vuelve ambiguo al legible (B2).
+        legibles, sin_contrasena = [], 0
+        for item, clave in encontrados:
+            leido = self._leer_login(item, clave)
+            if leido is None:
+                continue
+            if not leido.secreto:
+                sin_contrasena += 1
+                continue
+            legibles.append(leido)
+        if len(legibles) > 1:
             raise SecretoAmbiguo('Más de un ítem para la referencia.')
-        item, clave = encontrados[0]
+        if legibles:
+            if len(encontrados) > 1:
+                logger.warning('Vaultwarden: se ignoraron %d ítems ilegibles o '
+                               'sin contraseña con el mismo nombre.',
+                               len(encontrados) - 1)
+            return legibles[0]
+        if sin_contrasena:
+            raise SecretoNoEncontrado('El ítem no tiene contraseña.')
+        raise GestorMalConfigurado('Vaultwarden: ítem ilegible.')
+
+    @staticmethod
+    def _leer_login(item, clave):
+        """`ItemSecreto` del *login* (secreto vacío si no tiene), o `None`
+        si no se puede descifrar."""
         login = _campo(item, 'login') or {}
+        cifrada = _campo(login, 'password')
         try:
-            secreto = cifrado.descifrar_texto(_campo(login, 'password'), clave)
+            secreto = cifrado.descifrar_texto(cifrada, clave) if cifrada else ''
             usuario_cifrado = _campo(login, 'username')
             usuario = (cifrado.descifrar_texto(usuario_cifrado, clave).strip()
                        if usuario_cifrado else '')
         except cifrado.ErrorDeCifrado:
-            raise GestorMalConfigurado('Vaultwarden: ítem ilegible.') from None
-        if not secreto:
-            raise SecretoNoEncontrado('El ítem no tiene contraseña.')
+            return None
         return ItemSecreto(secreto=secreto, usuario=usuario or None)
 
     def reiniciar(self):

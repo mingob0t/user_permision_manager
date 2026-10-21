@@ -332,7 +332,7 @@ Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`
 - `configuracion.py`: `VAULTWARDEN_*`; fuera de dev y con alguna definida se valida todo en `create_app()` (sin conectar).
 - `cifrado.py`: descifrado Bitwarden del lado del cliente (PBKDF2/Argon2id con `LIMITES_KDF`, HKDF, tipo 2 AES-CBC+HMAC, tipos 3/4 RSA-OAEP); rechaza el tipo 0 y los 5/6.
 - `vaultwarden.py`: `ClienteVaultwarden.leer(referencia)` → `ItemSecreto`; sesión por llave de API, `sync` y búsqueda por nombre en `VAULTWARDEN_COLLECTION_ID`. Errores `SecretoNoEncontrado`/`SecretoAmbiguo`/`GestorCaido`/`GestorMalConfigurado`, sin valores. `transporte` inyectable (pruebas: `tests/secretos/vaultwarden_falso.py`).
-- Bind LDAP: con `LDAP_BIND_PASSWORD_REF` (solo fuera de dev), `ClienteDirectorio._contrasena_bind()` la pide al conectar; gestor caído → `ErrorDirectorio` transitorio (`LDAPCommunicationError`).
+- Bind LDAP: con `LDAP_BIND_PASSWORD_REF` (solo fuera de dev; reservada para conectores: `credenciales.referencia_reservada`, en `validacion.py` y `provider.py`), `ClienteDirectorio._contrasena_bind()` la pide al conectar; gestor caído → `ErrorDirectorio` transitorio (`LDAPCommunicationError`).
 - Operación: `docs/operacion/SECRETOS.md`.
 
 ### Accesos otorgados (`app/modules/access/`, FNC-054)

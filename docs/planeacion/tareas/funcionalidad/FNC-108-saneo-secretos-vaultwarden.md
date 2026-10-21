@@ -8,9 +8,9 @@
 | **Fase** | 3 |
 | **Módulo / Área** | aprovisionamiento |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-21 |
-| **Estatus Git** | — |
+| **Estatus Git** | resuelta en FNC-068 (`fnc/FNC-068-vaultwarden`, commit local, sin push) |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | Sí |
 
@@ -31,3 +31,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-21 | Creada como Propuesta (FNC-068) |
+| 2026-10-21 | Resuelta en FNC-068 (FNC-051 ya cerró): dos variables en `VARIABLES_SECRETAS`; regresión `tests/secretos/test_auditoria_fnc068.py::test_fnc108_*` (falló primero) |

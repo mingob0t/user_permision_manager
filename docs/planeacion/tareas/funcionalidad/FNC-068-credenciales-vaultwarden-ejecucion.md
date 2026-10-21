@@ -81,6 +81,16 @@
 - Docs: `docs/operacion/SECRETOS.md` (nuevo: preparación, alta de ítems, rotación con `limpiar_cache()`, reversión), `ENTORNOS.md`, `VARIABLES.md`, `HISTORIAL.md`, `.env.example`, `docs/backend/README.md`, `deploy/README.md`, catálogo de reutilización.
 - No se tocaron los archivos de FNC-051 (`api_http.py`, `destino_seguro.py`, `http_transporte.py`, `connectors/__init__.py`, `provisioning/saneo.py`).
 
+## Correcciones de auditor-seguridad (aprobado, solo hallazgos bajos)
+| Hallazgo | Corrección | Prueba de regresión (falló primero) |
+|---|---|---|
+| B1 excepciones sin traducir | `http.client.HTTPException` → `GestorCaido`; `RecursionError` de `json` → `GestorMalConfigurado`; `UnsupportedAlgorithm` de Argon2id → `ErrorDeCifrado` (→ `GestorMalConfigurado`); en `ldap_client._contrasena_bind` cualquier error → `ErrorDirectorio` genérico | `tests/secretos/test_auditoria_fnc068.py::test_b1_*` |
+| B2 ilegible + legible con el mismo nombre = ambiguo | Solo cuentan los ítems legibles y con contraseña; dos legibles = ambiguo; solo ilegibles = `GestorMalConfigurado` | `test_b2_*` |
+| B3 bind LDAP enviable a un conector | `credenciales.referencia_reservada()`: `validacion.py` responde `MENSAJE_REFERENCIA_RESERVADA` al guardar y `provider.py` falla permanente (`credencial_no_encontrada`) sin resolver al ejecutar | `test_b3_validacion_*`, `tests/connectors/test_referencia_reservada.py` |
+| FNC-108 | `VAULTWARDEN_CLIENT_SECRET` y `VAULTWARDEN_MASTER_PASSWORD` en `saneo.VARIABLES_SECRETAS`; FNC-108 cerrada como «resuelta en FNC-068» | `test_fnc108_*` |
+
+Antes de corregir: 10 failed, 3 passed (los 3 ya cubiertos: `RemoteDisconnected` es `OSError`, solo ilegibles y el control). Conflicto con FNC-051 en `saneo.py`: ninguno textual previsto (FNC-051 cambia otro bloque, desde la línea 54).
+
 ## Verificación
 | Comando | Resultado |
 |---|---|
@@ -99,6 +109,14 @@
 - Sin revisor ni auditor-seguridad (no se lanzaron por instrucción del orquestador); auditor-seguridad es obligatorio antes de cerrar.
 
 ## Impacto en elementos compartidos
+**Ronda de correcciones de auditoría:** `impacto.py` sube a 23 elementos, casi todos coincidencias por nombre. Cambios reales nuevos:
+- `connectors.validacion.validar_configuracion`: `credential_ref` igual a `LDAP_BIND_PASSWORD_REF` da error de campo (lo usan `PUT /platforms/<id>/connector` (FNC-061) y DIS-022).
+- `ProveedorConector._credencial`: la referencia reservada da fallo permanente `credencial_no_encontrada` sin resolverla (ejecutor y prueba de conexión).
+- `saneo.VARIABLES_SECRETAS`: dos variables más que se borran de la bitácora de ejecuciones (FNC-049/062).
+- `secretos`: `ClienteVaultwarden.leer` y `derivar_clave_maestra`, usados solo por `credenciales.py`.
+- Pytest completo tras las correcciones: **1837 passed, 15 xfailed, código de salida 0**.
+
+**Primera ronda:**
 **⚠ Impacto en elementos compartidos** (comparado contra `develop`): este cambio toca 6 elemento(s) usados en otras secciones: app/modules, app/utils, frontend/tests, tests, tests/access, tests/areas, tests/connectors, tests/directory, tests/platforms, tests/provisioning, tests/users. Valida cada una antes de integrar.
 
 | Elemento modificado | Tipo | Definido en | Usado en (fuera de la tarea) | Áreas afectadas | ¿Validado? |
@@ -122,3 +140,4 @@ Lectura: `__init__`, `obtener` y `resolver` son coincidencias por nombre (otras 
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Recomendaciones de auditor-seguridad sobre FNC-050 agregadas (sección «Requisitos de seguridad heredados de FNC-050») |
 | 2026-10-21 | Aprobada por el orquestador (modo autónomo) y En curso; implementada; En revisión |
+| 2026-10-21 | auditor-seguridad aprobado; corregidos B1, B2 y B3 y resuelta FNC-108, con regresiones que fallaron primero |

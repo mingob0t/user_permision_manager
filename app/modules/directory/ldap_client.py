@@ -162,7 +162,9 @@ class ClienteDirectorio:
         try:
             contrasena = credenciales.resolver_en_gestor(
                 cfg.bind_password_ref).secreto
-        except credenciales.ErrorDeCredencial as exc:
+        except Exception as exc:  # noqa: BLE001 — falla cerrado (B1)
+            # Cualquier error (también uno inesperado, p. ej. de la vida de la
+            # caché) es un `ErrorDirectorio` genérico; solo el tipo al log.
             logger.error('Directorio: sin contraseña de bind del gestor (%s).',
                          type(exc).__name__)
             causa = (LDAPCommunicationError('gestor de secretos no disponible')

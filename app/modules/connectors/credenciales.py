@@ -98,6 +98,18 @@ def referencia_valida(referencia):
             and not sufijo.endswith(SEPARADOR))
 
 
+VAR_REFERENCIA_BIND = 'LDAP_BIND_PASSWORD_REF'
+
+
+def referencia_reservada(referencia, entorno=None):
+    """`True` si `referencia` es la del bind LDAP (`LDAP_BIND_PASSWORD_REF`):
+    esa contraseña nunca se entrega a un conector (B3 de FNC-068)."""
+    entorno = os.environ if entorno is None else entorno
+    reservada = (entorno.get(VAR_REFERENCIA_BIND) or '').strip()
+    return bool(reservada) and isinstance(referencia, str) \
+        and referencia.strip() == reservada
+
+
 def referencias_en_conflicto(referencia, otras):
     """Referencias distintas de `referencia` que dan su misma variable."""
     variable = nombre_variable(referencia)

@@ -104,12 +104,16 @@ def derivar_clave_maestra(contrasena, correo, kdf, iteraciones,
         vueltas = _en_rango('pbkdf2_iteraciones', iteraciones)
         return hashlib.pbkdf2_hmac('sha256', secreto, sal, vueltas, LARGO_CLAVE)
     if kdf == KDF_ARGON2ID:
-        return Argon2id(
-            salt=hashlib.sha256(sal).digest(), length=LARGO_CLAVE,
-            iterations=_en_rango('argon2_iteraciones', iteraciones),
-            lanes=_en_rango('argon2_paralelismo', paralelismo),
-            memory_cost=_en_rango('argon2_memoria_mib', memoria_mib)
-            * KIB_POR_MIB).derive(secreto)
+        try:
+            return Argon2id(
+                salt=hashlib.sha256(sal).digest(), length=LARGO_CLAVE,
+                iterations=_en_rango('argon2_iteraciones', iteraciones),
+                lanes=_en_rango('argon2_paralelismo', paralelismo),
+                memory_cost=_en_rango('argon2_memoria_mib', memoria_mib)
+                * KIB_POR_MIB).derive(secreto)
+        except UnsupportedAlgorithm:
+            # OpenSSL sin Argon2 (B1): permanente, como un KDF no soportado.
+            raise ErrorDeCifrado('Argon2id no disponible.') from None
     raise ErrorDeCifrado('KDF no soportado.')
 
 

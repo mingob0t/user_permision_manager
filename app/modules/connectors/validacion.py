@@ -23,7 +23,8 @@ from app.modules.audit.sanitizar import FRAGMENTOS_SENSIBLES
 from app.modules.connectors.configuracion import (cargar_configuracion,
                                                   host_permitido,
                                                   normalizar_host)
-from app.modules.connectors.credenciales import (referencia_valida,
+from app.modules.connectors.credenciales import (referencia_reservada,
+                                                 referencia_valida,
                                                  referencias_en_conflicto)
 from app.modules.connectors.registry import obtener_tipo
 from app.modules.connectors.tipos import (LARGO_REFERENCIA, PUERTO_MAXIMO,
@@ -38,6 +39,8 @@ MENSAJE_REFERENCIA = ('Usa la referencia del ítem en el gestor de secretos '
                       f'(máximo {LARGO_REFERENCIA} caracteres).')
 MENSAJE_ACTIVO = 'Debe ser verdadero o falso.'
 MENSAJE_PARAMS_PROFUNDOS = 'Los parámetros tienen demasiados niveles.'
+MENSAJE_REFERENCIA_RESERVADA = ('Esa referencia está reservada para el '
+                                'directorio; usa una propia del conector.')
 MENSAJE_REFERENCIA_EN_CONFLICTO = ('La referencia equivale a otra ya usada; '
                                    'usa la misma o una distinta.')
 
@@ -126,6 +129,8 @@ def validar_configuracion(datos, entorno=None, referencias_en_uso=()):
             or not PATRON_REFERENCIA.fullmatch(referencia)
             or not referencia_valida(referencia)):
         errores['credential_ref'] = MENSAJE_REFERENCIA
+    elif referencia_reservada(referencia, entorno):
+        errores['credential_ref'] = MENSAJE_REFERENCIA_RESERVADA
     elif referencias_en_conflicto(referencia, referencias_en_uso):
         errores['credential_ref'] = MENSAJE_REFERENCIA_EN_CONFLICTO
 
