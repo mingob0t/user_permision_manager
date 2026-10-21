@@ -88,7 +88,7 @@ export function ErrorNote({ message }: { message: string }) {
 export function EmptyNote({ message }: { message: string }) {
   return (
     <Card className="text-center">
-      <p className="text-sm font-bold text-label/60">{message}</p>
+      <p className="text-sm font-bold text-label/85">{message}</p>
     </Card>
   );
 }

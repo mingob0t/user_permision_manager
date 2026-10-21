@@ -44,6 +44,8 @@ export const PARES: ParContraste[] = [
   // DIS-013: placeholder de `form.tsx` (`placeholder:text-label/85` sobre `bg-surface-container/30` en panel).
   { ...texto('placeholder/input', '--color-label-text', '--color-surface-container-bg', '--color-panel-fill'),
     alfaFondo: 0.3, alfaTexto: 0.85 },
+  // DIS-014: texto de `EmptyNote` en `ui.tsx` (`text-label/85` sobre `Card`, antes /60: 2,9–3,4:1).
+  { ...texto('empty-note/panel', '--color-label-text', '--color-panel-fill'), alfaTexto: 0.85 },
   texto('input-text/input-bg', '--color-input-text', '--color-input-bg'),
   texto('bi-text-main/panel', '--color-bi-text-main', '--color-panel-fill'),
   texto('bi-text-muted/panel', '--color-bi-text-muted', '--color-panel-fill'),

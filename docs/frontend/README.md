@@ -30,7 +30,7 @@ frontend/src/
 |---|---|---|---|
 | `/` | `Dashboard` | Panel: contadores (áreas, plataformas, visitas y, para administradores, usuarios), top de visitas y plataformas por área (gráfica recharts). | Todos |
 | `/platforms` | `RequestCatalog` + `PlatformCatalog` | `h1` "Plataformas" y dos `h2`. Catálogo solicitable (DIS-013): estado por plataforma, filtro por área y búsqueda en cliente, modal de solicitud de nivel con justificación opcional; superadmin solo consulta. Debajo, "Mis plataformas": abre el enlace, registra visita y marca favorito. | Todos |
-| `/requests` | — (reservada, DIS-014) | Mis solicitudes; guarda `requester`. | `usuario`, `admin_area` |
+| `/requests` | `MyRequestsView` | Pestañas "Mis solicitudes" (`mine`: estado, nivel, fechas, motivo de rechazo, estado del acceso) y "Mis accesos" (`/me/access`, `vigente` por defecto, estado explicado); filtro por estado, paginación y `usePolling`. Superadmin: estado vacío explicado, sin llamadas (DIS-014). | `usuario`, `admin_area` |
 | `/approvals` | — (reservada, DIS-015) | Aprobaciones; guarda `any_admin`. | `administrador`, `admin_area` |
 | `/inventory` | — (reservada, DIS-021) | Inventario; alcance por rol en el backend. | Todos |
 | `/admin/connectors` | — (reservada, DIS-022) | Conectores; guarda `admin`. | `administrador` |
@@ -59,8 +59,9 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | Aprobaciones, Administrar plataformas, Áreas, Usuarios | No | Sí | Sí |
 | Conectores | No | No | Sí |
 
+- `/requests` no usa la guarda: el superadmin ve un estado vacío explicado (DIS-014)
 - Guarda de ruta: `<RequireRole requires="…">` muestra "sin permiso" (`ErrorNote`) y no monta la pantalla, así que no llama a la API
-- Hoy la usan `/requests`, `/approvals`, `/admin/connectors`, `/areas` (dentro de `AreasList`, DIS-016) y `PlatformAdmin` (`any_admin`, DIS-017); las demás rutas previas no la usan
+- Hoy la usan `/approvals`, `/admin/connectors`, `/areas` (dentro de `AreasList`, DIS-016) y `PlatformAdmin` (`any_admin`, DIS-017); las demás rutas previas no la usan
 - Dentro de Ajustes, las pestañas de sistema solo se muestran a `administrador`. Ocultar en la interfaz no protege: el backend vuelve a validar cada endpoint.
 
 ## 4. Componentes principales
@@ -75,6 +76,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace (solo `https://`, `enlaceSeguro`). |
 | `PlatformForm`, `PlatformIntegrationFields`, `PlatformSaveNotice`, `field-notes`, `platform-payload`, `platform-save-errors` | `platforms/` | Formulario, sección Integración, aviso con `warnings` (región `status`), errores por campo con `aria-describedby` y foco, validación y cuerpo por rol (DIS-017). |
 | `RequestCatalog`, `RequestCatalogCard`, `RequestFormModal`, `AccessStatusBadge`, `describeRequestError` | `access/` | Catálogo solicitable, tarjeta con estado y motivo sin acción, modal con nivel y justificación (≤ 500, `aria-describedby`, foco), insignia de estado de acceso reutilizable y mensajes de `POST /access-requests` (DIS-013). |
+| `MyRequestsView`, `MyRequests`, `MyAccess`, `ResponsiveList`/`ResponsiveRow`, `ListPager`, `RequestStatusBadge`, `formatearFecha`, `describeListError`/`listLoadError` | `access/` | Mis solicitudes y mis accesos; lista que es tabla en `md` y lista en móvil (`dl` por fila); paginación de `Paginated`; insignia de estado de solicitud; fechas `es-MX`; error de carga sin texto del servidor que conserva el 401 para `usePolling` (DIS-014). |
 | `AreaForm`, `AreaAdminsPanel`, `mensajeDeError` | `areas/` | Alta/edición de área con errores por campo; administradores del área (superadmin); mensajes del contrato `areas-y-roles.md` (DIS-016). |
 | Pantallas | `dashboard.tsx`, `platform-catalog.tsx`, `favorites-list.tsx`, `notifications-list.tsx`, `platform-admin.tsx`, `areas-list.tsx`, `users-list.tsx`, `audit-log.tsx`, `settings-panel.tsx`, `login-form.tsx`, `logout-view.tsx` | Una por ruta. `settings-panel.tsx` (745 líneas) y `users-list.tsx` (581) concentran varias responsabilidades. |
 
@@ -150,6 +152,7 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 - `tests/components/audit-log.test.tsx`: `AuditLog` con la API simulada (datos, filtro, vacío, error).
 - `tests/components/platform-admin.test.tsx` y `platform-card.test.tsx`: formulario de plataforma por rol, errores `403`/`404`/`409`/`422`, `warnings`, estados y SEG-24 (DIS-017).
 - `tests/components/access/request-catalog.test.tsx`: catálogo solicitable (estados, filtro, envío, 409/403/422, foco) (DIS-013).
+- `tests/components/access/my-requests-view.test.tsx`: Mis solicitudes y Mis accesos (pestañas, superadmin, motivo de rechazo, filtro, paginación, carga, vacío, error, 403, 401) (DIS-014).
 - `tests/components/navegacion-por-rol.test.tsx`: entradas del menú por rol y `RequireRole` (sin permiso no monta ni llama a la API).
 - `tests/accesibilidad/contraste.test.ts`: contraste WCAG de los tokens en los 7 temas (4.5:1 texto, 3:1 bordes).
 - Los pares que hoy fallan están en `fallas-contraste-conocidas.ts` con su tarea DIS y se marcan `it.fails`. Si una tarea los corrige, la prueba avisa: quita el par de la lista.
