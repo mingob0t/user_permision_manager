@@ -92,7 +92,7 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py`:
 | `npm run typecheck` | salida 0 |
 | `npm run lint` | salida 0, sin avisos |
 | `npx eslint tests/components/access/my-requests-view.test.tsx` | salida 0 |
-| `npx vitest run` | salida 0: 16 archivos, 530 passed + 25 expected fail (antes 507 + 25; las 25 conocidas sin cambio) |
+| `npx vitest run` | salida 0: 16 archivos, 537 passed + 25 expected fail (antes 507 + 25; +16 de pantallas y +14 del par `empty-note/panel` y colores literales; las 25 conocidas sin cambio) |
 | `npx vitest run tests/accesibilidad` con `alfaTexto` 0,6 | `empty-note/panel` falla en los temas (regresión comprobada); con 0,85 pasa |
 | `grep` de `style=`, `<style`, `.style.`, `#hex`, `rgb(`, IPs en los archivos nuevos | sin coincidencias |
 
