@@ -54,3 +54,26 @@ export function describeCatalogError(err: unknown): string {
   }
   return 'No se pudo cargar el catálogo.';
 }
+
+/**
+ * Error al cargar una lista propia (DIS-014: `GET /access-requests/mine`,
+ * `GET /me/access`). `nombre` va tras el verbo: "tus solicitudes".
+ */
+export function describeListError(err: unknown, nombre: string): string {
+  if (err instanceof ApiError) {
+    if (err.isForbidden) return `No tienes permiso para ver ${nombre}.`;
+    if (err.isUnauthenticated) return MENSAJES_POR_ESTADO[401];
+  }
+  return `No se pudieron cargar ${nombre}.`;
+}
+
+/**
+ * El mismo error con el mensaje de `describeListError`. Conserva el estado
+ * HTTP para que `usePolling` se detenga con un `401`.
+ */
+export function listLoadError(err: unknown, nombre: string): Error {
+  const message = describeListError(err, nombre);
+  return err instanceof ApiError
+    ? new ApiError(err.status, message, { code: err.code ?? undefined })
+    : new Error(message);
+}
