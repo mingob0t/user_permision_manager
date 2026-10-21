@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | solicitudes |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `dis/DIS-014-mis-solicitudes-accesos` |
