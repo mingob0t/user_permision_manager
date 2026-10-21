@@ -32,7 +32,7 @@ frontend/src/
 | `/platforms` | `RequestCatalog` + `PlatformCatalog` | `h1` "Plataformas" y dos `h2`. Catálogo solicitable (DIS-013): estado por plataforma, filtro por área y búsqueda en cliente, modal de solicitud de nivel con justificación opcional; superadmin solo consulta. Debajo, "Mis plataformas": abre el enlace, registra visita y marca favorito. | Todos |
 | `/requests` | `MyRequestsView` | Pestañas "Mis solicitudes" (`mine`: estado, nivel, fechas, motivo de rechazo, estado del acceso) y "Mis accesos" (`/me/access`, `vigente` por defecto, estado explicado); filtro por estado, paginación y `usePolling`. Superadmin: estado vacío explicado, sin llamadas (DIS-014). | `usuario`, `admin_area` |
 | `/approvals` | `ApprovalsInbox` | Bandeja (`inbox`): solicitante, plataforma, nivel, estado, fechas y justificación; filtros por estado (`pendiente` por defecto) y área, paginación y `usePolling`; aprobar con confirmación (`ApproveDialog`) y rechazar con motivo de 10–500 (`RejectDialog`); la fila se actualiza con la respuesta y el aviso (`status`) recibe el foco; la solicitud propia no tiene acciones. Guarda `any_admin` (DIS-015). | `administrador`, `admin_area` |
-| `/inventory` | — (reservada, DIS-021) | Inventario; alcance por rol en el backend. | Todos |
+| `/inventory` | `Inventory` | Inventario de permisos (`GET /access/inventory`, `vigente` por defecto): usuario, plataforma, área, nivel, origen, desde, quién aprobó ("Sistema" si es automático) y estado; filtros por área (admin: las suyas; superadmin: `GET /areas`), plataforma (del alcance, acotada al área), nivel, origen, estado y búsqueda por nombre o correo (al enviar, sin caracteres de control, ≤ 100); paginación y botón "Recargar" (sin refresco periódico, contrato; `aria-disabled` mientras carga para conservar el foco y "Recargando…" en la región viva). Filtros con etiqueta visible (`Field`); vacío con filtros en `role="status"`. Guarda `any_admin` (DIS-021). | `administrador`, `admin_area` |
 | `/admin/connectors` | — (reservada, DIS-022) | Conectores; guarda `admin`. | `administrador` |
 | `/favorites` | `FavoritesList` | Plataformas marcadas como favoritas. | Todos |
 | `/notifications` | `NotificationsList` | Notificaciones in-app: marcar leídas y borrar. | Todos |
@@ -54,9 +54,9 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 
 | Entrada | `usuario` | `admin_area` | `administrador` |
 |---|---|---|---|
-| Panel, Catálogo, Favoritos, Notificaciones, Inventario, Auditoría, Ajustes | Sí | Sí | Sí |
+| Panel, Catálogo, Favoritos, Notificaciones, Auditoría, Ajustes | Sí | Sí | Sí |
 | Mis solicitudes | Sí | Sí | No |
-| Aprobaciones, Administrar plataformas, Áreas, Usuarios | No | Sí | Sí |
+| Aprobaciones, Administrar plataformas, Áreas, Usuarios, Inventario (DIS-021) | No | Sí | Sí |
 | Conectores | No | No | Sí |
 
 - `/requests` no usa la guarda: el superadmin ve un estado vacío explicado (DIS-014)
@@ -79,6 +79,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | `MyRequestsView`, `MyRequests`, `MyAccess`, `ResponsiveList`/`ResponsiveRow`, `ListPager`, `RequestStatusBadge`, `formatearFecha`, `describeListError`/`listLoadError` | `access/` | Mis solicitudes y mis accesos; lista que es tabla en `md` y lista en móvil (`dl` por fila); paginación de `Paginated`; insignia de estado de solicitud; fechas `es-MX`; error de carga sin texto del servidor que conserva el 401 para `usePolling` (DIS-014). |
 | `ApprovalsInbox`, `ApproveDialog`, `RejectDialog`, `describeDecisionError`, `MOTIVO_MIN`/`MOTIVO_MAX` | `access/` | Bandeja de aprobaciones; confirmación de aprobar (`Modal`, botón primario); rechazo con motivo obligatorio, contador y envío deshabilitado con la pista ligada; mensajes de approve/reject del contrato (DIS-015). |
 | `UserAccessPanel`, `RevokeAccessDialog`, `motivoSinRevocar`, `describeRevokeError`, `REVOCACION_MOTIVO_MAX` | `users/` | Accesos de un usuario (sección, no `Modal`, para no anidar diálogos): plataforma, nivel, origen, quién aprobó, estado explicado y última ejecución; revocar con confirmación y motivo opcional (patrón de `RejectDialog`); fila actualizada y aviso con foco; mensajes de `POST /access/<id>/revoke` sin texto del servidor (DIS-018). |
+| `Inventory`, `InventoryFilters`, `InventoryTable`, `limpiarBusqueda`, `ORIGENES_INVENTARIO` | `access/` | Inventario de permisos: contenedor (datos, filtros a la página 1, recarga), filtros (selectores y buscador con envío) y filas en `ResponsiveList` con ocho datos en cinco columnas (DIS-021). |
 | `AreaForm`, `AreaAdminsPanel`, `mensajeDeError` | `areas/` | Alta/edición de área con errores por campo; administradores del área (superadmin); mensajes del contrato `areas-y-roles.md` (DIS-016). |
 | Pantallas | `dashboard.tsx`, `platform-catalog.tsx`, `favorites-list.tsx`, `notifications-list.tsx`, `platform-admin.tsx`, `areas-list.tsx`, `users-list.tsx`, `audit-log.tsx`, `settings-panel.tsx`, `login-form.tsx`, `logout-view.tsx` | Una por ruta. `settings-panel.tsx` (745 líneas) y `users-list.tsx` (581) concentran varias responsabilidades. |
 
@@ -157,6 +158,7 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 - `tests/components/access/my-requests-view.test.tsx`: Mis solicitudes y Mis accesos (pestañas, superadmin, motivo de rechazo, filtro, paginación, carga, vacío, error, 403, 401) (DIS-014).
 - `tests/components/access/approvals-inbox.test.tsx`: bandeja (filtros, superadmin, propia, justificación escapada, paginación, carga, vacío, error), aprobar y rechazar (confirmación, motivo 10–500, fila actualizada, aviso con foco, 403/404/409/422) (DIS-015).
 - `tests/components/users/user-access-panel.test.tsx`: accesos de un usuario (reglas de revocación del contrato, lista, filtro, paginación, carga, vacío, error, superadmin, foco), revocar (motivo opcional ≤ 500, recorte, `aria-disabled`, fila actualizada, aviso con foco, 403/404/409/422) y el botón "Accesos" de `UsersList` (DIS-018).
+- `tests/components/access/inventory.test.tsx`: inventario (columnas del contrato, "Sistema", retirado, filtros al contrato y a la página 1, áreas y plataformas por rol, búsqueda limpia, carga, vacío con y sin filtros, 403/500 sin texto del servidor, recarga) (DIS-021).
 - `tests/components/navegacion-por-rol.test.tsx`: entradas del menú por rol y `RequireRole` (sin permiso no monta ni llama a la API).
 - `tests/accesibilidad/contraste.test.ts`: contraste WCAG de los tokens en los 7 temas (4.5:1 texto, 3:1 bordes).
 - Los pares que hoy fallan están en `fallas-contraste-conocidas.ts` con su tarea DIS y se marcan `it.fails`. Si una tarea los corrige, la prueba avisa: quita el par de la lista.
