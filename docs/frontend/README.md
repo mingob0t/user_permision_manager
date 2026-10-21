@@ -28,7 +28,7 @@ frontend/src/
 
 | Ruta | Componente | Qué hace | Visible en el menú para |
 |---|---|---|---|
-| `/` | `Dashboard` | Panel: contadores (áreas, plataformas, visitas y, para administradores, usuarios), top de visitas y plataformas por área (gráfica recharts). | Todos |
+| `/` | `Dashboard` | Panel. Arriba, resumen por rol (`RoleSummary`, `GET /home/summary`, `usePolling`): usuario, mis solicitudes y mis accesos; admin de área, pendientes, sus áreas y lo propio; superadmin, pendientes y global. Cada contador enlaza a `/requests`, `/approvals`, `/inventory`, `/areas` o `/admin/platforms`; botón "Ver auditoría" (DIS-024). Debajo, "Actividad del portal" heredada de `/stats`: contadores, top de visitas y plataformas por área (gráfica recharts, deuda DIS-003). | Todos |
 | `/platforms` | `RequestCatalog` + `PlatformCatalog` | `h1` "Plataformas" y dos `h2`. Catálogo solicitable (DIS-013): estado por plataforma, filtro por área y búsqueda en cliente, modal de solicitud de nivel con justificación opcional; superadmin solo consulta. Debajo, "Mis plataformas": abre el enlace, registra visita y marca favorito. | Todos |
 | `/requests` | `MyRequestsView` | Pestañas "Mis solicitudes" (`mine`: estado, nivel, fechas, motivo de rechazo, estado del acceso) y "Mis accesos" (`/me/access`, `vigente` por defecto, estado explicado); filtro por estado, paginación y `usePolling`. Superadmin: estado vacío explicado, sin llamadas (DIS-014). | `usuario`, `admin_area` |
 | `/approvals` | `ApprovalsInbox` | Bandeja (`inbox`): solicitante, plataforma, nivel, estado, fechas y justificación; filtros por estado (`pendiente` por defecto) y área, paginación y `usePolling`; aprobar con confirmación (`ApproveDialog`) y rechazar con motivo de 10–500 (`RejectDialog`); la fila se actualiza con la respuesta y el aviso (`status`) recibe el foco; la solicitud propia no tiene acciones. Guarda `any_admin` (DIS-015). | `administrador`, `admin_area` |
@@ -39,7 +39,9 @@ frontend/src/
 | `/admin/platforms` | `PlatformAdmin` | Crear, editar y eliminar plataformas con tipo de integración; grupos de acceso por nivel solo para el superadmin; avisos tras guardar (DIS-017). Guarda `any_admin`. | `administrador`, `admin_area` |
 | `/areas` | `AreasList` | Áreas visibles; superadmin y admin de área crean; cada uno edita y borra las que gestiona; el superadmin asigna administradores (`areas/area-admins-panel.tsx`). Guarda `any_admin`. | `administrador`, `admin_area` |
 | `/users` | `UsersList` | Alta, edición y baja de usuarios; asignación de áreas y plataformas; búsqueda en el directorio; usuarios inactivos y purga (superadmin). Botón "Accesos" por usuario: panel `UserAccessPanel` (`GET /users/<id>/access`, `vigente` por defecto, filtro, paginación y `usePolling`) con revocación confirmada y motivo opcional ≤ 500 (`RevokeAccessDialog`); sin botón donde el contrato no lo permite, con el motivo (DIS-018). | `administrador`, `admin_area` |
-| `/audit` | `AuditLog` | Registros de auditoría dentro del alcance del usuario. | Todos |
+| `/audit` | `AuditLog` | Registros de auditoría dentro del alcance (`GET /audit` paginado): fecha, quién ("Sistema" si `actor` es null), evento (catálogo en español; texto libre tal cual), sobre qué con plataforma y área, y resultado. Filtros con etiqueta visible: búsqueda en actor y destino (al enviar, sin control, ≤ 100), Desde/Hasta (`from ≤ to`, ≤ 366 días; si no, se explica y no se envía), evento, resultado y, para quien administra, área y plataforma (`ScopeSelects`). Paginación, "Recargar" (`aria-disabled`), vacío en `role="status"`, error sin texto del servidor. "Ver detalle" (48 px) abre un `Modal` con antes/después como lista de campos en texto plano; el foco vuelve al botón (DIS-020). | Todos |
+| `/audit/users/[id]` | `UserAuditHistory` | Historial de un usuario (`GET /audit/users/<id>`): mismos filtros y detalle; nombre tomado de los registros. El usuario solo ve el suyo ("Mi historial"); otro id, "sin permiso". 404 → "No existe o está fuera de tu alcance." Enlace desde el panel de accesos de Usuarios (DIS-020). | Todos (usuario: solo el propio) |
+| `/audit/platforms/[id]` | `PlatformAuditHistory` | Historial de una plataforma (`GET /audit/platforms/<id>`), sin filtros de área ni plataforma. Guarda `any_admin`. Enlace desde Inventario con una plataforma elegida (DIS-020). | `administrador`, `admin_area` |
 | `/settings` | `SettingsPanel` | Pestañas: Portal, Correo (SMTP), Plantillas, Directorio (LDAP), Respaldo — solo superadmin —, y Mis preferencias para todos. | Todos |
 | `/login` | `LoginForm` | Consulta `/auth/context`; si hay SSO ofrece entrar con Authelia; si no, formulario con casilla "directorio" (LDAP) o cuenta local. | Sin sesión |
 | `/logout` | `LogoutView` | Llama a `/auth/logout` y, con SSO, redirige al cierre de Authelia. | — (botón "Salir") |
@@ -48,7 +50,7 @@ frontend/src/
 
 ## 3. Menú por rol
 
-Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exigir un `RoleRequirement` de `components/require-role.tsx`; los permisos salen de `GET /api/v1/me` (`permissions.is_admin`, `permissions.is_area_admin`).
+Definido en `components/app-shell.tsx` (`NAV`, FNC-070). La misma lista (`Nav`) se muestra en la barra lateral desde `md` y en el menú móvil bajo `md` (DIS-025). Cada entrada puede exigir un `RoleRequirement` de `components/require-role.tsx`; los permisos salen de `GET /api/v1/me` (`permissions.is_admin`, `permissions.is_area_admin`).
 
 - `any_admin`: superadmin o admin de área; `admin`: solo superadmin; `requester`: usuario y admin de área (el superadmin no solicita)
 
@@ -68,9 +70,11 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 
 | Componente | Archivo | Rol |
 |---|---|---|
-| `AppShell` | `app-shell.tsx` | Marco: barra lateral (oculta en móvil), cabecera con nombre, rol y "Salir"; estados de carga y error de sesión. |
+| `AppShell` | `app-shell.tsx` | Marco: barra lateral (`md` y mayores), cabecera con menú móvil, nombre, rol y "Salir"; estados de carga y error de sesión. |
+| `MobileMenu` | `mobile-menu.tsx` | Bajo `md`: botón "Menú" (`aria-expanded`, `aria-controls`) y panel `role="dialog"` con la misma `Nav` por rol; cierra con Escape, al elegir opción y con clic fuera; foco al primer enlace, de vuelta al botón y atrapado con Tab; áreas de 48 px. Trampa de foco local hasta DIS-031 (DIS-025). |
 | `SessionProvider` / `useSession` | `session-provider.tsx` | Pide `/me` una vez; sin sesión redirige a `/login`. |
 | `RequireRole` / `meetsRequirement` | `require-role.tsx` | Guarda de ruta y regla de visibilidad por rol (FNC-070). |
+| `RoleSummary`, `gruposDelResumen`, `RUTAS_INICIO` | `home/role-summary.tsx` | Resumen de inicio por rol: grupos de contadores según los campos del contrato `inicio.md`; cada contador es `StatTile` dentro de `Link` con nombre accesible "Etiqueta: n. Ir a Pantalla"; carga, vacío (usuario: enlace al catálogo) y error con Reintentar (DIS-024). |
 | `Card`, `PanelHeader`, `StatTile`, `Spinner`, `ErrorNote`, `EmptyNote`, `Badge` | `ui.tsx` | Piezas base con clases del portal original (estados de carga, vacío y error). |
 | `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). |
 | `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace (solo `https://`, `enlaceSeguro`). |
@@ -80,6 +84,8 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | `ApprovalsInbox`, `ApproveDialog`, `RejectDialog`, `describeDecisionError`, `MOTIVO_MIN`/`MOTIVO_MAX` | `access/` | Bandeja de aprobaciones; confirmación de aprobar (`Modal`, botón primario); rechazo con motivo obligatorio, contador y envío deshabilitado con la pista ligada; mensajes de approve/reject del contrato (DIS-015). |
 | `UserAccessPanel`, `RevokeAccessDialog`, `motivoSinRevocar`, `describeRevokeError`, `REVOCACION_MOTIVO_MAX` | `users/` | Accesos de un usuario (sección, no `Modal`, para no anidar diálogos): plataforma, nivel, origen, quién aprobó, estado explicado y última ejecución; revocar con confirmación y motivo opcional (patrón de `RejectDialog`); fila actualizada y aviso con foco; mensajes de `POST /access/<id>/revoke` sin texto del servidor (DIS-018). |
 | `Inventory`, `InventoryFilters`, `InventoryTable`, `limpiarBusqueda`, `ORIGENES_INVENTARIO` | `access/` | Inventario de permisos: contenedor (datos, filtros a la página 1, recarga), filtros (selectores y buscador con envío) y filas en `ResponsiveList` con ocho datos en cinco columnas (DIS-021). |
+| `useOpcionesAlcance`, `ScopeSelects`, `PlataformaFiltro` | `access/scope-filters.tsx` | Áreas (admin: las suyas; superadmin: `GET /areas`) y plataformas del alcance, y los dos selectores encadenados; extraído del inventario en DIS-020 para reutilizarlo en Auditoría. |
+| `AuditHistory`, `AuditFilters`, `AuditTable`, `AuditDetailModal`, `compararCampos`, `etiquetaAccion`, `UserAuditHistory`, `PlatformAuditHistory`, `rutaHistorialUsuario`/`rutaHistorialPlataforma` | `audit/` | Auditoría: contenedor común de `/audit` y de los historiales (filtros a la página 1, recarga, estados, paginación, detalle con foco de vuelta), filtros, filas en `ResponsiveList`, detalle con antes/después en texto plano, catálogo de eventos y rutas (DIS-020). |
 | `AreaForm`, `AreaAdminsPanel`, `mensajeDeError` | `areas/` | Alta/edición de área con errores por campo; administradores del área (superadmin); mensajes del contrato `areas-y-roles.md` (DIS-016). |
 | Pantallas | `dashboard.tsx`, `platform-catalog.tsx`, `favorites-list.tsx`, `notifications-list.tsx`, `platform-admin.tsx`, `areas-list.tsx`, `users-list.tsx`, `audit-log.tsx`, `settings-panel.tsx`, `login-form.tsx`, `logout-view.tsx` | Una por ruta. `settings-panel.tsx` (745 líneas) y `users-list.tsx` (581) concentran varias responsabilidades. |
 
@@ -152,7 +158,8 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 - Las pruebas viven en `frontend/tests/`; configuración en `vitest.config.ts`.
 - `tests/lib/api.test.ts`: cliente de la API con `fetch` simulado (éxito, error HTTP, 401).
 - `tests/lib/use-polling.test.ts`: `usePolling` con temporizadores simulados (intervalo, pausa, *backoff*, sin solape, 401, desmontaje).
-- `tests/components/audit-log.test.tsx`: `AuditLog` con la API simulada (datos, filtro, vacío, error).
+- `tests/components/audit-log.test.tsx`: Auditoría (FNC-025, reescrita en DIS-020): filas, "Sistema", HTML escapado, filtros al contrato y a la página 1 (C1 incluido), fechas válidas e inválidas, alcance por rol, carga, vacío con y sin filtros, error sin texto del servidor, recarga con foco, detalle antes/después y foco de vuelta.
+- `tests/components/audit/audit-historiales.test.tsx`: historiales por usuario (propio, ajeno sin permiso, 404) y por plataforma (sin filtros de alcance), rutas, `compararCampos` y `valorLegible` (DIS-020).
 - `tests/components/platform-admin.test.tsx` y `platform-card.test.tsx`: formulario de plataforma por rol, errores `403`/`404`/`409`/`422`, `warnings`, estados y SEG-24 (DIS-017).
 - `tests/components/access/request-catalog.test.tsx`: catálogo solicitable (estados, filtro, envío, 409/403/422, foco) (DIS-013).
 - `tests/components/access/my-requests-view.test.tsx`: Mis solicitudes y Mis accesos (pestañas, superadmin, motivo de rechazo, filtro, paginación, carga, vacío, error, 403, 401) (DIS-014).
@@ -183,8 +190,8 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 | 5 | Sin selector de tema; temas adicionales definidos pero inalcanzables. | `styles/tokens.css` |
 | 6 | Pocas pruebas de frontend: runner y pruebas base listas (FNC-025); faltan pruebas de más pantallas. | `frontend/tests/` |
 | 7 | Componentes grandes con varias responsabilidades (`settings-panel.tsx`, `users-list.tsx`). | `components/` |
-| 8 | Navegación lateral oculta en móvil (`hidden md:block`) sin menú alternativo. | `app-shell.tsx` |
+| 8 | ~~Navegación lateral oculta en móvil sin menú alternativo~~ — resuelta por DIS-025 (`MobileMenu`). | `app-shell.tsx` |
 | 9 | Valor por defecto del backend escrito como dirección de loopback numérica en el código (incumple "sin IPs"; debería ser `localhost` o configuración). | `next.config.ts`, `lib/api.ts` |
-| 10 | Título "Nexus" fijo en `layout.tsx` y en la barra lateral, aunque el nombre del portal es configurable en `system_config`. | `app/layout.tsx`, `app-shell.tsx` |
+| 10 | Título "Nexus" fijo en `layout.tsx` y en la barra lateral, aunque el nombre del portal es configurable en `system_config`. | `app/layout.tsx`, `app-shell.tsx`, `mobile-menu.tsx` |
 
 > Límites de las pruebas automáticas: la de contraste mide los tokens de `tokens.css`, no el CSS final (reglas con `!important` pueden ignorarlos); la de colores literales no detecta colores con nombre, `oklch()`/`lab()` ni valores arbitrarios de Tailwind.

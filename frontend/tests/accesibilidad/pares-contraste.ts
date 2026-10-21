@@ -104,6 +104,18 @@ export const PARES: ParContraste[] = [
     alfaFondo: 0.3 },
   { ...texto('placeholder/input-sobre-body-bg', '--color-label-text', '--color-surface-container-bg', '--color-body-bg'),
     alfaFondo: 0.3, alfaTexto: 0.85 },
+  // DIS-020: auditoría. Error del rango de fechas (`text-error-text`) bajo los filtros, sobre el
+  // fondo de página. Filas, insignias (`TONOS_BADGE`), detalle en `.nx-modal-glass` y enlaces
+  // `.nexus-btn-secondary` reutilizan pares ya medidos.
+  texto('error-text/body-bg', '--color-error-text', '--color-body-bg'),
+  // DIS-024: inicio por rol. Contadores (`StatTile` en `Link`) y títulos reutilizan pares ya medidos
+  // (`label-text/panel`, `bi-text-main/panel`, `body-text/body-bg`, `label-text/body-bg`, botones).
+  // Nuevo: anillo de foco `ring-primary` del contador, junto al borde del `Card` (no textual, 3:1);
+  // del lado del fondo de página ya lo mide `tab-indicador/body-bg`.
+  { id: 'foco-primary/panel', texto: '--color-primary', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
+  // DIS-025 (auditor-accesibilidad): borde `border-primary` del panel del menú móvil y anillo de
+  // foco de sus botones y enlaces; del lado del panel lo mide `foco-primary/panel` y del lado del
+  // contenido, `tab-indicador/body-bg` (no textuales, 3:1). Sin par nuevo.
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },

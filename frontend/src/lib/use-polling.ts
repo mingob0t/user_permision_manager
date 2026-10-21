@@ -152,6 +152,8 @@ export function usePolling<T>(load: () => Promise<T>, options: PollingOptions = 
     else consultar();
   }, [consultar]);
 
-  // Tras un error useAsync deja `data` en null; se devuelve el último válido.
-  return { data: error !== null ? ultimoDato.current : data, loading, error, refresh };
+  // Tras un error useAsync deja `data` en null, también durante el reintento
+  // (cuando `error` vuelve a null): se devuelve el último válido para que la
+  // pantalla no desmonte su contenido ni pierda el foco (DIS-024).
+  return { data: data ?? ultimoDato.current, loading, error, refresh };
 }

@@ -112,6 +112,12 @@ describe('motivoSinRevocar (reglas del contrato)', () => {
 });
 
 describe('UserAccessPanel: lista', () => {
+  it('DIS-020: enlaza el historial del usuario en Auditoría', () => {
+    render(<UserAccessPanel user={ANA} onClose={() => {}} />);
+    const enlace = screen.getByRole('link', { name: 'Historial de Ana Ruiz en Auditoría' });
+    expect(enlace.getAttribute('href')).toBe('/audit/users/8');
+  });
+
   it('pide `vigente` y muestra plataforma, nivel, origen, quién aprobó, estado y última ejecución', async () => {
     render(<UserAccessPanel user={ANA} onClose={() => {}} />);
     const conta = await screen.findByRole('listitem', { name: FILA_CONTA });
