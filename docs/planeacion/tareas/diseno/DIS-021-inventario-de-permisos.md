@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | inventario |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local en `dis/DIS-021-inventario-permisos`, sin push |
 | **Rama** | `dis/DIS-021-inventario-permisos` |
