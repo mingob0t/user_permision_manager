@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | usuarios |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Rama local |
 | **Rama** | `dis/DIS-018-accesos-usuario-revocacion` |
