@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | secretos |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | commit local, sin push |
 | **Rama** | `fnc/FNC-068-vaultwarden` |
