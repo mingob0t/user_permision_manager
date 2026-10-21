@@ -211,7 +211,6 @@ def otro_admin_miembro_de_a(escena):
     ('PUT', '', {'name': 'Tomada'}),
     ('DELETE', '', None),
     ('PUT', '/areas', {'area_ids': []}),
-    ('PUT', '/platforms', {'platform_ids': []}),
 ])
 def test_admin_area_no_gestiona_a_otro_admin(escena, como,
                                              otro_admin_miembro_de_a, metodo,
@@ -415,17 +414,6 @@ def test_admin_area_no_saca_a_otro_admin_de_su_area(escena, como,
     assert escena['A'] in {a.id for a in _cuenta(otro_admin_miembro_de_a).areas}
 
 
-def test_admin_area_no_mete_a_otro_admin_en_su_plataforma(
-        escena, como, otro_admin_miembro_de_a):
-    area_a = db.session.get(Area, escena['A'])
-    plataforma = fabricas.crear_plataforma(area_a)
-    respuesta = como(escena['admin_a']).put(
-        f'{A}/platforms/{plataforma.id}/users',
-        json={'user_ids': [otro_admin_miembro_de_a]})
-    assert respuesta.status_code == 403
-    assert _cuenta(otro_admin_miembro_de_a).platforms == []
-
-
 def test_admin_area_ve_su_propia_auditoria(escena, como):
     cliente = como(escena['admin_a'])
     cliente.put(f"{A}/areas/{escena['A']}", json={'description': 'Editada'})
@@ -441,7 +429,6 @@ def test_admin_area_ve_su_propia_auditoria(escena, como):
 
 @pytest.mark.parametrize('ruta,cuerpo', [
     ('/areas', {'area_ids': []}),
-    ('/platforms', {'platform_ids': []}),
 ])
 def test_cuenta_fuera_de_alcance_da_404(escena, como, otro_admin_miembro_de_a,
                                         ruta, cuerpo):
@@ -454,9 +441,6 @@ def test_cuenta_fuera_de_alcance_da_404(escena, como, otro_admin_miembro_de_a,
     ('/areas', [1]),
     ('/areas', {'area_ids': 'x'}),
     ('/areas', {'area_ids': [[1]]}),
-    ('/platforms', [1]),
-    ('/platforms', {'platform_ids': 5}),
-    ('/platforms', {'platform_ids': [{}]}),
 ])
 def test_cuerpo_no_valido_da_400(escena, como, ruta, cuerpo):
     respuesta = como(escena['super']).put(

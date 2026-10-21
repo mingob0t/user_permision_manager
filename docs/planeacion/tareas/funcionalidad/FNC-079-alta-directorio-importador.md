@@ -30,3 +30,5 @@
 |---|---|
 | 2026-10-15 | Creada como Propuesta (revisión de FNC-044) |
 | 2026-10-19 | FNC-077 (En revisión): fuera de desarrollo `POST /users` ya crea `auth_source=ldap` sin contraseña, que se vincula al entrar por directorio/SSO; el alta del importador puede apoyarse en esto (falta comprobar que la cuenta existe en el directorio) |
+
+- 2026-10-21 (auditoría de seguridad DIS-019): la rama de alta local de `UserForm` y `api.createUser` (`users-list.tsx:119-134`) quedó como código muerto; retirarla con esta tarea.

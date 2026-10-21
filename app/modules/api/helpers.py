@@ -26,6 +26,8 @@ AREA_CON_ACCESOS = ('El área tiene accesos vigentes.', 409,
 AREA_CON_OTROS_ADMINS = ('El área tiene otros administradores; solo el '
                          'superadmin puede darla de baja.', 409,
                          'area_con_otros_admins')
+# Endpoint que reemplaza a la asignación directa de plataformas (FNC-065).
+REEMPLAZO_ASIGNACION = 'POST /access-requests'
 MENSAJE_VALIDACION = 'Revisa los campos marcados.'
 
 
@@ -41,6 +43,17 @@ def error_response(message, status=400, code=None, fields=None):
     if fields:
         cuerpo['fields'] = fields
     return jsonify(cuerpo), status
+
+
+def endpoint_retirado(use):
+    """`410` de un endpoint retirado, con el que lo reemplaza (FNC-065).
+
+    Mismo formato que el `410` de los blueprints heredados (`message`, `use`)
+    más `code`, como el resto de los errores de `/api/v1`.
+    """
+    cuerpo = {'status': 'error', 'message': 'Endpoint retirado.',
+              'code': 'endpoint_retirado', 'use': use}
+    return jsonify(cuerpo), 410
 
 
 def validation_error(fields):

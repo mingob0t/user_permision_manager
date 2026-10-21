@@ -19,7 +19,8 @@ import { quienActuo } from './audit-table';
 
 export const TITULO_DETALLE = 'Detalle del registro';
 
-function Dato({ etiqueta, valor }: { etiqueta: string; valor: React.ReactNode }) {
+/** Dato de un detalle (`dt`/`dd`); reutilizado en DIS-022. */
+export function Dato({ etiqueta, valor }: { etiqueta: string; valor: React.ReactNode }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs font-medium uppercase tracking-wide text-label">{etiqueta}</dt>

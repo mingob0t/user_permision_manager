@@ -48,9 +48,6 @@ ACCIONES = [
     ('DELETE', '/platforms/{plataforma}', None,
      'ELIMINAR PLATAFORMA: Plataforma auditada', 'Plataformas',
      'Plataforma auditada'),
-    ('PUT', '/platforms/{plataforma}/users', {'user_ids': []},
-     'ACTUALIZAR ACCESO: Plataforma auditada', 'Plataformas',
-     'Plataforma auditada'),
     ('POST', '/users', {'email': 'nuevo@pruebas.local'},
      'CREAR USUARIO: nuevo@pruebas.local', 'Usuarios', 'nuevo@pruebas.local'),
     ('PUT', '/users/{objetivo}', {'name': 'Editado'},
@@ -58,9 +55,6 @@ ACCIONES = [
      'objetivo@pruebas.local'),
     ('DELETE', '/users/{objetivo}', None,
      'ELIMINAR USUARIO: objetivo@pruebas.local', 'Usuarios',
-     'objetivo@pruebas.local'),
-    ('PUT', '/users/{objetivo}/platforms', {'platform_ids': []},
-     'ACTUALIZAR ACCESOS: objetivo@pruebas.local', 'Usuarios',
      'objetivo@pruebas.local'),
 ]
 
