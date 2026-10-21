@@ -24,7 +24,7 @@ from app.modules.access.tipos import (ESTADO_ACTIVO, ESTADO_EN_PROCESO,
                                       ESTADOS_OCUPANTES, LARGO_MOTIVO,
                                       NIVEL_USUARIO, NIVELES,
                                       ORIGEN_ADMIN_DE_AREA, ORIGEN_SOLICITUD,
-                                      ORIGENES, RANGO_NIVEL)
+                                      ORIGENES_OTORGABLES, RANGO_NIVEL)
 
 # Máquina de estados del contrato `accesos.md`.
 TRANSICIONES = {
@@ -48,7 +48,8 @@ def puede_pasar(origen, destino):
 def validar_datos(nivel, origen, request_id):
     if nivel not in NIVELES:
         raise errores.validacion('level', 'Nivel desconocido.')
-    if origen not in ORIGENES:
+    if origen not in ORIGENES_OTORGABLES:
+        # `heredado` solo lo crea la migración 0010 (FNC-065).
         raise errores.validacion('origin', 'Origen desconocido.')
     if origen == ORIGEN_SOLICITUD and not isinstance(request_id, int):
         # F-AUD-02: todo acceso por solicitud dice qué solicitud lo originó.

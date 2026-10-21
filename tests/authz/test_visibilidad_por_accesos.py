@@ -182,19 +182,3 @@ def test_cuenta_inactiva_no_ve_nada(escena):
     usuario.is_active = False
     db.session.commit()
     assert _visibles(usuario) == set()
-
-
-def test_acceso_activo_del_admin_no_le_da_alcance_para_asignar(escena,
-                                                               cliente_como):
-    """Ver una plataforma por un acceso propio no es administrarla: no la
-    asigna por `PUT /users/<id>/platforms` (heredado, FNC-065)."""
-    admin = fabricas.crear_usuario(
-        ROLE_AREA_ADMIN, areas=[escena['area'], escena['otra']],
-        areas_administradas=[escena['area']])
-    fabricas.crear_acceso(admin, escena['ajena'], ESTADO_ACTIVO)
-    usuario = escena['usuario']
-    respuesta = cliente_como(_recargar(admin)).put(
-        f'{A}/users/{usuario.id}/platforms',
-        json={'platform_ids': [escena['ajena'].id]})
-    assert respuesta.status_code == 403, respuesta.get_data(as_text=True)
-    assert _recargar(usuario).platforms == []

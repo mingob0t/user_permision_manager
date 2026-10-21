@@ -415,17 +415,6 @@ def test_admin_area_no_saca_a_otro_admin_de_su_area(escena, como,
     assert escena['A'] in {a.id for a in _cuenta(otro_admin_miembro_de_a).areas}
 
 
-def test_admin_area_no_mete_a_otro_admin_en_su_plataforma(
-        escena, como, otro_admin_miembro_de_a):
-    area_a = db.session.get(Area, escena['A'])
-    plataforma = fabricas.crear_plataforma(area_a)
-    respuesta = como(escena['admin_a']).put(
-        f'{A}/platforms/{plataforma.id}/users',
-        json={'user_ids': [otro_admin_miembro_de_a]})
-    assert respuesta.status_code == 403
-    assert _cuenta(otro_admin_miembro_de_a).platforms == []
-
-
 def test_admin_area_ve_su_propia_auditoria(escena, como):
     cliente = como(escena['admin_a'])
     cliente.put(f"{A}/areas/{escena['A']}", json={'description': 'Editada'})

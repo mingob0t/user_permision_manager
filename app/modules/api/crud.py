@@ -11,15 +11,15 @@ from flask_login import current_user, login_required
 from app import db
 from app.authz import (admin_required, any_admin_required, area_admin_required,
                        can_manage_user, scoped_areas, scoped_users)
-from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     NO_ENCONTRADO, OPERACION_PROPIA,
-                                     ROL_RESERVADO, error_response,
-                                     is_id_list, json_object)
+from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, NO_ENCONTRADO,
+                                     OPERACION_PROPIA, REEMPLAZO_ASIGNACION,
+                                     ROL_RESERVADO, endpoint_retirado,
+                                     error_response)
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.acceso_local import (contrasena_local_permitida,
                                            origen_de_alta)
 from app.modules.auth.models import User
-from app.modules.core.models import Area, Platform
+from app.modules.core.models import Area
 from app.modules.users.roles import (cambiar_rol, campos_no_permitidos,
                                      es_el_mismo_rol, rol_asignable)
 from app.utils.naming import sanitize_display_name
@@ -195,30 +195,9 @@ def delete_user(user_id):
 @login_required
 @any_admin_required
 def set_user_platforms(user_id):
-    """Asigna plataformas concretas a un usuario."""
-    from app.authz import can_manage_platform, scoped_platforms
-
-    target = User.query.get_or_404(user_id)
-    if not can_manage_user(target):
-        return _error(*NO_ENCONTRADO)
-
-    data = json_object()
-    platform_ids = (data or {}).get('platform_ids') or []
-    if data is None or not is_id_list(platform_ids):
-        return _error(*CUERPO_INVALIDO)
-    # Solo las que administra: un acceso activo propio (FNC-063) no le da
-    # alcance sobre la plataforma.
-    allowed = {p.id for p in scoped_platforms().all() if can_manage_platform(p)}
-    if [i for i in platform_ids if i not in allowed]:
-        return _error('Hay plataformas fuera de tu alcance.', 403)
-
-    keep = [p for p in target.platforms if p.id not in allowed]
-    target.platforms = keep + Platform.query.filter(
-        Platform.id.in_(platform_ids)).all()
-    db.session.commit()
-    add_audit_log(f"ACTUALIZAR ACCESOS: {target.email}", module='Usuarios',
-                  target=target.email, status='success')
-    return jsonify({'status': 'success'})
+    """Retirado (FNC-065): `user_platforms` es obsoleta; ahora se otorga por
+    solicitud (`POST /access-requests`)."""
+    return endpoint_retirado(REEMPLAZO_ASIGNACION)
 
 
 # --------------------------------------------------------------------------- #

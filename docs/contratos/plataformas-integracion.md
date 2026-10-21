@@ -27,7 +27,7 @@ Convenciones comunes: [README.md](README.md). Cambia `POST /platforms`, `PUT /pl
 | `has_connector` | boolean | Hay conector configurado (ver conectores-y-ejecuciones.md) |
 | `active_grants` | int | Accesos vigentes (definición en accesos.md) |
 
-- `user_ids` deja de exponerse (FNC-065; P4: los accesos de NEXUS se descartan).
+- `user_ids` deja de exponerse; `PUT /platforms/<id>/users` responde `410 endpoint_retirado` (FNC-065, ver README.md).
 - Plataformas heredadas: tras la migración 0005 quedan `integration_type: "ldap"` con ambos DN `null` y `groups_status: "sin_verificar"`; se editan sin completarlos y el superadmin define sus grupos (FNC-046).
 - `direct_link` y `logo_url` guardados que no cumplan la regla de entrada se devuelven `null` (FNC-046).
 - Los demás campos de `Platform` no cambian.

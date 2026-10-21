@@ -1,8 +1,8 @@
 """API v1 de plataformas: alta, edición, baja y usuarios asignados (FNC-046).
 
 Contrato `docs/contratos/plataformas-integracion.md`. Las rutas salieron de
-`api/crud.py` para no hacerlo crecer; `DELETE` y `PUT .../users` se movieron
-sin cambios.
+`api/crud.py` para no hacerlo crecer; `DELETE` se movió sin cambios y
+`PUT .../users` quedó retirado (410, FNC-065).
 
 Orden de las comprobaciones en `POST` y `PUT`:
 1. Cuerpo JSON y lista blanca (`400`).
@@ -18,20 +18,20 @@ Orden de las comprobaciones en `POST` y `PUT`:
    transacción: al dar de alta y al cambiar el área o los grupos.
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from flask_login import current_user, login_required
 
 from app import db
 from app.authz import (any_admin_required, can_manage_area,
                        can_manage_platform, is_admin,
-                       platform_manage_required, scoped_users)
+                       platform_manage_required)
 from app.modules.access.area_admin_sync import sincronizar_plataforma
 from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     NO_ENCONTRADO, error_response,
+                                     NO_ENCONTRADO, REEMPLAZO_ASIGNACION,
+                                     endpoint_retirado, error_response,
                                      json_object, validation_error)
 from app.modules.audit.events import Evento
 from app.modules.audit.services import add_audit_log
-from app.modules.auth.models import User
 from app.modules.core.models import Area, Platform
 from app.modules.directory.dn import mismo_dn
 from app.modules.platforms import grupos
@@ -329,19 +329,8 @@ def delete_platform(platform_id):
 
 @platforms_api_bp.route('/platforms/<int:platform_id>/users', methods=['PUT'])
 @login_required
-@platform_manage_required('platform_id')
+@any_admin_required
 def set_platform_users(platform_id):
-    """Define qué usuarios tienen asignada la plataforma."""
-    platform = Platform.query.get_or_404(platform_id)
-    user_ids = (request.get_json(silent=True) or {}).get('user_ids') or []
-
-    allowed = {u.id for u in scoped_users().all()}
-    if [i for i in user_ids if i not in allowed]:
-        return error_response('Hay usuarios fuera de tu alcance.', 403)
-
-    keep = [u for u in platform.platform_users.all() if u.id not in allowed]
-    platform.platform_users = keep + User.query.filter(User.id.in_(user_ids)).all()
-    db.session.commit()
-    add_audit_log(f"ACTUALIZAR ACCESO: {platform.name}", module='Plataformas',
-                  target=platform.name, status='success')
-    return jsonify({'status': 'success'})
+    """Retirado (FNC-065): `user_platforms` es obsoleta; ahora se otorga por
+    solicitud (`POST /access-requests`)."""
+    return endpoint_retirado(REEMPLAZO_ASIGNACION)

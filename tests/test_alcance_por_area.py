@@ -222,7 +222,6 @@ def test_listado_de_plataformas_filtrado(alcance, cliente_como, actor):
 @pytest.mark.parametrize('metodo,sufijo,cuerpo', [
     ('PUT', '', {'description': 'Editada desde otra área'}),
     ('DELETE', '', None),
-    ('PUT', '/users', {'user_ids': []}),
 ])
 def test_admin_area_no_toca_plataforma_ajena(alcance, cliente_como, actor,
                                              metodo, sufijo, cuerpo):
@@ -255,15 +254,6 @@ def test_admin_area_no_mueve_plataforma_a_area_ajena(alcance, cliente_como):
         esc.area['A']
 
 
-def test_admin_area_no_da_su_plataforma_a_usuario_ajeno(alcance, cliente_como):
-    esc = alcance
-    respuesta = _como(cliente_como, esc, ADMIN_A).put(
-        f"{A}/platforms/{esc.plataforma['A']}/users",
-        json={'user_ids': [esc.actor[USUARIO_B]]})
-    _assert_denegado(respuesta, (403,))
-    assert _usuario(esc.actor[USUARIO_B]).platforms == []
-
-
 # --------------------------------------------------------------------------- #
 # Usuarios
 # --------------------------------------------------------------------------- #
@@ -292,7 +282,6 @@ def test_superadmin_lista_a_todos(alcance, cliente_como):
     ('PUT', '', {'is_active': False}),
     ('DELETE', '', None),
     ('PUT', '/areas', {'area_ids': []}),
-    ('PUT', '/platforms', {'platform_ids': []}),
 ])
 def test_admin_a_no_toca_cuentas_ajenas(alcance, cliente_como, objetivo,
                                         metodo, sufijo, cuerpo):
@@ -339,15 +328,6 @@ def test_no_asigna_area_ajena_a_usuario_propio(alcance, cliente_como):
     _assert_denegado(respuesta, (403,))
     assert [a.id for a in _usuario(esc.actor[USUARIO_A]).areas] == \
         [esc.area['A']]
-
-
-def test_no_asigna_plataforma_ajena_a_usuario_propio(alcance, cliente_como):
-    esc = alcance
-    respuesta = _como(cliente_como, esc, ADMIN_A).put(
-        f'{A}/users/{esc.actor[USUARIO_A]}/platforms',
-        json={'platform_ids': [esc.plataforma['B']]})
-    _assert_denegado(respuesta, (403,))
-    assert _usuario(esc.actor[USUARIO_A]).platforms == []
 
 
 def test_crear_usuario_no_le_da_area_ajena(alcance, cliente_como):

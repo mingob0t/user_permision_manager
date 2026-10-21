@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.1 (2026-10-20) |
-| Proveedor | backend (FNC-054, FNC-058, FNC-059) |
+| Versión | 1.2 (2026-10-21) |
+| Proveedor | backend (FNC-054, FNC-058, FNC-059, FNC-065) |
 | Consumidores | web (FNC-069; pantallas DIS-014, DIS-018, DIS-021) |
 | Solicitudes | — |
 
@@ -22,7 +22,7 @@ Convenciones comunes: [README.md](README.md). Tabla `platform_access_grants`.
 | Campo | Valores |
 |---|---|
 | `level` | `usuario` \| `admin` (P5: uno vigente por usuario y plataforma; subir reemplaza) |
-| `origin` | `solicitud` \| `admin_de_area` (P4: sin `heredado`; los accesos de NEXUS se descartan) |
+| `origin` | `solicitud` \| `admin_de_area` \| `heredado` (1.2: lo crea solo la migración 0010 desde `user_platforms`; nivel `usuario`, sin solicitud ni otorgante) |
 
 - Vigente = `en_proceso`, `activo`, `revocando`, `fallido` o `fallo_revocacion`.
 - Subir a `admin`: el acceso `usuario` pasa a `revocando` (motivo `reemplazado_por_nivel_superior`) y el nuevo `admin` a `en_proceso`, en una transacción.
@@ -39,6 +39,7 @@ Convenciones comunes: [README.md](README.md). Tabla `platform_access_grants`.
 
 - Revocar un acceso propio → 403 `operacion_propia` (SEC-AUTHZ-08).
 - Un admin no revoca accesos de otros admins del área ni accesos de origen `admin_de_area` → 404 (SEC-AUTHZ-06); el superadmin sí.
+- Un admin de área sí revoca un acceso `heredado` de las plataformas de sus áreas (misma regla que `solicitud`).
 
 ## `GET /me/access` · `GET /users/<id>/access`
 | Parámetro | Tipo | Regla |
@@ -59,7 +60,8 @@ Orden: `granted_at` descendente. Respuesta paginada de `Access`.
 ```
 | Campo | Tipo |
 |---|---|
-| `granted_by` | `{id, name}` \| null (null = `sistema`, origen `admin_de_area`) |
+| `granted_by` | `{id, name}` \| null (null = `sistema`: origen `admin_de_area` o `heredado`) |
+| `request_id` | int \| null (null en `admin_de_area` y `heredado`) |
 | `revoked_by` | `{id, name}` \| null |
 | `last_job_id` | int \| null (ver conectores-y-ejecuciones.md); se omite en `/me/access` para el rol usuario |
 
@@ -78,7 +80,7 @@ F-AUD-02: quién tiene qué plataforma, nivel, desde cuándo y quién aprobó.
 |---|---|
 | `area_id`, `platform_id`, `user_id` | int |
 | `level` | `usuario` \| `admin` |
-| `origin` | `solicitud` \| `admin_de_area` |
+| `origin` | `solicitud` \| `admin_de_area` \| `heredado` |
 | `status` | estado o `vigente` (por defecto `vigente`) |
 | `q` | texto ≤ 100 (nombre o correo del usuario) |
 | `page`, `per_page` | int |
@@ -114,3 +116,4 @@ Orden: área, plataforma, usuario. Respuesta paginada de `Access` (mismos campos
 |---|---|---|
 | 1 | 2026-10-14 | Versión inicial (FNC-038) |
 | 1.1 | 2026-10-20 | Corrección (FNC-054, auditor-seguridad): el acceso automático (`admin_de_area`) es de nivel `usuario` para todos los admins del área, incluido el creador (P6, dueño 2026-10-14); el ejemplo de datos simulados decía `admin` |
+| 1.2 | 2026-10-21 | Aditivo (FNC-065): origen `heredado` (migración 0010 desde `user_platforms`); `PUT /platforms/<id>/users` y `PUT /users/<id>/platforms` responden `410 endpoint_retirado` (ver `plataformas-integracion.md` y `areas-y-roles.md`). Decisión del orquestador, pendiente de validar en la prueba de concepto; P4 decía "sin `heredado`" |

@@ -91,7 +91,7 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 | P1 | Catálogo: solo plataformas de las áreas del usuario | solicitudes.md |
 | P2 | Superadmin y admins crean cuentas en OpenLDAP (admin, para sus áreas) | usuarios-directorio.md |
 | P3 / ADR-004 | Convención LDAP por variables `.env` | plataformas-integracion.md |
-| P4 | Accesos actuales (`user_platforms`) se descartan; sin origen `heredado` | accesos.md |
+| P4 | Accesos actuales (`user_platforms`): se descartaban; FNC-065 (orquestador, pendiente de validar en la prueba de concepto) los migra con origen `heredado` | accesos.md |
 | P5 | Un nivel por plataforma; subir reemplaza | solicitudes.md, accesos.md |
 | P6 / P12 | Superadmin con acceso por defecto; alta de plataforma otorga acceso al admin creador con dos eventos de auditoría | plataformas-integracion.md, auditoria.md |
 | P9 | Conectores: base primero; tipos después | conectores-y-ejecuciones.md |
@@ -106,7 +106,7 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 ## Endpoints retirados en v1
 | Endpoint | Motivo | Tarea |
 |---|---|---|
-| `PUT /platforms/<id>/users` | P4: los accesos de NEXUS (`user_platforms`) se descartan; el acceso sale de solicitudes | FNC-065 |
+| `PUT /platforms/<id>/users` | El acceso sale de solicitudes; `user_platforms` es obsoleta (sus filas pasaron a accesos `heredado`). Responde `410 endpoint_retirado` con `use: "POST /access-requests"` | FNC-065 |
 | `PUT /users/<id>/platforms` | Igual | FNC-065 |
 
 ## Por confirmar (valor más seguro aplicado)
@@ -125,3 +125,4 @@ Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 | accesos 1.1 | 2026-10-20 | Acceso automático del admin creador: nivel `usuario`, no `admin` (P6; FNC-054) |
 | plataformas-integracion 1.1, areas-y-roles 2.1 | 2026-10-20 | Accesos automáticos de los admins: cambio de área con resincronización y efecto de asignar o quitar áreas (FNC-055) |
 | solicitudes 1.1 | 2026-10-20 | Justificación opcional (decisión del dueño); detalles del catálogo y `409 estado_invalido` (FNC-056) |
+| accesos 1.2 | 2026-10-21 | Origen `heredado` y `410 endpoint_retirado` en las dos asignaciones directas (FNC-065) |
