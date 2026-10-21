@@ -192,7 +192,9 @@ export interface ConnectorTestResult {
   message: string;
 }
 
-export type JobStatus = 'pendiente' | 'en_ejecucion' | 'reintentando' | 'exitoso' | 'fallido';
+/** `cancelado`: otorgar en espera que dejó sin efecto una revocación posterior (FNC-049); final. */
+export type JobStatus =
+  | 'pendiente' | 'en_ejecucion' | 'reintentando' | 'exitoso' | 'fallido' | 'cancelado';
 export type JobOperation = 'otorgar' | 'revocar';
 
 export interface JobAttempt {

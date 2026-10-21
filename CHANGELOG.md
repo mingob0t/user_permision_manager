@@ -3,6 +3,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Conectores (`/admin/connectors`, superadmin): plataformas con conector, configuración por referencia de credencial (sin contraseñas), prueba de conexión y borrado confirmado; bitácora de ejecuciones con filtros, detalle de intentos y reintento confirmado de las fallidas, que se refresca sola solo mientras hay ejecuciones en curso (DIS-022, 2026-10-21).
 - Usuarios: alta de cuentas en el directorio corporativo desde "Nuevo usuario" (identificador, correo, nombre, apellidos y áreas; sin contraseña, la maneja el inicio de sesión corporativo) con errores por campo; el superadmin hace admin de área a un usuario eligiendo sus áreas, cambia esas áreas o le quita el rol, con el efecto explicado antes de confirmar. La edición ya no ofrece rol ni contraseña (salvo la cuenta de emergencia) (DIS-019, 2026-10-21).
 - Navegación en móvil: botón "Menú" en la cabecera bajo `md` con panel de las mismas entradas por rol, cierre con Escape, al elegir opción o con clic fuera, foco atrapado y áreas de 48 px (DIS-025, 2026-10-21).
 - Inicio por rol en el Panel: mis solicitudes y mis accesos (usuario), pendientes y resumen de sus áreas (admin de área) o global (superadmin), con cada contador enlazado a su pantalla y refresco periódico (DIS-024, 2026-10-21).
@@ -51,6 +52,7 @@
 - Resumen del inicio por rol `GET /home/summary`: el usuario recibe sus accesos y solicitudes por estado; el admin de área, además, pendientes por aprobar, accesos fallidos y totales de sus áreas; el superadmin, los globales. `GET /stats` no cambia (FNC-066, 2026-10-20).
 
 ### Corregido
+- Web: borrar un conector envía el cuerpo `{}` que exige el contrato 1.1 (antes el servidor respondía `415`) (DIS-022, 2026-10-21).
 - Botón primario con contraste AA en los temas obsidian, rose, emerald y violet: `.nexus-btn-primary` usa `--color-primary-solid` y `--color-on-primary` (DIS-015, 2026-10-20).
 - Contraste AA del texto de estado (éxito, error, advertencia, estrella de favorito) con tokens `*-text` por tema, sin clases de paleta fija (DIS-002, 2026-10-19).
 - Contraste AA de los tokens por tema: título de modales e insignias en oscuro, header y pestaña activa en emerald/rose/violet, y color de marca como texto con variantes `*-text` (DIS-001, 2026-10-19).

@@ -11,6 +11,8 @@
  */
 import { ESTADOS as ESTADOS_ACCESO } from '@/components/access/access-status-badge';
 import { ESTADOS_SOLICITUD } from '@/components/access/request-status-badge';
+import { ESTADOS_CREDENCIAL } from '@/components/connectors/connector-catalog';
+import { ESTADOS_EJECUCION, RESULTADOS_INTENTO } from '@/components/connectors/job-catalog';
 import { MIN_NO_TEXTO, MIN_TEXTO } from '../utils/wcag';
 
 export interface ParContraste {
@@ -125,6 +127,15 @@ export const PARES: ParContraste[] = [
   // (`--color-panel-fill`, fondo real del modal) y falla 3:1 en los 7 temas (1,42–2,02:1, medido por
   // auditor-accesibilidad): es de `.nexus-checkbox` (compartido) y lo corrige DIS-039.
   { id: 'checkbox-marcada/panel', texto: '--color-primary', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
+  // DIS-022: conectores y ejecuciones. Insignias de estado de ejecución y de intento (en `Card` y en
+  // `.nx-modal-glass`) y de la credencial, sobre `--color-panel-fill`. El resto (filas, avisos
+  // `success-text`/`error-text` en `Card`, pistas, botones y anillos de foco) reutiliza pares ya medidos.
+  ...Object.entries(ESTADOS_EJECUCION).map(([estado, { tono }]) =>
+    texto(`badge-ejecucion-${estado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
+  ...Object.entries(RESULTADOS_INTENTO).map(([resultado, { tono }]) =>
+    texto(`badge-intento-${resultado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
+  ...Object.entries(ESTADOS_CREDENCIAL).map(([estado, { tono }]) =>
+    texto(`badge-credencial-${estado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },
