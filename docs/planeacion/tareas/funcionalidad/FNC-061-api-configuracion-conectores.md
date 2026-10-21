@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | conectores |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local en `fnc/FNC-061-api-conectores`, sin push |
 | **Rama** | `fnc/FNC-061-api-conectores` |
