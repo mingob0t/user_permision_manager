@@ -8,10 +8,10 @@
 | **Fase** | 3 |
 | **Módulo / Área** | inventario |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
+| **Estatus** | En curso |
 | **Creada** | 2026-10-13 |
-| **Estatus Git** | — |
-| **Rama** | `dis/DIS-021-inventario-de-permisos` |
+| **Estatus Git** | Rama local `dis/DIS-021-inventario-permisos` |
+| **Rama** | `dis/DIS-021-inventario-permisos` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -54,3 +54,4 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
+| 2026-10-20 | Aprobada por el orquestador (modo autónomo) y En curso en el worktree `pokemon-wt-d023` |
