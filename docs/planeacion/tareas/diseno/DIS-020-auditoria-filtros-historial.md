@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | auditoria |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Rama local, sin push |
 | **Rama** | `dis/DIS-020-auditoria-filtros-historial` |
