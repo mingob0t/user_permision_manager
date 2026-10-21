@@ -2,7 +2,7 @@
 
 /** Usuarios: alta, edición, baja y asignación de áreas y plataformas. */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { usersApi } from '@/lib/access/users';
 import { useAsync } from '@/lib/use-async';
@@ -12,6 +12,7 @@ import type {
 import { Button, Checkbox, ConfirmDialog, Field, Modal, Select, TextInput } from './form';
 import { useSession } from './session-provider';
 import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
+import { UserAccessPanel } from './users/user-access-panel';
 
 /** El alta de cuentas que ya existen en el directorio llega con FNC-079. */
 const DIRECTORY_IMPORT_PENDING =
@@ -432,6 +433,9 @@ export function UsersList() {
   const [directory, setDirectory] = useState(false);
   const [showPurge, setShowPurge] = useState(false);
   const [prefill, setPrefill] = useState<DirectoryUser | null>(null);
+  // DIS-018: accesos del usuario; al cerrar, el foco vuelve a su botón.
+  const [accessOf, setAccessOf] = useState<ManagedUser | null>(null);
+  const accessTrigger = useRef<HTMLButtonElement | null>(null);
 
   const isAdmin = session?.permissions.is_admin ?? false;
 
@@ -477,6 +481,17 @@ export function UsersList() {
       </div>
 
       {showPurge ? <PurgePanel onDone={users.reload} /> : null}
+
+      {accessOf ? (
+        <UserAccessPanel
+          key={accessOf.id}
+          user={accessOf}
+          onClose={() => {
+            setAccessOf(null);
+            accessTrigger.current?.focus();
+          }}
+        />
+      ) : null}
 
       {problem ? <ErrorNote message={problem} /> : null}
       {users.loading ? <Spinner /> : null}
@@ -530,6 +545,17 @@ export function UsersList() {
                     className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
                   >
                     Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      accessTrigger.current = event.currentTarget;
+                      setAccessOf(user);
+                    }}
+                    aria-label={`Accesos de ${user.name}`}
+                    className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
+                  >
+                    Accesos
                   </button>
                   <button
                     type="button"

@@ -28,7 +28,7 @@ type Filtro = NonNullable<AccessListParams['status']>;
 const NOMBRE_LISTA = 'tus accesos';
 const FILTRO_POR_DEFECTO: Filtro = 'vigente';
 
-const FILTROS: { valor: Filtro; texto: string }[] = [
+export const FILTROS: { valor: Filtro; texto: string }[] = [
   { valor: 'vigente', texto: 'Vigentes' },
   { valor: 'activo', texto: 'Con acceso' },
   { valor: 'en_proceso', texto: 'En proceso' },
