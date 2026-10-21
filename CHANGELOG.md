@@ -43,6 +43,7 @@
 - Resumen del inicio por rol `GET /home/summary`: el usuario recibe sus accesos y solicitudes por estado; el admin de área, además, pendientes por aprobar, accesos fallidos y totales de sus áreas; el superadmin, los globales. `GET /stats` no cambia (FNC-066, 2026-10-20).
 
 ### Corregido
+- Botón primario con contraste AA en los temas obsidian, rose, emerald y violet: `.nexus-btn-primary` usa `--color-primary-solid` y `--color-on-primary` (DIS-015, 2026-10-20).
 - Contraste AA del texto de estado (éxito, error, advertencia, estrella de favorito) con tokens `*-text` por tema, sin clases de paleta fija (DIS-002, 2026-10-19).
 - Contraste AA de los tokens por tema: título de modales e insignias en oscuro, header y pestaña activa en emerald/rose/violet, y color de marca como texto con variantes `*-text` (DIS-001, 2026-10-19).
 - Login local solo para la cuenta de emergencia (superadmin local) y con `auth_source=local`; el alta de usuarios ya no fija `nexus123` y el portal no fija contraseñas locales salvo la de emergencia; excepción de desarrollo `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (corrige SEG-02) (FNC-077, 2026-10-19).
