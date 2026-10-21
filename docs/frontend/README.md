@@ -28,7 +28,7 @@ frontend/src/
 
 | Ruta | Componente | Qué hace | Visible en el menú para |
 |---|---|---|---|
-| `/` | `Dashboard` | Panel: contadores (áreas, plataformas, visitas y, para administradores, usuarios), top de visitas y plataformas por área (gráfica recharts). | Todos |
+| `/` | `Dashboard` | Panel. Arriba, resumen por rol (`RoleSummary`, `GET /home/summary`, `usePolling`): usuario, mis solicitudes y mis accesos; admin de área, pendientes, sus áreas y lo propio; superadmin, pendientes y global. Cada contador enlaza a `/requests`, `/approvals`, `/inventory`, `/areas` o `/admin/platforms`; botón "Ver auditoría" (DIS-024). Debajo, "Actividad del portal" heredada de `/stats`: contadores, top de visitas y plataformas por área (gráfica recharts, deuda DIS-003). | Todos |
 | `/platforms` | `RequestCatalog` + `PlatformCatalog` | `h1` "Plataformas" y dos `h2`. Catálogo solicitable (DIS-013): estado por plataforma, filtro por área y búsqueda en cliente, modal de solicitud de nivel con justificación opcional; superadmin solo consulta. Debajo, "Mis plataformas": abre el enlace, registra visita y marca favorito. | Todos |
 | `/requests` | `MyRequestsView` | Pestañas "Mis solicitudes" (`mine`: estado, nivel, fechas, motivo de rechazo, estado del acceso) y "Mis accesos" (`/me/access`, `vigente` por defecto, estado explicado); filtro por estado, paginación y `usePolling`. Superadmin: estado vacío explicado, sin llamadas (DIS-014). | `usuario`, `admin_area` |
 | `/approvals` | `ApprovalsInbox` | Bandeja (`inbox`): solicitante, plataforma, nivel, estado, fechas y justificación; filtros por estado (`pendiente` por defecto) y área, paginación y `usePolling`; aprobar con confirmación (`ApproveDialog`) y rechazar con motivo de 10–500 (`RejectDialog`); la fila se actualiza con la respuesta y el aviso (`status`) recibe el foco; la solicitud propia no tiene acciones. Guarda `any_admin` (DIS-015). | `administrador`, `admin_area` |
@@ -73,6 +73,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). Cada entrada puede exig
 | `AppShell` | `app-shell.tsx` | Marco: barra lateral (oculta en móvil), cabecera con nombre, rol y "Salir"; estados de carga y error de sesión. |
 | `SessionProvider` / `useSession` | `session-provider.tsx` | Pide `/me` una vez; sin sesión redirige a `/login`. |
 | `RequireRole` / `meetsRequirement` | `require-role.tsx` | Guarda de ruta y regla de visibilidad por rol (FNC-070). |
+| `RoleSummary`, `gruposDelResumen`, `RUTAS_INICIO` | `home/role-summary.tsx` | Resumen de inicio por rol: grupos de contadores según los campos del contrato `inicio.md`; cada contador es `StatTile` dentro de `Link` con nombre accesible "Etiqueta: n. Ir a Pantalla"; carga, vacío (usuario: enlace al catálogo) y error con Reintentar (DIS-024). |
 | `Card`, `PanelHeader`, `StatTile`, `Spinner`, `ErrorNote`, `EmptyNote`, `Badge` | `ui.tsx` | Piezas base con clases del portal original (estados de carga, vacío y error). |
 | `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). |
 | `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace (solo `https://`, `enlaceSeguro`). |

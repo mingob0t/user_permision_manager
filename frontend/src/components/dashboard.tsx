@@ -1,24 +1,23 @@
 'use client';
 
-/** Panel: contadores y distribución de plataformas dentro del alcance. */
+/**
+ * Panel: resumen por rol (DIS-024) encima de los contadores y la distribución
+ * de plataformas dentro del alcance (`/stats`, heredado).
+ */
 
 import {
   Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { api } from '@/lib/api';
+import type { Stats } from '@/lib/types';
 import { useAsync } from '@/lib/use-async';
+import { RoleSummary } from './home/role-summary';
 import { useSession } from './session-provider';
 import { Card, ErrorNote, Spinner, StatTile } from './ui';
 
 export function Dashboard() {
   const { session } = useSession();
   const { data: stats, loading, error } = useAsync(() => api.stats(), []);
-
-  if (loading) return <Spinner />;
-  if (error) return <ErrorNote message={error} />;
-  if (!stats) return null;
-
-  const byArea = stats.platforms_by_area.filter((row) => row.count > 0);
 
   return (
     <div className="space-y-6">
@@ -31,6 +30,22 @@ export function Dashboard() {
         </p>
       </div>
 
+      <RoleSummary />
+
+      {loading ? <Spinner /> : null}
+      {error ? <ErrorNote message={error} /> : null}
+      {stats ? <Estadisticas stats={stats} /> : null}
+    </div>
+  );
+}
+
+/** Contadores, gráfica y más visitadas de `/stats` (sin cambios, DIS-024). */
+function Estadisticas({ stats }: { stats: Stats }) {
+  const byArea = stats.platforms_by_area.filter((row) => row.count > 0);
+
+  return (
+    <>
+      <h2 className="text-lg font-semibold">Actividad del portal</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Áreas" value={stats.areas} />
         <StatTile label="Plataformas" value={stats.platforms} />
@@ -104,6 +119,6 @@ export function Dashboard() {
           )}
         </Card>
       </div>
-    </div>
+    </>
   );
 }
