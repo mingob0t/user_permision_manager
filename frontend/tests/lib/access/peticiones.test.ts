@@ -73,7 +73,7 @@ describe.each([
     '/api/v1/platforms/12/connector', 'PUT',
     { type: 'api', host: 'erp.ejemplo.local', port: 443, params: {}, credential_ref: 'p/c' }],
   ['borrar conector', () => connectorsApi.remove(12),
-    '/api/v1/platforms/12/connector', 'DELETE', undefined],
+    '/api/v1/platforms/12/connector', 'DELETE', {}],
   ['probar conector', () => connectorsApi.test(12),
     '/api/v1/platforms/12/connector/test', 'POST', {}],
   ['ejecuciones', () => provisioningApi.jobs({ status: 'fallido', provider: 'ldap' }),

@@ -249,4 +249,29 @@ describe('usePolling', () => {
     await avanzar(INTERVALO_POLLING_MAX_S * S);
     expect(load).toHaveBeenCalledTimes(1);
   });
+
+  it('DIS-022: con activo en false no programa consultas; refresh() sigue y al activarse reanuda', async () => {
+    const load = vi.fn().mockResolvedValue('ok');
+    const { result, rerender } = renderHook(
+      ({ activo }) => usePolling(load, { intervalSeconds: 15, activo }),
+      { initialProps: { activo: false } },
+    );
+    await avanzar(0);
+    expect(load).toHaveBeenCalledTimes(1);
+    await avanzar(60 * S);
+    expect(load).toHaveBeenCalledTimes(1);
+
+    cambiarVisibilidad('hidden');
+    cambiarVisibilidad('visible');
+    await avanzar(0);
+    expect(load).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.refresh());
+    await avanzar(0);
+    expect(load).toHaveBeenCalledTimes(2);
+
+    rerender({ activo: true });
+    await avanzar(15 * S);
+    expect(load).toHaveBeenCalledTimes(3);
+  });
 });

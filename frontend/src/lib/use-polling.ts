@@ -51,6 +51,12 @@ export interface PollingOptions {
   intervalSeconds?: number | null;
   /** Igual que en `useAsync`: cuándo se recarga por cambio de parámetros. */
   deps?: unknown[];
+  /**
+   * `false`: no programa consultas periódicas ni al volver a la pestaña (la
+   * carga inicial, el cambio de `deps` y `refresh()` siguen). Por defecto
+   * `true`. Sirve para refrescar solo con estados transitorios (DIS-022).
+   */
+  activo?: boolean;
 }
 
 /**
@@ -68,6 +74,7 @@ export interface PollingOptions {
  */
 export function usePolling<T>(load: () => Promise<T>, options: PollingOptions = {}) {
   const intervalo = normalizarIntervalo(options.intervalSeconds);
+  const activo = options.activo ?? true;
   const ultimoError = useRef<unknown>(null);
   const ultimoDato = useRef<T | null>(null);
   const turno = useRef(0);
@@ -137,15 +144,15 @@ export function usePolling<T>(load: () => Promise<T>, options: PollingOptions = 
   useEffect(() => {
     const volvio = visible && !visibleAntes.current;
     visibleAntes.current = visible;
-    if (volvio && !detenido && !cargando.current) consultar();
-  }, [visible, detenido, consultar]);
+    if (volvio && activo && !detenido && !cargando.current) consultar();
+  }, [visible, activo, detenido, consultar]);
 
   // Siguiente consulta programada solo sin consulta en curso y con la pestaña visible.
   useEffect(() => {
-    if (loading || !visible || detenido) return;
+    if (loading || !visible || detenido || !activo) return;
     const id = setTimeout(consultar, esperaPolling(intervalo, fallos));
     return () => clearTimeout(id);
-  }, [loading, visible, detenido, intervalo, fallos, consultar]);
+  }, [loading, visible, detenido, activo, intervalo, fallos, consultar]);
 
   const refresh = useCallback(() => {
     if (cargando.current) pendiente.current = true;

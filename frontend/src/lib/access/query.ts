@@ -13,6 +13,6 @@ export function withQuery(
 }
 
 /** Cuerpo JSON de una escritura (el contrato pide JSON, también vacío). */
-export function jsonBody(method: 'POST' | 'PUT', body: unknown = {}): RequestInit {
+export function jsonBody(method: 'POST' | 'PUT' | 'DELETE', body: unknown = {}): RequestInit {
   return { method, body: JSON.stringify(body) };
 }

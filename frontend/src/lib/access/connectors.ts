@@ -17,9 +17,10 @@ export const connectorsApi = {
       `/platforms/${platformId}/connector`, jsonBody('PUT', input),
       () => ({ status: 'success', connector: { ...MOCK_CONNECTOR, ...input, platform_id: platformId } })),
 
+  /** Cuerpo `{}` (contrato 1.1: sin JSON → `415`). */
   remove: (platformId: number) =>
     accessRequest<StatusOk>(
-      `/platforms/${platformId}/connector`, { method: 'DELETE' },
+      `/platforms/${platformId}/connector`, jsonBody('DELETE'),
       () => ({ status: 'success' })),
 
   /** Un fallo de conexión llega como `200` con `result: "error"`. */

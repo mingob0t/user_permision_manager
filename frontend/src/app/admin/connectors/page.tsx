@@ -1,8 +1,8 @@
 import { AppShell } from '@/components/app-shell';
+import { ConnectorsAdmin } from '@/components/connectors/connectors-admin';
 import { RequireRole } from '@/components/require-role';
-import { EmptyNote } from '@/components/ui';
 
-/** Ruta reservada por FNC-070; el contenido llega con DIS-022. */
+/** Conectores y bitácora de ejecuciones (DIS-022); guarda `admin` (FNC-070). */
 export default function Page() {
   return (
     <AppShell>
@@ -12,7 +12,7 @@ export default function Page() {
             <h1 className="text-2xl font-semibold">Conectores</h1>
             <p className="mt-1 text-sm text-label">Configuración de conectores y bitácora de ejecuciones.</p>
           </div>
-          <EmptyNote message="Esta sección todavía no está disponible." />
+          <ConnectorsAdmin />
         </div>
       </RequireRole>
     </AppShell>
