@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | configuracion-directorio |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `dis/DIS-023-ajustes-directorio` (worktree `pokemon-wt-d023`) |

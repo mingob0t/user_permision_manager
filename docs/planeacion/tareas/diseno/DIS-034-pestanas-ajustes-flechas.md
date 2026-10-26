@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | ajustes |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-20 |
 
 ## Contexto
