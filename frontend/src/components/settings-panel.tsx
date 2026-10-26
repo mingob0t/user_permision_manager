@@ -2,15 +2,20 @@
 
 /** Configuración del sistema: portal, SMTP, plantillas y directorio. */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import type { EmailTemplate } from '@/lib/types';
+import { destinoPorTecla } from './access/my-requests-view';
 import { Button, Checkbox, Field, Select, TextArea, TextInput } from './form';
+import { DirectoryTab } from './settings/directory-tab';
 import { useSession } from './session-provider';
 import { Card, EmptyNote, ErrorNote, Spinner } from './ui';
 
 type Tab = 'portal' | 'smtp' | 'templates' | 'ldap' | 'backup' | 'preferences';
+
+const tabId = (id: Tab) => `ajustes-${id}-pestana`;
+const panelId = (id: Tab) => `ajustes-${id}-panel`;
 
 function Saved({ show }: { show: boolean }) {
   if (!show) return null;
@@ -480,148 +485,6 @@ function TemplatesTab() {
   );
 }
 
-/** Directorio corporativo (LDAP). */
-function LdapTab() {
-  const { data, loading, error, reload } = useAsync(() => api.authConfig(), []);
-  const [form, setForm] = useState<Record<string, unknown> | null>(null);
-  const [password, setPassword] = useState('');
-  const [state, setState] = useState<{ saving: boolean; saved: boolean; error: string | null; probe: string | null }>(
-    { saving: false, saved: false, error: null, probe: null },
-  );
-
-  if (loading) return <Spinner />;
-  if (error) return <ErrorNote message={error} />;
-  if (!data) return null;
-
-  const value = form ?? {
-    ldap_host: data.ldap_host ?? '',
-    ldap_port: data.ldap_port ?? 389,
-    ldap_ssl: data.ldap_ssl ?? false,
-    ldap_base_dn: data.ldap_base_dn ?? '',
-    ldap_user: data.ldap_user ?? '',
-    ldap_user_attr: data.ldap_user_attr ?? 'sAMAccountName',
-    ldap_group_admin: data.ldap_group_admin ?? '',
-    ldap_group_user: data.ldap_group_user ?? '',
-  };
-
-  async function save() {
-    setState({ ...state, saving: true, saved: false, error: null });
-    try {
-      await api.saveAuthConfig({ ...value, ...(password ? { ldap_pass: password } : {}) });
-      setPassword('');
-      setState({ saving: false, saved: true, error: null, probe: null });
-      reload();
-    } catch (err) {
-      setState({
-        saving: false, saved: false, probe: null,
-        error: err instanceof Error ? err.message : 'No se pudo guardar',
-      });
-    }
-  }
-
-  async function probe() {
-    setState({ ...state, probe: null, error: null });
-    try {
-      // Prueba los valores del formulario, así se valida antes de guardar.
-      const result = await api.testAuthConfig({
-        ...value, ...(password ? { ldap_pass: password } : {}),
-      });
-      setState({ ...state, probe: result.message ?? 'Conexión correcta.', error: null });
-    } catch (err) {
-      setState({
-        ...state, probe: null,
-        error: err instanceof Error ? err.message : 'No se pudo conectar',
-      });
-    }
-  }
-
-  return (
-    <Card className="space-y-4">
-      {state.error ? <ErrorNote message={state.error} /> : null}
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Servidor">
-          <TextInput
-            value={String(value.ldap_host ?? '')}
-            onChange={(e) => setForm({ ...value, ldap_host: e.target.value })}
-          />
-        </Field>
-        <Field label="Puerto">
-          <TextInput
-            type="number" value={String(value.ldap_port)}
-            onChange={(e) => setForm({ ...value, ldap_port: Number(e.target.value) })}
-          />
-        </Field>
-      </div>
-
-      <Checkbox
-        label="Usar SSL"
-        checked={Boolean(value.ldap_ssl)}
-        onChange={(e) => setForm({ ...value, ldap_ssl: e.target.checked })}
-      />
-
-      <Field label="Base DN">
-        <TextInput
-          value={String(value.ldap_base_dn ?? '')}
-          onChange={(e) => setForm({ ...value, ldap_base_dn: e.target.value })}
-          placeholder="dc=empresa,dc=com"
-        />
-      </Field>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Usuario de enlace">
-          <TextInput
-            value={String(value.ldap_user ?? '')}
-            onChange={(e) => setForm({ ...value, ldap_user: e.target.value })}
-          />
-        </Field>
-        <Field label="Contraseña" hint="Vacío conserva la actual.">
-          <TextInput
-            type="password" value={password} autoComplete="new-password"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
-      </div>
-
-      <Field label="Atributo de usuario">
-        <TextInput
-          value={String(value.ldap_user_attr ?? '')}
-          onChange={(e) => setForm({ ...value, ldap_user_attr: e.target.value })}
-        />
-      </Field>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Grupo de administradores">
-          <TextInput
-            value={String(value.ldap_group_admin ?? '')}
-            onChange={(e) => setForm({ ...value, ldap_group_admin: e.target.value })}
-          />
-        </Field>
-        <Field label="Grupo de usuarios">
-          <TextInput
-            value={String(value.ldap_group_user ?? '')}
-            onChange={(e) => setForm({ ...value, ldap_group_user: e.target.value })}
-          />
-        </Field>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={save} disabled={state.saving}>
-          {state.saving ? 'Guardando…' : 'Guardar'}
-        </Button>
-        <Button variant="secondary" onClick={probe}>
-          Probar conexión
-        </Button>
-        <Saved show={state.saved} />
-      </div>
-
-      {state.probe ? (
-        <p className="text-sm text-success-text">{state.probe}</p>
-      ) : null}
-    </Card>
-  );
-}
-
 /** Preferencias propias, disponibles para cualquier usuario. */
 function PreferencesTab() {
   const { session } = useSession();
@@ -690,6 +553,7 @@ export function SettingsPanel() {
   const { session } = useSession();
   const isAdmin = session?.permissions.is_admin ?? false;
   const [tab, setTab] = useState<Tab>(isAdmin ? 'portal' : 'preferences');
+  const botones = useRef<(HTMLButtonElement | null)[]>([]);
 
   // La configuración del sistema es solo del superadmin; las preferencias, de
   // cada usuario.
@@ -706,6 +570,15 @@ export function SettingsPanel() {
     { id: 'preferences', label: 'Mis preferencias' },
   ];
 
+  // Activación automática: la flecha mueve el foco y selecciona la pestaña.
+  function alPulsar(event: React.KeyboardEvent<HTMLButtonElement>, indice: number) {
+    const destino = destinoPorTecla(event.key, indice, tabs.length);
+    if (destino === null) return;
+    event.preventDefault();
+    setTab(tabs[destino].id);
+    botones.current[destino]?.focus();
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -717,15 +590,21 @@ export function SettingsPanel() {
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-panel-border" role="tablist">
-        {tabs.map((item) => (
+      {/* Teclado WAI-ARIA y 48 px de alto, como las pestañas de DIS-014 (DIS-034). */}
+      <div className="flex flex-wrap gap-1 border-b border-panel-border" role="tablist" aria-label="Ajustes">
+        {tabs.map((item, indice) => (
           <button
             key={item.id}
+            ref={(el) => { botones.current[indice] = el; }}
+            id={tabId(item.id)}
             type="button"
             role="tab"
             aria-selected={tab === item.id}
+            aria-controls={panelId(item.id)}
+            tabIndex={tab === item.id ? 0 : -1}
             onClick={() => setTab(item.id)}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm transition-colors ${
+            onKeyDown={(event) => alPulsar(event, indice)}
+            className={`-mb-px min-h-12 border-b-2 px-3 py-3 text-sm transition-colors ${
               tab === item.id
                 ? 'border-primary font-medium text-primary-text'
                 : 'border-transparent text-label hover:text-body-text'
@@ -736,12 +615,20 @@ export function SettingsPanel() {
         ))}
       </div>
 
-      {tab === 'portal' ? <PortalTab /> : null}
-      {tab === 'smtp' ? <SmtpTab /> : null}
-      {tab === 'templates' ? <TemplatesTab /> : null}
-      {tab === 'ldap' ? <LdapTab /> : null}
-      {tab === 'backup' ? <BackupTab /> : null}
-      {tab === 'preferences' ? <PreferencesTab /> : null}
+      <div
+        role="tabpanel"
+        id={panelId(tab)}
+        aria-labelledby={tabId(tab)}
+        tabIndex={0}
+        className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        {tab === 'portal' ? <PortalTab /> : null}
+        {tab === 'smtp' ? <SmtpTab /> : null}
+        {tab === 'templates' ? <TemplatesTab /> : null}
+        {tab === 'ldap' ? <DirectoryTab /> : null}
+        {tab === 'backup' ? <BackupTab /> : null}
+        {tab === 'preferences' ? <PreferencesTab /> : null}
+      </div>
     </div>
   );
 }

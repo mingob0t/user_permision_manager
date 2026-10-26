@@ -3,6 +3,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Ajustes → Directorio (superadmin): configuración efectiva de OpenLDAP en solo lectura, con la variable `LDAP_*` de cada valor y si viene del entorno o es la predeterminada, estados de sin configurar e inválida y "Probar conexión" con mensajes propios; sin campos de contraseña ni mapeos de rol. Las pestañas de Ajustes se recorren con las flechas, Inicio y Fin y miden 48 px (DIS-023, DIS-034, 2026-10-26).
 - Conector tipo base de datos (`bd`, MySQL/MariaDB y PostgreSQL): otorgar, revocar y consultar con sentencias parametrizadas fijas (sin SQL libre; una sola sentencia, sin comentarios ni comillas), conexión a la IP validada con TLS siempre verificado, transacción explícita con `rollback`, límite de filas afectadas, errores del driver clasificados sin guardar su mensaje y guía de usuario de BD con permisos mínimos; variables `CONNECTOR_DB_TIMEOUT_SECONDS` y `CONNECTOR_DB_CA_FILE`; `psycopg2-binary` fijado en 2.9.13 (FNC-053, 2026-10-21).
 - Credenciales de conectores desde Vaultwarden en staging y producción (cuenta de servicio de solo lectura de una colección, descifrado en la app, TLS validado y falla cerrado), contraseña de bind LDAP opcional desde el mismo gestor con `LDAP_BIND_PASSWORD_REF`, revisión de `VAULTWARDEN_*` en `preflight.sh` e `install.sh` y procedimiento de alta y rotación en `docs/operacion/SECRETOS.md` (FNC-068, 2026-10-21).
 - Conectores (`/admin/connectors`, superadmin): plataformas con conector, configuración por referencia de credencial (sin contraseñas), prueba de conexión y borrado confirmado; bitácora de ejecuciones con filtros, detalle de intentos y reintento confirmado de las fallidas, que se refresca sola solo mientras hay ejecuciones en curso (DIS-022, 2026-10-21).
@@ -56,6 +57,7 @@
 - Resumen del inicio por rol `GET /home/summary`: el usuario recibe sus accesos y solicitudes por estado; el admin de área, además, pendientes por aprobar, accesos fallidos y totales de sus áreas; el superadmin, los globales. `GET /stats` no cambia (FNC-066, 2026-10-20).
 
 ### Retirado
+- Web: cliente heredado de `/auth-config` (`api.authConfig`, `saveAuthConfig`, `testAuthConfig` y el tipo `AuthConfig`), que enviaba contraseña y mapeos de rol que el servidor ya rechaza (DIS-023, 2026-10-26).
 - `PUT /platforms/<id>/users` y `PUT /users/<id>/platforms` (asignación directa de plataformas) responden `410 endpoint_retirado` con `use: POST /access-requests` y ya no escriben; `user_platforms` queda obsoleta, sin borrar ni migrar (P4: sus filas se descartan). Quien veía una plataforma solo por esa tabla ya no la ve (FNC-063) y debe solicitar acceso (FNC-065, 2026-10-21).
 
 ### Corregido

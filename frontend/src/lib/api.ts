@@ -7,7 +7,7 @@
  */
 
 import type {
-  Area, AreaInput, AppNotification, AuditEntry, AuthConfig, AuthContext,
+  Area, AreaInput, AppNotification, AuditEntry, AuthContext,
   EmailTemplate,
   DirectoryUser, InactiveUser, ManagedUser, Platform, PlatformInput, PlatformWarning,
   Session, SmtpConfig, Stats,
@@ -274,12 +274,4 @@ export const api = {
     }
     return data as { status: string; restored: string[] };
   },
-
-  authConfig: () => request<AuthConfig>('/auth-config'),
-  saveAuthConfig: (input: Partial<AuthConfig> & { ldap_pass?: string }) =>
-    request<{ status: string; config: AuthConfig }>(
-      '/auth-config', { method: 'PUT', body: JSON.stringify(input) }),
-  testAuthConfig: (input?: Partial<AuthConfig> & { ldap_pass?: string }) =>
-    request<{ status: string; message?: string }>(
-      '/auth-config/test', { method: 'POST', body: JSON.stringify(input ?? {}) }),
 };

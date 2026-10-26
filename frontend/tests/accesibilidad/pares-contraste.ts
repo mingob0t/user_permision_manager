@@ -13,6 +13,7 @@ import { ESTADOS as ESTADOS_ACCESO } from '@/components/access/access-status-bad
 import { ESTADOS_SOLICITUD } from '@/components/access/request-status-badge';
 import { ESTADOS_CREDENCIAL } from '@/components/connectors/connector-catalog';
 import { ESTADOS_EJECUCION, RESULTADOS_INTENTO } from '@/components/connectors/job-catalog';
+import { ESTADOS_DIRECTORIO } from '@/components/settings/directory-catalog';
 import { MIN_NO_TEXTO, MIN_TEXTO } from '../utils/wcag';
 
 export interface ParContraste {
@@ -136,6 +137,15 @@ export const PARES: ParContraste[] = [
     texto(`badge-intento-${resultado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
   ...Object.entries(ESTADOS_CREDENCIAL).map(([estado, { tono }]) =>
     texto(`badge-credencial-${estado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
+  // DIS-023: pestaña Directorio de Ajustes. Aviso de origen (`text-body-text` sobre `bg-primary/10`)
+  // fuera de `Card`, sobre el fondo de página; insignia de estado del directorio sobre `Card`. Valores,
+  // origen (`text-label`), avisos `success-text`/`error-text` en `Card`, pista, botón secundario y
+  // anillos de foco reutilizan pares ya medidos. DIS-034: las pestañas (`text-primary-text`/`text-label` sobre la página,
+  // indicador y anillo `primary`) reutilizan los pares de DIS-014.
+  { ...texto('body-text/primary-10-sobre-body-bg', '--color-body-text', '--color-primary', '--color-body-bg'),
+    alfaFondo: 0.1 },
+  ...Object.entries(ESTADOS_DIRECTORIO).map(([estado, { tono }]) =>
+    texto(`badge-directorio-${estado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },

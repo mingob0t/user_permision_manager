@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | ajustes |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
+| **Estatus** | En revisión |
 | **Creada** | 2026-10-20 |
 
 ## Contexto
@@ -20,3 +20,14 @@
 
 ## Impacto cruzado
 - Origen ← DIS-014
+
+## Resolución
+- Hecha junto con DIS-023 (rama `dis/DIS-023-ajustes-directorio`): `settings-panel.tsx` importa `destinoPorTecla`; pestañas con *roving tabindex*, ←/→/Inicio/Fin, `aria-controls`, `tabpanel` enfocable y `min-h-12`
+- Sin componente de pestañas común (queda para DIS-011). Decisión del orquestador (pendiente de validar en la prueba de concepto)
+- Verificación: prueba Vitest en `tests/components/settings/directory-tab.test.tsx`; visual no verificada
+
+## Bitácora
+| Fecha | Nota |
+|---|---|
+| 2026-10-20 | Creada como Propuesta (DIS-014) |
+| 2026-10-26 | Aprobada (modo autónomo) e implementada dentro de DIS-023. En revisión |
