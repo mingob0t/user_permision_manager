@@ -154,18 +154,6 @@ export interface AppNotification {
   timestamp: string;
 }
 
-export interface AuthConfig {
-  ldap_host: string | null;
-  ldap_port: number;
-  ldap_ssl: boolean;
-  ldap_base_dn: string | null;
-  ldap_user: string | null;
-  ldap_user_attr: string;
-  ldap_group_admin: string | null;
-  ldap_group_user: string | null;
-  ldap_role_mappings: string | null;
-}
-
 /** Campos editables de un área. */
 export interface AreaInput {
   name?: string;

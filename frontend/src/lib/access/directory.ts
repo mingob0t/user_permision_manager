@@ -1,8 +1,8 @@
 /**
  * Configuración del directorio en su forma de FNC-043 (`docs/contratos/
  * usuarios-directorio.md`). Solo lectura: la fuente son las variables `LDAP_*`.
- * Sustituye a `api.authConfig` / `saveAuthConfig` / `testAuthConfig`
- * (forma heredada) cuando DIS-023 migre la pestaña Directorio.
+ * La consume la pestaña Directorio de Ajustes (DIS-023), que retiró la forma
+ * heredada de NEXUS (`api.authConfig` / `saveAuthConfig` / `testAuthConfig`).
  */
 
 import { accessRequest } from './client';
