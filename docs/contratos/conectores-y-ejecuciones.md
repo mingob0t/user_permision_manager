@@ -2,12 +2,12 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.2 (2026-10-21) |
-| Proveedor | backend (FNC-051, FNC-061, FNC-062; base FNC-049, FNC-050) |
+| Versión | 1.4 (2026-10-26) |
+| Proveedor | backend (FNC-051, FNC-052, FNC-061, FNC-062; base FNC-049, FNC-050) |
 | Consumidores | web (FNC-069; pantallas DIS-022, DIS-018) |
 | Solicitudes | — |
 
-Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: el tipo `api` (FNC-051) ya tiene esquema de `params` (§ siguiente); `bd` (FNC-053) ya tiene el suyo; `ssh` (FNC-052) agregará el suyo como versión aditiva.
+Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: los tipos `api` (FNC-051), `ssh` (FNC-052) y `bd` (FNC-053) ya tienen esquema de `params` (§ siguientes).
 
 ## Endpoints
 
@@ -59,6 +59,23 @@ Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`.
 - Salida: solo HTTPS; el host resuelve a IP públicas y se conecta a la IP validada; sin redirecciones; TLS validado (CA del sistema o `CONNECTOR_HTTP_CA_FILE`).
 - Estados: 2xx éxito; `sin_cambios` (por defecto `[404, 410]` al revocar); 408, 425, 429, 500, 502, 503 y 504 transitorios; 3xx y el resto, permanentes. `consultar`: 2xx presente, 404 ausente.
 - Motivos nuevos en la bitácora (mensaje genérico; detalle solo `HTTP <estado>`): `configuracion_invalida`, `valor_no_valido` (cuenta o nivel vacíos, `.`/`..` o con segmento así; `{correo}` sin `@`), `destino_no_permitido`, `tls_no_valido`, `http_rechazado`, `http_transitorio`, `red_no_disponible`, `redireccion_no_permitida`.
+
+## `params` del tipo `ssh` (FNC-052)
+Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`.
+| Campo | Tipo | Obligatorio | Regla |
+|---|---|---|---|
+| `huellas` | lista de texto | Sí, salvo que el despliegue tenga `CONNECTOR_SSH_KNOWN_HOSTS_FILE` | 1–5 huellas `SHA256:<base64>` (`ssh-keygen -lf`) de la llave del host; varias para rotarla. Sin coincidencia → permanente `ssh_huella_no_coincide` (nunca se acepta una llave nueva) |
+| `auth` | object | No | `metodo`: `llave` (por defecto) o `contrasena` (solo si la plataforma no admite llave). Usuario y secreto salen de la credencial del gestor (llave privada sin frase de paso o contraseña) |
+| `otorgar`, `revocar` | object | Sí | `comando`: lista de 1–8 textos de letras, dígitos y `. _ / = : + -` (≤ 100), el primero una ruta absoluta sin `..`; `sin_cambios` (códigos de salida 1–255 que cuentan como «ya estaba así»); `transitorios` (códigos 1–255 que se reintentan; por defecto `[75]`). Un código no puede estar en dos listas |
+| `consultar` | object | No | `comando` y `transitorios` como arriba; `ausente` (códigos que significan «sin acceso»). Sin él, consultar da `consulta_no_disponible` |
+
+- Sin marcas: el comando es **fijo** y no lleva datos de la solicitud. Los datos viajan por la entrada estándar como **una línea JSON** `{"operacion": "otorgar", "correo": "...", "nivel": "...", "plataforma": "7"}` (ASCII, escapada con `json.dumps`).
+- Se recomienda en el servidor un comando forzado (`command="..."`, `restrict` en `authorized_keys`) que lea esa línea; el comando enviado queda entonces como información.
+- Valores del servidor no vacíos, sin caracteres de control, sin `.`/`..` ni segmentos así, y `{correo}` con `@`; si no → permanente `valor_no_valido` sin conectar.
+- Ejemplo: `{"huellas": ["SHA256:..."], "otorgar": {"comando": ["/usr/local/bin/acceso", "otorgar"], "sin_cambios": [3]}, "revocar": {"comando": ["/usr/local/bin/acceso", "revocar"], "sin_cambios": [4]}, "consultar": {"comando": ["/usr/local/bin/acceso", "consultar"], "ausente": [1]}}`.
+- Salida: el host resuelve a IP públicas y se conecta a la IP validada; sin agente, túneles, `ProxyJump` ni `ProxyCommand`; sin `ssh-rsa` (SHA-1) ni `ssh-dss`; la llave del host se verifica antes de enviar la credencial.
+- Códigos: `0` éxito (`presente` al consultar); `sin_cambios`/`ausente`; `transitorios` y cierre sin código → transitorios; el resto, permanentes. La salida remota nunca se guarda: el detalle es solo `salida <n>`.
+- Motivos nuevos en la bitácora (mensaje genérico): `ssh_huella_no_coincide`, `ssh_autenticacion_rechazada`, `ssh_comando_rechazado`, `ssh_comando_transitorio`, `ssh_salida_excesiva`; además se reutilizan `configuracion_invalida`, `valor_no_valido`, `destino_no_permitido`, `credencial_no_encontrada`, `red_no_disponible` y `tiempo_agotado`.
 
 ## `params` del tipo `bd` (FNC-053)
 Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`. Sin SQL libre: las sentencias son plantillas fijas con marcadores `%s` del driver; los valores van siempre como parámetros.
@@ -154,4 +171,5 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | 1 | 2026-10-20 | Aclaración (FNC-061): `DELETE` y `POST .../test` con cuerpo `{}` (convención de escrituras; sin JSON → `415`; cualquier campo → `400 campo_no_permitido`); `PUT` con campo fuera de la lista → `400 campo_no_permitido`; plataforma o configuración inexistente → `404`; cambiar `type` con accesos vigentes → `409 plataforma_con_accesos`; `test` deja `credential_status` en `ok` o `no_encontrada` |
 | 1.1 | 2026-10-21 | Aclaración (FNC-061, auditor-seguridad): `POST .../test` exige cuerpo `{}` (sin Content-Type JSON → `415`) y actualiza `credential_status`; error aditivo `409 conector_concurrente` en el `PUT` que crea |
 | 1.2 | 2026-10-21 | Aditivo (FNC-051): esquema de `params` del tipo `api` (`422 fields.params.<campo>`) y 8 motivos nuevos en la bitácora de ejecuciones (incluye `valor_no_valido`, auditoría) |
-| 1.3 | 2026-10-21 | Aditivo (FNC-053): esquema de `params` del tipo `bd` (`422 fields.params.<campo>`) y 4 motivos nuevos en la bitácora de ejecuciones |
+| 1.3 | 2026-10-21 | Aditivo (FNC-052): esquema de `params` del tipo `ssh` (`422 fields.params.<campo>`) y 5 motivos nuevos en la bitácora de ejecuciones |
+| 1.4 | 2026-10-26 | Aditivo (FNC-053): esquema de `params` del tipo `bd` (`422 fields.params.<campo>`) y 4 motivos nuevos en la bitácora de ejecuciones |

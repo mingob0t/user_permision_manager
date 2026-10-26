@@ -70,6 +70,12 @@ MOTIVO_BD_AUTENTICACION = 'bd_autenticacion_rechazada'
 MOTIVO_BD_RECHAZADA = 'bd_operacion_rechazada'
 MOTIVO_BD_TRANSITORIA = 'bd_operacion_transitoria'
 MOTIVO_BD_FILAS = 'bd_filas_excesivas'
+# Conector SSH (FNC-052).
+MOTIVO_SSH_HUELLA = 'ssh_huella_no_coincide'
+MOTIVO_SSH_AUTENTICACION = 'ssh_autenticacion_rechazada'
+MOTIVO_SSH_RECHAZADO = 'ssh_comando_rechazado'
+MOTIVO_SSH_TRANSITORIO = 'ssh_comando_transitorio'
+MOTIVO_SSH_SALIDA = 'ssh_salida_excesiva'
 
 MENSAJES = {
     MOTIVO_TIEMPO_AGOTADO: 'Tiempo de espera agotado.',
@@ -98,6 +104,11 @@ MENSAJES = {
     MOTIVO_BD_RECHAZADA: 'La base de datos rechazó la operación.',
     MOTIVO_BD_TRANSITORIA: 'La base de datos no pudo atender la operación por ahora.',
     MOTIVO_BD_FILAS: 'La sentencia afectó más filas de las permitidas y se deshizo.',
+    MOTIVO_SSH_HUELLA: 'La huella del servidor SSH no coincide con la registrada.',
+    MOTIVO_SSH_AUTENTICACION: 'El servidor SSH rechazó la credencial o la llave no es válida.',
+    MOTIVO_SSH_RECHAZADO: 'El comando remoto rechazó la operación.',
+    MOTIVO_SSH_TRANSITORIO: 'El comando remoto no pudo atender la operación por ahora.',
+    MOTIVO_SSH_SALIDA: 'El comando remoto devolvió más salida de la permitida.',
     # Motivos del escritor LDAP (`directory/errors.py`).
     MOTIVO_FUERA_DE_BASE: 'El grupo o la persona están fuera de la base autorizada.',
     MOTIVO_GRUPO_INEXISTENTE: 'El grupo no existe en el directorio.',
