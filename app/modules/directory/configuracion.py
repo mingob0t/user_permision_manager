@@ -7,6 +7,13 @@ no hay TLS, la app no arranca y el mensaje dice qué variable corregir.
 TLS es obligatorio: `ldaps://` o `ldap://` con StartTLS; no hay modo sin
 cifrar. El certificado del servidor se valida siempre (CA del sistema o la de
 `LDAP_CA_CERT_FILE`).
+
+Contraseña de bind (FNC-068): en desarrollo, `LDAP_BIND_PASSWORD` (`.env`).
+Fuera de desarrollo, `LDAP_BIND_PASSWORD` (ADR-005 C, inyección en el
+`EnvironmentFile`) **o** `LDAP_BIND_PASSWORD_REF`, el nombre del ítem de
+Vaultwarden (ADR-005 A), nunca las dos. Con la referencia se exige
+`VAULTWARDEN_*` válida al arrancar y la contraseña se pide al conectar
+(`ClienteDirectorio`), con la caché de las credenciales.
 """
 import ipaddress
 import os
@@ -25,6 +32,7 @@ VAR_URL = 'LDAP_URL'
 VAR_CA_CERT_FILE = 'LDAP_CA_CERT_FILE'
 VAR_BIND_DN = 'LDAP_BIND_DN'
 VAR_BIND_PASSWORD = 'LDAP_BIND_PASSWORD'
+VAR_BIND_PASSWORD_REF = 'LDAP_BIND_PASSWORD_REF'
 VAR_USUARIOS_BASE_DN = 'LDAP_USERS_BASE_DN'
 VAR_GRUPOS_BASE_DN = 'LDAP_GROUPS_BASE_DN'
 VAR_ATRIBUTO_USUARIO = 'LDAP_USER_ATTR'
@@ -91,6 +99,9 @@ class ConfiguracionDirectorio:
     miembro_relleno: str | None = None
     # Plantilla del DN de grupo de plataforma (FNC-046); None = no se deriva.
     plantilla_grupo: str | None = None
+    # Ítem de Vaultwarden con la contraseña de bind (FNC-068); None = se usa
+    # `bind_password`.
+    bind_password_ref: str | None = None
 
 
 def _leer(entorno, nombre):
@@ -243,12 +254,41 @@ def _ca_cert_file(entorno):
     return ruta
 
 
+def _bind(entorno):
+    """`(contraseña, referencia)` de la cuenta de servicio (FNC-068)."""
+    from app.modules.connectors.tipos import LARGO_REFERENCIA
+    from app.modules.connectors.validacion import PATRON_REFERENCIA
+    from app.modules.secretos import configuracion as secretos
+    referencia = _leer(entorno, VAR_BIND_PASSWORD_REF)
+    if not referencia:
+        return _requerida(entorno, VAR_BIND_PASSWORD), None
+    if _leer(entorno, VAR_BIND_PASSWORD):
+        raise ErrorConfiguracionDirectorio(
+            f'Define {VAR_BIND_PASSWORD} o {VAR_BIND_PASSWORD_REF}, no ambas.')
+    if secretos.es_desarrollo(entorno):
+        raise ErrorConfiguracionDirectorio(
+            f'En desarrollo usa {VAR_BIND_PASSWORD}; {VAR_BIND_PASSWORD_REF} '
+            'es solo para staging y producción.')
+    if len(referencia) > LARGO_REFERENCIA \
+            or not PATRON_REFERENCIA.fullmatch(referencia):
+        raise ErrorConfiguracionDirectorio(
+            f'{VAR_BIND_PASSWORD_REF} debe ser el nombre del ítem de '
+            'Vaultwarden (letras, dígitos, ".", "_", "-" y "/").')
+    try:
+        secretos.cargar_configuracion(entorno)
+    except secretos.ErrorConfiguracionSecretos as exc:
+        raise ErrorConfiguracionDirectorio(
+            f'{VAR_BIND_PASSWORD_REF} exige Vaultwarden: {exc}') from None
+    return '', referencia
+
+
 def cargar_configuracion(entorno=None):
     """Lee y valida la configuración; lanza `ErrorConfiguracionDirectorio`."""
     entorno = os.environ if entorno is None else entorno
     url = _requerida(entorno, VAR_URL)
     host, puerto, usa_ldaps = _validar_url(url)
     usuarios_base_dn = _dn(entorno, VAR_USUARIOS_BASE_DN)
+    bind_password, bind_password_ref = _bind(entorno)
     return ConfiguracionDirectorio(
         url=url,
         host=host,
@@ -256,7 +296,8 @@ def cargar_configuracion(entorno=None):
         usa_ldaps=usa_ldaps,
         ca_cert_file=_ca_cert_file(entorno),
         bind_dn=_dn(entorno, VAR_BIND_DN),
-        bind_password=_requerida(entorno, VAR_BIND_PASSWORD),
+        bind_password=bind_password,
+        bind_password_ref=bind_password_ref,
         usuarios_base_dn=usuarios_base_dn,
         grupos_base_dn=_dn(entorno, VAR_GRUPOS_BASE_DN),
         atributo_usuario=_nombre_atributo(

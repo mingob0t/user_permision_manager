@@ -66,7 +66,7 @@ def test_la_representacion_nunca_muestra_el_secreto():
     assert SECRETO_FICTICIO not in f'{credencial!r} {credencial}'
 
 
-def test_vaultwarden_es_un_stub_no_configurado_hasta_fnc_068():
+def test_vaultwarden_sin_configuracion_falla_cerrado():
     with pytest.raises(GestorNoConfigurado):
         ProveedorSecretosVaultwarden().obtener(REFERENCIA)
 

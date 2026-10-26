@@ -24,7 +24,9 @@ from app.modules.provisioning.tipos import (LARGO_ERROR,
 
 # Variables secretas cuyo valor nunca debe quedar en la bitácora.
 VARIABLES_SECRETAS = ('LDAP_BIND_PASSWORD', 'REDIS_PASS', 'DB_PASS',
-                      'SMTP_PASSWORD', 'SECRET_KEY')
+                      'SMTP_PASSWORD', 'SECRET_KEY',
+                      # Credencial de arranque de Vaultwarden (FNC-068/108).
+                      'VAULTWARDEN_CLIENT_SECRET', 'VAULTWARDEN_MASTER_PASSWORD')
 # Un valor más corto no se busca (reemplazaría letras sueltas).
 LARGO_MINIMO_SECRETO = 4
 SEPARADOR_DETALLE = ': '

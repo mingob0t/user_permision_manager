@@ -76,6 +76,11 @@ def create_app(config_overrides=None):
     from app.modules.connectors.configuracion import (
         validar_al_arrancar as validar_conectores)
     validar_conectores()
+    # Fuera de dev, `VAULTWARDEN_*` incompleta o insegura detiene el arranque
+    # (FNC-068); no se conecta a Vaultwarden al arrancar.
+    from app.modules.secretos.configuracion import (
+        validar_al_arrancar as validar_secretos)
+    validar_secretos()
 
 
 

@@ -17,7 +17,7 @@ dotenv.load_dotenv = lambda *args, **kwargs: False
 
 # Variables que apuntan a servicios externos: se quitan del entorno heredado.
 PREFIJOS_EXTERNOS = ('DB_', 'REDIS_', 'SMTP_', 'AUTHELIA_', 'LDAP_', 'NOTIFY_',
-                     'DEBUG_', 'CONNECTOR_')
+                     'DEBUG_', 'CONNECTOR_', 'VAULTWARDEN_')
 VARIABLES_EXTERNAS = ('TRUSTED_PROXIES', 'FRONTEND_URL', 'BASE_URL',
                       'ENABLE_NOTIFICATIONS', 'APP_ENV',
                       'LOGIN_LOCAL_TODAS_LAS_CUENTAS')

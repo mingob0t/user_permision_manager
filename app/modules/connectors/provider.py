@@ -131,6 +131,11 @@ class ProveedorConector(Provisioner):
             logger.warning('Conector: referencia ambigua en la plataforma %s.',
                            configuracion.platform_id)
             raise _Fallo(permanente(MOTIVO_CREDENCIAL_NO_ENCONTRADA))
+        if credenciales.referencia_reservada(referencia):
+            # La del bind LDAP nunca va a un conector (B3 de FNC-068).
+            logger.warning('Conector: referencia reservada en la plataforma %s.',
+                           configuracion.platform_id)
+            raise _Fallo(permanente(MOTIVO_CREDENCIAL_NO_ENCONTRADA))
         try:
             return credenciales.resolver_credencial(configuracion.credential_ref)
         except ErrorDeCredencial as exc:

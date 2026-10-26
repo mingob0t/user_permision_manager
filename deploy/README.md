@@ -252,6 +252,13 @@ distinto del previsto.
 
 `ENABLE_NOTIFICATIONS=false` corta todo el correo, al margen de lo anterior.
 
+## Secretos de staging y producción (Vaultwarden, FNC-068)
+
+- `preflight.sh` e `install.sh` cargan `deploy/secretos.sh` (`revisar_vaultwarden`): fuera de `APP_ENV=development` comprueban que cada `VAULTWARDEN_*` obligatoria tenga valor (nunca lo imprimen), que `VAULTWARDEN_URL` sea `https://` con nombre de host y que el bind LDAP use **una** fuente (`LDAP_BIND_PASSWORD_REF` o `LDAP_BIND_PASSWORD`). Con un `FALTA`, `install.sh` se detiene.
+- Sin ninguna `VAULTWARDEN_*`: solo `AVISO` (los conectores fallan cerrado).
+- Las variables las pone una persona en `<prefijo>/.env` (600). Procedimiento completo, alta de ítems y rotación: [`docs/operacion/SECRETOS.md`](../docs/operacion/SECRETOS.md).
+- Prueba: `pytest tests/deploy/test_secretos_sh.py` (`.env` sintéticos).
+
 ## Seguridad
 
 Los puertos de ambos servicios deben escuchar **solo en loopback**. El backend
