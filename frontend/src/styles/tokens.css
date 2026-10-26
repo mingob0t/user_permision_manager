@@ -110,6 +110,9 @@ table.dataTable tbody tr {
      su texto, el relleno es un tono más oscuro del mismo color. */
   --color-primary-solid: var(--color-primary);
   --color-on-primary: 255 255 255;
+  /* DIS-004: relleno de peligro con texto encima (botón `danger`) y su texto. */
+  --color-error-solid: 220 38 38;      /* Red-600: blanco 4.83:1 (Red-500 daba 3.76) */
+  --color-on-error: 255 255 255;
 
 
   /* ─────────────────────────────────────────────
@@ -150,8 +153,8 @@ table.dataTable tbody tr {
   /* ─────────────────────────────────────────────
      BOTONES
   ───────────────────────────────────────────── */
-  --color-button-bg: var(--color-primary);
-  --color-button-text: 255 255 255;
+  --color-button-bg: var(--color-primary-solid);   /* DIS-004: como la pestaña activa */
+  --color-button-text: var(--color-on-primary);
   --color-button-disabled-bg: 203 213 225;
   --color-button-disabled-text: 148 163 184;
 
@@ -237,6 +240,9 @@ table.dataTable tbody tr {
   :root:not(.light):not([class*="theme-"]) {
     --color-body-bg: #030712;               /* Gray-950: profundidad real */
     --color-body-text: #e2e8f0;             /* Slate-200: neutro */
+    /* DIS-004: botón de peligro (mismo valor que el tema claro). */
+    --color-error-solid: 220 38 38;
+    --color-on-error: 255 255 255;
 
     --color-header-bg: #1e3a8a;
     --color-header-text: #e2e8f0;
@@ -319,6 +325,9 @@ table.dataTable tbody tr {
 html.dark {
   --color-body-bg: #0f172a;            /* Slate-900: profundidad real */
   --color-body-text: #f1f5f9;          /* Slate-100: claridad suave */
+  /* DIS-004: botón de peligro (mismo valor que el tema claro). */
+  --color-error-solid: 220 38 38;
+  --color-on-error: 255 255 255;
 
   /* BADGE ADAPTATIVO — MODO OSCURO (Brillo Neón) */
   --badge-primary-bg: 37 99 235 / 0.15;  --badge-primary-text: 96 165 250;
@@ -406,6 +415,9 @@ html.theme-emerald-light {
   --color-accent-peach-text: 180 83 9;  /* Amber-700 */
   --color-primary-solid: 4 120 87;      /* Emerald-700: blanco 5.48:1 */
   --color-on-primary: 255 255 255;
+  /* DIS-004: relleno de peligro con texto encima (botón `danger`) y su texto. */
+  --color-error-solid: 220 38 38;      /* Red-600: blanco 4.83:1 (Red-500 daba 3.76) */
+  --color-on-error: 255 255 255;
 
   --color-body-bg: #fafaf9;             /* Stone-50 */
   --color-body-text: #1c1917;           /* Stone-900 */
@@ -423,8 +435,8 @@ html.theme-emerald-light {
   --color-audit-body: 245 245 244;
   --color-audit-body-alpha: 0.6;
 
-  --color-button-bg: var(--color-primary);
-  --color-button-text: 255 255 255;
+  --color-button-bg: var(--color-primary-solid);   /* DIS-004: como la pestaña activa */
+  --color-button-text: var(--color-on-primary);
   --color-button-disabled-bg: 214 211 209;
   --color-button-disabled-text: 168 162 158;
 
@@ -488,6 +500,9 @@ html.theme-obsidian-dark {
   --color-info-text: 147 197 253;     /* DIS-002: Blue-300 */
   --color-primary-solid: var(--color-primary);
   --color-on-primary: 9 9 11;           /* Zinc-950 sobre Zinc-400 */
+  /* DIS-004: el tema conserva texto oscuro sobre relleno claro (5.29:1). */
+  --color-error-solid: var(--color-error);
+  --color-on-error: 9 9 11;
 
   --color-body-bg: #09090b;             /* Zinc-950 */
   --color-body-text: #e4e4e7;           /* Zinc-200 */
@@ -515,8 +530,8 @@ html.theme-obsidian-dark {
   --color-audit-body: 24 24 27;
   --color-audit-body-alpha: 0.4;
 
-  --color-button-bg: var(--color-primary);
-  --color-button-text: 9 9 11;
+  --color-button-bg: var(--color-primary-solid);   /* DIS-004: como la pestaña activa */
+  --color-button-text: var(--color-on-primary);
   --color-button-disabled-bg: 39 39 42;
   --color-button-disabled-text: 82 82 91;
 
@@ -575,6 +590,9 @@ html.theme-rose-light {
   --color-accent-peach-text: 194 65 12; /* Orange-700 */
   --color-primary-solid: 225 29 72;     /* Rose-600: blanco 4.70:1 */
   --color-on-primary: 255 255 255;
+  /* DIS-004: relleno de peligro con texto encima (botón `danger`) y su texto. */
+  --color-error-solid: 220 38 38;      /* Red-600: blanco 4.83:1 (Red-500 daba 3.76) */
+  --color-on-error: 255 255 255;
 
   --color-body-bg: #fff1f2;             /* Rose-50 */
   --color-body-text: #1c1917;           /* Stone-900 */
@@ -592,8 +610,8 @@ html.theme-rose-light {
   --color-audit-body: 255 241 242;
   --color-audit-body-alpha: 0.6;
 
-  --color-button-bg: var(--color-primary);
-  --color-button-text: 255 255 255;
+  --color-button-bg: var(--color-primary-solid);   /* DIS-004: como la pestaña activa */
+  --color-button-text: var(--color-on-primary);
   --color-button-disabled-bg: 214 211 209;
   --color-button-disabled-text: 168 162 158;
 
@@ -657,6 +675,9 @@ html.theme-violet-dark {
   --color-info-text: 147 197 253;     /* DIS-002: Blue-300 */
   --color-primary-solid: 124 58 237;    /* Violet-600: blanco 5.70:1 */
   --color-on-primary: 255 255 255;
+  /* DIS-004: relleno de peligro con texto encima (botón `danger`) y su texto. */
+  --color-error-solid: 220 38 38;      /* Red-600: blanco 4.83:1 (Red-500 daba 3.76) */
+  --color-on-error: 255 255 255;
 
   --color-body-bg: #0c0a1d;             /* Custom deep violet */
   --color-body-text: #e2e0f0;           /* Lavender light */
@@ -684,8 +705,8 @@ html.theme-violet-dark {
   --color-audit-body: 17 12 46;
   --color-audit-body-alpha: 0.4;
 
-  --color-button-bg: var(--color-primary);
-  --color-button-text: 255 255 255;
+  --color-button-bg: var(--color-primary-solid);   /* DIS-004: como la pestaña activa */
+  --color-button-text: var(--color-on-primary);
   --color-button-disabled-bg: 30 24 64;
   --color-button-disabled-text: 76 59 130;
 

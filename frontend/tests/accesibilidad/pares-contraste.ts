@@ -146,6 +146,12 @@ export const PARES: ParContraste[] = [
     alfaFondo: 0.1 },
   ...Object.entries(ESTADOS_DIRECTORIO).map(([estado, { tono }]) =>
     texto(`badge-directorio-${estado}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
+  // DIS-004: botón `danger` de `form.tsx` (antes blanco sobre `--color-error`: 3,76:1) y hover de
+  // `.nexus-btn-secondary` (`--color-primary-text` sobre `primary/5`) en `Card`/modal y en la página.
+  texto('on-error/error-solid', '--color-on-error', '--color-error-solid'),
+  tinte('btn-secondary-hover/panel', '--color-primary-text', '--color-primary', 0.05),
+  { ...texto('btn-secondary-hover/body-bg', '--color-primary-text', '--color-primary', '--color-body-bg'),
+    alfaFondo: 0.05 },
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },
