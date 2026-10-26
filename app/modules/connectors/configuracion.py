@@ -8,6 +8,10 @@
   conector corte antes que RQ.
 - `CONNECTOR_CREDENTIAL_CACHE_SECONDS`: vida de la caché en memoria de las
   credenciales (ADR-005); 0 = sin caché.
+- `CONNECTOR_SSH_TIMEOUT_SECONDS`, `CONNECTOR_SSH_MAX_OUTPUT_BYTES` y
+  `CONNECTOR_SSH_KNOWN_HOSTS_FILE`: tiempo de ejecución del comando, límite de
+  la salida remota que se lee y `known_hosts` del despliegue del conector
+  `ssh` (FNC-052); el tiempo también es menor que el del intento.
 - `validar_al_arrancar()` corre en `create_app()`.
 """
 import os
@@ -21,11 +25,16 @@ from app.modules.provisioning.configuracion import \
 VAR_HOSTS = 'CONNECTOR_ALLOWED_HOSTS'
 VAR_TIEMPO = 'CONNECTOR_TIMEOUT_SECONDS'
 VAR_CACHE = 'CONNECTOR_CREDENTIAL_CACHE_SECONDS'
+VAR_SSH_TIEMPO = 'CONNECTOR_SSH_TIMEOUT_SECONDS'
+VAR_SSH_SALIDA = 'CONNECTOR_SSH_MAX_OUTPUT_BYTES'
+VAR_SSH_KNOWN_HOSTS = 'CONNECTOR_SSH_KNOWN_HOSTS_FILE'
 SEPARADOR_HOSTS = ','
 
 # (por defecto, mínimo, máximo) de cada entero.
 TIEMPO_ESPERA_SEGUNDOS = (10, 1, 120)
 CACHE_SEGUNDOS = (60, 0, 300)
+SSH_TIEMPO_SEGUNDOS = (30, 1, 300)
+SSH_SALIDA_BYTES = (4096, 1, 65536)
 
 # Nombre de host RFC 1123: etiquetas de 1 a 63 de letras, dígitos y "-".
 _ETIQUETA = r'(?!-)[a-z0-9-]{1,63}(?<!-)'
@@ -42,6 +51,9 @@ class ConfiguracionConectores:
     hosts_permitidos: frozenset
     tiempo_espera: int
     segundos_cache: int
+    ssh_tiempo: int = SSH_TIEMPO_SEGUNDOS[0]
+    ssh_maximo_salida: int = SSH_SALIDA_BYTES[0]
+    ssh_known_hosts: str = ''
 
 
 def normalizar_host(host):
@@ -98,9 +110,17 @@ def cargar_configuracion(entorno=None):
         raise ErrorConfiguracionConectores(
             f'{VAR_TIEMPO} debe ser menor que '
             f'PROVISIONING_ATTEMPT_TIMEOUT_SECONDS ({intento}).')
+    ssh_tiempo = _entero(entorno, VAR_SSH_TIEMPO, SSH_TIEMPO_SEGUNDOS)
+    if ssh_tiempo >= intento:
+        raise ErrorConfiguracionConectores(
+            f'{VAR_SSH_TIEMPO} debe ser menor que '
+            f'PROVISIONING_ATTEMPT_TIMEOUT_SECONDS ({intento}).')
     return ConfiguracionConectores(
         hosts_permitidos=_hosts(entorno), tiempo_espera=tiempo,
-        segundos_cache=_entero(entorno, VAR_CACHE, CACHE_SEGUNDOS))
+        segundos_cache=_entero(entorno, VAR_CACHE, CACHE_SEGUNDOS),
+        ssh_tiempo=ssh_tiempo,
+        ssh_maximo_salida=_entero(entorno, VAR_SSH_SALIDA, SSH_SALIDA_BYTES),
+        ssh_known_hosts=_leer(entorno, VAR_SSH_KNOWN_HOSTS))
 
 
 def validar_al_arrancar(entorno=None):

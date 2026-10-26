@@ -126,7 +126,7 @@ def test_fuera_de_dev_sin_vaultwarden_es_permanente(conector_noop,
 
 @pytest.mark.parametrize('cambio, mensaje', [
     ({'active': False}, 'El conector de la plataforma no está disponible.'),
-    ({'type': 'ssh'}, 'El conector de la plataforma no está disponible.'),
+    ({'type': 'bd'}, 'El conector de la plataforma no está disponible.'),
     ({'host': 'ajeno.pruebas.local'},
      'El host del conector no está autorizado.'),
 ])
