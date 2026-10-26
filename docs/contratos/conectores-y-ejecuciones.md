@@ -2,12 +2,12 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.3 (2026-10-21) |
+| Versión | 1.4 (2026-10-26) |
 | Proveedor | backend (FNC-051, FNC-052, FNC-061, FNC-062; base FNC-049, FNC-050) |
 | Consumidores | web (FNC-069; pantallas DIS-022, DIS-018) |
 | Solicitudes | — |
 
-Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: los tipos `api` (FNC-051) y `ssh` (FNC-052) ya tienen esquema de `params` (§ siguientes); `bd` (FNC-053) espera y agregará el suyo como versión aditiva.
+Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: los tipos `api` (FNC-051), `ssh` (FNC-052) y `bd` (FNC-053) ya tienen esquema de `params` (§ siguientes).
 
 ## Endpoints
 
@@ -76,6 +76,22 @@ Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`.
 - Salida: el host resuelve a IP públicas y se conecta a la IP validada; sin agente, túneles, `ProxyJump` ni `ProxyCommand`; sin `ssh-rsa` (SHA-1) ni `ssh-dss`; la llave del host se verifica antes de enviar la credencial.
 - Códigos: `0` éxito (`presente` al consultar); `sin_cambios`/`ausente`; `transitorios` y cierre sin código → transitorios; el resto, permanentes. La salida remota nunca se guarda: el detalle es solo `salida <n>`.
 - Motivos nuevos en la bitácora (mensaje genérico): `ssh_huella_no_coincide`, `ssh_autenticacion_rechazada`, `ssh_comando_rechazado`, `ssh_comando_transitorio`, `ssh_salida_excesiva`; además se reutilizan `configuracion_invalida`, `valor_no_valido`, `destino_no_permitido`, `credencial_no_encontrada`, `red_no_disponible` y `tiempo_agotado`.
+
+## `params` del tipo `bd` (FNC-053)
+Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`. Sin SQL libre: las sentencias son plantillas fijas con marcadores `%s` del driver; los valores van siempre como parámetros.
+| Campo | Tipo | Obligatorio | Regla |
+|---|---|---|---|
+| `motor` | string | Sí | `mysql` (MySQL y MariaDB) o `postgresql` |
+| `base_datos` | string | Sí | Letras, dígitos, `_` y `-`; ≤ 64 |
+| `otorgar`, `revocar` | object | Sí | `sentencia` (texto de una línea ≤ 500; `INSERT` o `UPDATE` al otorgar, `DELETE` o `UPDATE` al revocar; `UPDATE` y `DELETE` con `WHERE`), `parametros` (lista ≤ 10 de marcas, una por cada `%s`), `max_filas` (entero 1–10, por defecto 1: más filas afectadas se deshacen) |
+| `consultar` | object | No | Igual, con `SELECT` y sin `max_filas`; sin él, consultar da `consulta_no_disponible` (permanente) |
+
+- Marcas permitidas (datos del servidor): `correo`, `nivel`, `plataforma`; el valor viaja como parámetro del driver.
+- La sentencia no puede tener `;`, comentarios (`--`, `#`, `/* */`), comillas, `\`, `$`, `?`, otro `%` que `%s`, ni palabras de definición, permisos, archivos o espera (`DROP`, `GRANT`, `OUTFILE`, `SLEEP`, `COPY`…).
+- Ejemplo: `{"motor": "mysql", "base_datos": "erp", "otorgar": {"sentencia": "INSERT INTO usuarios (email, rol) VALUES (%s, %s) ON DUPLICATE KEY UPDATE rol = VALUES(rol)", "parametros": ["correo", "nivel"], "max_filas": 2}, "revocar": {"sentencia": "DELETE FROM usuarios WHERE email = %s", "parametros": ["correo"]}, "consultar": {"sentencia": "SELECT 1 FROM usuarios WHERE email = %s", "parametros": ["correo"]}}`.
+- Salida: el host (siempre el de `host`, nunca de `params`) resuelve a IP públicas y se conecta a la IP validada; TLS siempre verificado (certificado y nombre del host; CA del sistema o `CONNECTOR_DB_CA_FILE`); transacción explícita con `rollback` ante error; tiempos `CONNECTOR_DB_TIMEOUT_SECONDS`.
+- Resultado: filas afectadas > 0 éxito; 0 `sin_cambios`; más de `max_filas` → permanente `bd_filas_excesivas` (se deshace). `consultar`: fila presente / ausente, sin confirmar.
+- Motivos nuevos en la bitácora (mensaje genérico; detalle solo un código, `MySQL <n>` o `SQLSTATE <xxxxx>`, nunca el texto del driver): `bd_autenticacion_rechazada`, `bd_operacion_rechazada`, `bd_operacion_transitoria`, `bd_filas_excesivas`; además reutiliza `configuracion_invalida`, `valor_no_valido`, `destino_no_permitido`, `tls_no_valido`, `red_no_disponible` y `credencial_no_encontrada` (la credencial debe traer usuario y secreto).
 
 ## `DELETE /platforms/<id>/connector`
 - `409 plataforma_con_accesos` si hay accesos vigentes. Respuesta `{"status": "success"}`. Auditoría `conector_eliminado`.
@@ -156,3 +172,4 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | 1.1 | 2026-10-21 | Aclaración (FNC-061, auditor-seguridad): `POST .../test` exige cuerpo `{}` (sin Content-Type JSON → `415`) y actualiza `credential_status`; error aditivo `409 conector_concurrente` en el `PUT` que crea |
 | 1.2 | 2026-10-21 | Aditivo (FNC-051): esquema de `params` del tipo `api` (`422 fields.params.<campo>`) y 8 motivos nuevos en la bitácora de ejecuciones (incluye `valor_no_valido`, auditoría) |
 | 1.3 | 2026-10-21 | Aditivo (FNC-052): esquema de `params` del tipo `ssh` (`422 fields.params.<campo>`) y 5 motivos nuevos en la bitácora de ejecuciones |
+| 1.4 | 2026-10-26 | Aditivo (FNC-053): esquema de `params` del tipo `bd` (`422 fields.params.<campo>`) y 4 motivos nuevos en la bitácora de ejecuciones |

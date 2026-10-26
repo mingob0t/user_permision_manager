@@ -65,6 +65,11 @@ MOTIVO_HTTP_RECHAZADO = 'http_rechazado'
 MOTIVO_HTTP_TRANSITORIO = 'http_transitorio'
 MOTIVO_RED = 'red_no_disponible'
 MOTIVO_REDIRECCION = 'redireccion_no_permitida'
+# Conector BD (FNC-053).
+MOTIVO_BD_AUTENTICACION = 'bd_autenticacion_rechazada'
+MOTIVO_BD_RECHAZADA = 'bd_operacion_rechazada'
+MOTIVO_BD_TRANSITORIA = 'bd_operacion_transitoria'
+MOTIVO_BD_FILAS = 'bd_filas_excesivas'
 # Conector SSH (FNC-052).
 MOTIVO_SSH_HUELLA = 'ssh_huella_no_coincide'
 MOTIVO_SSH_AUTENTICACION = 'ssh_autenticacion_rechazada'
@@ -95,6 +100,10 @@ MENSAJES = {
     MOTIVO_HTTP_TRANSITORIO: 'La plataforma no pudo atender la operación por ahora.',
     MOTIVO_RED: 'No se pudo conectar con la plataforma.',
     MOTIVO_REDIRECCION: 'La plataforma respondió con una redirección, que no se sigue.',
+    MOTIVO_BD_AUTENTICACION: 'La base de datos rechazó la credencial o sus permisos.',
+    MOTIVO_BD_RECHAZADA: 'La base de datos rechazó la operación.',
+    MOTIVO_BD_TRANSITORIA: 'La base de datos no pudo atender la operación por ahora.',
+    MOTIVO_BD_FILAS: 'La sentencia afectó más filas de las permitidas y se deshizo.',
     MOTIVO_SSH_HUELLA: 'La huella del servidor SSH no coincide con la registrada.',
     MOTIVO_SSH_AUTENTICACION: 'El servidor SSH rechazó la credencial o la llave no es válida.',
     MOTIVO_SSH_RECHAZADO: 'El comando remoto rechazó la operación.',

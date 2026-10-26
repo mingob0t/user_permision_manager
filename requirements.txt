@@ -6,7 +6,7 @@ PyMySQL==1.1.0
 cryptography
 ldap3
 Flask-Mail
-psycopg2-binary
+psycopg2-binary==2.9.13
 Flask-Login==0.6.3
 pexpect
 openpyxl
