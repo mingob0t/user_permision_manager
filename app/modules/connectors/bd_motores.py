@@ -116,6 +116,14 @@ class MotorMysql(Motor):
             connect_timeout=p.tiempo, read_timeout=p.tiempo,
             write_timeout=p.tiempo, defer_connect=True)
         conexion.connect(enchufe)
+        if not conexion._secure:
+            # PyMySQL solo activa TLS si el servidor lo anuncia; si no, sigue
+            # sin cifrar y sin error: aquí se exige (SEC-CON-05).
+            try:
+                conexion.close()
+            except Exception:  # noqa: BLE001 - se aborta de todos modos
+                pass
+            raise pymysql.err.OperationalError(MYSQL_TLS_CODIGO, '')
         return conexion
 
     def clasificar(self, exc):

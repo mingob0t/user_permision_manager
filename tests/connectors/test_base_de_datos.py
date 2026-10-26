@@ -574,6 +574,7 @@ def test_mysql_conecta_a_la_ip_y_exige_tls_verificado(monkeypatch):
 
         def connect(self, enchufe):
             capturado['enchufe'] = enchufe
+            self._secure = True
 
     def crear(direccion, tiempo):
         capturado['direccion'] = (direccion, tiempo)
@@ -596,6 +597,61 @@ def test_mysql_conecta_a_la_ip_y_exige_tls_verificado(monkeypatch):
     assert kwargs['password'] == SECRETO.encode()
     assert kwargs['defer_connect'] is True
     assert capturado['enchufe'] is not None
+
+
+def _servidor_sin_tls(monkeypatch, cifrada):
+    """Driver cuyo servidor no anuncia TLS (`_secure` queda en `False`)."""
+    estado = {'cerrada': False, 'operaciones': 0}
+
+    class EnchufeFalso:
+        def settimeout(self, t):
+            pass
+
+    class ConexionFalsa:
+        def __init__(self, **kwargs):
+            self._secure = False
+
+        def connect(self, enchufe):
+            self._secure = cifrada
+
+        def close(self):
+            estado['cerrada'] = True
+
+        def cursor(self):
+            estado['operaciones'] += 1
+
+    monkeypatch.setattr(bd_motores.socket, 'create_connection',
+                        lambda *_a: EnchufeFalso())
+    monkeypatch.setattr(bd_motores.pymysql.connections, 'Connection',
+                        ConexionFalsa)
+    return estado
+
+
+def test_mysql_servidor_que_no_anuncia_tls_se_aborta(monkeypatch):
+    # PyMySQL no falla si el servidor no ofrece TLS: seguiría sin cifrar.
+    estado = _servidor_sin_tls(monkeypatch, cifrada=False)
+    with pytest.raises(pymysql.err.OperationalError) as info:
+        MOTORES['mysql'].conectar(_parametros())
+    clase = MOTORES['mysql'].clasificar(info.value)
+    assert (clase.transitorio, clase.motivo) == (False, 'tls_no_valido')
+    assert estado['cerrada'] is True
+
+
+def test_conector_no_opera_si_el_servidor_no_ofrece_tls(monkeypatch):
+    estado = _servidor_sin_tls(monkeypatch, cifrada=False)
+    destino = Destino(host=HOST, puerto=3306,
+                      params=MappingProxyType(params()))
+    c = ConectorBd(destino, Credencial(SECRETO, USUARIO),
+                   getaddrinfo=dns(PUBLICA))
+    resultado = c.otorgar(solicitud())
+    assert resultado.resultado == RESULTADO_ERROR_PERMANENTE
+    assert resultado.motivo == 'tls_no_valido'
+    assert estado['operaciones'] == 0
+
+
+def test_mysql_conexion_cifrada_se_entrega(monkeypatch):
+    _servidor_sin_tls(monkeypatch, cifrada=True)
+    assert MOTORES['mysql'].conectar(_parametros()) is not None
 
 
 def test_mysql_sin_red_a_la_ip_es_error_de_conexion(monkeypatch):

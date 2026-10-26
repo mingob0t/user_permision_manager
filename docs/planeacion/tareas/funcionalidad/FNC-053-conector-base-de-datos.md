@@ -78,11 +78,15 @@
 - Otra IP solo si falla la red antes de enviar (`ErrorConexion`); después no se reintenta
 - Se reutilizan `_valores_seguros` y `_con_control` de `api_http.py` importándolos (sin tocar FNC-051); moverlos a un módulo común: FNC-115
 
+## Correcciones de la auditoría de seguridad (aprobada con 1 hallazgo medio)
+- Media: PyMySQL activa TLS solo si el servidor lo anuncia; si no, sigue sin cifrar y sin error. Ahora `MotorMysql.conectar` comprueba `conexion._secure` tras `connect` y, si no está cifrada, cierra y aborta como `tls_no_valido` (permanente) sin operar. Regresión: 2 pruebas fallaron antes (`test_mysql_servidor_que_no_anuncia_tls_se_aborta`, `test_conector_no_opera_si_el_servidor_no_ofrece_tls`); `_secure` es atributo interno del driver (versión fijada 1.1.0): revisar al actualizar PyMySQL. PostgreSQL ya falla con `verify-full` si el servidor no ofrece TLS
+- Endurecimiento futuro (no hecho): la lista negra de `bd_sentencias.py` no cubre `WITH` (CTE) ni `SET` de sesión dentro de la sentencia; considerar una lista blanca de forma (p. ej. `INSERT INTO <tabla> (<columnas>) VALUES (%s…)`, `DELETE FROM <tabla> WHERE <col> = %s`, `SELECT … FROM <tabla> WHERE <col> = %s`) en lugar de palabras prohibidas. Mientras, la defensa de fondo es el usuario de BD con permisos mínimos
+
 ## Verificación
 - `tests/connectors/test_base_de_datos.py`: 119 pruebas pasaron, sin red real (SQLite en memoria como doble con el marcador `%s`, DNS falso y drivers PyMySQL/psycopg2 simulados con sus excepciones reales)
 - Cobertura: otorgar/revocar/consultar e idempotencia; inyección (comillas, `;`, `--`, `\`, `%s`, saltos de línea; la tabla sigue viva y el dato se guarda literal); validación de sentencias y de `params`; IP privada y DNS; reintento en otra IP; credencial incompleta; rollback y cierre; `max_filas`; clasificación MySQL y PostgreSQL; certificado en la cadena de causas; argumentos TLS de cada driver (`CERT_REQUIRED`, `check_hostname`, `verify-full`, `hostaddr`, IP en `create_connection`); configuración
 - Controles rotos a propósito y detectados: sin `rollback` por exceso de filas, `sslmode=require`, `;` permitido, consulta que confirma
-- `pytest` completo: 2123 passed, 15 xfailed, salida 0 (una corrida previa tuvo 1 fallo: `test_tipo_sin_implementar_o_desconocido` usaba `bd` como tipo sin implementar; ajustada a `ssh`, `otro`, `None`)
+- `pytest` completo: 2123 passed, 15 xfailed, salida 0 antes de la corrección de la auditoría; tras ella 2126 passed, 15 xfailed, salida 0 (una corrida previa tuvo 1 fallo: `test_tipo_sin_implementar_o_desconocido` usaba `bd` como tipo sin implementar; ajustada a `ssh`, `otro`, `None`)
 - No verificado: contra MySQL o PostgreSQL reales (handshake TLS real, `statement_timeout`, códigos de error reales); `crear_contexto` con CA propia contra un servidor de base de datos; plataforma piloto (P9)
 - Sin revisor ni auditor-seguridad (requerido por la ficha: lo lanza el orquestador)
 
@@ -105,3 +109,4 @@
 | 2026-10-13 | Creada como Propuesta (FNC-037) |
 | 2026-10-20 | Recomendaciones de auditor-seguridad sobre FNC-050 agregadas (sección «Requisitos de seguridad heredados de FNC-050») |
 | 2026-10-21 | Implementada: tipo `bd` (MySQL/MariaDB y PostgreSQL), sentencias parametrizadas, TLS verificado a la IP validada, 119 pruebas; contrato 1.3; En revisión |
+| 2026-10-21 | Auditor-seguridad: aprobada con un hallazgo medio (MySQL sin TLS si el servidor no lo anuncia) corregido con regresión; endurecimiento de sentencias anotado |

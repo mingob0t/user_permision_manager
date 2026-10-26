@@ -19,7 +19,8 @@ Garantías:
 - Host, puerto y base salen de `Destino`/`params` validados; el host de la
   lista blanca se resuelve y se conecta a la **IP validada** (`destino_seguro`).
 - TLS siempre obligatorio y verificado (certificado y nombre del host; CA del
-  sistema o `CONNECTOR_DB_CA_FILE`). Sin opción para desactivarlo.
+  sistema o `CONNECTOR_DB_CA_FILE`). Sin opción para desactivarlo; si el servidor
+  MySQL no ofrece TLS la conexión se aborta (`tls_no_valido`).
 - Los valores viajan como parámetros del driver. Transacción explícita: se
   confirma solo si la sentencia terminó bien y no afectó más de `max_filas`;
   ante cualquier error, `rollback`. Una consulta nunca confirma.
