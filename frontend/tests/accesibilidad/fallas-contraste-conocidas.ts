@@ -17,11 +17,6 @@ interface FallaConocida {
 const TODOS: NombreContexto[] = ['claro', 'so-oscuro', 'html.dark', 'emerald', 'obsidian', 'rose', 'violet'];
 
 export const FALLAS_CONOCIDAS: FallaConocida[] = [
-  // DIS-005: texto atenuado (muted) a 4.5:1.
-  { par: 'bi-text-muted/panel', contextos: ['obsidian'], tarea: 'DIS-005' },
-  { par: 'bi-text-muted/surface-container', contextos: ['claro', 'emerald', 'obsidian', 'rose'], tarea: 'DIS-005' },
-  { par: 'secondary/panel', contextos: ['so-oscuro', 'html.dark', 'obsidian'], tarea: 'DIS-005' },
-
   // DIS-006: bordes de campo y panel a 3:1.
   { par: 'input-border/panel', contextos: TODOS, tarea: 'DIS-006' },
   { par: 'panel-border/body-bg', contextos: TODOS, tarea: 'DIS-006' },

@@ -81,7 +81,7 @@ export function NotificationsList() {
             {(data ?? []).map((item) => (
               <Card
                 key={item.id}
-                className={item.is_read ? 'opacity-70' : 'border-primary/40'}
+                className={item.is_read ? 'opacity-85' : 'border-primary/40'}
               >
                 <div className="flex gap-3">
                   <span

@@ -26,7 +26,7 @@ export function Field({
       </span>
       {children}
       {hint ? (
-        <span className="mt-1.5 block text-xs text-label/60">{hint}</span>
+        <span className="mt-1.5 block text-xs text-label/85">{hint}</span>
       ) : null}
     </label>
   );

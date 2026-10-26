@@ -175,7 +175,7 @@ table.dataTable tbody tr {
   --color-bi-card-logistics: 71 85 105;
   --color-bi-ring-bg: 239 246 255;
   --color-bi-text-main: 15 23 42;
-  --color-bi-text-muted: 100 116 139;
+  --color-bi-text-muted: 97 112 135;   /* DIS-005: Slate-500 oscurecido lo mínimo para 4.5:1 sobre surface-container */
   --color-kpi-highlight: var(--color-accent-peach);
 
 
@@ -243,6 +243,8 @@ table.dataTable tbody tr {
     /* DIS-004: botón de peligro (mismo valor que el tema claro). */
     --color-error-solid: 220 38 38;
     --color-on-error: 255 255 255;
+    /* DIS-005: Slate-500 aclarado lo mínimo para 4.5:1 sobre panel (heredado daba 3.75). */
+    --color-secondary: 113 130 153;
 
     --color-header-bg: #1e3a8a;
     --color-header-text: #e2e8f0;
@@ -328,6 +330,8 @@ html.dark {
   /* DIS-004: botón de peligro (mismo valor que el tema claro). */
   --color-error-solid: 220 38 38;
   --color-on-error: 255 255 255;
+  /* DIS-005: Slate-500 aclarado lo mínimo para 4.5:1 sobre panel (heredado daba 3.75). */
+  --color-secondary: 113 130 153;
 
   /* BADGE ADAPTATIVO — MODO OSCURO (Brillo Neón) */
   --badge-primary-bg: 37 99 235 / 0.15;  --badge-primary-text: 96 165 250;
@@ -449,7 +453,7 @@ html.theme-emerald-light {
   --color-bi-card-logistics: 87 83 78;
   --color-bi-ring-bg: 245 245 244;
   --color-bi-text-main: 28 25 23;
-  --color-bi-text-muted: 120 113 108;
+  --color-bi-text-muted: 117 110 106;  /* DIS-005: Stone-500 oscurecido lo mínimo para 4.5:1 */
   --color-kpi-highlight: var(--color-accent-peach);
 
   --color-input-bg: 255 255 255;
@@ -485,7 +489,7 @@ html.theme-obsidian-dark {
   --color-accent-violet: 161 161 170;
   --color-accent-peach: 250 204 21;     /* Yellow-400 */
   --color-success: 74 222 128;          /* Green-400 */
-  --color-secondary: 113 113 122;
+  --color-secondary: 129 129 138;       /* DIS-005: Zinc-500 aclarado lo mínimo para 4.5:1 sobre panel */
   --color-accent: 250 204 21;
 
   /* DIS-001: texto de marca y relleno con texto encima (>= 4.5:1) */
@@ -544,7 +548,7 @@ html.theme-obsidian-dark {
   --color-bi-card-logistics: 113 113 122;
   --color-bi-ring-bg: 24 24 27;
   --color-bi-text-main: 228 228 231;
-  --color-bi-text-muted: 113 113 122;
+  --color-bi-text-muted: 142 142 150;  /* DIS-005: Zinc-500 aclarado lo mínimo para 4.5:1 sobre surface-container */
   --color-kpi-highlight: var(--color-accent-peach);
 
   --color-input-bg: 39 39 42;
@@ -624,7 +628,7 @@ html.theme-rose-light {
   --color-bi-card-logistics: 87 83 78;
   --color-bi-ring-bg: 255 241 242;
   --color-bi-text-main: 28 25 23;
-  --color-bi-text-muted: 120 113 108;
+  --color-bi-text-muted: 117 110 106;  /* DIS-005: Stone-500 oscurecido lo mínimo para 4.5:1 */
   --color-kpi-highlight: var(--color-accent-peach);
 
   --color-input-bg: 255 255 255;
