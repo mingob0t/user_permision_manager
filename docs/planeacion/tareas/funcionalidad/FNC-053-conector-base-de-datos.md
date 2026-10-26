@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | conectores |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | `fnc/FNC-053-conector-bd` (commit local, sin push) |
 | **Rama** | `fnc/FNC-053-conector-bd` |
