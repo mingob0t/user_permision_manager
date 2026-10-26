@@ -192,7 +192,7 @@ def test_put_con_host_nuevo_deja_la_credencial_sin_verificar(plataforma,
     ({'params': {'base_path': '/x'}}, 'params.base_path'),
     ({'params': {'password': 'x'}}, 'params.password'),
     ({'credential_ref': 'pokemon/con__doble'}, 'credential_ref'),
-    ({'type': 'bd'}, 'type'),
+    ({'type': 'otro'}, 'type'),
     ({'active': 'si'}, 'active'),
 ])
 def test_put_invalido_responde_422_por_campo(plataforma, superadmin,
