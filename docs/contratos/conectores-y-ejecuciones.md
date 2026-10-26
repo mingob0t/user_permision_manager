@@ -7,7 +7,7 @@
 | Consumidores | web (FNC-069; pantallas DIS-022, DIS-018) |
 | Solicitudes | — |
 
-Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: el tipo `api` (FNC-051) ya tiene esquema de `params` (§ siguiente); `ssh` y `bd` (FNC-052, FNC-053) esperan y agregarán el suyo como versión aditiva.
+Convenciones comunes: [README.md](README.md). Cola: Redis + RQ (ADR-003). P9: el tipo `api` (FNC-051) ya tiene esquema de `params` (§ siguiente); `bd` (FNC-053) ya tiene el suyo; `ssh` (FNC-052) agregará el suyo como versión aditiva.
 
 ## Endpoints
 
@@ -59,6 +59,22 @@ Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`.
 - Salida: solo HTTPS; el host resuelve a IP públicas y se conecta a la IP validada; sin redirecciones; TLS validado (CA del sistema o `CONNECTOR_HTTP_CA_FILE`).
 - Estados: 2xx éxito; `sin_cambios` (por defecto `[404, 410]` al revocar); 408, 425, 429, 500, 502, 503 y 504 transitorios; 3xx y el resto, permanentes. `consultar`: 2xx presente, 404 ausente.
 - Motivos nuevos en la bitácora (mensaje genérico; detalle solo `HTTP <estado>`): `configuracion_invalida`, `valor_no_valido` (cuenta o nivel vacíos, `.`/`..` o con segmento así; `{correo}` sin `@`), `destino_no_permitido`, `tls_no_valido`, `http_rechazado`, `http_transitorio`, `red_no_disponible`, `redireccion_no_permitida`.
+
+## `params` del tipo `bd` (FNC-053)
+Esquema cerrado: una clave desconocida → `422` con `fields.params.<campo>`. Sin SQL libre: las sentencias son plantillas fijas con marcadores `%s` del driver; los valores van siempre como parámetros.
+| Campo | Tipo | Obligatorio | Regla |
+|---|---|---|---|
+| `motor` | string | Sí | `mysql` (MySQL y MariaDB) o `postgresql` |
+| `base_datos` | string | Sí | Letras, dígitos, `_` y `-`; ≤ 64 |
+| `otorgar`, `revocar` | object | Sí | `sentencia` (texto de una línea ≤ 500; `INSERT` o `UPDATE` al otorgar, `DELETE` o `UPDATE` al revocar; `UPDATE` y `DELETE` con `WHERE`), `parametros` (lista ≤ 10 de marcas, una por cada `%s`), `max_filas` (entero 1–10, por defecto 1: más filas afectadas se deshacen) |
+| `consultar` | object | No | Igual, con `SELECT` y sin `max_filas`; sin él, consultar da `consulta_no_disponible` (permanente) |
+
+- Marcas permitidas (datos del servidor): `correo`, `nivel`, `plataforma`; el valor viaja como parámetro del driver.
+- La sentencia no puede tener `;`, comentarios (`--`, `#`, `/* */`), comillas, `\`, `$`, `?`, otro `%` que `%s`, ni palabras de definición, permisos, archivos o espera (`DROP`, `GRANT`, `OUTFILE`, `SLEEP`, `COPY`…).
+- Ejemplo: `{"motor": "mysql", "base_datos": "erp", "otorgar": {"sentencia": "INSERT INTO usuarios (email, rol) VALUES (%s, %s) ON DUPLICATE KEY UPDATE rol = VALUES(rol)", "parametros": ["correo", "nivel"], "max_filas": 2}, "revocar": {"sentencia": "DELETE FROM usuarios WHERE email = %s", "parametros": ["correo"]}, "consultar": {"sentencia": "SELECT 1 FROM usuarios WHERE email = %s", "parametros": ["correo"]}}`.
+- Salida: el host (siempre el de `host`, nunca de `params`) resuelve a IP públicas y se conecta a la IP validada; TLS siempre verificado (certificado y nombre del host; CA del sistema o `CONNECTOR_DB_CA_FILE`); transacción explícita con `rollback` ante error; tiempos `CONNECTOR_DB_TIMEOUT_SECONDS`.
+- Resultado: filas afectadas > 0 éxito; 0 `sin_cambios`; más de `max_filas` → permanente `bd_filas_excesivas` (se deshace). `consultar`: fila presente / ausente, sin confirmar.
+- Motivos nuevos en la bitácora (mensaje genérico; detalle solo un código, `MySQL <n>` o `SQLSTATE <xxxxx>`, nunca el texto del driver): `bd_autenticacion_rechazada`, `bd_operacion_rechazada`, `bd_operacion_transitoria`, `bd_filas_excesivas`; además reutiliza `configuracion_invalida`, `valor_no_valido`, `destino_no_permitido`, `tls_no_valido`, `red_no_disponible` y `credencial_no_encontrada` (la credencial debe traer usuario y secreto).
 
 ## `DELETE /platforms/<id>/connector`
 - `409 plataforma_con_accesos` si hay accesos vigentes. Respuesta `{"status": "success"}`. Auditoría `conector_eliminado`.
@@ -138,3 +154,4 @@ Orden: `created_at` descendente. Respuesta paginada de `Job` (sin `attempts`).
 | 1 | 2026-10-20 | Aclaración (FNC-061): `DELETE` y `POST .../test` con cuerpo `{}` (convención de escrituras; sin JSON → `415`; cualquier campo → `400 campo_no_permitido`); `PUT` con campo fuera de la lista → `400 campo_no_permitido`; plataforma o configuración inexistente → `404`; cambiar `type` con accesos vigentes → `409 plataforma_con_accesos`; `test` deja `credential_status` en `ok` o `no_encontrada` |
 | 1.1 | 2026-10-21 | Aclaración (FNC-061, auditor-seguridad): `POST .../test` exige cuerpo `{}` (sin Content-Type JSON → `415`) y actualiza `credential_status`; error aditivo `409 conector_concurrente` en el `PUT` que crea |
 | 1.2 | 2026-10-21 | Aditivo (FNC-051): esquema de `params` del tipo `api` (`422 fields.params.<campo>`) y 8 motivos nuevos en la bitácora de ejecuciones (incluye `valor_no_valido`, auditoría) |
+| 1.3 | 2026-10-21 | Aditivo (FNC-053): esquema de `params` del tipo `bd` (`422 fields.params.<campo>`) y 4 motivos nuevos en la bitácora de ejecuciones |
