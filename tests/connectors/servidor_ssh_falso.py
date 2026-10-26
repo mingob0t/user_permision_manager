@@ -67,11 +67,13 @@ class ServidorSshFalso:
     """`comportamiento(comando, entrada, canal) -> código de salida`."""
 
     def __init__(self, comportamiento, llave_host=None, llave_cliente=None,
-                 acepta_contrasena=False):
+                 acepta_contrasena=False, cifrados=None, macs=None):
         self.comportamiento = comportamiento
         self.llave_host = llave_host or generar_llave()
         self.llave_cliente = llave_cliente
         self.acepta_contrasena = acepta_contrasena
+        self.cifrados = cifrados
+        self.macs = macs
         self.intentos_auth = 0
         self.comandos = []
         self.entradas = []
@@ -91,6 +93,11 @@ class ServidorSshFalso:
                 return
             transporte = paramiko.Transport(conexion)
             transporte.add_server_key(self.llave_host)
+            opciones = transporte.get_security_options()
+            if self.cifrados:
+                opciones.ciphers = self.cifrados
+            if self.macs:
+                opciones.digests = self.macs
             self._transportes.append(transporte)
             try:
                 transporte.start_server(server=_Interfaz(self))

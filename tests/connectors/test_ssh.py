@@ -92,13 +92,13 @@ class TransporteFalso:
 
 
 def conector(*respuestas, valores=None, credencial=None,
-             direcciones=(PUBLICA,), cfg=CFG):
+             direcciones=(PUBLICA,), cfg=CFG, reloj=None):
     transporte = TransporteFalso(*respuestas)
     destino = Destino(host=HOST, puerto=22, tiempo_espera=7,
                       params=MappingProxyType(valores or params()))
     ssh = ConectorSsh(destino, credencial or Credencial(SECRETO, USUARIO),
                       transporte=transporte, getaddrinfo=dns(*direcciones),
-                      configuracion=cfg)
+                      configuracion=cfg, **({'reloj': reloj} if reloj else {}))
     return ssh, transporte
 
 
@@ -317,6 +317,27 @@ def test_si_no_conecta_prueba_otra_ip_hasta_tres():
     assert len(transporte.peticiones) == 3
 
 
+def test_el_plazo_es_unico_para_todas_las_ip():
+    reloj = [0]
+
+    class Lento(TransporteFalso):
+        def ejecutar(self, peticion):
+            reloj[0] += 8  # cada intento gasta 8 s de un plazo de 11
+            return super().ejecutar(peticion)
+    transporte = Lento(ErrorConexionSsh(), ErrorConexionSsh(), 0)
+    destino = Destino(host=HOST, puerto=22, tiempo_espera=7,
+                      params=MappingProxyType(params()))
+    ssh = ConectorSsh(destino, Credencial(SECRETO, USUARIO),
+                      transporte=transporte,
+                      getaddrinfo=dns(PUBLICA, PUBLICA_2, OTRA_1),
+                      configuracion=CFG, reloj=lambda: reloj[0])
+    res = ssh.otorgar(solicitud())
+    assert (res.resultado, res.motivo) == (RESULTADO_ERROR_TRANSITORIO,
+                                           'tiempo_agotado')
+    assert len(transporte.peticiones) == 2  # la tercera IP ya no se prueba
+    assert {p.limite for p in transporte.peticiones} == {11}
+
+
 def test_huella_distinta_no_prueba_otra_ip():
     ssh, transporte = conector(ErrorHuella(),
                                direcciones=(PUBLICA, PUBLICA_2))
@@ -358,13 +379,13 @@ def test_credencial_sin_usuario_o_sin_secreto_es_permanente(credencial):
 
 
 def test_la_peticion_lleva_la_ip_validada_los_tiempos_y_la_verificacion():
-    ssh, transporte = conector(0)
+    ssh, transporte = conector(0, reloj=lambda: 1000)
     ssh.otorgar(solicitud())
     p, = transporte.peticiones
     assert (p.ip, p.host, p.puerto) == (PUBLICA, HOST, 22)
     assert p.huellas == (HUELLA,) and p.archivo_known_hosts == ''
-    assert (p.tiempo_conexion, p.tiempo_ejecucion, p.maximo_salida) == (
-        7, 11, 2048)
+    assert (p.tiempo_conexion, p.maximo_salida) == (7, 2048)
+    assert p.limite == 1000 + 11  # reloj falso + plazo único
     assert p.metodo_auth == 'llave' and p.usuario == USUARIO
     assert SECRETO not in repr(p)
 

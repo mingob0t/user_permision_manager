@@ -12,7 +12,12 @@
   por la entrada estándar. De la salida remota solo se cuentan los bytes
   (límite) y se descarta: nunca se guarda ni se devuelve; sale el código de
   salida.
-- Algoritmos débiles (`ssh-rsa` con SHA-1 y `ssh-dss`) desactivados.
+- Algoritmos débiles desactivados: `ssh-rsa` (SHA-1) y `ssh-dss`, cifrados
+  CBC (`aes*-cbc`, `3des-cbc`) y MAC `hmac-md5(-96)` y `hmac-sha1(-96)`.
+- Plazo único (`PeticionSsh.limite`, instante monotónico): TCP, saludo,
+  autenticación, sesión, todas las IP y la ejecución comparten el mismo reloj;
+  cada etapa usa `min(tiempo de la etapa, plazo restante)` y al vencer el plazo
+  falla con `ErrorTiempoEjecucion` (transitorio).
 """
 import hmac
 import io
@@ -26,8 +31,12 @@ PUERTO_SSH_ESTANDAR = 22
 INTERVALO_LECTURA_SEGUNDOS = 0.05
 TAMANO_LECTURA = 4096
 CODIGO_SIN_ESTADO = -1  # el canal se cerró sin código de salida
-ALGORITMOS_DESACTIVADOS = {'keys': ['ssh-rsa', 'ssh-dss'],
-                           'pubkeys': ['ssh-rsa', 'ssh-dss']}
+ALGORITMOS_DESACTIVADOS = {
+    'keys': ['ssh-rsa', 'ssh-dss'],
+    'pubkeys': ['ssh-rsa', 'ssh-dss'],
+    'ciphers': ['aes128-cbc', 'aes192-cbc', 'aes256-cbc', '3des-cbc'],
+    'macs': ['hmac-md5', 'hmac-md5-96', 'hmac-sha1', 'hmac-sha1-96'],
+}
 TIPOS_DE_LLAVE = (paramiko.RSAKey, paramiko.ECDSAKey, paramiko.Ed25519Key)
 
 AUTH_LLAVE = 'llave'
@@ -77,7 +86,7 @@ class PeticionSsh:
     huellas: tuple
     archivo_known_hosts: str
     tiempo_conexion: int
-    tiempo_ejecucion: int
+    limite: float  # instante `time.monotonic()` en que vence todo el plazo
     maximo_salida: int
 
 
@@ -87,7 +96,7 @@ def cargar_llave(texto):
     for tipo in TIPOS_DE_LLAVE:
         try:
             return tipo.from_private_key(io.StringIO(texto))
-        except (paramiko.SSHException, ValueError, TypeError):
+        except Exception:  # llave corrupta: cualquier falla, sin su texto
             continue
     raise ErrorAutenticacion()
 
@@ -99,8 +108,9 @@ def _nombre_known_hosts(host, puerto):
 def _huella_en_known_hosts(clave, peticion):
     try:
         conocidas = paramiko.HostKeys(peticion.archivo_known_hosts)
-    except (OSError, paramiko.SSHException):
-        return False
+    except (OSError, ValueError, paramiko.SSHException,
+            paramiko.hostkeys.InvalidHostKey):
+        return False  # ilegible, no UTF-8, `@cert-authority`/`@revoked`...
     entradas = conocidas.lookup(_nombre_known_hosts(peticion.host,
                                                     peticion.puerto))
     fijada = entradas.get(clave.get_name()) if entradas else None
@@ -120,18 +130,35 @@ def llave_de_host_valida(clave, peticion):
     return False
 
 
+def _restante(peticion):
+    """Segundos que quedan del plazo único; `ErrorTiempoEjecucion` si venció."""
+    restante = peticion.limite - time.monotonic()
+    if restante <= 0:
+        raise ErrorTiempoEjecucion()
+    return restante
+
+
+def _etapa(peticion):
+    """Tiempo de una etapa de red: el de conexión o lo que quede del plazo."""
+    return min(peticion.tiempo_conexion, _restante(peticion))
+
+
 def _abrir(peticion):
     try:
         conexion = socket.create_connection((peticion.ip, peticion.puerto),
-                                            peticion.tiempo_conexion)
+                                            _etapa(peticion))
     except OSError:
         raise ErrorConexionSsh() from None
     transporte = paramiko.Transport(
         conexion, disabled_algorithms=ALGORITMOS_DESACTIVADOS)
-    transporte.banner_timeout = peticion.tiempo_conexion
-    transporte.auth_timeout = peticion.tiempo_conexion
     try:
-        transporte.start_client(timeout=peticion.tiempo_conexion)
+        espera = _etapa(peticion)
+        transporte.banner_timeout = espera
+        transporte.auth_timeout = espera
+        transporte.start_client(timeout=espera)
+    except ErrorTiempoEjecucion:
+        transporte.close()
+        raise
     except (paramiko.SSHException, OSError, EOFError):
         transporte.close()
         raise ErrorConexionSsh() from None
@@ -139,6 +166,7 @@ def _abrir(peticion):
 
 
 def _autenticar(transporte, peticion, llave):
+    transporte.auth_timeout = _etapa(peticion)
     try:
         if peticion.metodo_auth == AUTH_LLAVE:
             transporte.auth_publickey(peticion.usuario, llave)
@@ -153,16 +181,15 @@ def _autenticar(transporte, peticion, llave):
 
 def _ejecutar_canal(transporte, peticion):
     """Código de salida; la salida remota se cuenta y se descarta."""
-    limite = time.monotonic() + peticion.tiempo_ejecucion
     try:
-        canal = transporte.open_session(timeout=peticion.tiempo_conexion)
-        canal.settimeout(peticion.tiempo_ejecucion)
+        canal = transporte.open_session(timeout=_etapa(peticion))
+        canal.settimeout(_restante(peticion))
         canal.exec_command(peticion.comando)
         canal.sendall(peticion.entrada)
         canal.shutdown_write()
         total = 0
         while not canal.exit_status_ready():
-            if time.monotonic() > limite:
+            if time.monotonic() > peticion.limite:
                 raise ErrorTiempoEjecucion()
             leido = 0
             if canal.recv_ready():

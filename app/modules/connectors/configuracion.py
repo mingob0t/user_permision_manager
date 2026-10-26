@@ -9,7 +9,8 @@
 - `CONNECTOR_CREDENTIAL_CACHE_SECONDS`: vida de la caché en memoria de las
   credenciales (ADR-005); 0 = sin caché.
 - `CONNECTOR_SSH_TIMEOUT_SECONDS`, `CONNECTOR_SSH_MAX_OUTPUT_BYTES` y
-  `CONNECTOR_SSH_KNOWN_HOSTS_FILE`: tiempo de ejecución del comando, límite de
+  `CONNECTOR_SSH_KNOWN_HOSTS_FILE`: plazo único de una operación SSH (red,
+  autenticación y comando), límite de
   la salida remota que se lee y `known_hosts` del despliegue del conector
   `ssh` (FNC-052); el tiempo también es menor que el del intento.
 - `validar_al_arrancar()` corre en `create_app()`.

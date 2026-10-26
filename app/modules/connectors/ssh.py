@@ -39,14 +39,16 @@ detalle es solo `salida <n>`: la salida remota nunca se guarda.
 
 Red: se resuelve el DNS y se conecta a la IP validada (`destino_seguro`); solo
 se prueba otra IP si falla la conexión o el saludo (aún sin credencial). Huella
-distinta o credencial rechazada: permanente. Comando que no termina en
-`CONNECTOR_SSH_TIMEOUT_SECONDS` o que supera `CONNECTOR_SSH_MAX_OUTPUT_BYTES`:
-transitorio y permanente respectivamente.
+distinta o credencial rechazada: permanente. `CONNECTOR_SSH_TIMEOUT_SECONDS`
+es el **plazo único** de la operación (DNS, todas las IP, TCP, saludo,
+autenticación, sesión y comando; vencido: transitorio `tiempo_agotado`); una
+salida mayor que `CONNECTOR_SSH_MAX_OUTPUT_BYTES` es permanente.
 """
 import json
 import re
 import shlex
 import socket
+import time
 
 from app.modules.connectors.base import Conector
 from app.modules.connectors.configuracion import cargar_configuracion
@@ -258,13 +260,14 @@ class ConectorSsh(Conector):
     pruebas; sin ellos: SSH real, DNS del sistema y variables `CONNECTOR_*`."""
 
     def __init__(self, destino, credencial, transporte=None, getaddrinfo=None,
-                 configuracion=None):
+                 configuracion=None, reloj=time.monotonic):
         super().__init__(destino, credencial)
         self._transporte = transporte or TransporteSsh()
         self._getaddrinfo = getaddrinfo or socket.getaddrinfo
         self._configuracion = configuracion
+        self._reloj = reloj
 
-    def _peticion(self, ip, params, spec, operacion, solicitud, cfg):
+    def _peticion(self, ip, params, spec, operacion, solicitud, cfg, limite):
         huellas = tuple(params.get('huellas', ()))
         return PeticionSsh(
             ip=ip, host=self.destino.host, puerto=self.destino.puerto,
@@ -275,12 +278,14 @@ class ConectorSsh(Conector):
             huellas=huellas,
             archivo_known_hosts='' if huellas else cfg.ssh_known_hosts,
             tiempo_conexion=self.destino.tiempo_espera,
-            tiempo_ejecucion=cfg.ssh_tiempo,
+            limite=limite,
             maximo_salida=cfg.ssh_maximo_salida)
 
-    def _ejecutar(self, ips, construir):
+    def _ejecutar(self, ips, construir, limite):
         """Código de salida o un `ResultadoProveedor` de error."""
         for ip in ips[:MAXIMO_DIRECCIONES]:
+            if self._reloj() >= limite:
+                return transitorio(MOTIVO_TIEMPO_AGOTADO)
             try:
                 return self._transporte.ejecutar(construir(ip))
             except ErrorConexionSsh:
@@ -296,6 +301,7 @@ class ConectorSsh(Conector):
         """`(código, None)` o `(None, ResultadoProveedor)` de error."""
         params = dict(self.destino.params)
         cfg = self._configuracion or cargar_configuracion()
+        limite = self._reloj() + cfg.ssh_tiempo  # plazo único de la operación
         if errores_esquema(params, bool(cfg.ssh_known_hosts)):
             return None, permanente(MOTIVO_CONFIGURACION_INVALIDA)
         if not _valores_seguros(solicitud):
@@ -311,7 +317,7 @@ class ConectorSsh(Conector):
             return None, transitorio(MOTIVO_RED)
         spec = params[operacion]
         resultado = self._ejecutar(ips, lambda ip: self._peticion(
-            ip, params, spec, operacion, solicitud, cfg))
+            ip, params, spec, operacion, solicitud, cfg, limite), limite)
         if isinstance(resultado, ResultadoProveedor):
             return None, resultado
         return resultado, None

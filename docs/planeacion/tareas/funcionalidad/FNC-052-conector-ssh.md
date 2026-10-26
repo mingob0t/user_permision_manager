@@ -49,7 +49,9 @@
 | Llave del host | `params.huellas` (1–5 `SHA256:`) o `CONNECTOR_SSH_KNOWN_HOSTS_FILE`; sin ninguna, no conecta; se verifica **antes** de enviar la credencial; no hay confianza en el primer uso | SEC-CON-04; las huellas permiten rotar la llave (varias) sin tocar el despliegue |
 | Librería | `paramiko==5.1.0`, con `Transport` (no `SSHClient`) | Sin `AutoAddPolicy`, `ssh_config`, `ProxyCommand` ni agente por construcción; `asyncssh` obliga a un bucle asíncrono que el ejecutor RQ no usa |
 | Autenticación | Llave privada de la credencial (por defecto); contraseña solo si `params.auth.metodo = contrasena`. Llaves con frase de paso: no (FNC-110) | La llave se puede restringir en el servidor (`restrict`, comando forzado); la contraseña queda para plataformas que no admiten llave |
-| Algoritmos | `ssh-rsa` (SHA-1) y `ssh-dss` desactivados (huella y autenticación) | Débiles; RSA con SHA-2 sigue permitido |
+| Algoritmos | `ssh-rsa` (SHA-1), `ssh-dss`, cifrados CBC (`aes*-cbc`, `3des-cbc`) y MAC `hmac-md5(-96)`/`hmac-sha1(-96)` desactivados | Débiles; RSA con SHA-2, CTR/GCM y HMAC SHA-2 siguen permitidos (auditor-seguridad) |
+| Plazo | **Único** para toda la operación (DNS, todas las IP, TCP, saludo, autenticación, sesión y comando): reloj de plazo restante con instante monotónico (`PeticionSsh.limite`); `CONNECTOR_SSH_TIMEOUT_SECONDS` pasa a ser ese plazo y se valida al arrancar que sea menor que el del intento | Sin variable nueva; evita que las etapas sumen más que el intento (auditor-seguridad). Decisión del orquestador, pendiente de validar en la prueba de concepto |
+| Entradas hostiles | `known_hosts` ilegible, no UTF-8 o con `@cert-authority`/`@revoked` → huella no válida (`ssh_huella_no_coincide`); llave corrupta (cualquier excepción) → `ssh_autenticacion_rechazada`, sin texto del error | Fallar cerrado y sin filtrar detalles (auditor-seguridad) |
 | Salida remota | Se cuenta y se descarta (≤ `CONNECTOR_SSH_MAX_OUTPUT_BYTES`); solo sale el código (`salida <n>`) | Nunca se guarda texto del servidor remoto |
 | Códigos de salida | 0 éxito; `sin_cambios`/`ausente` y `transitorios` (por defecto `[75]`, EX_TEMPFAIL) declarados por operación; un cierre sin código es transitorio; el resto, permanente | No reintentar a ciegas un rechazo; sin código, lo más probable es corte de red |
 | Reintento en otra IP | Solo si falla la conexión o el saludo (antes de autenticar), máximo 3 | Tras enviar la credencial o el comando no se duplica la escritura |
@@ -102,10 +104,13 @@ Salida de `~/.claude/agentes/herramientas/impacto.py` (comparado contra `develop
 |---|---|
 | `venv/bin/python -m pytest tests/connectors/test_ssh.py tests/connectors/test_ssh_transporte.py -q` | 106 passed, salida 0 |
 | Mutaciones (cada una rompió pruebas y se restauró): huella siempre válida (4 fallan), sin chequeo de caracteres de control (4), comando con dato añadido (13), huella como transitoria (2), salida excesiva como transitoria (1) | Detectadas |
-| `venv/bin/python -m pytest -q` (completo) | 2019 passed, 15 xfailed, salida 0 (897 s) |
+| `venv/bin/python -m pytest -q` (completo, tras las correcciones del auditor) | 2036 passed, 15 xfailed, salida 0 (926 s); `tests/connectors` 425 passed, salida 0 |
 - Servidor de prueba: `tests/connectors/servidor_ssh_falso.py` (paramiko real en `127.0.0.1`, puerto efímero): huella correcta, distinta y por `known_hosts`; llave autorizada y no autorizada; contraseña; comando exacto y datos por stdin con entrada maliciosa; límite de salida; tiempo de ejecución; puerto cerrado.
 - **No verificado:** contra una plataforma piloto real (P9); algoritmos de servidores antiguos que solo ofrezcan `ssh-rsa`; llaves con frase de paso (no soportadas, FNC-110); el comando forzado del lado remoto (lo configura quien administra la plataforma); `revisor` y `auditor-seguridad` (no lanzados por indicación del orquestador; la ficha exige `auditor-seguridad`).
 - El destino con IP privada se rechaza (`destino_no_permitido`), como en `api`: plataformas internas dependen de FNC-106.
+
+## Recomendación para FNC-016 (CI)
+- Agregar `pip-audit` (sobre `requirements.txt`, que ahora fija `paramiko==5.1.0`) al CI para detectar dependencias con vulnerabilidades conocidas (auditor-seguridad sobre FNC-052).
 
 ## Bitácora
 | Fecha | Nota |
@@ -114,3 +119,4 @@ Salida de `~/.claude/agentes/herramientas/impacto.py` (comparado contra `develop
 | 2026-10-20 | Recomendaciones de auditor-seguridad sobre FNC-050 agregadas (sección «Requisitos de seguridad heredados de FNC-050») |
 | 2026-10-21 | En curso: tipo `ssh` (`ssh.py`, `ssh_transporte.py`), variables, motivos, contrato 1.3 y guía |
 | 2026-10-21 | En revisión: pruebas verdes, impacto registrado; pendiente `auditor-seguridad` y validación del dueño. Propone FNC-110 (llave con frase de paso) |
+| 2026-10-21 | Correcciones del auditor-seguridad (4 hallazgos bajos): `known_hosts` hostil, llave corrupta, cifrados y MAC débiles, plazo único; cada una con prueba que falló antes. Recomendación `pip-audit` para FNC-016 |
