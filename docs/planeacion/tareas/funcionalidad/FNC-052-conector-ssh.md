@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | conectores |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 | **Estatus Git** | Rama local `fnc/FNC-052-conector-ssh` (sin push) |
 | **Rama** | `fnc/FNC-052-conector-ssh` |
