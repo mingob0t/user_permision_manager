@@ -26,6 +26,8 @@ export interface Session {
     email_notifications: boolean;
     refresh_interval: number;
     tour_enabled: boolean;
+    /** Id de tema de `lib/tema.ts` (FNC-122); nunca se usa como clase sin `esTemaValido`. */
+    theme?: string;
   };
 }
 
