@@ -27,6 +27,7 @@ from app.modules.auth.acceso_local import motivo_rechazo_login_local
 from app.modules.auth.models import User
 from app.modules.auth.services import (MENSAJE_CREDENCIALES, avisar_bloqueo,
                                        motivo_de_bloqueo, normalizar_correo)
+from app.modules.notifications.services import avisar_usuario_creado
 
 auth_api_bp = Blueprint('api_auth', __name__, url_prefix='/api/v1/auth')
 
@@ -114,17 +115,9 @@ def sso_login():
     add_audit_log('ACCESO SSO', status='success', target=email,
                   detail='Sesión iniciada vía Authelia')
 
-    if created and os.getenv('NOTIFY_USER_CREATED', 'true').lower() == 'true':
-        try:
-            from app.modules.notifications.services import send_notification_by_slug
-            base = os.getenv('BASE_URL', request.host_url.rstrip('/'))
-            send_notification_by_slug('usuario_creado', email, context={
-                'nombre': name, 'usuario': email,
-                'base_url': base, 'url': base,
-            })
-        except Exception:
-            # Un fallo al notificar no debe impedir el acceso.
-            pass
+    if created:
+        avisar_usuario_creado(
+            email, name, os.getenv('BASE_URL', request.host_url.rstrip('/')))
 
     return jsonify({'status': 'success', 'role': user.role})
 

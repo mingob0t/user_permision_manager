@@ -8,6 +8,9 @@
 ### Seguridad
 - Next.js: el rewrite de `/api` hacia Flask existe solo con `NODE_ENV=development` (`next build`/`next start` no generan ninguno), se retira el rewrite de `/auth` y `BACKEND_URL` se rechaza si es una IP; cierra la vía de Next hacia Flask con cabeceras `Remote-*` del cliente (FNC-005, FNC-118, 2026-10-26).
 
+### Cambiado
+- Backend: un solo `error_response`/`json_payload` (se borran `_payload` y `_error` de `crud.py` y `admin.py`), lista blanca de campos y lectura del cuerpo comunes (`campos_no_permitidos`, `campos_prohibidos`, `leer_cuerpo`) usadas por áreas, plataformas, usuarios, solicitudes, accesos, conectores, directorio y reintentos, aviso de usuario creado único (`avisar_usuario_creado`) y purga de inactivos en `users/services.py`; se borra la purga heredada de `auth/services.py`. Sin cambio en códigos HTTP, `code` ni `fields` (FNC-030, FNC-082, 2026-10-27).
+
 ### Agregado
 - Prueba de que la línea base `0001` incluye el efecto de los SQL heredados 001-004 (FNC-028, 2026-10-26).
 - Diálogos: el foco empieza en el primer campo, no sale del diálogo con Tab y vuelve al botón que lo abrió; el texto que explica la acción se anuncia como descripción (aprobar, rechazar, revocar, rol de admin, eliminar conector, reintentar y confirmaciones de borrado); el ✕ mide 48 px. Velo detrás de los diálogos y del menú móvil con token propio por tema, y el fondo no se desplaza mientras están abiertos (DIS-031, DIS-038, 2026-10-26).

@@ -15,6 +15,7 @@ from flask_login import current_user, login_required
 
 from app import db
 from app.authz import admin_required
+from app.modules.api.helpers import error_response, json_payload
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.models import AuthConfig
 from app.modules.notifications.models import (InAppNotification,
@@ -22,14 +23,6 @@ from app.modules.notifications.models import (InAppNotification,
 from app.modules.settings.models import SystemConfig
 
 admin_bp = Blueprint('api_admin', __name__, url_prefix='/api/v1')
-
-
-def _payload():
-    return request.get_json(silent=True) or {}
-
-
-def _error(message, status=400):
-    return jsonify({'status': 'error', 'message': message}), status
 
 
 def _smtp_forced():
@@ -97,7 +90,7 @@ def save_settings():
         config = SystemConfig()
         db.session.add(config)
 
-    data = _payload()
+    data = json_payload()
     for field in ('portal_name', 'bg_color', 'text_color'):
         if field in data:
             setattr(config, field, data[field])
@@ -105,7 +98,8 @@ def save_settings():
     if 'portal_identity_type' in data:
         kind = data['portal_identity_type']
         if kind not in ('icon', 'image'):
-            return _error('El tipo de identidad debe ser "icon" o "image".')
+            return error_response(
+                'El tipo de identidad debe ser "icon" o "image".')
         config.portal_identity_type = kind
 
     if 'portal_icon' in data:
@@ -113,7 +107,7 @@ def save_settings():
         if config.portal_identity_type == 'image':
             value, problem = _validate_logo(raw)
             if problem:
-                return _error(problem)
+                return error_response(problem)
             config.portal_icon = value
         else:
             # Para el modo icono se guarda el SVG tal cual.
@@ -178,15 +172,16 @@ def save_smtp():
     # Con el entorno forzado, guardar en la base de datos no tendría efecto:
     # es mejor rechazarlo que dejar creer que el cambio se aplicó.
     if _smtp_forced():
-        return _error('La configuración SMTP está fijada por el entorno '
-                      '(SMTP_FORCE_ENV). Edítala en el .env del servidor.', 409)
+        return error_response(
+            'La configuración SMTP está fijada por el entorno (SMTP_FORCE_ENV). '
+            'Edítala en el .env del servidor.', 409)
 
     config = SMTPConfig.query.first()
     if config is None:
         config = SMTPConfig()
         db.session.add(config)
 
-    data = _payload()
+    data = json_payload()
     for field in ('server', 'encryption', 'username', 'sender_name'):
         if field in data:
             setattr(config, field, data[field])
@@ -194,7 +189,7 @@ def save_smtp():
         try:
             config.port = int(data['port'])
         except (TypeError, ValueError):
-            return _error('Puerto no válido.')
+            return error_response('Puerto no válido.')
     if 'auth_enabled' in data:
         config.auth_enabled = bool(data['auth_enabled'])
     # Una contraseña vacía no borra la guardada.
@@ -211,21 +206,22 @@ def save_smtp():
 @admin_required
 def test_smtp():
     """Envía un correo de prueba al destinatario indicado."""
-    recipient = (_payload().get('email') or current_user.email or '').strip()
+    recipient = (json_payload().get('email') or current_user.email
+                 or '').strip()
     if not recipient or '@' not in recipient:
-        return _error('Indica un correo de destino válido.')
+        return error_response('Indica un correo de destino válido.')
 
     from app.modules.notifications.services import (resolve_smtp_settings,
                                                     send_test_email)
 
     config = resolve_smtp_settings()
     if config is None:
-        return _error('No hay configuración SMTP utilizable.')
+        return error_response('No hay configuración SMTP utilizable.')
 
     try:
         # Se prueba lo que está en vigor; el payload puede sobrescribir campos
         # para validar antes de guardar, salvo si el entorno manda.
-        data = {} if config.source == 'env' else _payload()
+        data = {} if config.source == 'env' else json_payload()
         result = send_test_email(
             server=data.get('server') or config.server,
             port=int(data.get('port') or config.port),
@@ -242,7 +238,7 @@ def test_smtp():
     except Exception as exc:
         add_audit_log('PRUEBA SMTP', module='Notificaciones', status='error',
                       detail=str(exc))
-        return _error(f'No se pudo enviar: {exc}', 502)
+        return error_response(f'No se pudo enviar: {exc}', 502)
 
     add_audit_log('PRUEBA SMTP', module='Notificaciones', status='success',
                   detail=f'Destinatario: {recipient}')
@@ -267,11 +263,11 @@ def list_templates():
 @admin_required
 def save_template(slug):
     template = NotificationTemplate.query.filter_by(slug=slug).first()
-    data = _payload()
+    data = json_payload()
 
     if template is None:
         if not data.get('name') or not data.get('subject'):
-            return _error('Nombre y asunto son obligatorios.')
+            return error_response('Nombre y asunto son obligatorios.')
         template = NotificationTemplate(slug=slug, name=data['name'],
                                         subject=data['subject'],
                                         body=data.get('body') or '')
@@ -312,7 +308,7 @@ def list_notifications():
 @login_required
 def mark_notifications_read():
     """Marca como leídas: todas las propias, o las indicadas."""
-    ids = _payload().get('ids')
+    ids = json_payload().get('ids')
     query = InAppNotification.query.filter(
         db.or_(InAppNotification.user_id == current_user.id,
                InAppNotification.user_id.is_(None)))
@@ -403,21 +399,22 @@ def import_backup():
     import zipfile
 
     if 'file' not in request.files:
-        return _error('No se recibió el archivo.')
+        return error_response('No se recibió el archivo.')
 
     upload = request.files['file']
     if not zipfile.is_zipfile(upload):
-        return _error('El archivo no es un paquete ZIP válido.')
+        return error_response('El archivo no es un paquete ZIP válido.')
 
     upload.seek(0)
     try:
         with zipfile.ZipFile(upload) as archive:
             if 'nexus_config.json' not in archive.namelist():
-                return _error('El paquete no contiene nexus_config.json.')
+                return error_response(
+                    'El paquete no contiene nexus_config.json.')
             with archive.open('nexus_config.json') as handle:
                 data = json.load(handle)
     except (zipfile.BadZipFile, json.JSONDecodeError) as exc:
-        return _error(f'No se pudo leer el paquete: {exc}')
+        return error_response(f'No se pudo leer el paquete: {exc}')
 
     payload = data.get('payload') or {}
     restored = []

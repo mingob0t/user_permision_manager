@@ -1,10 +1,13 @@
 import html
+import logging
 import os
 import re
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.modules.notifications.models import SMTPConfig, NotificationTemplate, InAppNotification
+
+logger = logging.getLogger(__name__)
 
 
 class SmtpSettings:
@@ -271,3 +274,25 @@ def send_notification_by_slug(slug, target_email, context=None):
 
     except Exception as e:
         return {"status": "error", "message": "Error interno enviando notificación."}
+
+
+SLUG_USUARIO_CREADO = 'usuario_creado'
+VAR_NOTIFY_USER_CREATED = 'NOTIFY_USER_CREATED'
+
+
+def avisar_usuario_creado(correo, nombre, base_url, url=None):
+    """Correo de bienvenida a una cuenta recién creada (D-04, FNC-030).
+
+    Solo si `NOTIFY_USER_CREATED` es `true` (por omisión). Un fallo al
+    notificar nunca impide el acceso: se registra en el log y se sigue.
+    `url` es el enlace de la plantilla (por omisión, `base_url`).
+    """
+    if os.getenv(VAR_NOTIFY_USER_CREATED, 'true').lower() != 'true':
+        return
+    try:
+        send_notification_by_slug(SLUG_USUARIO_CREADO, correo, context={
+            'nombre': nombre, 'usuario': correo,
+            'base_url': base_url, 'url': url or base_url,
+        })
+    except Exception:
+        logger.exception('Fallo al enviar el aviso de usuario creado')
