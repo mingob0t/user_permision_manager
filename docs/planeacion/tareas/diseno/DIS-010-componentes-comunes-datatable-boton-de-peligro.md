@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
@@ -81,3 +81,5 @@ No verificado: capturas en navegador (tema claro/oscuro, móvil/escritorio); `au
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-27 | Aprobada en modo autónomo y pasada a En curso (decisión del orquestador, pendiente de validar en la prueba de concepto) |
 | 2026-10-27 | Implementada: DataTable, FilterBar, .nexus-btn-danger, Tone/SuccessNote, Toast; pruebas y build en 0; pasa a En revisión |
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado (contraste del botón de peligro 4,83:1 y 5,29:1 en obsidian; tabla, filtros, toast y SuccessNote sin fallas). Agregada la prueba de hover de `.nexus-btn-danger`; pausa y foco del toast registrados como DIS-049. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
