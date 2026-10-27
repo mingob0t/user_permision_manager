@@ -122,6 +122,15 @@ Se pasan al invocar `deploy/preflight.sh` o `deploy/install.sh`; no van en `.env
 | `CREATE_USER` | install | `1` crea la cuenta de servicio (equivale a `--create-user`) | `0` | No |
 | `PROXY_URL` (o `HTTPS_PROXY`/`HTTP_PROXY` en mayúsculas o minúsculas) | ambos | Proxy de salida para dnf, pip y npm | ninguno | **Sí** si lleva credenciales |
 | `NO_PROXY` / `no_proxy` | ambos | Excepciones del proxy | localhost y loopback | No |
+| `DB_SERVICE` | install | Servicio systemd de la BD local para `After=`/`Wants=` de backend y worker (equivale a `--db-service`; se valida como nombre de unidad). FNC-125 | se detecta (`SERVICIOS_BD`); ninguno si la BD es remota | No |
+
+## Variables del sistema leídas por las pruebas
+
+No son configuración del proyecto ni van en `.env`/`.env.example`.
+
+| Variable | Dónde | Propósito | Alta |
+|---|---|---|---|
+| `PATH` | `tests/deploy/test_servicio_bd_sh.py` | Anteponer un `systemctl` falso al PATH del sistema (el resto de herramientas siguen siendo las reales) | FNC-125, 2026-10-27 |
 
 ## Plantilla anterior retirada
 
@@ -136,6 +145,8 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `NODE_MAJOR` | Node LTS que instala `install.sh` | `22` | versión mayor | `deploy/preflight.sh`, `deploy/install.sh` | FNC-001, 2026-10-13 | Vigente |
 | `NODE_MIN_MINOR` | Menor mínima dentro de `NODE_MAJOR` | `13` | versión menor | `deploy/preflight.sh`, `deploy/install.sh` | FNC-073, 2026-10-27 | Vigente |
 | `NODE_NEXT_MAJOR` | Primera mayor posterior aceptada completa (excluye el 23) | `24` | versión mayor | `deploy/preflight.sh`, `deploy/install.sh` | FNC-073, 2026-10-27 | Vigente |
+| `SERVICIOS_BD` | Servicios de BD que `install.sh` y `preflight.sh` buscan, en orden de preferencia | `mysqld.service`, `mariadb.service`, `mysql.service` | nombres de unidad | `deploy/servicio_bd.sh` | FNC-125, 2026-10-27 | Vigente |
+| `EXCLUIDOS_COPIA` | Lo que `rsync --delete` no copia ni borra en el prefijo (no portables y locales: `/.env`, `/.env.*` salvo `.env.example`, `/instance/`, `/backups/`, `/uploads/`, `/storage/`, `/logs/`) | ver `deploy/copia_proyecto.sh` | patrones de rsync | `deploy/copia_proyecto.sh` | FNC-125, 2026-10-27 | Vigente |
 | `engines.node` | Rango de Node del frontend; los tres valores de arriba deben dar el mismo | `^22.13.0 \|\| >=24.0.0` | rango semver | `frontend/package.json` (y su lock) | FNC-073, 2026-10-27 | Vigente |
 | `WTF_CSRF_TIME_LIMIT` | Caducidad del token CSRF | sin límite | — | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `pool_recycle` | Reciclado de conexiones de BD | 3600 | s | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |

@@ -70,7 +70,7 @@ venv/bin/flask --app run:app provisioning worker   # terminal 3: worker (opciona
 
 ## Despliegue
 
-Rocky Linux 8 con systemd y nginx: `deploy/preflight.sh` y `deploy/install.sh`. Guía: [deploy/README.md](deploy/README.md); entornos: [ENTORNOS.md](docs/operacion/ENTORNOS.md).
+Rocky/RHEL 8 o 9 con systemd y nginx: `deploy/preflight.sh` y `deploy/install.sh`. Guía: [deploy/README.md](deploy/README.md); entornos: [ENTORNOS.md](docs/operacion/ENTORNOS.md).
 
 ## Documentación
 

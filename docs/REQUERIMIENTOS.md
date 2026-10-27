@@ -91,8 +91,8 @@ Levantados del código y de `deploy/preflight.sh` en FNC-001.
 
 | Componente | Mínimo | Recomendado / notas |
 |---|---|---|
-| Sistema operativo (servidor) | Rocky Linux 8 o familia RHEL 8 (x86_64 o aarch64) | RHEL 9 funciona con avisos; el instalador asume `dnf` |
-| Python | 3.11 con módulo `venv` | 3.11 o 3.12; Rocky 8 trae 3.6, se instala `python311` de AppStream si no hay otro |
+| Sistema operativo (servidor) | Rocky/RHEL 8 o 9 (x86_64 o aarch64) | Destino previsto: el9; el instalador asume `dnf` |
+| Python | 3.11 con módulo `venv` | 3.11 o 3.12; Rocky/RHEL 8 trae 3.6, se instala `python311` de AppStream si no hay otro; en el9, `python3.12` |
 | Node.js / npm | 18.18 | 22 LTS (Next.js 15) |
 | Base de datos | MySQL (BD objetivo, ADR-001) accesible por nombre de host | El código usa PyMySQL; SQLite solo como respaldo en dev |
 | Cliente `mysql` | — | Útil para respaldar la base antes de migrar |
@@ -100,7 +100,7 @@ Levantados del código y de `deploy/preflight.sh` en FNC-001.
 | Reverse proxy | nginx con TLS en el mismo dominio para API y frontend | SELinux `httpd_can_network_connect` activo; firewalld con `http`/`https` |
 | Autenticación | Authelia y OpenLDAP existentes, accesibles por nombre de host | Authelia vía `auth_request` en nginx; LDAP solo lectura |
 | Correo | Servidor SMTP (nombre de host) | Configurable por interfaz o por `.env` |
-| Paquetes de compilación | `gcc`, `make`, `openssl-devel`, `libffi-devel`, `openldap-devel` | Para `cryptography` y `ldap3` sin rueda binaria |
+| Paquetes de compilación | `gcc`, `make`, `openssl-devel`, `libffi-devel` | Para `cryptography`, `cffi`, `bcrypt` y `PyNaCl` sin rueda binaria; PyMySQL y ldap3 son puro Python (FNC-125) |
 | Recursos | 2 GB de disco libres; 1 GB de RAM | Más RAM o swap para `next build` |
 | Puertos locales | 5001 (backend) y 3000 (frontend) libres, solo en loopback | Solo nginx expone 443 |
 | Salida a Internet | Directa o vía proxy corporativo | Necesaria para `dnf`, `pip` y `npm` durante la instalación |

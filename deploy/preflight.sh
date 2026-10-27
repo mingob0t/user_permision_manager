@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Evaluación previa a la instalación de Nexus en Rocky Linux 8.
+# Evaluación previa a la instalación de Nexus en Rocky/RHEL 8 o 9.
 #
 # No instala ni modifica nada: solo informa de qué hay, qué falta y qué
 # decisiones habrá que tomar. Ejecutarlo antes de install.sh.
@@ -37,6 +37,9 @@ warnings=0
 # Revisión de VAULTWARDEN_* y del bind LDAP (FNC-068).
 # shellcheck source=deploy/secretos.sh
 . "$(dirname "${BASH_SOURCE[0]}")/secretos.sh"
+# Servicio systemd de la BD local (FNC-125).
+# shellcheck source=deploy/servicio_bd.sh
+. "$(dirname "${BASH_SOURCE[0]}")/servicio_bd.sh"
 
 # Color solo en terminal: al redirigir a un fichero o a un pipe, texto plano.
 if [[ -t 1 ]]; then
@@ -70,7 +73,8 @@ if [[ -r /etc/os-release ]]; then
         rocky:8|rhel:8|centos:8|almalinux:8)
             ok "distribución compatible (familia RHEL 8)" ;;
         rocky:9|rhel:9|almalinux:9)
-            warn "RHEL 9: el script sirve, pero Python 3.12 y Node vienen de repos distintos" ;;
+            ok "distribución compatible (familia RHEL 9)"
+            printf "  en el9, Python 3.12 y Node vienen de repos distintos (ver deploy/README.md)\n" ;;
         *)
             warn "distribución no probada; el script asume dnf y familia RHEL" ;;
     esac
@@ -135,7 +139,8 @@ if [[ -n "$PY_BIN" ]]; then
 else
     sys_ver=$(python3 --version 2>&1 || echo 'ausente')
     bad "no hay Python >= 3.${PY_MIN_MINOR} (el del sistema es ${sys_ver})"
-    printf "  opciones en Rocky 8: dnf module enable python311  (o python312)\n"
+    printf "  opciones en Rocky/RHEL 8: dnf module enable python311  (o python312)\n"
+    printf "  en Rocky/RHEL 9: dnf install python3.12 python3.12-devel\n"
 fi
 
 # --- 5. Node -----------------------------------------------------------------
@@ -158,12 +163,11 @@ fi
 
 # --- 6. Cabeceras de compilación --------------------------------------------
 head2 "Dependencias de compilación"
-# cryptography, PyMySQL y ldap3 compilan extensiones si no hay rueda binaria.
+# cryptography, cffi, bcrypt y PyNaCl compilan si no hay rueda binaria.
+# PyMySQL y ldap3 son puro Python (FNC-125): sin mariadb-devel ni openldap-devel.
 for pkg in gcc openssl-devel libffi-devel; do
     rpm -q "$pkg" >/dev/null 2>&1 && ok "$pkg" || warn "$pkg ausente (lo instala el script)"
 done
-rpm -q openldap-devel >/dev/null 2>&1 && ok "openldap-devel" \
-    || warn "openldap-devel ausente (necesario para ldap3 en algunos casos)"
 
 # --- 6b. Salida a Internet ---------------------------------------------------
 head2 "Salida a Internet"
@@ -234,7 +238,7 @@ head2 "Base de datos y Redis"
 if command -v mysql >/dev/null 2>&1; then
     ok "cliente mysql presente"
 else
-    warn "cliente mysql ausente; útil para respaldar la base antes de migrar"
+    warn "cliente mysql ausente; útil para respaldar la base antes de migrar (el instalador intenta instalarlo: paquete mariadb o mysql según el servidor)"
 fi
 
 # Los valores del .env no son de confianza (el script corre como root): host y
@@ -291,6 +295,14 @@ if [[ -f .env ]]; then
     done < <(revisar_vaultwarden .env)
 else
     bad ".env ausente — copiar de .env.example y rellenar credenciales"
+fi
+
+# Las unidades arrancan después de este servicio (install.sh lo detecta igual;
+# --db-service lo fuerza).
+if servicio_bd="$(detectar_servicio_bd)"; then
+    ok "servicio de BD local: $servicio_bd (las unidades arrancarán después)"
+else
+    printf "  sin servicio de BD local (mysqld, mariadb ni mysql): BD remota; las unidades no dependerán de ella\n"
 fi
 
 # --- 8. Puertos --------------------------------------------------------------
