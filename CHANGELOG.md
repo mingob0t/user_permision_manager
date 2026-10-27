@@ -5,6 +5,9 @@
 
 ## [Sin publicar]
 
+### Documentación
+- Retirados `docs/business_rules.md` y `docs/ARCHITECTURE.md` (contradecían el sistema: prohibían `/api/v1` y SSH); README raíz reescrito para el gestor de accesos y `deploy/README.md` corregido (plantillas reales, sin IPs, `SMTP_*` en VARIABLES.md) (FNC-035, 2026-10-27).
+
 ### Corregido
 - Notificaciones: marcar una global como leída ya no la marca para todos los usuarios; la lectura se guarda por usuario en `notification_reads` (migración 0010) y la respuesta de la API mantiene su forma (FNC-031, 2026-10-27).
 

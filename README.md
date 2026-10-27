@@ -1,199 +1,90 @@
-# 🧠 NEXUS - UNIFIED SYSTEM TERMINAL
+# pokemon — gestor de accesos por áreas
 
-NEXUS es una plataforma de gestión centralizada diseñada para el monitoreo y administración de identidades, áreas operativas y plataformas de servicios.
+Portal para gestionar el acceso a plataformas internas agrupadas por **áreas**. Origen: clon de NEXUS (`docs/REQUERIMIENTOS.md`).
 
-## 🚀 Características Principales
-
-*   **Gestión de Áreas y Plataformas**: Control centralizado de departamentos y los sistemas vinculados a ellos.
-*   **Portal de Catálogo**: Vista unificada para que los usuarios finales exploren y marquen sus sistemas favoritos.
-*   **Sistema de Solicitudes**: Flujo de aprobación para el acceso a plataformas restringidas.
-*   **Seguridad de Grado Empresarial**: Sistema de autenticación con soporte LDAP y control de acceso basado en roles (RBAC).
-*   **Sistema de Notificaciones**: Motor de plantillas configurable para alertas por correo electrónico y notificaciones in-app.
-*   **Auditoría Integral**: Registro detallado de cada acción realizada en el sistema.
-
-## 🛠️ Stack Tecnológico
-
-*   **Backend**: Python 3.x, Flask como API JSON (`/api/v1`), modular con Blueprints.
-*   **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS.
-*   **Base de Datos**: SQLAlchemy (Soporte para SQLite y MySQL).
-*   **Autenticación**: Flask-Login, con soporte para LDAP y SSO vía Authelia.
-*   **Entorno**: Soporte nativo para variables `.env`.
-
-Son **dos servicios** tras un reverse proxy: Flask no sirve interfaz, solo
-datos; Next.js no accede a la base de datos, solo consume la API. Ver
-[deploy/README.md](deploy/README.md).
-
-## 📂 Estructura del Proyecto
-
-```text
-/
-├── app/                  # Backend Flask (solo API)
-│   ├── authz.py          # Autorización y alcance multitenant
-│   ├── modules/
-│   │   ├── api/          # API v1: lectura, escritura, admin y auth
-│   │   ├── auth/         # Sesión, LDAP y SSO
-│   │   ├── areas/        # Áreas (tenants)
-│   │   ├── notifications/# SMTP y plantillas
-│   │   ├── audit/        # Auditoría
-│   │   └── settings/     # Configuración del sistema
-│   └── utils/            # Utilidades compartidas
-├── frontend/             # Frontend Next.js
-│   └── src/
-│       ├── app/          # Rutas (App Router)
-│       ├── components/   # Componentes
-│       └── lib/          # Cliente de API y tipos
-├── assets/img/           # Imágenes subidas desde los ajustes
-├── templates/errors/     # Páginas de error de Flask
-├── deploy/               # systemd y Nginx
-└── run.py                # Punto de entrada del backend
-```
-
-## ⚙️ Iniciar los servicios
-
-Son tres procesos independientes: el **backend** (Flask, puerto 5001), el
-**frontend** (Next.js, puerto 3000) y el **worker de aprovisionamiento** (sin
-puerto). El navegador entra siempre por el frontend, que reenvía `/api` al
-backend solo en desarrollo (`npm run dev`); en producción lo enruta nginx.
-
-### Requisitos
-
-*   Python 3.11 o superior, Node 18.18 o superior (se recomienda 22 LTS).
-*   MySQL accesible por nombre de host (si `DB_ENGINE` no es `mysql`, la app usa SQLite local `nexus.db`).
-*   Redis con contraseña (`requirepass`) y escuchando solo en loopback, en la misma máquina (`REDIS_HOST=localhost`, SEC-CFG-08): obligatorio para el worker. Sin Redis la API arranca igual, pero los trabajos de aprovisionamiento esperan.
-
-### 1. Configuración (una sola vez)
-
-```bash
-cp .env.example .env    # completar los valores; .env nunca se versiona
-```
-
-Las variables y su significado están en [docs/configuracion/VARIABLES.md](docs/configuracion/VARIABLES.md).
-
-### 2. Backend (terminal 1)
-
-```bash
-# instalación (una sola vez)
-python3.11 -m venv venv
-venv/bin/pip install -r requirements.txt
-
-# esquema de la BD (Alembic): crea las tablas en una BD nueva o aplica
-# las migraciones pendientes; siempre antes de arrancar la app
-venv/bin/alembic upgrade head
-
-# crear una migración tras cambiar un modelo (revisar el archivo generado)
-# venv/bin/alembic revision --autogenerate -m "descripcion"
-
-# iniciar en desarrollo
-venv/bin/python run.py                     # API en http://localhost:5001
-
-# o iniciar como en producción (sin modo debug)
-venv/bin/gunicorn --workers 4 --bind 127.0.0.1:5001 "run:app"
-```
-
-Comprobar que responde:
-
-```bash
-curl -s localhost:5001/api/v1/auth/context
-```
-
-> ⚠️ `run.py` arranca con `debug=True` y escucha en todas las interfaces. Úsalo
-> solo en tu equipo; en cualquier servidor usa gunicorn (corrección pendiente
-> en la tarea FNC-009).
-
-### 3. Frontend (terminal 2)
-
-```bash
-cd frontend
-
-# instalación (una sola vez)
-npm ci
-
-# iniciar en desarrollo (recarga en caliente)
-npm run dev                                # interfaz en http://localhost:3000
-
-# o compilar e iniciar como en producción
-npm run build
-npm run start
-```
-
-Comprobar que responde:
-
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' localhost:3000/login   # espera 200
-```
-
-Abre `http://localhost:3000` en el navegador. El backend debe estar arriba
-antes de iniciar sesión.
-
-### 4. Worker de aprovisionamiento (terminal 3)
-
-Otorga y revoca accesos en segundo plano (OpenLDAP o conector), con reintentos
-(FNC-049, ADR-003). Necesita Redis local con contraseña y, en el `.env`:
-
-| Variable | Valor en desarrollo |
+| Qué hace | Cómo |
 |---|---|
-| `REDIS_HOST` | `localhost` (Redis solo en loopback, SEC-CFG-08); nunca una IP |
-| `REDIS_PORT` | puerto de Redis (por defecto 6379) |
-| `REDIS_PASS` | la contraseña (`requirepass`) de tu Redis local; **obligatoria** |
+| Catálogo y solicitudes | El usuario pide acceso a una plataforma con nivel `usuario` o `admin` |
+| Aprobaciones | El admin del área aprueba o rechaza (rechazo con motivo) |
+| Aprovisionamiento | Al aprobar, un worker agrega al usuario al grupo de OpenLDAP o ejecuta un conector (API, SSH o BD), con reintentos |
+| Revocación e inventario | Quién tiene qué plataforma, con qué nivel y desde cuándo |
+| Auditoría | Bitácora inmutable con antes/después, visible según el rol |
+| Autenticación | Authelia (SSO por cabeceras), directorio OpenLDAP y cuenta local de emergencia |
+
+Roles: `administrador` (superadmin), `admin_area` (sus áreas) y `usuario`. Detalle: [docs/REQUERIMIENTOS.md](docs/REQUERIMIENTOS.md) §2.
+
+## Estado
+
+> ⚠️ **No exponer el portal** en un entorno accesible antes de cerrar la fase 5 (seguridad).
+
+| Fase | Estado |
+|---|---|
+| 0 — Incorporación | Cerrada |
+| 1 — Lineamientos de seguridad | Cerrada |
+| 2 — Pruebas | Cerrada salvo el CI (FNC-026), que espera el repositorio remoto |
+| 3 — Gestor de accesos | Cerrada (2026-10-26) |
+| 4 — Estándares, modularidad y accesibilidad | Cerrada (2026-10-27) |
+| 5 — Seguridad final | **En pausa** por decisión del dueño (2026-10-27); se retoma cuando él lo indique |
+| 6 — Documentación y operación | En curso |
+
+Detalle y tareas: [ROADMAP](docs/planeacion/ROADMAP.md) y [TABLERO](docs/planeacion/TABLERO.md).
+
+## Arquitectura
+
+| Proceso | Tecnología | Puerto (loopback) | Función |
+|---|---|---|---|
+| Backend | Flask, API JSON `/api/v1` | 5001 | Datos, autorización por área; no sirve interfaz |
+| Frontend | Next.js 15, TypeScript, Tailwind | 3000 | Toda la interfaz; no accede a la BD |
+| Worker | `flask provisioning worker` (RQ sobre Redis) | — | Otorga y revoca accesos en segundo plano |
+
+Ambos servicios van bajo el mismo dominio tras nginx. BD: MySQL (SQLite local si `DB_ENGINE` no es `mysql`), esquema con Alembic. Decisión del stack: [ADR-001](docs/decisiones/ADR-001-stack.md).
+
+## Desarrollo local
+
+Requisitos: Python 3.11 o superior; Node 18.18 o superior (se recomienda 22 LTS); Redis local con `requirepass` solo para el worker.
 
 ```bash
-# desde la raíz del proyecto, con el venv del backend y la BD migrada
-venv/bin/flask --app run:app provisioning worker   # Ctrl+C: termina el intento en curso y sale
+cp .env.example .env                 # completar; .env nunca se versiona
+python3.11 -m venv venv
+venv/bin/pip install -r requirements.txt -r requirements-dev.txt
+venv/bin/alembic upgrade head        # siempre antes de arrancar
+venv/bin/python run.py               # terminal 1: API en localhost:5001
+(cd frontend && npm ci && npm run dev)   # terminal 2: interfaz en localhost:3000
+venv/bin/flask --app run:app provisioning worker   # terminal 3: worker (opcional)
 ```
 
-Redis en otra máquina es una **excepción** que exige TLS hacia Redis, y la app
-todavía no lo soporta: hoy no se admite (ver `deploy/README.md`).
+- `run.py` arranca en modo debug: solo en tu equipo (corrección en FNC-009).
+- Variables y su significado: [VARIABLES.md](docs/configuracion/VARIABLES.md).
+- Entrar sin Authelia: [ENTORNOS.md](docs/operacion/ENTORNOS.md) § «Entrar en local sin Authelia».
+- Más detalle: [backend](docs/backend/README.md) §6 y [frontend](docs/frontend/README.md) §7.
 
-Sin `REDIS_PASS` o sin Redis, el comando sale con código 1 y el motivo. Las
-`PROVISIONING_*` son opcionales (valores por defecto en
-[VARIABLES.md](docs/configuracion/VARIABLES.md)).
+## Pruebas
 
-### 5. En el servidor (systemd)
+| Qué | Comando |
+|---|---|
+| Backend (pytest, sin `.env` ni servicios externos) | `venv/bin/pytest` |
+| Frontend: pruebas (Vitest) | `cd frontend && npm test` |
+| Frontend: tipos y lint | `cd frontend && npm run typecheck && npm run lint` |
+| Frontend: build | `cd frontend && npm run build` |
+| Controles de lineamientos (pre-commit) | `.githooks/pre-commit` (activar con `git config core.hooksPath .githooks`) |
 
-Tras `deploy/install.sh` (ver abajo), los tres procesos quedan como unidades
-systemd llamadas `NOMBRE-backend`, `NOMBRE-frontend` y `NOMBRE-worker`
-(`NOMBRE` es el valor de `--name`, por defecto `nexus`):
+## Despliegue
 
-```bash
-sudo systemctl start   nexus-backend nexus-frontend nexus-worker    # iniciar
-sudo systemctl stop    nexus-backend nexus-frontend nexus-worker    # detener
-sudo systemctl restart nexus-backend nexus-frontend nexus-worker    # reiniciar
-systemctl status       nexus-backend nexus-frontend nexus-worker    # estado
-journalctl -u nexus-backend -f                          # logs del backend
-journalctl -u nexus-frontend -f                         # logs del frontend
-journalctl -u nexus-worker -f                           # logs del worker
-```
+Rocky Linux 8 con systemd y nginx: `deploy/preflight.sh` y `deploy/install.sh`. Guía: [deploy/README.md](deploy/README.md); entornos: [ENTORNOS.md](docs/operacion/ENTORNOS.md).
 
-El frontend depende del backend: systemd arranca primero `nexus-backend`. El
-worker arranca después de la red, MySQL y Redis; si agota sus reinicios queda
-en `failed` (`sudo systemctl reset-failed nexus-worker && sudo systemctl start nexus-worker`).
+## Documentación
 
-## 🚀 Instalación en servidor (Rocky Linux 8)
-
-```bash
-./deploy/preflight.sh          # evalúa el sistema, no modifica nada
-sudo ./deploy/install.sh --domain nexus.example.com
-```
-
-`preflight.sh` comprueba distribución, recursos, Python, Node, cabeceras de
-compilación, conectividad con la base de datos y Redis (obligatorio, con
-`REDIS_PASS`), puertos libres, nginx, SELinux y firewalld. Sale con código 1
-si hay algo que resolver antes.
-
-`install.sh` instala los paquetes, crea el usuario de servicio, copia el
-proyecto, monta el venv, construye el frontend, registra las tres unidades
-systemd (backend, frontend y worker) y configura nginx. Es idempotente.
-Opciones: `--prefix`, `--user`, `--domain`, `--skip-packages`.
-
-Detalles y notas de seguridad en [deploy/README.md](deploy/README.md).
-
-## 📚 Documentación Adicional
-
-*   [Reglas de Negocio](docs/business_rules.md): Lineamientos operativos y de diseño.
-*   [Arquitectura Técnica](docs/ARCHITECTURE.md): Detalles sobre el flujo de datos y base de datos.
-*   [Despliegue](deploy/README.md): Servicios systemd y reverse proxy.
-
-## 🚧 Desarrollos Pendientes (Roadmap)
-
-*   [ ] **Activación del Centro de Ayuda**: Habilitación visual de la documentación integrada para usuarios y administradores.
-
+| Tema | Documento |
+|---|---|
+| Índice de `docs/` | [docs/README.md](docs/README.md) |
+| Requerimientos, roles y funcionalidades | [docs/REQUERIMIENTOS.md](docs/REQUERIMIENTOS.md) |
+| Backend: arquitectura, autorización, modelo de datos, endpoints, migraciones | [docs/backend/README.md](docs/backend/README.md) |
+| Frontend: pantallas, menú por rol, tokens y tema | [docs/frontend/README.md](docs/frontend/README.md) |
+| Contratos de la API | [docs/contratos/](docs/contratos/README.md) |
+| Variables y su historial | [docs/configuracion/](docs/configuracion/VARIABLES.md) |
+| Entornos, secretos, respaldos, releases, retención | [docs/operacion/](docs/operacion/ENTORNOS.md) |
+| Seguridad | [docs/seguridad/](docs/seguridad/README.md) |
+| Decisiones (ADR) | [docs/decisiones/](docs/decisiones/README.md) |
+| Estándares y reutilización | [docs/estandarizacion/](docs/estandarizacion/) |
+| Despliegue | [deploy/README.md](deploy/README.md) |
+| Cambios | [CHANGELOG.md](CHANGELOG.md) |

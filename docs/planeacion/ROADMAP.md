@@ -27,9 +27,9 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 8. [x] Web, desde el paso 2 con datos simulados: FNC-069 Cliente · FNC-071 Refresco · FNC-070 Navegación
 9. [x] Pantallas, tras su backend: DIS-013 Catálogo · DIS-014 Mis solicitudes · DIS-015 Aprobaciones · DIS-016 Áreas · DIS-017 Plataformas · DIS-018 Accesos de usuario → DIS-019 Alta y elevación · DIS-020 Auditoría · DIS-021 Inventario · DIS-022 Conectores · DIS-023 Directorio · DIS-024 Inicio
 
-## Fase 4 — Estándares, modularidad y accesibilidad
-- [ ] FNC-027 a FNC-034, DIS-001 a DIS-012
-- [ ] Propuestas de auditorías de fase 3: DIS-030, DIS-031, DIS-032, DIS-033, DIS-035, DIS-036, DIS-037, DIS-038, DIS-039, DIS-040, DIS-041, DIS-042
+## Fase 4 — Estándares, modularidad y accesibilidad ✅ (cerrada 2026-10-27; DIS-053 queda en Propuesta, pendiente de decisión del dueño)
+- [x] FNC-027 a FNC-034, DIS-001 a DIS-012
+- [x] Propuestas de auditorías de fase 3: DIS-030, DIS-031, DIS-032, DIS-033, DIS-035, DIS-036, DIS-037, DIS-038, DIS-039, DIS-040, DIS-041, DIS-042
 
 ## Fase 5 — Seguridad final
 
@@ -39,5 +39,7 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 - [ ] FNC-120 (lista blanca estricta de campos; movida desde la fase 4 el 2026-10-27)
 - [ ] Propuestas de auditorías de fase 3: FNC-075, FNC-078, FNC-079, FNC-083, FNC-084, FNC-085, FNC-086, FNC-087, FNC-088, FNC-089, FNC-096, FNC-106, FNC-100, FNC-107, FNC-110, FNC-115, FNC-116
 
-## Fase 6 — Documentación y operación
-- [ ] FNC-035
+## Fase 6 — Documentación y operación (en curso desde 2026-10-27)
+- [x] FNC-035
+- [ ] FNC-073
+- [ ] FNC-124

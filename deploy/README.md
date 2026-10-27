@@ -4,8 +4,8 @@ Dos servicios tras un reverse proxy y un worker en segundo plano:
 
 | Servicio | Escucha | Sirve |
 |---|---|---|
-| `<nombre>-backend` (Flask/Gunicorn) | 127.0.0.1:5001 | API `/api/v1` |
-| `<nombre>-frontend` (Next.js) | 127.0.0.1:3000 | La interfaz |
+| `<nombre>-backend` (Flask/Gunicorn) | loopback:5001 | API `/api/v1` |
+| `<nombre>-frontend` (Next.js) | loopback:3000 | La interfaz |
 | `<nombre>-worker` (`flask provisioning worker`, RQ) | no escucha | Otorgar y revocar accesos con reintentos (FNC-049, ADR-003) |
 
 `<nombre>` lo define `--name` (por defecto `nexus`).
@@ -95,7 +95,7 @@ la instalación fallará al descargar paquetes:
 ```bash
 PROXY_URL=http://proxy.empresa.com:3128 ./deploy/preflight.sh
 sudo ./deploy/install.sh --proxy http://proxy.empresa.com:3128 \
-                        --no-proxy localhost,127.0.0.1,10.0.0.0/8
+                        --no-proxy localhost,.empresa.com
 ```
 
 Cada herramienta lee el proxy de un sitio distinto, y el script cubre los tres:
@@ -190,22 +190,22 @@ sudo systemctl reset-failed nexus-worker && sudo systemctl start nexus-worker
 Reversión: `sudo systemctl disable --now nexus-worker` (los trabajos quedan en
 la BD y se retoman al volver a arrancarlo).
 
-### Servicios
+### Servicios y nginx
+
+En `deploy/` solo hay **plantillas**; `install.sh` las rellena y las instala. A mano, sustituir los marcadores `@...@` (por ejemplo `@APP_NAME@`, `@PREFIX@`) con los mismos valores que usaría `install.sh`:
+
+| Plantilla | Destino |
+|---|---|
+| `backend.service.tmpl` | `/etc/systemd/system/<nombre>-backend.service` |
+| `frontend.service.tmpl` | `/etc/systemd/system/<nombre>-frontend.service` |
+| `worker.service.tmpl` | `/etc/systemd/system/<nombre>-worker.service` |
+| `nginx.conf.tmpl` | `/etc/nginx/conf.d/<nombre>.conf` (rellenar `server_name` y certificados) |
 
 ```bash
-sudo cp deploy/nexus-*.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now nexus-backend nexus-frontend nexus-worker
-```
-
-### Nginx
-
-```bash
-sudo cp deploy/nginx-nexus.conf /etc/nginx/conf.d/
 sudo nginx -t && sudo systemctl reload nginx
 ```
-
-Rellenar `server_name` y las rutas de los certificados.
 
 ## Migraciones
 
@@ -228,17 +228,9 @@ Dos formas de configurarlo, y una variable que decide cuál manda:
 Forzar el entorno sirve para fijar el servidor de correo por despliegue: nadie
 puede cambiarlo desde la interfaz, ni siquiera un administrador global.
 
-```ini
-SMTP_FORCE_ENV=true
-SMTP_SERVER=smtp.empresa.com
-SMTP_PORT=587
-SMTP_ENCRYPTION=starttls      # starttls | ssl | none
-SMTP_AUTH=true                # si se omite, se asume true cuando hay usuario y clave
-SMTP_USER=servicio@empresa.com
-SMTP_PASSWORD=...
-SMTP_SENDER_NAME=Nexus
-SMTP_SENDER_EMAIL=noreply@empresa.com   # remitente visible; por defecto, SMTP_USER
-```
+Las `SMTP_*` (servidor, puerto, cifrado, usuario, remitente) y sus valores por
+defecto están en [`docs/configuracion/VARIABLES.md`](../docs/configuracion/VARIABLES.md);
+`SMTP_PASSWORD` es secreto (Vaultwarden en staging y producción).
 
 Con `SMTP_FORCE_ENV=true` y `SMTP_SERVER` vacío no se envía nada y la interfaz
 lo advierte: se prefiere fallar de forma visible a enviar por un servidor
@@ -254,6 +246,9 @@ distinto del previsto.
 - Prueba: `pytest tests/deploy/test_secretos_sh.py` (`.env` sintéticos).
 
 ## Seguridad
+
+> El portal **no se expone** en un entorno accesible antes de cerrar la fase 5
+> (seguridad), hoy en pausa por decisión del dueño ([ROADMAP](../docs/planeacion/ROADMAP.md)).
 
 Los puertos de ambos servicios deben escuchar **solo en loopback**. El backend
 deduce la identidad SSO de las cabeceras `Remote-*`, y solo las acepta si la
