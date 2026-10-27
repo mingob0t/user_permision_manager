@@ -128,6 +128,8 @@ export const PARES: ParContraste[] = [
   // (`--color-panel-fill`, fondo real del modal) y falla 3:1 en los 7 temas (1,42–2,02:1, medido por
   // auditor-accesibilidad): es de `.nexus-checkbox` (compartido) y lo corrige DIS-039.
   { id: 'checkbox-marcada/panel', texto: '--color-primary', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
+  // DIS-009: la marca ✓ de la casilla marcada era `white`; ahora `--color-on-primary` sobre `--color-primary` (no textual, 3:1).
+  { id: 'checkbox-marca/relleno', texto: '--color-on-primary', fondo: '--color-primary', minimo: MIN_NO_TEXTO },
   // DIS-022: conectores y ejecuciones. Insignias de estado de ejecución y de intento (en `Card` y en
   // `.nx-modal-glass`) y de la credencial, sobre `--color-panel-fill`. El resto (filas, avisos
   // `success-text`/`error-text` en `Card`, pistas, botones y anillos de foco) reutiliza pares ya medidos.

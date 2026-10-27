@@ -12,6 +12,7 @@ import { api } from '@/lib/api';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import { useAsync } from '@/lib/use-async';
 import type { Platform, PlatformWarning } from '@/lib/types';
+import { variablesCss } from '@/lib/variables-css';
 import { ACCION_FILA, ACCION_FILA_PELIGRO } from './acciones-fila';
 import { rutaHistorialPlataforma } from './audit/audit-routes';
 import { Button, ConfirmDialog } from './form';
@@ -176,11 +177,8 @@ function PlatformAdminContent() {
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <span
-                          className="grid h-7 w-7 shrink-0 place-items-center rounded text-xs font-semibold"
-                          style={{
-                            background: platform.bg_color,
-                            color: platform.text_color,
-                          }}
+                          className="nx-chip-solid grid h-7 w-7 shrink-0 place-items-center rounded text-xs font-semibold"
+                          style={variablesCss({ '--chip-bg': platform.bg_color, '--chip-fg': platform.text_color })}
                           aria-hidden
                         >
                           {platform.name.slice(0, 2).toUpperCase()}

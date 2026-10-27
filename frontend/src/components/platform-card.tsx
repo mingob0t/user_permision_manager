@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Platform } from '@/lib/types';
+import { variablesCss } from '@/lib/variables-css';
 import { Badge } from './ui';
 
 export function PlatformCard({
@@ -51,8 +52,8 @@ export function PlatformCard({
     <>
       <div className="flex items-start justify-between gap-3">
         <span
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-semibold"
-          style={{ background: platform.bg_color, color: platform.text_color }}
+          className="nx-chip-solid grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-semibold"
+          style={variablesCss({ '--chip-bg': platform.bg_color, '--chip-fg': platform.text_color })}
           aria-hidden
         >
           {platform.name.slice(0, 2).toUpperCase()}
@@ -83,11 +84,8 @@ export function PlatformCard({
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {platform.area_name ? (
           <span
-            className="inline-flex items-center rounded-full px-2 py-0.5 text-xs"
-            style={{
-              background: `${platform.area_color}22`,
-              color: platform.area_color,
-            }}
+            className="nx-chip-tint inline-flex items-center rounded-full px-2 py-0.5 text-xs"
+            style={variablesCss({ '--chip-color': platform.area_color })}
           >
             {platform.area_name}
           </span>
