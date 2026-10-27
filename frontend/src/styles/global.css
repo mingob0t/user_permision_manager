@@ -1,3 +1,9 @@
+html, body {
+    color: var(--color-body-text);
+    margin: 0;
+    padding: 0;
+}
+
 html {
     background-color: var(--color-body-bg);
     overflow: hidden;
@@ -54,3 +60,11 @@ input:-webkit-autofill:active{
     -webkit-text-fill-color: var(--color-input-text) !important;
     transition: background-color 5000s ease-in-out 0s;
 }
+
+/* FNC-032: `color-scheme` por tema, para que los controles nativos (lista del
+   `select`, barras) coincidan con él. Va aquí y no en `tokens.css`, que solo
+   declara variables (DIS-047). Sin clase de tema, `light dark` sigue la
+   preferencia del sistema (igual que los tokens). */
+:root { color-scheme: light dark; }
+html.light, html.theme-emerald-light, html.theme-rose-light { color-scheme: light; }
+html.dark, html.theme-obsidian-dark, html.theme-violet-dark { color-scheme: dark; }

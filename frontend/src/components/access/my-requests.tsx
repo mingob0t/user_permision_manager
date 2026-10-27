@@ -5,30 +5,34 @@
  * nivel, fechas, motivo de rechazo y estado del acceso tras aprobarse.
  *
  * - Paginada en el servidor; el filtro por estado vuelve a la página 1.
- * - Refresco con `usePolling` y el intervalo de la preferencia del usuario.
+ * - Refresco con `usePolling` y el intervalo de la preferencia del usuario, solo
+ *   con una solicitud `pendiente` o un acceso transitorio en la página (DIS-033).
+ * - Anuncia a lectores de pantalla solo los cambios de estado entre respuestas (DIS-050).
  * - Tabla en escritorio y lista en móvil con el mismo marcado (`dl` por fila).
  */
 
 import { useState } from 'react';
 import { requestsApi } from '@/lib/access/requests';
 import type { AccessRequest, RequestStatus } from '@/lib/access/types';
+import { useCambiosDeEstado } from '@/lib/use-cambios-de-estado';
 import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
+import { RegionDeAnuncios } from '../region-de-anuncios';
 import { useSession } from '../session-provider';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
-import { AccessStatusBadge, NIVELES } from './access-status-badge';
+import { AccessStatusBadge, ESTADOS as ESTADOS_ACCESO, NIVELES } from './access-status-badge';
 import { formatearFecha } from './fecha';
 import { ListPager } from './list-pager';
 import { listLoadError } from './request-errors';
 import { ETIQUETA_CELDA, ResponsiveList, ResponsiveRow } from './responsive-list';
-import { ESTADOS_SOLICITUD, RequestStatusBadge } from './request-status-badge';
+import { ESTADOS_SOLICITUD, RequestStatusBadge, hayTransitoriosEnSolicitudes } from './request-status-badge';
 
 const NOMBRE_LISTA = 'tus solicitudes';
 
 /** Columnas en escritorio: plataforma, nivel, estado, fechas. */
 const COLUMNAS = 'md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,2fr)]';
 
-const ESTADOS = Object.keys(ESTADOS_SOLICITUD) as RequestStatus[];
+export const ESTADOS = Object.keys(ESTADOS_SOLICITUD) as RequestStatus[];
 
 function Fila({ request }: { request: AccessRequest }) {
   const rechazo = request.status === 'rechazada' ? request.rejection_reason : null;
@@ -83,22 +87,44 @@ function Fila({ request }: { request: AccessRequest }) {
   );
 }
 
-export function MyRequests() {
+/** `estadoInicial`: filtro que llegó por la URL (DIS-036). */
+export function MyRequests({ estadoInicial }: { estadoInicial?: RequestStatus }) {
   const { session } = useSession();
-  const [status, setStatus] = useState<RequestStatus | ''>('');
+  const [status, setStatus] = useState<RequestStatus | ''>(estadoInicial ?? '');
   const [page, setPage] = useState(1);
 
+  const [transitorios, setTransitorios] = useState(true);
+
   const lista = usePolling(
-    () => requestsApi.mine({ status: status || undefined, page }).catch((err: unknown) => {
-      throw listLoadError(err, NOMBRE_LISTA);
-    }),
-    { intervalSeconds: session?.preferences.refresh_interval, deps: [status, page] },
+    () => requestsApi.mine({ status: status || undefined, page })
+      .then((r) => {
+        setTransitorios(hayTransitoriosEnSolicitudes(r.items));
+        return r;
+      })
+      .catch((err: unknown) => {
+        throw listLoadError(err, NOMBRE_LISTA);
+      }),
+    { intervalSeconds: session?.preferences.refresh_interval, deps: [status, page], activo: transitorios },
   );
 
   const data = lista.data;
 
+  const anuncio = useCambiosDeEstado(data?.items, `${status}:${page}`, (r) => [
+    { clave: r.status, texto: `Solicitud de ${r.platform.name}: ${ESTADOS_SOLICITUD[r.status].texto}` },
+    {
+      clave: r.access?.status ?? '',
+      texto: r.access ? `Acceso a ${r.platform.name}: ${ESTADOS_ACCESO[r.access.status].texto}` : '',
+    },
+  ], {
+    total: data?.total ?? 0,
+    salida: status
+      ? (r) => `Solicitud de ${r.platform.name} ya no está en “${ESTADOS_SOLICITUD[status].texto}”`
+      : undefined,
+  });
+
   return (
     <div className="space-y-4">
+      <RegionDeAnuncios mensaje={anuncio} />
       <Select
         value={status}
         onChange={(event) => {

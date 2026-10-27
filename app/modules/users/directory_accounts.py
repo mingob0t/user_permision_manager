@@ -29,7 +29,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app import db
 from app.authz import ROLE_USER, is_area_admin, managed_area_ids
-from app.modules.api.crud import RESERVED_NAMES
+from app.modules.users.roles import RESERVED_NAMES
 from app.modules.api.helpers import NO_ENCONTRADO, is_id_list
 from app.modules.audit.events import Evento
 from app.modules.audit.services import add_audit_log

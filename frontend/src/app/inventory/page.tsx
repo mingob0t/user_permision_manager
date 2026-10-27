@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { Inventory } from '@/components/access/inventory';
 import { RequireRole } from '@/components/require-role';
+import { Spinner } from '@/components/ui';
 
 /**
  * Inventario de permisos (DIS-021): admin de área (sus áreas) y superadmin
@@ -18,7 +20,9 @@ export default function Page() {
               áreas (todas, si eres superadmin).
             </p>
           </div>
-          <Inventory />
+          <Suspense fallback={<Spinner label="Cargando…" />}>
+            <Inventory />
+          </Suspense>
         </div>
       </RequireRole>
     </AppShell>

@@ -240,6 +240,6 @@ describe('UsersList: acciones de rol', () => {
     fireEvent.click(modal.getByText('Hacer admin'));
     const aviso = await screen.findByText('Ana Ruiz ahora es admin de área de: Finanzas.');
     await waitFor(() => expect(document.activeElement).toBe(aviso.closest('[role="status"]')));
-    expect(api.users).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(api.users).toHaveBeenCalledTimes(2));
   });
 });

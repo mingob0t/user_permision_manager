@@ -75,6 +75,17 @@ function destinoAlterno(): HTMLElement[] {
   ].filter((el): el is HTMLElement => el !== null);
 }
 
+/**
+ * DIS-049: regiones fuera del contenedor que forman parte del ciclo de Tab de
+ * la trampa (los avisos del toast, en un portal aparte). Se marcan con este
+ * atributo.
+ */
+export const REGION_FUERA_DE_TRAMPA = '[data-fuera-de-trampa]';
+
+function extras(): HTMLElement[] {
+  return Array.from(document.querySelectorAll<HTMLElement>(REGION_FUERA_DE_TRAMPA)).flatMap(enfocables);
+}
+
 // Trampas activas, la última encima.
 const pila: symbol[] = [];
 
@@ -126,14 +137,26 @@ export function useFocusTrap(
         return;
       }
       if (event.key !== 'Tab') return;
-      const items = enfocables(contenedor);
+      const propios = enfocables(contenedor);
+      const regiones = extras();
+      const items = [...propios, ...regiones];
       if (items.length === 0) {
         event.preventDefault();
         contenedor.focus();
         return;
       }
       const activoAhora = document.activeElement;
-      const fuera = !contenedor.contains(activoAhora) || activoAhora === contenedor;
+      const fuera =
+        activoAhora === contenedor ||
+        (!contenedor.contains(activoAhora) && !items.includes(activoAhora as HTMLElement));
+      const indice = items.indexOf(activoAhora as HTMLElement);
+      // Con regiones externas el orden del DOM no coincide con el del ciclo: se recorre a mano.
+      if (regiones.length > 0 && indice >= 0 && !fuera) {
+        event.preventDefault();
+        const paso = event.shiftKey ? -1 : 1;
+        enfocarPrimero([items[(indice + paso + items.length) % items.length]]);
+        return;
+      }
       if (event.shiftKey && (activoAhora === items[0] || fuera)) {
         event.preventDefault();
         enfocarPrimero([...items].reverse());
@@ -143,12 +166,33 @@ export function useFocusTrap(
       }
     }
 
+    // DIS-049: si el aviso con el foco se cierra o desaparece, el foco cae a `body`: vuelve al diálogo.
+    let focoEnRegion = false;
+    function onFocusIn(event: FocusEvent) {
+      focoEnRegion = event.target instanceof Element && event.target.closest(REGION_FUERA_DE_TRAMPA) !== null;
+    }
+    const observador = new MutationObserver(() => {
+      if (!focoEnRegion || pila[pila.length - 1] !== id || !contenedor) return;
+      const actual = document.activeElement;
+      if (actual && actual !== document.body) return;
+      focoEnRegion = false;
+      enfocarPrimero([...enfocables(contenedor), contenedor]);
+    });
+    observador.observe(document.body, { childList: true, subtree: true });
+
     document.addEventListener('keydown', onKey);
+    document.addEventListener('focusin', onFocusIn);
     return () => {
+      observador.disconnect();
+      document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('keydown', onKey);
       pila.splice(pila.indexOf(id), 1);
       const actual = document.activeElement;
-      const libre = !actual || actual === document.body || contenedor.contains(actual);
+      const libre =
+        !actual ||
+        actual === document.body ||
+        contenedor.contains(actual) ||
+        actual.closest(REGION_FUERA_DE_TRAMPA) !== null;
       if (!libre) return;
       enfocarPrimero([destino?.isConnected ? destino : null, ...destinoAlterno()]);
     };
