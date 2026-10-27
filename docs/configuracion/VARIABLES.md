@@ -101,7 +101,7 @@
 
 | Variable | Propósito | Tipo | Por defecto en código | Ejemplo | Obligatoria | Sensible | En `.env.example` | Dónde se usa | Alta | Estado |
 |---|---|---|---|---|---|---|---|---|---|---|
-| `BACKEND_URL` | URL del backend para los `rewrites` de dev y las llamadas desde el servidor (SSR) | URL | `lib/api.ts`: `http://localhost:5001` (constante `BACKEND_URL_POR_DEFECTO`, FNC-069); `next.config.ts`: IP de loopback (deuda, FNC-005) | `http://localhost:5001` | No | No | Sí | `frontend/next.config.ts`, `frontend/src/lib/api.ts` | FNC-001, 2026-10-13 | Vigente |
+| `BACKEND_URL` | URL del backend para el rewrite de `/api` en desarrollo y las llamadas desde el servidor (SSR) | URL http(s) con nombre de host; **nunca una IP** (`next.config.ts` falla al cargar si lo es) | `http://localhost:5001` en `rewrites-dev.ts` y en `lib/api.ts` (constante `BACKEND_URL_POR_DEFECTO`) | `http://localhost:5001` | No | No | Sí | `frontend/rewrites-dev.ts`, `frontend/next.config.ts`, `frontend/src/lib/api.ts` | FNC-001, 2026-10-13; FNC-005, 2026-10-26 | Vigente |
 | `NEXT_PUBLIC_ACCESS_MOCKS` | `1` = el cliente del gestor de accesos (`lib/access/`) devuelve los datos simulados de los contratos; se ignora con `NODE_ENV=production` | `1` o vacío | vacío (apagado) | `1` | No | No | Sí | `frontend/src/lib/access/client.ts` | FNC-069, 2026-10-19 | Vigente (temporal: se retira al integrar el backend) |
 | `NODE_ENV` | Modo de ejecución | `production` | — | `production` | Sí (prod) | No | No (lo fija la unidad systemd) | `deploy/frontend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |
 | `PORT` | Puerto de `server.js` | entero | 3000 | `3000` | Sí (prod) | No | No (unidad systemd) | `deploy/frontend.service.tmpl` | FNC-001, 2026-10-13 | Vigente |

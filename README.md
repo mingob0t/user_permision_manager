@@ -52,8 +52,8 @@ datos; Next.js no accede a la base de datos, solo consume la API. Ver
 
 Son tres procesos independientes: el **backend** (Flask, puerto 5001), el
 **frontend** (Next.js, puerto 3000) y el **worker de aprovisionamiento** (sin
-puerto). El navegador entra siempre por el frontend, que reenvía `/api` y
-`/auth` al backend.
+puerto). El navegador entra siempre por el frontend, que reenvía `/api` al
+backend solo en desarrollo (`npm run dev`); en producción lo enruta nginx.
 
 ### Requisitos
 

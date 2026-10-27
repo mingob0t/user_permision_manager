@@ -6,7 +6,7 @@
 | FNC-002 | Login de directorio seguro: sin purga de cuentas, filtro LDAP escapado y mensajes genéricos | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — | Absorbida por FNC-042 (En revisión) |
 | FNC-003 | Eliminar credenciales por defecto y crear el primer superadmin con un comando explícito | backend | 5 | auth | Crítica | Propuesta | 2026-10-13 | | | — | SEG-02 cerrado por FNC-077 (En revisión); queda SEG-03 |
 | FNC-004 | nginx: limpiar cabeceras Remote-* en todas las location, bloquear /api y /auth sin distinguir mayúsculas, TLS y cabeceras de seguridad | infra | 5 | deploy | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-005 y FNC-006 cierra SEG-04 |
-| FNC-005 | Next.js: rewrites hacia la API solo en desarrollo y sin IP por defecto en BACKEND_URL | web | 5 | config | Crítica | Propuesta | 2026-10-13 | | | — | Junto con FNC-004 y FNC-006 |
+| FNC-005 | Next.js: rewrites hacia la API solo en desarrollo y sin IP por defecto en BACKEND_URL | web | 5 | config | Crítica | Hecha | 2026-10-13 | 2026-10-26 | | `fnc/FNC-005-118-rewrites-next` (commit local, sin push) | Junto con FNC-004 y FNC-006 |
 | FNC-006 | SSO: autenticar al proxy con un secreto compartido además de la IP | backend | 5 | auth | Alta | Propuesta | 2026-10-13 | | | — | Junto con FNC-004 y FNC-005 |
 | FNC-007 | Alcance del admin de área sobre cuentas: sin gestionar otros admins ni contraseñas no locales; solo el superadmin asigna admin_area | backend | 5 | authz | Alta | Propuesta | 2026-10-13 | | | — | Absorbida por FNC-044 (En revisión): SEG-05 y SEG-09 corregidos |
 | FNC-008 | CSRF en la API y endurecimiento de la sesión (SameSite, Secure, remember, revocación al desactivar) | backend | 5 | auth | Alta | Propuesta | 2026-10-13 | | | — |  |
@@ -143,4 +143,4 @@
 | FNC-115 | Conectores: mover `_valores_seguros` y `_con_control` a un módulo común | backend | 5 | conectores | Baja | Propuesta | 2026-10-21 | | | — | Origen: FNC-053 |
 | FNC-116 | Conector `bd`: probar contra MySQL y PostgreSQL reales con TLS | backend | 5 | conectores | Media | Propuesta | 2026-10-21 | | | — | Origen: FNC-053; depende de P9 |
 | FNC-117 | Cierre de la fase 3: plan completo y propuestas de auditoría reasignadas a fases 4 y 5 | infra | 3 | planeacion | Media | Hecha | 2026-10-26 | 2026-10-26 | | `fnc/FNC-117-cierre-fase-3` | Orquestador (modo autónomo) |
-| FNC-118 | Web: retirar el `rewrite` de `/auth/:path*` en `next.config.ts` (el backend ya no tiene `/auth`) | web | 4 | frontend | Baja | Propuesta | 2026-10-26 | | | — | Origen: FNC-027 |
+| FNC-118 | Web: retirar el `rewrite` de `/auth/:path*` en `next.config.ts` (el backend ya no tiene `/auth`) | web | 4 | frontend | Baja | Hecha | 2026-10-26 | 2026-10-26 | | `fnc/FNC-005-118-rewrites-next` (commit local, sin push) | Origen: FNC-027 |
