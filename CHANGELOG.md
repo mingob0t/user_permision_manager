@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Despliegue: `install.sh --force` (alias `--reinstall`) limpia una instalación previa del mismo nombre (unidades, `.conf` de nginx, `venv`, `node_modules`, `.next` y registros) tras mostrar la lista y confirmar escribiendo el nombre en una terminal; nunca toca `.env`, código, BD ni datos locales (FNC-129, 2026-10-27).
 - Despliegue: `install.sh --web-port`/`--api-port` (también `WEB_PORT`/`API_PORT` por entorno o en `<prefijo>/.env`; por defecto 3000 y 5001, 1024-65535, distintos) para servidores con el 3000 ocupado (p. ej. Grafana); nginx, unidades y `preflight.sh` usan el mismo valor (FNC-127, 2026-10-27).
 
 ### Documentación
@@ -19,6 +20,8 @@
 - Notificaciones: marcar una global como leída ya no la marca para todos los usuarios; la lectura se guarda por usuario en `notification_reads` (migración 0010) y la respuesta de la API mantiene su forma (FNC-031, 2026-10-27).
 
 ### Cambiado
+- Despliegue (seguridad): el código de la carpeta de instalación queda de root sin escritura de grupo ni otros y `install.sh` se niega a seguir si no es así (antes la cuenta de servicio era dueña de todo, incluido el propio instalador, que luego corría como root); `venv`, `node_modules` y `.next` los crea root; la cuenta solo posee sus datos y registros; `.env` `root:<grupo>` 640. `--force` revalida cada ruta justo antes de borrar y exige el logdir bajo `/var/log/` (FNC-129, SEG-1 a SEG-3, 2026-10-27).
+- Despliegue: `install.sh` instala en sitio, sobre la carpeta donde se clonó el código, sin copiar a otro prefijo; `--prefix` deja de existir (salida 2) y el nombre por defecto es el de la carpeta (antes `nexus`, que llevaba a `/opt/nexus`); `preflight.sh` igual. `copia_proyecto.sh` retirado; la protección del `.env` pasa a `env_seguro.sh` (FNC-129, 2026-10-27).
 - Backend: `_trusted_proxy` pasa de `api/auth.py` a `app/utils/proxy_confiable.py` como `es_proxy_confiable`; la usan el SSO y la IP de auditoría, sin cambio de comportamiento (FNC-076, 2026-10-27).
 - CSS depurado: `components.css` y `global.css` pierden 142 clases sin uso (DataTables, KPI, monitoreo, tour, toast, select propio y modal duplicado), reglas por id sin elemento y `@keyframes` huérfanos (1892 líneas netas, CSS generado de 80 449 a 45 208 bytes); sin colores literales: se borró el estilo del deslizador (sin uso), `.nexus-checkbox` queda en una sola regla y su marca usa `--color-on-primary`. Pruebas contra clases sin uso y colores literales en los CSS (DIS-009, 2026-10-27).
 - Sin estilos inline: el color de plataformas y áreas llega como variable CSS (`variablesCss`, `.nx-chip-solid`, `.nx-chip-tint`) y los botones de las páginas de error usan `text-on-primary`; una prueba impide estilos en línea nuevos (DIS-012, 2026-10-27).

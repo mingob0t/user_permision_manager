@@ -111,11 +111,11 @@
 
 ## Variables de los scripts de despliegue
 
-Se pasan al invocar `deploy/preflight.sh` o `deploy/install.sh`; no van en `.env`, salvo `WEB_PORT` y `API_PORT`, que también se leen del `.env` del prefijo (FNC-127).
+Se pasan al invocar `deploy/preflight.sh` o `deploy/install.sh`; no van en `.env`, salvo `WEB_PORT` y `API_PORT`, que también se leen del `.env` del prefijo (FNC-127). El prefijo es la carpeta donde se clonó el código (FNC-129).
 
 | Variable | Script | Propósito | Por defecto | Sensible |
 |---|---|---|---|---|
-| `APP_NAME` | preflight | Nombre del despliegue (equivale a `--name`) | `nexus` | No |
+| `APP_NAME` | preflight | Nombre del despliegue (equivale a `--name` de install). Se valida con `NOMBRE_DESPLIEGUE_REGEX` | nombre de la carpeta del código (FNC-129; antes `nexus`) | No |
 | `API_PORT` | ambos | Puerto de loopback del backend (Gunicorn `--bind`, upstream de nginx, `BACKEND_URL` del SSR); equivale a `--api-port`. Precedencia: opción > entorno > `<prefijo>/.env` (comentada en `.env.example`) > defecto. Entero 1024-65535, distinto de `WEB_PORT`. FNC-127 | `5001` (`API_PORT_POR_DEFECTO`, `deploy/puertos.sh`) | No |
 | `WEB_PORT` | ambos | Puerto de loopback del frontend (`PORT` de Next, upstream de nginx); equivale a `--web-port`. Misma precedencia y validación. FNC-127 | `3000` (`WEB_PORT_POR_DEFECTO`, `deploy/puertos.sh`) | No |
 | `SVC_USER` | preflight | Cuenta de servicio a comprobar | quien invoca sudo | No |
@@ -130,7 +130,7 @@ No son configuración del proyecto ni van en `.env`/`.env.example`.
 
 | Variable | Dónde | Propósito | Alta |
 |---|---|---|---|
-| `PATH` | `tests/deploy/test_servicio_bd_sh.py` | Anteponer un `systemctl` falso al PATH del sistema (el resto de herramientas siguen siendo las reales) | FNC-125, 2026-10-27 |
+| `PATH` | `tests/deploy/test_servicio_bd_sh.py`, `tests/deploy/test_reinstalar_sh.py` (FNC-129) | Anteponer un `systemctl` falso al PATH del sistema (el resto de herramientas siguen siendo las reales) | FNC-125, 2026-10-27 |
 
 ## Plantilla anterior retirada
 
@@ -146,7 +146,13 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `NODE_MIN_MINOR` | Menor mínima dentro de `NODE_MAJOR` | `13` | versión menor | `deploy/preflight.sh`, `deploy/install.sh` | FNC-073, 2026-10-27 | Vigente |
 | `NODE_NEXT_MAJOR` | Primera mayor posterior aceptada completa (excluye el 23) | `24` | versión mayor | `deploy/preflight.sh`, `deploy/install.sh` | FNC-073, 2026-10-27 | Vigente |
 | `SERVICIOS_BD` | Servicios de BD que `install.sh` y `preflight.sh` buscan, en orden de preferencia | `mysqld.service`, `mariadb.service`, `mysql.service` | nombres de unidad | `deploy/servicio_bd.sh` | FNC-125, 2026-10-27 | Vigente |
-| `EXCLUIDOS_COPIA` | Lo que `rsync --delete` no copia ni borra en el prefijo (no portables y locales: `/.env`, `/.env.*` salvo `.env.example`, `/instance/`, `/backups/`, `/uploads/`, `/storage/`, `/logs/`) | ver `deploy/copia_proyecto.sh` | patrones de rsync | `deploy/copia_proyecto.sh` | FNC-125, 2026-10-27 | Vigente |
+| `EXCLUIDOS_COPIA` | Lo que `rsync --delete` no copia ni borra en el prefijo (no portables y locales: `/.env`, `/.env.*` salvo `.env.example`, `/instance/`, `/backups/`, `/uploads/`, `/storage/`, `/logs/`) | ver `deploy/copia_proyecto.sh` | patrones de rsync | `deploy/copia_proyecto.sh` | FNC-125, 2026-10-27 | Baja (FNC-129, 2026-10-27: instalación en sitio, sin copia; archivo retirado) |
+| `NOMBRE_DESPLIEGUE_REGEX` | Regla del nombre del despliegue (`--name`, `APP_NAME` y nombre por defecto desde la carpeta) | `^[a-z][a-z0-9_-]{0,31}$` | expresión regular | `deploy/nombre_despliegue.sh` | FNC-129, 2026-10-27 (antes, literal en `install.sh` y `preflight.sh`; mismo valor) | Vigente |
+| `GENERADOS_PREFIJO` | Lo que `--force` borra dentro del prefijo para recompilar limpio | `venv`, `frontend/node_modules`, `frontend/.next` | rutas relativas | `deploy/reinstalar.sh` | FNC-129, 2026-10-27 | Vigente |
+| `SYSTEMD_DIR` | Dónde `install.sh` escribe (y `--force` borra) las unidades | `/etc/systemd/system` | ruta | `deploy/install.sh` | FNC-129, 2026-10-27 (antes, literal; mismo valor) | Vigente |
+| `LOGDIR_BASE` | Base del directorio de registros (por defecto `<base>/<nombre>`); con `--force`, el logdir debe estar debajo (SEG-3) | `/var/log` | ruta | `deploy/install.sh` | FNC-129, 2026-10-27 (antes, literal; mismo valor) | Vigente |
+| `DATOS_SERVICIO` | Directorios del prefijo que escribe la cuenta de servicio: se le entregan si existen y no se exigen de root (SEG-1) | `instance`, `uploads`, `storage`, `backups` | rutas relativas | `deploy/install.sh` | FNC-129, 2026-10-27 | Vigente |
+| `NGINX_CONF_DIR` | Dónde `install.sh` escribe (y `--force` borra) `<nombre>.conf` | `/etc/nginx/conf.d` | ruta | `deploy/install.sh` | FNC-129, 2026-10-27 (antes, literal; mismo valor) | Vigente |
 | `engines.node` | Rango de Node del frontend; los tres valores de arriba deben dar el mismo | `^22.13.0 \|\| >=24.0.0` | rango semver | `frontend/package.json` (y su lock) | FNC-073, 2026-10-27 | Vigente |
 | `WTF_CSRF_TIME_LIMIT` | Caducidad del token CSRF | sin límite | — | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `pool_recycle` | Reciclado de conexiones de BD | 3600 | s | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |

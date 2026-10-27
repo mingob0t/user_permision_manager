@@ -36,6 +36,7 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 > ⏸ **En pausa** (decisión del dueño, 2026-10-27): primero el sistema funcional. Tras la fase 4 sigue la fase 6; la fase 5 se retoma cuando el dueño lo indique. Sigue vigente que el portal no se expone antes de cerrarla.
 - [ ] Auditoría de seguridad completa del proyecto terminado
 - [ ] Correcciones pendientes del diagnóstico inicial (FNC-002 a FNC-018) y de la auditoría final
+- [ ] FNC-130 (endurecimientos del instalador: build sin root, hardlinks, logdir)
 - [ ] FNC-126 (`.env` fuera de rutas escribibles por la cuenta de servicio)
 - [ ] FNC-120 (lista blanca estricta de campos; movida desde la fase 4 el 2026-10-27)
 - [ ] Propuestas de auditorías de fase 3: FNC-075, FNC-078, FNC-079, FNC-083, FNC-084, FNC-085, FNC-086, FNC-087, FNC-088, FNC-089, FNC-096, FNC-106, FNC-100, FNC-107, FNC-110, FNC-115, FNC-116
@@ -46,3 +47,4 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 - [x] FNC-124
 - [x] FNC-125 (despliegue en RHEL 9: servicio de BD real en las unidades; `.env` del prefijo intacto)
 - [x] FNC-127 (puertos de backend y frontend configurables en el instalador)
+- [x] FNC-129 (instalador en sitio, nombre desde la carpeta y `--force`)

@@ -22,5 +22,11 @@
 - `revisar_vaultwarden` lee la nueva ruta.
 - Migración documentada para instalaciones existentes.
 
+## Resuelto en FNC-129 (2026-10-27, SEG-1)
+- Prefijo de root: código, `venv`, `node_modules` y `.next` de root sin escritura de grupo ni otros; `install.sh` lo exige antes de cargar nada.
+- La cuenta de servicio solo posee `instance/`, `uploads/`, `storage/`, `backups/` y el logdir.
+- `.env` `root:<grupo de servicio>` 640 (sigue en el prefijo, pero la cuenta ya no puede cambiarlo ni sustituirlo, porque el prefijo es de root).
+- **Pendiente aquí:** mover el `.env` a `/etc/<app>/app.env` o `LoadCredential=`, `revisar_vaultwarden` con la nueva ruta y la migración documentada.
+
 ## Impacto cruzado
 - Origen ← FNC-125
