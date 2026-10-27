@@ -143,8 +143,6 @@ table.dataTable tbody tr {
   /* DIS-038: velo detrás de Modal y del menú móvil (con su opacidad). El panel se distingue
      por su relleno (temas claros) o su borde (oscuros), >= 3:1: prueba velo.test.ts. */
   --color-overlay: 0 0 0 / 0.6;
-  --color-slider-thumb: 255 255 255;   /* DIS-009: perilla del control deslizante (era #ffffff) */
-  --color-shadow: 0 0 0;                  /* DIS-009: sombra neutra (era rgba(0,0,0,·)) */
   --color-panel-border: 131 145 165;   /* DIS-006: Slate-300 → Slate-500 lo mínimo para 3:1 */
   --color-panel-shadow: 37 99 235 / 0.07;
 
@@ -279,8 +277,6 @@ table.dataTable tbody tr {
     /* DIS-038: velo detrás de Modal y del menú móvil (con su opacidad). El panel se distingue
        por su relleno (temas claros) o su borde (oscuros), >= 3:1: prueba velo.test.ts. */
     --color-overlay: 0 0 0 / 0.6;
-    --color-slider-thumb: 255 255 255;   /* DIS-009: perilla del control deslizante (era #ffffff) */
-    --color-shadow: 0 0 0;                  /* DIS-009: sombra neutra (era rgba(0,0,0,·)) */
     --color-panel-border: 88 102 123;       /* DIS-006: Slate-600 → Slate-400 lo mínimo para 3:1 */
     --color-panel-shadow: 0 0 0 / 0;
 
@@ -372,8 +368,6 @@ html.dark {
   /* DIS-038: velo detrás de Modal y del menú móvil (con su opacidad). El panel se distingue
      por su relleno (temas claros) o su borde (oscuros), >= 3:1: prueba velo.test.ts. */
   --color-overlay: 0 0 0 / 0.6;
-  --color-slider-thumb: 255 255 255;   /* DIS-009: perilla del control deslizante (era #ffffff) */
-  --color-shadow: 0 0 0;                  /* DIS-009: sombra neutra (era rgba(0,0,0,·)) */
   --color-panel-border: 88 102 123;       /* DIS-006: Slate-600 → Slate-400 lo mínimo para 3:1 */
   --color-panel-shadow: 0 0 0 / 0;
 
@@ -448,8 +442,6 @@ html.theme-emerald-light {
   /* DIS-038: velo detrás de Modal y del menú móvil (con su opacidad). El panel se distingue
      por su relleno (temas claros) o su borde (oscuros), >= 3:1: prueba velo.test.ts. */
   --color-overlay: 0 0 0 / 0.6;
-  --color-slider-thumb: 255 255 255;   /* DIS-009: perilla del control deslizante (era #ffffff) */
-  --color-shadow: 0 0 0;                  /* DIS-009: sombra neutra (era rgba(0,0,0,·)) */
   --color-panel-border: 149 143 139;    /* DIS-006: Stone-300 → Stone-500 lo mínimo para 3:1 */
   --color-panel-shadow: 5 150 105 / 0.07;
 
@@ -548,8 +540,6 @@ html.theme-obsidian-dark {
   /* DIS-038: velo detrás de Modal y del menú móvil (con su opacidad). El panel se distingue
      por su relleno (temas claros) o su borde (oscuros), >= 3:1: prueba velo.test.ts. */
   --color-overlay: 0 0 0 / 0.6;
-  --color-slider-thumb: 255 255 255;   /* DIS-009: perilla del control deslizante (era #ffffff) */
-  --color-shadow: 0 0 0;                  /* DIS-009: sombra neutra (era rgba(0,0,0,·)) */
   --color-panel-border: 101 101 109;    /* DIS-006: Zinc-700 → Zinc-500 lo mínimo para 3:1 */
   --color-panel-shadow: 0 0 0 / 0;
 
@@ -633,8 +623,6 @@ html.theme-rose-light {
   /* DIS-038: velo detrás de Modal y del menú móvil (con su opacidad). El panel se distingue
      por su relleno (temas claros) o su borde (oscuros), >= 3:1: prueba velo.test.ts. */
   --color-overlay: 0 0 0 / 0.6;
-  --color-slider-thumb: 255 255 255;   /* DIS-009: perilla del control deslizante (era #ffffff) */
-  --color-shadow: 0 0 0;                  /* DIS-009: sombra neutra (era rgba(0,0,0,·)) */
   --color-panel-border: 146 138 134;    /* DIS-006: Stone con tinte rosa, hacia Stone-500 lo mínimo para 3:1 */
   --color-panel-shadow: 244 63 94 / 0.07;
 
@@ -733,8 +721,6 @@ html.theme-violet-dark {
   /* DIS-038: velo detrás de Modal y del menú móvil (con su opacidad). El panel se distingue
      por su relleno (temas claros) o su borde (oscuros), >= 3:1: prueba velo.test.ts. */
   --color-overlay: 0 0 0 / 0.6;
-  --color-slider-thumb: 255 255 255;   /* DIS-009: perilla del control deslizante (era #ffffff) */
-  --color-shadow: 0 0 0;                  /* DIS-009: sombra neutra (era rgba(0,0,0,·)) */
   --color-panel-border: 104 84 167;     /* DIS-006: violeta aclarado hacia Violet-400 lo mínimo para 3:1 */
   --color-panel-shadow: 0 0 0 / 0;
 

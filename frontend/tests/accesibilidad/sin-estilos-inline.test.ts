@@ -47,13 +47,16 @@ const claves = (objeto: string): string[] => [...objeto.matchAll(/([\w'"-]+)\s*:
 export function violaciones(texto: string, permitidas: string[] = []): string[] {
   const t = sinComentarios(texto);
   const salida: string[] = [];
-  for (const m of t.matchAll(/(?<![\w-])style\s*=\s*(\{\{[\s\S]*?\}\}|\{\s*variablesCss\(|"[^"]*"|'[^']*')/g)) {
+  // Valor del atributo: objeto en línea, texto, o cualquier otra expresión (`{obj}`, `{fn()}`).
+  for (const m of t.matchAll(/(?<![\w-])style\s*=\s*(\{\{[\s\S]*?\}\}|\{\s*variablesCss\(|"[^"]*"|'[^']*'|\{[^{][^}]*\})/g)) {
     const valor = m[1];
-    if (valor.startsWith('{ variablesCss(') || valor.startsWith('{variablesCss(')) continue;
+    if (/^\{\s*variablesCss\(/.test(valor)) continue;
     const dentro = valor.startsWith('{{') ? valor.slice(2, -2) : valor.slice(1, -1);
-    if (valor.startsWith('{{') ? claves(dentro).every((c) => c.startsWith('--')) : /^\s*(--[\w-]+\s*:[^;]*;?\s*)+$/.test(dentro)) continue;
+    // Un objeto en línea solo con claves `--*` y sin spread (`...x` puede traer propiedades visuales).
+    if (valor.startsWith('{{') ? !dentro.includes('...') && claves(dentro).every((c) => c.startsWith('--')) : /^\s*(--[\w-]+\s*:[^;]*;?\s*)+$/.test(dentro)) continue;
     salida.push(`${linea(t, m.index ?? 0)}: style en línea con propiedades visuales`);
   }
+  for (const m of t.matchAll(/setAttribute\(\s*['"]style['"]/g)) salida.push(`${linea(t, m.index ?? 0)}: setAttribute de style`);
   for (const m of t.matchAll(new RegExp('<' + 'style[\\s>]', 'gi'))) salida.push(`${linea(t, m.index ?? 0)}: bloque de estilos`);
   for (const m of t.matchAll(/\.style\b(?!\.setProperty\(\s*['"]--)/g)) {
     salida.push(`${linea(t, m.index ?? 0)}: asignación de estilo desde JS (.style)`);
@@ -77,6 +80,11 @@ describe('sin estilos inline en src/', () => {
     expect(violaciones(`<a ${S}={{ '--chip-bg': x, '--chip-fg': y }} />`)).toHaveLength(0);
     expect(violaciones(`<a ${S}={variablesCss({ '--chip-bg': x })} />`)).toHaveLength(0);
     expect(violaciones(`el.${S}.setProperty('--x', v)`)).toHaveLength(0);
+    expect(violaciones(`<a ${S}={{ ...extra }} />`)).toHaveLength(1);
+    expect(violaciones(`<a ${S}={{ '--x': v, ...extra }} />`)).toHaveLength(1);
+    expect(violaciones(`<a ${S}={objeto} />`)).toHaveLength(1);
+    expect(violaciones(`<a ${S}={obtener()} />`)).toHaveLength(1);
+    expect(violaciones(`el.setAttribute('${S}', 'x')`)).toHaveLength(1);
     expect(violaciones(`// ${S}={{ color: x }}\n/* ${S}="a:b" */`)).toHaveLength(0);
   });
 

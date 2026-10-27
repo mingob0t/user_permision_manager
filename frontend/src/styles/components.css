@@ -32,11 +32,9 @@ thead tr {
 }
 
 /* --- GLOBAL UI NORMALIZE: Premium Inputs --- */
-:where(input[type="text"], 
-input[type="password"], 
+:where(input[type="password"], 
 input[type="email"], 
 input[type="number"], 
-input[type="tel"], 
 input[type="url"], 
 input[type="color"],
 input:not([type]),
@@ -54,11 +52,9 @@ textarea) {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-:where(input[type="text"], 
-input[type="password"], 
+:where(input[type="password"], 
 input[type="email"], 
 input[type="number"], 
-input[type="tel"], 
 input[type="url"], 
 input[type="color"],
 input:not([type]),
@@ -81,40 +77,48 @@ textarea):focus {
 }
 
 /* === NEXUS CHECKBOX PREMIUM === */
+/* DIS-009: una sola regla (antes había dos, "premium" y "tactical"); mismos valores calculados. */
 .nexus-checkbox {
-    appearance: none;
     -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgb(var(--color-panel-border));
-    border-radius: 5px;
-    background-color: rgba(var(--color-panel-fill), 0.5);
+    appearance: none !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    border: 2px solid rgb(var(--color-panel-border)) !important;
+    border-radius: 0.5rem !important;
+    background: rgb(var(--color-input-bg)) !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
     outline: none;
 }
 
 .nexus-checkbox:hover {
-    border-color: rgb(var(--color-primary)); /* DIS-006: 3:1 (con / 0.5 daba 1,9–2,2) */
+    border-color: rgb(var(--color-primary)); /* DIS-006: 3:1 (hoy lo tapa el borde !important de arriba) */
 }
 
 .nexus-checkbox:checked {
-    background-color: rgb(var(--color-primary));
-    border-color: rgb(var(--color-primary));
+    background: rgb(var(--color-primary)) !important;
+    border-color: rgb(var(--color-primary)) !important;
 }
 
 .nexus-checkbox:checked::after {
-    content: '';
-    display: block;
+    content: '✓' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     width: 9px;
     height: 5px;
     border-left: 2px solid rgb(var(--color-on-primary)); /* DIS-009: era `white` */
     border-bottom: 2px solid rgb(var(--color-on-primary));
     transform: rotate(-45deg) translate(1px, -1px);
+    color: rgb(var(--color-on-primary)) !important;
+    font-size: var(--text-xs) !important; /* DIS-007: era 10px */
+    font-weight: 900 !important;
 }
 
 .nexus-checkbox:focus {
@@ -188,36 +192,6 @@ textarea):focus {
     background: rgb(var(--color-primary) / 0.05) !important;
 }
 
-/* 3. TACTICAL CHECKBOX */
-.nexus-checkbox {
-    width: 1.25rem !important;
-    height: 1.25rem !important;
-    border-radius: 0.5rem !important;
-    border: 2px solid rgb(var(--color-panel-border)) !important;
-    background: rgb(var(--color-input-bg)) !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    appearance: none !important;
-    position: relative !important;
-}
-
-.nexus-checkbox:checked {
-    background: rgb(var(--color-primary)) !important;
-    border-color: rgb(var(--color-primary)) !important;
-}
-
-.nexus-checkbox:checked::after {
-    content: '✓' !important;
-    position: absolute !important;
-    inset: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    color: rgb(var(--color-on-primary)) !important; /* DIS-009: era `white` */
-    font-size: var(--text-xs) !important; /* DIS-007: era 10px */
-    font-weight: 900 !important;
-}
-
 /* --- NUCLEAR SELECT ARROW FIX --- */
 select {
     -webkit-appearance: none !important;
@@ -229,68 +203,6 @@ select {
 
 select::-ms-expand {
     display: none !important;
-}
-
-/* === NEXUS PREMIUM RANGE SLIDER — v1.0 === */
-input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    background: transparent;
-    cursor: pointer;
-}
-
-input[type="range"]:focus {
-    outline: none;
-}
-
-/* Track Styling */
-input[type="range"]::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 12px;
-    background: linear-gradient(to right, rgb(var(--color-primary) / 0.1), rgb(var(--color-primary) / 0.3));
-    border: 1px solid rgb(var(--color-panel-border) / 0.4);
-    border-radius: 99px;
-    transition: all 0.3s ease;
-}
-
-input[type="range"]:hover::-webkit-slider-runnable-track {
-    border-color: rgb(var(--color-primary) / 0.4);
-    background: linear-gradient(to right, rgb(var(--color-primary) / 0.15), rgb(var(--color-primary) / 0.4));
-}
-
-/* Thumb Styling */
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    height: 24px;
-    width: 24px;
-    border-radius: 50%;
-    background: rgb(var(--color-slider-thumb));
-    border: 4px solid rgb(var(--color-primary));
-    box-shadow: 0 4px 12px rgb(var(--color-shadow) / 0.15), 0 0 0 0px rgb(var(--color-primary) / 0.2);
-    margin-top: -7px; /* Centers thumb on track */
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-input[type="range"]:active::-webkit-slider-thumb {
-    transform: scale(1.15);
-    box-shadow: 0 8px 24px rgb(var(--color-shadow) / 0.2), 0 0 0 8px rgb(var(--color-primary) / 0.1);
-}
-
-/* Firefox Support */
-input[type="range"]::-moz-range-track {
-    width: 100%;
-    height: 12px;
-    background: linear-gradient(to right, rgb(var(--color-primary) / 0.1), rgb(var(--color-primary) / 0.3));
-    border-radius: 99px;
-}
-
-input[type="range"]::-moz-range-thumb {
-    height: 18px;
-    width: 18px;
-    border-radius: 50%;
-    background: rgb(var(--color-slider-thumb));
-    border: 4px solid rgb(var(--color-primary));
-    box-shadow: 0 4px 12px rgb(var(--color-shadow) / 0.15);
 }
 
 /* DIS-012: color que solo se conoce al ejecutar (plataforma o área, vienen de los datos).

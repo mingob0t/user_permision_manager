@@ -53,14 +53,14 @@ Origen (diagnóstico inicial, FNC-001):
 ## Resultado
 | Medida | Antes | Después |
 |---|---|---|
-| Líneas `components.css` | 1746 | 307 |
+| Líneas `components.css` | 1746 | 219 |
 | Líneas `global.css` | 509 | 56 |
 | Clases en los dos CSS | 167 (142 sin uso) | 19 (0 sin uso) |
 | Reglas borradas | — | 236 de 2255 líneas, más comentarios huérfanos |
 | `@keyframes` borrados | — | 6 (`float`, `shake` ×2, `nexus-pulse`, `nexus-modal-in`, `toastProgress`) |
 | Variables borradas | — | `--dt-row-hover`, `--dt-zebra-bg`, `--color-brand-identity-bg/-text`, `--nx-primary` |
 | Colores literales en los dos CSS (medidos con la regla de la prueba, sin comentarios) | 92: 18 hex, 61 `rgb()`/`rgba()` numéricos y 13 nombres (`white`) | 0 |
-| CSS generado por `next build` | 80 449 bytes (59 237 + 21 212) | 47 666 bytes (−32 783, −41 %) |
+| CSS generado por `next build` | 80 449 bytes (59 237 + 21 212) | 45 208 bytes (−35 241, −44 %) |
 
 ### Cómo se comprobó que una clase no se usa (sin falsos negativos)
 - `postcss` (de `node_modules`) recorre cada regla; una regla se borra solo si **todos** sus selectores contienen una clase sin uso. Una clase dentro de `:not()`, `:is()` o `:has()` no condena a la regla (solo `.dt-layout-row:has(.dt-paging)` y `table.dataTable:not(.border-separate)`, ya muertas por otra clase).
@@ -75,8 +75,7 @@ Origen (diagnóstico inicial, FNC-001):
 | Literal | Dónde | Ahora |
 |---|---|---|
 | `white` (marca ✓ ×2 reglas) | `.nexus-checkbox:checked::after` | `rgb(var(--color-on-primary))` (token existente; igual en 6 temas, oscuro en obsidian) |
-| `#ffffff` | perilla del `input[type=range]` (webkit y moz) | `rgb(var(--color-slider-thumb))` (token nuevo) |
-| `rgba(0,0,0,.15/.2)` | sombra de la perilla | `rgb(var(--color-shadow) / .15\|.2)` (token nuevo) |
+| `#ffffff`, `rgba(0,0,0,.15/.2)` | bloque `input[type=range]` | bloque sin llamador: borrado (los tokens `--color-slider-thumb` y `--color-shadow` creados antes se dieron de baja) |
 | `#ffffff` | `--color-brand-identity-text` | variable sin uso: borrada |
 | `#f43f5e`, `rgba(244,63,94,.15)` | `.border-error` | clase sin uso: borrada |
 | `rgba(0,0,0,.45)`, `rgba(99,102,241,.3)`, `white`, `rgba(255,255,255,.05\|.1)` | `#sidebarOverlay`, `#templateEditor` | reglas por id sin elemento: borradas |
@@ -88,7 +87,8 @@ Origen (diagnóstico inicial, FNC-001):
 
 ## Decisiones del orquestador (pendientes de validar en la prueba de concepto)
 - Borrar también las reglas por id y los `@keyframes`/variables huérfanos, no solo las clases (misma causa: nada del `src` los usa).
-- Un token nuevo por rol: `--color-slider-thumb` (`255 255 255`) y `--color-shadow` (`0 0 0`) en los 7 temas; mismo valor que el literal.
+- Ajuste tras la auditoría: se borra el deslizador y sus dos tokens (no hay tokens nuevos netos); `.nexus-checkbox` se unifica en una regla con los mismos valores calculados (el `:hover` ya estaba tapado por el borde `!important` y se conserva tal cual); `input[type=text]` y `[type=tel]` salen de la lista de campos (ninguno en `src/`).
+- `css-sin-uso.test.ts` ahora ignora comentarios, limita `nx-badge-` a los tonos de `Badge` y exige llamador a ids, elementos y atributos; `sin-estilos-inline.test.ts` detecta spread, objeto suelto y `setAttribute`.
 - La ✓ usa `--color-on-primary` (no un token nuevo): es el texto sobre `--color-primary`; solo cambia en obsidian (mejora el contraste).
 - No tocar los duplicados `.nexus-checkbox` ni `select { appearance: none }` en los dos CSS: consolidarlos es refactor fuera de alcance (no cambia el aspecto).
 - `tokens.css` queda fuera (tiene reglas `.dt-*`, `table.dataTable` y `.animate-shake` sin uso): propuesta DIS-047.
@@ -98,8 +98,8 @@ Origen (diagnóstico inicial, FNC-001):
 |---|---|
 | `npx tsc --noEmit` | código 0 |
 | `npx next lint` | código 0, sin avisos |
-| `npx vitest run` | 39 archivos y 1460 pruebas pasaron, código 0 (repetido 5 veces después; ver nota) |
-| `npx next build` | código 0; CSS 80 449 → 47 666 bytes |
+| `npx vitest run` | 39 archivos y 1474 pruebas pasaron, código 0 (repetido 5 veces después; ver nota) |
+| `npx next build` | código 0; CSS 80 449 → 45 208 bytes |
 - Nota: una corrida de `vitest` dio código 1 una vez (no se guardó el detalle) y las 5 siguientes dieron 0; coincide con la intermitencia conocida de `areas-list.test.tsx` (DIS-040). No se atribuye a este cambio, pero no se pudo reproducir para comprobarlo.
 - No verificado en navegador (no se levantó la app): tema claro/oscuro, móvil/escritorio ni la apariencia de la perilla del deslizador y la ✓. Se espera aspecto idéntico (mismos valores); validar en obsidian la ✓.
 - Contraste, texto mínimo y área táctil siguen en 0 (sus pruebas pasan).
@@ -128,3 +128,4 @@ Lectura (decisión del orquestador, pendiente de validar en la prueba de concept
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-27 | DIS-007 anota CSS muerto: `.stacked-bar-label`, `.nx-tour-counter`, `table.dataTable` / `.tab-panel-content` |
 | 2026-10-27 | En curso → En revisión: CSS depurado (−1892 líneas netas), 2 tokens nuevos, pruebas `css-sin-uso` y `colores-literales` para CSS; propuesta DIS-047 |
+| 2026-10-27 | Ajustes tras auditoría: deslizador y sus tokens borrados, `.nexus-checkbox` unificado, pruebas más estrictas; propuesta DIS-048 |

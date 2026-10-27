@@ -9,10 +9,13 @@
  * - aparece como palabra completa en algún `.ts`/`.tsx` de `src/` (cadenas,
  *   `className`, condicionales, mapas de tonos); una utilidad con barra
  *   (`border-error/30`) no cuenta como la clase `border-error`;
- * - o su nombre empieza con un prefijo que el código completa al ejecutar:
- *   `` `nx-badge-${tono}` `` o `'nx-badge-' + tono`;
+ * - o es `nx-badge-<tono>` con un tono del tipo `tone` de `Badge` (`ui.tsx`):
+ *   las demás clases armadas al ejecutar no tienen permiso (`PREFIJOS_DINAMICOS`);
  * - o está en `CLASES_SIN_LLAMADOR` (hoy vacío, con el motivo de cada una).
- * Los comentarios no cuentan. `tokens.css` queda fuera (DIS-047).
+ * También se exige llamador a cada id, a cada selector de elemento (`select`,
+ * `thead`...) y a cada atributo (`input[type="color"]`, `[data-desplazable]`):
+ * el elemento, el atributo o el valor deben aparecer en el código.
+ * Los comentarios (CSS y TS/TSX) no cuentan. `tokens.css` queda fuera (DIS-047).
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
@@ -36,7 +39,10 @@ function archivos(carpeta: string): string[] {
 const sinComentarios = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
 const escapar = (t: string): string => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const codigo = archivos(RAIZ_SRC).map((r) => readFileSync(r, 'utf8')).join('\n');
+// Comentarios fuera: una clase nombrada solo en un comentario no es un llamador.
+const sinComentariosTs = (texto: string): string =>
+  texto.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:'"`\w])\/\/.*$/gm, '$1');
+const codigo = archivos(RAIZ_SRC).map((r) => sinComentariosTs(readFileSync(r, 'utf8'))).join('\n');
 const textoTailwind = readFileSync(CONFIG_TAILWIND, 'utf8');
 const css = CSS_REVISADOS.map((r) => sinComentarios(readFileSync(r, 'utf8'))).join('\n');
 
@@ -48,24 +54,48 @@ const IDS = [...new Set([...selectores.matchAll(/#([a-zA-Z_][\w-]*)/g)].map((m) 
 const ANIMACIONES = [...css.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]);
 const VARIABLES_NX = [...new Set([...css.matchAll(/(--nx-[\w-]+)\s*:/g)].map((m) => m[1]))].sort();
 
-/** Prefijos que el código completa al ejecutar: `nx-badge-${…}` o `'nx-badge-' + …`. */
-const PREFIJOS_DINAMICOS = [
-  ...new Set([
-    ...[...codigo.matchAll(/([\w-]+-)\$\{/g)].map((m) => m[1]),
-    ...[...codigo.matchAll(/['"`]([\w-]+-)['"`]\s*\+/g)].map((m) => m[1]),
-  ]),
-];
+/** Tonos que acepta `Badge` (unión del prop `tone` en ui.tsx). */
+const TONOS_BADGE = [
+  ...(/tone\?:\s*([^;}\n]+)/.exec(readFileSync(join(RAIZ_SRC, 'components/ui.tsx'), 'utf8'))?.[1] ?? '').matchAll(/'([\w-]+)'/g),
+].map((m) => m[1]);
+/** Clases armadas al ejecutar que se aceptan: prefijo → sufijos válidos. */
+const PREFIJOS_DINAMICOS: Record<string, string[]> = { 'nx-badge-': TONOS_BADGE };
 
-/** Prefijos de id con la misma lógica (`id={`x-${…}`}`). */
 const usada = (clase: string): boolean =>
   new RegExp(`(?<![\\w-])${escapar(clase)}(?![\\w/-])`).test(codigo) ||
-  PREFIJOS_DINAMICOS.some((p) => clase.startsWith(p) && clase.length > p.length);
+  Object.entries(PREFIJOS_DINAMICOS).some(([p, sufijos]) => clase.startsWith(p) && sufijos.includes(clase.slice(p.length)));
+
+/** Un id se usa si el código lo asigna: `id="x"`, `id: 'x'`, `id={'x'}` o `htmlFor`/`aria-*` no cuentan. */
+const idUsado = (id: string): boolean => new RegExp(`\\bid\\s*[=:]\\s*\\{?\\s*['"\`]${escapar(id)}['"\`]`).test(codigo);
+
+// Selectores de elemento y de atributo.
+const GLOBALES = new Set(['html', 'body']);
+const ATRIBUTOS = [...selectores.matchAll(/\[\s*([\w-]+)\s*(?:[~|^$*]?=\s*["']?([^"'\]]*)["']?)?\s*\]/g)].map((m) => ({ nombre: m[1], valor: m[2] }));
+const ELEMENTOS = [
+  ...new Set(
+    selectores
+      .replace(/\[[^\]]*\]/g, ' ')
+      .replace(/[.#][\w-]+/g, ' ')
+      .replace(/::?(?:where|is|not|has)\(/g, '(')
+      .replace(/::?[\w-]+(\([^)]*\))?/g, ' ')
+      .match(/(?<![\w-])[a-z][a-z0-9]*(?![\w-])/g) ?? [],
+  ),
+].filter((e) => !GLOBALES.has(e)).sort();
+const ATRIBUTOS_UNICOS = [...new Map(ATRIBUTOS.map((a) => [`${a.nombre}=${a.valor ?? ''}`, a])).values()];
 
 describe('CSS sin uso en components.css y global.css', () => {
   it('lee los selectores (la extracción no está rota)', () => {
     expect(CLASES).toContain('nexus-btn');
     expect(CLASES).toContain('nx-badge-primary');
-    expect(PREFIJOS_DINAMICOS).toContain('nx-badge-');
+    expect(TONOS_BADGE).toContain('primary');
+    expect(TONOS_BADGE).toContain('cyan');
+    expect(ELEMENTOS).toContain('select');
+    expect(ATRIBUTOS_UNICOS.length).toBeGreaterThan(0);
+  });
+
+  it('el código sin comentarios no cuenta como llamador y un tono inexistente no pasa', () => {
+    expect(sinComentariosTs('/* nx-fantasma */ // otro-fantasma\nconst a = 1;')).not.toMatch(/fantasma/);
+    expect(usada('nx-badge-inexistente')).toBe(false);
   });
 
   it('una clase armada al ejecutar cuenta como usada, una con barra no', () => {
@@ -87,7 +117,21 @@ describe('CSS sin uso en components.css y global.css', () => {
 
   for (const id of IDS) {
     it(`#${id} existe como id en src/`, () => {
-      expect(new RegExp(`['"\`]${escapar(id)}['"\`]|id=\\{?['"\`]${escapar(id)}`).test(codigo) || codigo.includes(`#${id}`)).toBe(true);
+      expect(idUsado(id), `#${id}: ningún elemento de src/ tiene ese id`).toBe(true);
+    });
+  }
+
+  for (const el of ELEMENTOS) {
+    it(`el elemento <${el}> existe en src/`, () => {
+      expect(new RegExp(`<${el}[\\s>/]|createElement\\(\\s*['"]${el}['"]`).test(codigo), `<${el}> no aparece en src/`).toBe(true);
+    });
+  }
+
+  for (const { nombre, valor } of ATRIBUTOS_UNICOS) {
+    it(`el atributo [${nombre}${valor ? `=${valor}` : ''}] tiene llamador en src/`, () => {
+      const atributo = new RegExp(`(?<![\\w-])${escapar(nombre)}(?![\\w-])`).test(codigo);
+      const conValor = !valor || new RegExp(`['"\`]${escapar(valor)}['"\`]`).test(codigo);
+      expect(atributo && conValor, `[${nombre}${valor ? `="${valor}"` : ''}] no aparece en src/`).toBe(true);
     });
   }
 
