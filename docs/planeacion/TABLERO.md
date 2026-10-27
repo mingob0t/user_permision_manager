@@ -28,7 +28,7 @@
 | FNC-024 | Línea base web: instalar dependencias, configurar ESLint y ejecutar typecheck y lint | web | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (fd2a22d) | Build roto por 1 error de lint: decisión pendiente |
 | FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (85e220c) | Depende de FNC-024; fallas de contraste a DIS-001 a DIS-006 |
 | FNC-026 | CI que ejecute pytest, typecheck, lint y los controles del pre-commit | infra | 2 | ci | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 y FNC-024; requiere repositorio remoto |
-| FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | En revisión | 2026-10-13 | 2026-10-26 | | `fnc/FNC-027-retirar-blueprints-heredados` (commit local, sin push) | Origen: H-01. Propone FNC-118 |
+| FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | Hecha | 2026-10-13 | 2026-10-26 | | `fnc/FNC-027-retirar-blueprints-heredados` (commit local, sin push) | Origen: H-01. Propone FNC-118 |
 | FNC-028 | Limpiar scratch/ y utils/ (PSX5K) y adoptar Alembic con las migraciones 001-004 | backend | 4 | bd | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-029 | Dividir app/modules/api/admin.py, crud.py y create_app | backend | 4 | api | Media | Propuesta | 2026-10-13 | | | — | Después de FNC-020 |
 | FNC-030 | Unificar helpers duplicados del backend (usuario creado, purga, _payload/_error, auditoría) | backend | 4 | api | Media | Propuesta | 2026-10-13 | | | — |  |

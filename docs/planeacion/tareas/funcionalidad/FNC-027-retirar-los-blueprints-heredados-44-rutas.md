@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | global |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | desarrollador |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-26 |
