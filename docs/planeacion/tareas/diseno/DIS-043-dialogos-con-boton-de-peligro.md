@@ -53,3 +53,4 @@ Ninguno modificado: `Button` no cambia, solo la variante elegida en 4 diálogos.
 |---|---|
 | 2026-10-26 | Creada como Propuesta desde DIS-004 |
 | 2026-10-26 | Aprobada en modo autónomo y resuelta dentro de DIS-031/DIS-038: 4 confirmaciones destructivas a `danger`, comentarios actualizados. En revisión |
+| 2026-10-26 | H3 de auditor-accesibilidad: el botón `danger` de `ConfirmDialog` usa `aria-disabled` al enviar, como estos 4 diálogos |

@@ -62,6 +62,7 @@
 - `PUT /platforms/<id>/users` y `PUT /users/<id>/platforms` (asignación directa de plataformas) responden `410 endpoint_retirado` con `use: POST /access-requests` y ya no escriben; `user_platforms` queda obsoleta, sin borrar ni migrar (P4: sus filas se descartan). Quien veía una plataforma solo por esa tabla ya no la ve (FNC-063) y debe solicitar acceso (FNC-065, 2026-10-21).
 
 ### Corregido
+- Las páginas más altas que la ventana se recortaban (`html` y `body` sin desplazamiento): ahora se desplaza el contenido, con la cabecera y la barra lateral fijas; con un diálogo o el menú móvil abiertos, lo de detrás no recibe foco ni clics; el botón de confirmar conserva el foco mientras borra; el foco no cae en elementos ocultos y, si el botón que abrió el diálogo desapareció, va al contenido (DIS-044, DIS-031, 2026-10-26).
 - El diálogo dejaba de tener el foco cuando la pantalla se volvía a dibujar; el menú móvil y los diálogos usan la misma trampa de foco (DIS-031, 2026-10-26).
 - Rechazar, revocar, quitar admin y eliminar conector confirman con el botón de peligro, que ya cumple AA (DIS-043, 2026-10-26).
 - Contraste AA en los 7 temas: botón de peligro con relleno y texto propios (4,83:1), tokens de botón por tema, texto atenuado (`bi-text-muted`, `secondary`, pistas de campo y tarjetas atenuadas) a 4.5:1, bordes de panel, campos y casillas a 3:1 y anillo de foco visible en campos y casillas; la lista de fallas de contraste conocidas queda vacía (DIS-004, DIS-005, DIS-006, 2026-10-26).

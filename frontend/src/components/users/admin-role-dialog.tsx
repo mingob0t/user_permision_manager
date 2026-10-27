@@ -13,8 +13,9 @@
  *   sus áreas administradas y revoca sus accesos automáticos (FNC-055).
  * - Es una acción sensible: el diálogo es la confirmación y explica el efecto
  *   con las áreas concretas antes de enviar. Patrón de `ApproveDialog`
- *   (DIS-015): `aria-disabled` durante el envío; el texto del efecto describe
- *   el diálogo (`describedBy`, DIS-031). Hacer admin usa el botón primario;
+ *   (DIS-015): `aria-disabled` durante el envío; describe el diálogo
+ *   (`describedBy`, DIS-031) un texto estático: la pista de las áreas en
+ *   `AdminAreasDialog` y el efecto en `RemoveAdminDialog`. Hacer admin usa el botón primario;
  *   Quitar admin, `danger` (DIS-043: retira permisos y accesos automáticos).
  */
 
@@ -84,7 +85,6 @@ export function AdminAreasDialog({
   const [error, setError] = useState<string | null>(null);
   const [errorAreas, setErrorAreas] = useState<string | undefined>();
   const quien = user.name || user.email;
-  const efectoId = useId();
 
   async function guardar() {
     if (sending) return;
@@ -122,7 +122,9 @@ export function AdminAreasDialog({
     <Modal
       title={elevar ? `Hacer admin a ${quien}` : `Áreas que administra ${quien}`}
       onClose={onClose}
-      describedBy={efectoId}
+      // H6: descripción estática (la pista de la lista de áreas, `${AREAS_ID}-pista` de
+      // `AreaChecklist`); el efecto cambia con cada casilla y se anuncia por `aria-live`.
+      describedBy={`${AREAS_ID}-pista`}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -147,7 +149,7 @@ export function AdminAreasDialog({
           loadError={areasError}
           empty="No hay áreas registradas."
         />
-        <div id={efectoId} aria-live="polite" className="space-y-2">
+        <div aria-live="polite" className="space-y-2">
           {efectoAdmin(user, areas, ids).map((linea) => (
             <p key={linea} className="text-sm text-body-text">{linea}</p>
           ))}

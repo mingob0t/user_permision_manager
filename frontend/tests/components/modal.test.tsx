@@ -1,13 +1,22 @@
 /**
- * DIS-031 y DIS-038: `Modal` (`form.tsx`), compartido por todas las pantallas con diálogo.
- * Trampa de foco, foco inicial, devolución del foco, `describedBy`, foco estable al
- * re-renderizar, velo por token y bloqueo del desplazamiento por clase.
+ * DIS-031, DIS-038 y DIS-044: `Modal` (`form.tsx`), compartido por todas las pantallas
+ * con diálogo. Trampa de foco, foco inicial, devolución del foco (y destino alterno),
+ * `describedBy`/`aria-labelledby`, foco estable al re-renderizar, elementos ocultos,
+ * Escape ya atendido, portal, velo por token, bloqueo del desplazamiento e `inert`.
  */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfirmDialog, Modal, TextInput } from '@/components/form';
 import { CLASE_SCROLL_BLOQUEADO } from '@/lib/use-scroll-lock';
+import { crearRaiz, simularCajas } from '../utils/dom-simulado';
+
+let raiz: HTMLElement;
+
+beforeEach(() => {
+  simularCajas();
+  raiz = crearRaiz();
+});
 
 afterEach(cleanup);
 
@@ -47,19 +56,19 @@ function abrir() {
 
 describe('Modal: foco', () => {
   it('el foco inicial va al primer campo del cuerpo', () => {
-    render(<Pantalla />);
+    render(<Pantalla />, { container: raiz });
     abrir();
     expect(document.activeElement).toBe(screen.getByLabelText('Nombre'));
   });
 
   it('sin campos, el foco inicial va al panel', () => {
-    render(<Pantalla campos={false} />);
+    render(<Pantalla campos={false} />, { container: raiz });
     const { dialogo } = abrir();
     expect(document.activeElement).toBe(dialogo);
   });
 
   it('Tab y Mayús+Tab ciclan dentro del diálogo', () => {
-    render(<Pantalla />);
+    render(<Pantalla />, { container: raiz });
     abrir();
     const cerrar = screen.getByRole('button', { name: 'Cerrar' });
     const aceptar = screen.getByRole('button', { name: 'Aceptar' });
@@ -78,7 +87,7 @@ describe('Modal: foco', () => {
   });
 
   it('desde el panel (sin campos), Tab va al primero y Mayús+Tab al último', () => {
-    render(<Pantalla campos={false} />);
+    render(<Pantalla campos={false} />, { container: raiz });
     abrir();
     fireEvent.keyDown(document, { key: 'Tab' });
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cerrar' }));
@@ -88,7 +97,7 @@ describe('Modal: foco', () => {
   });
 
   it('Escape cierra y devuelve el foco al disparador', () => {
-    render(<Pantalla />);
+    render(<Pantalla />, { container: raiz });
     const { disparador } = abrir();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -96,7 +105,7 @@ describe('Modal: foco', () => {
   });
 
   it('el botón ✕ cierra y devuelve el foco al disparador', () => {
-    render(<Pantalla />);
+    render(<Pantalla />, { container: raiz });
     const { disparador } = abrir();
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -169,14 +178,14 @@ describe('Modal: foco', () => {
 
 describe('Modal: describedBy', () => {
   it('se traduce en aria-describedby del role="dialog"', () => {
-    render(<Pantalla describedBy="explica" />);
+    render(<Pantalla describedBy="explica" />, { container: raiz });
     const { dialogo } = abrir();
     expect(dialogo.getAttribute('aria-describedby')).toBe('explica');
     expect(document.getElementById('explica')?.textContent).toBe('Explica la acción.');
   });
 
   it('sin describedBy no pone el atributo', () => {
-    render(<Pantalla />);
+    render(<Pantalla />, { container: raiz });
     const { dialogo } = abrir();
     expect(dialogo.hasAttribute('aria-describedby')).toBe(false);
   });
@@ -193,7 +202,7 @@ describe('Modal: describedBy', () => {
 
 describe('Modal: velo, ✕ y desplazamiento', () => {
   it('el velo usa el token (bg-overlay), sin color literal', () => {
-    render(<Pantalla />);
+    render(<Pantalla />, { container: raiz });
     const { dialogo } = abrir();
     const velo = dialogo.parentElement!;
     expect(velo.className).toContain('bg-overlay');
@@ -201,27 +210,39 @@ describe('Modal: velo, ✕ y desplazamiento', () => {
   });
 
   it('el botón ✕ tiene área de 48 px', () => {
-    render(<Pantalla />);
+    render(<Pantalla />, { container: raiz });
     abrir();
     const cerrar = screen.getByRole('button', { name: 'Cerrar' });
     expect(cerrar.className).toContain('min-w-12');
     expect(cerrar.className).toContain('min-h-12');
   });
 
-  it('bloquea el desplazamiento con una clase en <html>, sin estilos inline', () => {
-    const html = document.documentElement;
-    render(<Pantalla />);
-    expect(html.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
-    abrir();
-    expect(html.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(true);
+  it('se pinta en un portal en body; la raíz queda bloqueada e inert, sin estilos inline', () => {
+    render(<Pantalla />, { container: raiz });
+    expect(raiz.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
+    const { dialogo, disparador } = abrir();
+    expect(raiz.contains(dialogo)).toBe(false);
+    expect(dialogo.parentElement!.parentElement).toBe(document.body);
+    expect(raiz.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(true);
+    expect(raiz.hasAttribute('inert')).toBe(true);
+    expect(raiz.getAttribute('style')).toBeNull();
     expect(document.body.getAttribute('style')).toBeNull();
-    expect(html.getAttribute('style')).toBeNull();
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(html.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
+    expect(raiz.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
+    expect(raiz.hasAttribute('inert')).toBe(false);
+    // La raíz deja de ser `inert` antes de devolver el foco.
+    expect(document.activeElement).toBe(disparador);
   });
 
-  it('con dos diálogos, la clase se quita al cerrar el último', () => {
-    const html = document.documentElement;
+  it('la regla de bloqueo cubre la raíz y los contenedores [data-desplazable] y gana a overflow-y-auto', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const css = readFileSync(resolve(import.meta.dirname, '../../src/styles/global.css'), 'utf8');
+    expect(css).toMatch(/\.scroll-bloqueado\[data-desplazable\],\s*\.scroll-bloqueado \[data-desplazable\]\s*\{\s*overflow: hidden;/);
+  });
+
+  it('con dos diálogos, la clase y inert se quitan al cerrar el último', () => {
+    const html = raiz;
     function Dos() {
       const [a, setA] = useState(true);
       const [b, setB] = useState(true);
@@ -232,7 +253,7 @@ describe('Modal: velo, ✕ y desplazamiento', () => {
         </>
       );
     }
-    render(<Dos />);
+    render(<Dos />, { container: raiz });
     expect(html.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(true);
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog', { name: 'B' })).toBeNull();
@@ -240,5 +261,122 @@ describe('Modal: velo, ✕ y desplazamiento', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(html.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
+    expect(html.hasAttribute('inert')).toBe(false);
+  });
+});
+
+describe('Modal: hallazgos de auditor-accesibilidad (H3–H6)', () => {
+  it('el nombre del diálogo viene del título con aria-labelledby', () => {
+    render(<Pantalla />, { container: raiz });
+    const { dialogo } = abrir();
+    const id = dialogo.getAttribute('aria-labelledby');
+    expect(dialogo.hasAttribute('aria-label')).toBe(false);
+    expect(id && document.getElementById(id)?.tagName).toBe('H2');
+  });
+
+  it('ConfirmDialog ocupado: aria-disabled, ignora el clic y conserva el foco', () => {
+    const confirmar = vi.fn();
+    render(
+      <ConfirmDialog title="Eliminar" message="Se borrará." onConfirm={confirmar} onCancel={() => undefined} busy />,
+      { container: raiz },
+    );
+    const boton = screen.getByRole('button', { name: 'Eliminando…' });
+    expect(boton.getAttribute('aria-disabled')).toBe('true');
+    expect(boton.hasAttribute('disabled')).toBe(false);
+    boton.focus();
+    fireEvent.click(boton);
+    expect(confirmar).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(boton);
+  });
+
+  it('ConfirmDialog libre: confirma con el clic', () => {
+    const confirmar = vi.fn();
+    render(
+      <ConfirmDialog title="Eliminar" message="Se borrará." onConfirm={confirmar} onCancel={() => undefined} />,
+      { container: raiz },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar' }));
+    expect(confirmar).toHaveBeenCalledTimes(1);
+  });
+
+  it('los elementos ocultos, inert o en fieldset deshabilitado no rompen el ciclo', () => {
+    render(
+      <Modal
+        title="Diálogo"
+        onClose={() => undefined}
+        footer={
+          <>
+            <button type="button">Aceptar</button>
+            <button type="button" data-sin-caja="">Oculto por CSS</button>
+            <div inert><button type="button">Inerte</button></div>
+          </>
+        }
+      >
+        <fieldset disabled><TextInput aria-label="Bloqueado" /></fieldset>
+        <div data-sin-caja=""><TextInput aria-label="Sin caja" /></div>
+        <TextInput aria-label="Visible" />
+      </Modal>,
+      { container: raiz },
+    );
+    // Foco inicial: el primer campo visible, no los ocultos.
+    expect(document.activeElement).toBe(screen.getByLabelText('Visible'));
+    const aceptar = screen.getByRole('button', { name: 'Aceptar' });
+    aceptar.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cerrar' }));
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(aceptar);
+  });
+
+  it('si focus() no mueve el foco, prueba con el siguiente', () => {
+    render(<Pantalla />, { container: raiz });
+    abrir();
+    const cerrar = screen.getByRole('button', { name: 'Cerrar' });
+    // Simula un elemento que rechaza el foco (p. ej. oculto en el último momento).
+    vi.spyOn(cerrar, 'focus').mockImplementation(() => undefined);
+    screen.getByRole('button', { name: 'Aceptar' }).focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(screen.getByLabelText('Nombre'));
+  });
+
+  it('Escape ya atendido (defaultPrevented) no cierra el diálogo', () => {
+    const cerrar = vi.fn();
+    render(
+      <Modal title="Diálogo" onClose={cerrar}>
+        <TextInput
+          aria-label="Combo"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') event.preventDefault();
+          }}
+        />
+      </Modal>,
+      { container: raiz },
+    );
+    fireEvent.keyDown(screen.getByLabelText('Combo'), { key: 'Escape' });
+    expect(cerrar).not.toHaveBeenCalled();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(cerrar).toHaveBeenCalledTimes(1);
+  });
+
+  it('si el disparador ya no existe, el foco va al <main> con tabIndex=-1', () => {
+    function Fila() {
+      const [abierto, setAbierto] = useState(false);
+      const [fila, setFila] = useState(true);
+      return (
+        <main tabIndex={-1}>
+          {fila ? <button type="button" onClick={() => setAbierto(true)}>Abrir</button> : null}
+          {abierto ? (
+            <Modal title="Diálogo" onClose={() => { setFila(false); setAbierto(false); }}>
+              <p>Texto</p>
+            </Modal>
+          ) : null}
+        </main>
+      );
+    }
+    render(<Fila />, { container: raiz });
+    abrir();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('button', { name: 'Abrir' })).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('main'));
   });
 });

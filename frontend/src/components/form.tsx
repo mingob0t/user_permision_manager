@@ -9,7 +9,8 @@
  */
 
 import { useId, useRef } from 'react';
-import { CAMPOS, useFocusTrap } from '@/lib/use-focus-trap';
+import { createPortal } from 'react-dom';
+import { CAMPOS, esVisible, useFocusTrap } from '@/lib/use-focus-trap';
 import { useScrollLock } from '@/lib/use-scroll-lock';
 
 export function Field({
@@ -104,7 +105,11 @@ export function Button({
  * - `describedBy`: id (o ids separados por espacio) del texto que explica la
  *   acción; va a `aria-describedby` del `role="dialog"`.
  * - DIS-038: velo `bg-overlay` (token `--color-overlay`) y bloqueo del
- *   desplazamiento del fondo con clase en `<html>` (`useScrollLock`).
+ *   desplazamiento del fondo (`useScrollLock`).
+ * - Se pinta en un portal en `document.body`, fuera de la raíz de la app, que
+ *   queda `inert` mientras está abierto (H2). Nombre del diálogo con
+ *   `aria-labelledby` al título (H6). Solo se monta tras una acción del
+ *   usuario: en el servidor no se pinta.
  */
 export function Modal({
   title,
@@ -121,14 +126,19 @@ export function Modal({
 }) {
   const panel = useRef<HTMLDivElement>(null);
   const cuerpo = useRef<HTMLDivElement>(null);
+  const tituloId = useId();
 
+  // Primero el bloqueo: al cerrar, la raíz deja de ser `inert` antes de devolver el foco.
+  useScrollLock();
   useFocusTrap(panel, {
     alEscape: onClose,
-    focoInicial: () => cuerpo.current?.querySelector<HTMLElement>(CAMPOS) ?? null,
+    focoInicial: () =>
+      Array.from(cuerpo.current?.querySelectorAll<HTMLElement>(CAMPOS) ?? []).filter(esVisible),
   });
-  useScrollLock();
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-overlay backdrop-blur-sm p-4 sm:items-center"
       onClick={(event) => {
@@ -139,13 +149,13 @@ export function Modal({
         ref={panel}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={tituloId}
         aria-describedby={describedBy}
         tabIndex={-1}
         className="nx-modal-glass w-full max-w-lg rounded-2xl shadow-2xl outline-none"
       >
         <div className="flex items-center justify-between border-b border-panel-border px-6 py-4">
-          <h2 className="text-sm font-black uppercase tracking-[0.15em] text-panel-header-text">
+          <h2 id={tituloId} className="text-sm font-black uppercase tracking-[0.15em] text-panel-header-text">
             {title}
           </h2>
           {/* DIS-031: área táctil de 48 px (antes 36). */}
@@ -165,7 +175,8 @@ export function Modal({
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -195,7 +206,16 @@ export function ConfirmDialog({
           <Button variant="secondary" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={busy}>
+          {/* H3: `aria-disabled` mientras se envía (con `disabled` el foco caería en `body`);
+              el clic se ignora. */}
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (!busy) onConfirm();
+            }}
+            aria-disabled={busy || undefined}
+            className="aria-disabled:opacity-40"
+          >
             {busy ? 'Eliminando…' : confirmLabel}
           </Button>
         </>

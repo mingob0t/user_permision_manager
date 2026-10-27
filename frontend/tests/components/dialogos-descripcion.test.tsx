@@ -71,7 +71,8 @@ describe('describedBy y botón de confirmar', () => {
         onStale={nada}
       />,
     );
-    expect(descripcion()).toContain('Sin cambios en sus áreas.');
+    // Nodo estático (H6): la pista de la lista; el efecto va en la región `aria-live`.
+    expect(descripcion()).toBe('Al menos una. Para que no administre ninguna, usa Quitar admin.');
     expect(confirmar(/^Guardar áreas$/).className).not.toContain(PELIGRO);
   });
 

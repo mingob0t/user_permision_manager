@@ -84,6 +84,22 @@ Salida de `impacto.py` (contra `develop`): ver *Reporte de impacto* abajo.
 
 No verificado: navegador real (temas claro y oscuro, móvil y escritorio, lector de pantalla). No se levantó la app en esta sesión. Sin auditores (por instrucción del orquestador); revisor y tester quedan para el orquestador.
 
+## Hallazgos de auditor-accesibilidad (2026-10-26)
+Sin fallas de contraste. Corregidos en la misma rama (decisiones del orquestador, pendientes de validar en la prueba de concepto):
+| # | Hallazgo | Corrección | Prueba |
+|---|---|---|---|
+| H1 | `html` y `body` con `overflow: hidden` y sin contenedor desplazable: páginas largas recortadas (1.4.10, 2.1.1) | Ver DIS-044: raíz `#raiz-app` y `<main>` de `AppShell` desplazables; el bloqueo actúa sobre ellos, no sobre `html` | `raiz-desplazable.test.tsx`, `menu-movil.test.tsx`, `modal.test.tsx` |
+| H2 | Lo de detrás del diálogo seguía accesible | `Modal` y el panel del menú en un portal en `document.body`; `useScrollLock` marca la raíz `inert` (mismo contador). `useScrollLock` se declara antes de `useFocusTrap` para quitar `inert` antes de devolver el foco | portal, `inert` y foco devuelto |
+| H3 | `ConfirmDialog` con `disabled` al enviar: el foco caía en `body` | `aria-disabled={busy \|\| undefined}` e ignora el clic | "ConfirmDialog ocupado…" |
+| H4 | Sin destino si el disparador ya no existe | `<main tabIndex={-1}>` de `AppShell` o el primer `h1` | "si el disparador ya no existe…" |
+| H5 | Ocultos contaban en el ciclo | `esVisible`: `getClientRects()` vacío, `[inert]`, `[hidden]`, `fieldset[disabled]`; si `focus()` no mueve el foco, el siguiente (`enfocarPrimero`). Pruebas con `getClientRects` simulado (`tests/utils/dom-simulado.ts`) | "los elementos ocultos…", "si focus() no mueve…" |
+| H6 | Escape ya atendido cerraba; `aria-label`; descripción dinámica; hover con `aria-disabled` | Escape respeta `defaultPrevented`; `aria-labelledby` al `h2` con `useId`; `AdminAreasDialog` describe con la pista estática de las áreas (el efecto sigue en `aria-live`); `.nexus-btn:active`, `-primary:hover` y `-secondary:hover` con `:not([aria-disabled="true"])` | Escape, `aria-labelledby`, `dialogos-descripcion`, `hover-botones` |
+| — | `rgb(var(--nx-border))` en `dashboard.tsx:69/87` | Fuera de alcance: anotado en DIS-003 | — |
+
+Pantallas afectadas por el cambio de `AppShell` (marco a `h-dvh`, `<main>` desplazable con `tabIndex={-1}`, barra lateral con `overflow-y-auto`): `/`, `/platforms`, `/requests`, `/favorites`, `/notifications`, `/approvals`, `/admin/platforms`, `/areas`, `/users`, `/inventory`, `/audit`, `/audit/users/[id]`, `/audit/platforms/[id]`, `/admin/connectors`, `/settings`. Por la raíz de `layout.tsx`: además `/login`, `/logout`, 404 y error.
+
+Verificación tras las correcciones (en `frontend/`): typecheck 0, lint 0, vitest 0 (33 archivos, 1207 pasan; fallas de contraste conocidas 0), `next build` 0. No verificado en navegador.
+
 ## Reporte de impacto
 **⚠ Impacto en elementos compartidos** (comparado contra `develop`): este cambio toca 17 elemento(s) usados en otras secciones: app/modules, frontend/src, frontend/tests, tests, tests/access_requests, tests/connectors. Valida cada una antes de integrar.
 
@@ -107,6 +123,8 @@ No verificado: navegador real (temas claro y oscuro, móvil y escritorio, lector
 | `quitar` | función | `frontend/src/components/users/admin-role-dialog.tsx` | `app/modules/audit/events.py`, `app/modules/audit/parametros.py`, `app/modules/directory/api.py`, `app/modules/provisioning/saneo.py`, `app/modules/secretos/cifrado.py`, `frontend/src/components/access/approvals-inbox.tsx`, `frontend/src/components/access/request-catalog.tsx`, `frontend/src/components/users-list.tsx` (+2) | app/modules, frontend/src, frontend/tests | ☐ |
 | `submit` | función | `frontend/src/components/access/reject-dialog.tsx`, `frontend/src/components/users/revoke-access-dialog.tsx` | `frontend/src/components/access/inventory-filters.tsx`, `frontend/src/components/access/request-form-modal.tsx`, `frontend/src/components/audit/audit-filters.tsx`, `frontend/src/components/connectors/connector-form.tsx`, `frontend/src/components/login-form.tsx`, `frontend/src/components/users/directory-account-form.tsx` | frontend/src | ☐ |
 
+Segunda corrida de `impacto.py` (tras H1–H6): 30 elementos. Nuevos reales: `.nexus-btn`, `.nexus-btn-primary`, `.nexus-btn-secondary` (hover y pulsación sin efecto con `aria-disabled`): todos los botones `Button` y los enlaces con esas clases (`inventory.tsx`, historiales de auditoría, `role-summary.tsx`, `platform-integration-fields.tsx`, `ui.tsx`, `user-access-panel.tsx` y demás); solo cambia con `aria-disabled="true"`. `AppShell` y `layout.tsx` (pantallas en la sección de hallazgos). Falsos positivos nuevos: auxiliares de prueba (`Contador`, `Dos`, `Fila`, `Pantalla`, `bloque`, `color`, `descripcion`, `montar`, `nada`, `sesion`) y `raiz` (función local de `use-scroll-lock.ts`).
+
 Falsos positivos: `abrir`, `aprobar`, `confirmar`, `guardar`, `quitar`, `submit` son funciones locales con el mismo nombre que otras del proyecto; `--color-panel-fill` y `TopeLiterales` no cambiaron (aparecen por líneas vecinas).
 
 ## Impacto en elementos compartidos
@@ -124,3 +142,4 @@ Falsos positivos: `abrir`, `aprobar`, `confirmar`, `guardar`, `quitar`, `submit`
 | 2026-10-21 | DIS-019 (auditor-accesibilidad): `describedBy` para los diálogos de rol y foco inicial solo al montar |
 | 2026-10-26 | Aprobada en modo autónomo y En curso, junto con DIS-038 y DIS-043 (rama `dis/DIS-031-038-modal`) |
 | 2026-10-26 | `useFocusTrap` común (Modal y menú móvil), foco inicial, devolución, `describedBy` en 6 diálogos y `ConfirmDialog`, ✕ de 48 px; 23 pruebas nuevas; typecheck, lint, vitest y build en 0. En revisión |
+| 2026-10-26 | Hallazgos H1–H6 de auditor-accesibilidad corregidos (portal, `inert`, contenedor desplazable, `aria-disabled` en `ConfirmDialog`, destino alterno del foco, ocultos, Escape, `aria-labelledby`, hover); 13 pruebas nuevas; todo en 0. En revisión |

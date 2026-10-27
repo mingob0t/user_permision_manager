@@ -44,8 +44,8 @@ Decisión del orquestador (pendiente de validar en la prueba de concepto), en to
 | 4 | Clase en `<html>` (`scroll-bloqueado`), no atributo en `body` | La ficha admite cualquiera; el selector cubre `html` y `body` |
 | 5 | El velo del menú cubre también la cabecera (z-40, el panel z-50) | Un clic fuera del panel, incluido el botón "Menú", cierra |
 
-## Observación (no corregida, fuera de alcance)
-- `global.css` ya pone `overflow: hidden` en `html` y `body` (heredado). El desplazamiento real lo hace otro contenedor o no lo hay; el bloqueo por clase reproduce lo que hacía `Modal` con `body.style`, pero su efecto visible depende de eso. Propuesta DIS-044.
+## Observación → DIS-044 (resuelta en la misma rama)
+- `global.css` pone `overflow: hidden` en `html` y `body` (heredado) y no había contenedor desplazable. Tras auditor-accesibilidad (H1/H2), `useScrollLock` ya no usa `html`: pone `scroll-bloqueado` e `inert` en la raíz `#raiz-app`, y la regla `.scroll-bloqueado[data-desplazable], .scroll-bloqueado [data-desplazable]` bloquea la raíz y el `<main>` de `AppShell`. Detalle en DIS-044 y DIS-031.
 
 ## Impacto en elementos compartidos
 | Elemento | Cambio | Usado en |
@@ -77,3 +77,4 @@ No verificado: navegador real (velo y bloqueo en temas claro y oscuro, móvil y 
 | 2026-10-21 | Creada como Propuesta desde DIS-025 |
 | 2026-10-26 | Aprobada en modo autónomo y En curso, junto con DIS-031 y DIS-043 |
 | 2026-10-26 | Token `--color-overlay` (7 temas), `useScrollLock` por clase en `<html>`, velo en `Modal` y menú móvil; prueba de contraste del velo; propuesta DIS-044. En revisión |
+| 2026-10-26 | H1/H2 de auditor-accesibilidad: bloqueo sobre la raíz y los contenedores `[data-desplazable]` (no `html`), raíz `inert`, `Modal` y menú en portal. En revisión |

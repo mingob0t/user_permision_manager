@@ -10,11 +10,15 @@
  *   panel abierto, Tab y Mayús+Tab no salen de él. Trampa compartida con
  *   `Modal`: `useFocusTrap` (DIS-031).
  * - Con el panel abierto: velo `bg-overlay` detrás y desplazamiento del fondo
- *   bloqueado con clase en `<html>` (`useScrollLock`, DIS-038).
+ *   bloqueado (`useScrollLock`, DIS-038).
+ * - El velo y el panel se pintan en un portal en `document.body` (fuera de la
+ *   raíz, que queda `inert` con el menú abierto); el portal se crea al montar
+ *   en el cliente, nunca en el servidor.
  */
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { useFocusTrap } from '@/lib/use-focus-trap';
+import { createPortal } from 'react-dom';
+import { enfocables, useFocusTrap } from '@/lib/use-focus-trap';
 import { useScrollLock } from '@/lib/use-scroll-lock';
 
 /** Desde `md` (768 px, breakpoint de Tailwind) el menú móvil no se muestra: se cierra. */
@@ -29,17 +33,21 @@ export function MobileMenu({
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  const [montado, setMontado] = useState(false);
 
   const close = useCallback(() => setOpen(false), []);
 
+  useEffect(() => setMontado(true), []);
+
+  // Primero el bloqueo: al cerrar, la raíz deja de ser `inert` antes de devolver el foco.
+  useScrollLock(open);
   // Foco al primer enlace al abrir, atrapado con Tab, Escape cierra y el foco vuelve al botón.
   useFocusTrap(panel, {
     activo: open,
     alEscape: close,
     devolverA: button,
-    focoInicial: (contenedor) => contenedor.querySelector<HTMLElement>('a[href]'),
+    focoInicial: (contenedor) => enfocables(contenedor).filter((el) => el.matches('a[href]')),
   });
-  useScrollLock(open);
 
   // Clic fuera y cruce de `md`, solo con el panel abierto.
   useEffect(() => {
@@ -85,30 +93,35 @@ export function MobileMenu({
         Menú
       </button>
 
-      <div id={panelId} hidden={!open} className="md:hidden">
-        {/* Velo (DIS-038): el clic en él cierra por el oyente de clic fuera. */}
-        <div aria-hidden="true" className="fixed inset-0 z-40 bg-overlay" />
-        <div
-          ref={panel}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Menú"
-          tabIndex={-1}
-          className="fixed inset-y-0 left-0 z-50 w-72 max-w-full overflow-y-auto border-r-2 border-primary bg-panel-fill p-4 shadow-2xl"
-        >
-          <div className="flex items-center justify-between gap-2 pb-4">
-            <p className="px-3 text-lg font-semibold">Nexus</p>
-            <button
-              type="button"
-              onClick={close}
-              className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg border border-panel-border px-3 text-sm text-label outline-none hover:text-body-text focus-visible:ring-2 focus-visible:ring-primary"
+      {montado
+        ? createPortal(
+          <div id={panelId} hidden={!open} className="md:hidden">
+            {/* Velo (DIS-038): el clic en él cierra por el oyente de clic fuera. */}
+            <div aria-hidden="true" className="fixed inset-0 z-40 bg-overlay" />
+            <div
+              ref={panel}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menú"
+              tabIndex={-1}
+              className="fixed inset-y-0 left-0 z-50 w-72 max-w-full overflow-y-auto border-r-2 border-primary bg-panel-fill p-4 shadow-2xl"
             >
-              Cerrar
-            </button>
-          </div>
-          {children(close)}
-        </div>
-      </div>
+              <div className="flex items-center justify-between gap-2 pb-4">
+                <p className="px-3 text-lg font-semibold">Nexus</p>
+                <button
+                  type="button"
+                  onClick={close}
+                  className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg border border-panel-border px-3 text-sm text-label outline-none hover:text-body-text focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  Cerrar
+                </button>
+              </div>
+              {children(close)}
+            </div>
+          </div>,
+          document.body,
+        )
+        : null}
     </>
   );
 }

@@ -21,8 +21,15 @@ describe('hover de botones', () => {
   const css = readFileSync(RUTA_COMPONENTES, 'utf8');
 
   it('.nexus-btn-primary:hover no usa filter ni cambia color o fondo', () => {
-    const hover = bloque(css, '.nexus-btn-primary:hover');
+    const hover = bloque(css, '.nexus-btn-primary:hover:not([aria-disabled="true"])');
     expect(hover).not.toMatch(/\bfilter\s*:/);
     expect(hover).not.toMatch(/\b(color|background)\s*:/);
+  });
+
+  it('hover y pulsación no se aplican a botones con aria-disabled (DIS-031, H6)', () => {
+    for (const selector of ['.nexus-btn:active', '.nexus-btn-primary:hover', '.nexus-btn-secondary:hover']) {
+      expect(css, selector).toContain(`${selector}:not([aria-disabled="true"]) {`);
+      expect(css, selector).not.toContain(`${selector} {`);
+    }
   });
 });

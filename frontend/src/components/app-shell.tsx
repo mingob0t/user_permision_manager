@@ -106,13 +106,14 @@ function Frame({ children }: { children: React.ReactNode }) {
   if (!session) return null;
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden w-60 shrink-0 border-r border-panel-border bg-panel-fill p-4 md:block">
+    // DIS-044: el marco ocupa la ventana; se desplazan el `<main>` y, si no cabe, la barra lateral.
+    <div className="flex h-dvh">
+      <aside className="hidden w-60 shrink-0 overflow-y-auto border-r border-panel-border bg-panel-fill p-4 md:block">
         <p className="px-3 pb-4 text-lg font-semibold">Nexus</p>
         <Nav />
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-4 border-b border-panel-border bg-panel-fill px-6 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <MobileMenu>{(close) => <Nav touch onNavigate={close} />}</MobileMenu>
@@ -134,7 +135,15 @@ function Frame({ children }: { children: React.ReactNode }) {
           </a>
         </header>
 
-        <main className="min-w-0 flex-1 p-6">{children}</main>
+        {/* Contenedor que se desplaza (`useScrollLock` lo bloquea) y destino alterno del foco
+            al cerrar un diálogo cuyo disparador ya no existe (`tabIndex={-1}`, DIS-031). */}
+        <main
+          tabIndex={-1}
+          data-desplazable=""
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6 outline-none"
+        >
+          {children}
+        </main>
       </div>
     </div>
   );
