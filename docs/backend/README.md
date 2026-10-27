@@ -88,7 +88,8 @@ Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue a
 | `auth_config` | `auth.models.AuthConfig` | **Obsoleta** (FNC-043): nada la lee; solo viaja en el respaldo. `ldap_pass` vacía (migración 0004) y el modelo rechaza escribirla. Resto: `ldap_host`, `ldap_port`, `ldap_ssl`, `ldap_base_dn`, `ldap_user`, `ldap_user_attr`, `ldap_group_admin`, `ldap_group_user`, `ldap_role_mappings` |
 | `smtp_config` | `notifications.models.SMTPConfig` | `server`, `port`, `encryption` (`starttls`/`ssl`/`none`), `auth_enabled`, `username`, `password` (en claro), `sender_name` |
 | `notification_templates` | `NotificationTemplate` | `slug` (único), `name`, `subject`, `body`, `is_html` |
-| `in_app_notifications` | `InAppNotification` | `user_id` (nulo = global), `type`, `title`, `message`, `is_read`, `created_at` |
+| `in_app_notifications` | `InAppNotification` | `user_id` (nulo = global), `type`, `title`, `message`, `is_read` (solo propias), `created_at` |
+| `notification_reads` | `NotificationRead` | FNC-031 (0010): `notification_id` y `user_id` (`ON DELETE CASCADE`, par único), `read_at`; lectura por usuario de las globales |
 | `system_config` | `settings.models.SystemConfig` | `portal_name`, `portal_identity_type` (`icon`/`image`), `portal_icon` (SVG o data URI de imagen, máx. 512 KB), `bg_color`, `text_color` |
 
 ## 4. Endpoints
@@ -260,7 +261,7 @@ También con `leer_cuerpo` (FNC-119): cuerpo no objeto → `400 cuerpo_invalido`
 | `GET /templates` | `admin_required` | Lista plantillas de correo. |
 | `PUT /templates/<slug>` | `admin_required` | Crea o edita plantilla. |
 | `GET /notifications` | Sesión | Últimas 50 notificaciones in-app propias y globales (vacío si el usuario las desactivó). |
-| `POST /notifications/read` | Sesión | Marca como leídas (todas o `ids`). Afecta también a las globales para todos (ver deuda). |
+| `POST /notifications/read` | Sesión | Marca como leídas para quien consulta (todas o `ids`); las globales se registran en `notification_reads` y no afectan a otros. `GET` calcula `is_read` por usuario (FNC-031). |
 | `DELETE /notifications` | Sesión | Borra las propias. |
 | `GET /backup` | `admin_required` | Descarga ZIP `nexus_config.json` con portal, LDAP, SMTP (sin contraseñas), plantillas y usuarios locales con su hash. |
 | `POST /backup` | `admin_required` | Restaura desde ese ZIP; solo agrega usuarios que no existan. |

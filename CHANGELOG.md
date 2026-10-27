@@ -5,6 +5,9 @@
 
 ## [Sin publicar]
 
+### Corregido
+- Notificaciones: marcar una global como leída ya no la marca para todos los usuarios; la lectura se guarda por usuario en `notification_reads` (migración 0010) y la respuesta de la API mantiene su forma (FNC-031, 2026-10-27).
+
 ### Cambiado
 - CSS depurado: `components.css` y `global.css` pierden 142 clases sin uso (DataTables, KPI, monitoreo, tour, toast, select propio y modal duplicado), reglas por id sin elemento y `@keyframes` huérfanos (1892 líneas netas, CSS generado de 80 449 a 45 208 bytes); sin colores literales: se borró el estilo del deslizador (sin uso), `.nexus-checkbox` queda en una sola regla y su marca usa `--color-on-primary`. Pruebas contra clases sin uso y colores literales en los CSS (DIS-009, 2026-10-27).
 - Sin estilos inline: el color de plataformas y áreas llega como variable CSS (`variablesCss`, `.nx-chip-solid`, `.nx-chip-tint`) y los botones de las páginas de error usan `text-on-primary`; una prueba impide estilos en línea nuevos (DIS-012, 2026-10-27).
