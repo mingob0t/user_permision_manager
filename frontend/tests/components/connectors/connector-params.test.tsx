@@ -3,7 +3,7 @@
  * `conectores-y-ejecuciones.md` 1.4). Campos visibles, validación, envío y
  * error del servidor por `params.<ruta>`. Sin secretos ni direcciones IP.
  */
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Connector } from '@/lib/access/types';
 
@@ -15,7 +15,7 @@ import { ApiError } from '@/lib/api';
 import { connectorsApi } from '@/lib/access/connectors';
 import { ConnectorForm } from '@/components/connectors/connector-form';
 import { cuerpoConector, formularioDesde } from '@/components/connectors/connector-catalog';
-import { describeConnectorSaveError } from '@/components/connectors/connector-errors';
+import { MENSAJE_REVISA, describeConnectorSaveError } from '@/components/connectors/connector-errors';
 import { OBLIGATORIO_PARAM, claveDeError, validarParametros } from '@/components/connectors/connector-params';
 
 const save = vi.mocked(connectorsApi.save);
@@ -32,8 +32,11 @@ function conector(tipo: Connector['type'], params: Record<string, unknown>, extr
   };
 }
 
+const HUELLA = `SHA256:${'A'.repeat(43)}`;
+const HUELLA_2 = `SHA256:${'b'.repeat(43)}`;
+
 const SSH = conector('ssh', {
-  huellas: ['SHA256:abcDEF123+/='],
+  huellas: [HUELLA],
   otorgar: { comando: ['/usr/local/bin/acceso', 'otorgar'], sin_cambios: [3] },
   revocar: { comando: ['/usr/local/bin/acceso', 'revocar'], sin_cambios: [4] },
   consultar: { comando: ['/usr/local/bin/acceso', 'consultar'], ausente: [1] },
@@ -118,7 +121,7 @@ describe('tipo ssh', () => {
   it('muestra huellas, autenticación y las tres operaciones sin pedir secretos', () => {
     abrir(SSH);
     expect((screen.getByLabelText('Huellas de la llave del host') as HTMLTextAreaElement).value)
-      .toBe('SHA256:abcDEF123+/=');
+      .toBe(HUELLA);
     expect(screen.getByLabelText('Método de autenticación')).toBeTruthy();
     expect(screen.getAllByLabelText('Comando *')).toHaveLength(3);
     expect(screen.getByLabelText('Códigos «sin acceso»')).toBeTruthy();
@@ -129,7 +132,7 @@ describe('tipo ssh', () => {
 
   it('valida el comando, las huellas y los códigos; consultar solo exige lo suyo si se completa', () => {
     const base = {
-      huellas: 'SHA256:abc', 'otorgar.comando': '/usr/bin/acceso otorgar', 'revocar.comando': '/usr/bin/acceso revocar',
+      huellas: HUELLA, 'otorgar.comando': '/usr/bin/acceso otorgar', 'revocar.comando': '/usr/bin/acceso revocar',
     };
     expect(validarParametros('ssh', base)).toEqual({});
     expect(validarParametros('ssh', { ...base, 'consultar.ausente': '1' })).toEqual({
@@ -146,13 +149,13 @@ describe('tipo ssh', () => {
     save.mockResolvedValue({ status: 'success', connector: SSH });
     abrir(SSH);
     fireEvent.change(screen.getByLabelText('Huellas de la llave del host'), {
-      target: { value: 'SHA256:aaa\nSHA256:bbb' },
+      target: { value: `${HUELLA}\n${HUELLA_2}` },
     });
     guardar();
     await waitFor(() => expect(save).toHaveBeenCalledWith(12, {
       type: 'ssh', host: 'erp.ejemplo.local', port: 22, credential_ref: 'pokemon/erp', active: true,
       params: {
-        huellas: ['SHA256:aaa', 'SHA256:bbb'],
+        huellas: [HUELLA, HUELLA_2],
         otorgar: { comando: ['/usr/local/bin/acceso', 'otorgar'], sin_cambios: [3] },
         revocar: { comando: ['/usr/local/bin/acceso', 'revocar'], sin_cambios: [4] },
         consultar: { comando: ['/usr/local/bin/acceso', 'consultar'], ausente: [1] },
@@ -203,6 +206,80 @@ describe('tipo bd', () => {
   });
 });
 
+describe('DIS-042 accesibilidad: grupo opcional, anuncios y resumen', () => {
+  it('el grupo Consultar se describe con su explicación y los obligatorios condicionales lo dicen', () => {
+    abrir(conector('ssh', {}));
+    const grupo = screen.getByRole('group', { name: 'Consultar acceso (opcional)' });
+    const nota = document.getElementById(grupo.getAttribute('aria-describedby')!);
+    expect(nota?.textContent).toMatch(/Déjalo vacío/);
+    const comando = within(grupo).getByLabelText('Comando *');
+    const pista = comando.getAttribute('aria-describedby')!.split(' ')
+      .map((id) => document.getElementById(id)?.textContent).join(' ');
+    expect(pista).toContain('Obligatorio si completas este grupo');
+    // Fuera del grupo opcional no se repite.
+    const otorgar = within(screen.getByRole('group', { name: 'Otorgar acceso' })).getByLabelText('Comando *');
+    expect(otorgar.getAttribute('aria-describedby')).not.toContain('grupo');
+    const textoOtorgar = otorgar.getAttribute('aria-describedby')!.split(' ')
+      .map((id) => document.getElementById(id)?.textContent).join(' ');
+    expect(textoOtorgar).not.toContain('Obligatorio si completas');
+  });
+
+  const region = () => document.querySelector('[data-region-anuncios]')?.textContent ?? '';
+
+  it('anuncia los parámetros al cambiar de tipo, también en altas', () => {
+    abrir(SSH);
+    expect(region()).toBe('');
+    fireEvent.change(screen.getByLabelText('Tipo de conector *'), { target: { value: 'bd' } });
+    expect(region()).toMatch(/^Parámetros de Base de datos: \d+ campos en \d+ grupos\. Se descartaron los del tipo anterior\.$/);
+    cleanup();
+    render(<ConnectorForm platformId={12} guardado={null} onSaved={vi.fn()} onStale={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Tipo de conector *'), { target: { value: 'ssh' } });
+    expect(region()).toMatch(/^Parámetros de SSH: \d+ campos en \d+ grupos\./);
+  });
+
+  it('anuncia los campos que aparecen o desaparecen según otro valor', () => {
+    abrir(conector('api', { auth: { esquema: 'bearer' } }));
+    fireEvent.change(screen.getByLabelText('Esquema de autenticación *'), { target: { value: 'cabecera' } });
+    expect(region()).toMatch(/Aparece: Nombre de la cabecera/);
+    fireEvent.change(screen.getByLabelText('Esquema de autenticación *'), { target: { value: 'basic' } });
+    expect(region()).toMatch(/Se oculta: Nombre de la cabecera/);
+  });
+
+  it('la validación del cliente muestra el resumen de errores', () => {
+    abrir(conector('api', {}));
+    guardar();
+    expect(screen.getByText(/^Revisa \d+ campos marcados\.$/)).toBeTruthy();
+  });
+
+  it('con un solo error usa el mensaje de siempre', () => {
+    abrir(conector('bd', { ...BD.params, base_datos: 'mala base' }, { port: 3306 }));
+    guardar();
+    expect(screen.getByText(MENSAJE_REVISA)).toBeTruthy();
+  });
+
+  it('grupos y pistas se encogen en pantallas de 320 px', () => {
+    abrir(SSH);
+    for (const g of document.querySelectorAll('fieldset fieldset')) expect(g.className).toContain('min-w-0');
+    expect(document.getElementById('conector-param-huellas-pista')?.className).toContain('break-words');
+  });
+
+  it('alinea con el servidor: huella de 43 caracteres y sentencia sin ;, comillas ni comentarios', () => {
+    const ok = { huellas: HUELLA, 'otorgar.comando': '/usr/bin/a', 'revocar.comando': '/usr/bin/b' };
+    expect(validarParametros('ssh', ok)).toEqual({});
+    expect(validarParametros('ssh', { ...ok, huellas: 'SHA256:abc' }).huellas).toBeTruthy();
+    expect(validarParametros('ssh', { ...ok, huellas: `${HUELLA}=` }).huellas).toBeTruthy();
+    const bd = {
+      motor: 'mysql', base_datos: 'erp', 'otorgar.sentencia': 'INSERT INTO t (a) VALUES (%s)',
+      'otorgar.parametros': 'correo', 'revocar.sentencia': 'DELETE FROM t WHERE a = %s', 'revocar.parametros': 'correo',
+    };
+    expect(validarParametros('bd', bd)).toEqual({});
+    for (const malo of ["DELETE FROM t WHERE a = %s; DROP", "DELETE FROM t WHERE a = '%s'", 'DELETE FROM t WHERE a = %s -- x',
+      'DELETE FROM t WHERE a = %s # x', 'DELETE FROM t WHERE a = %s /* x */', 'DELETE FROM t WHERE a = "%s"']) {
+      expect(validarParametros('bd', { ...bd, 'revocar.sentencia': malo })['revocar.sentencia']).toBeTruthy();
+    }
+  });
+});
+
 describe('cambio de tipo y errores del servidor', () => {
   it('al cambiar de tipo se descartan los parámetros del anterior', () => {
     abrir(SSH);
@@ -211,7 +288,7 @@ describe('cambio de tipo y errores del servidor', () => {
     expect(screen.queryByLabelText('Huellas de la llave del host')).toBeNull();
     fireEvent.change(screen.getByLabelText('Tipo de conector *'), { target: { value: 'ssh' } });
     expect((screen.getByLabelText('Huellas de la llave del host') as HTMLTextAreaElement).value)
-      .toBe('SHA256:abcDEF123+/=');
+      .toBe(HUELLA);
   });
 
   it('asigna params.<ruta> al campo más específico del tipo, con texto propio', () => {

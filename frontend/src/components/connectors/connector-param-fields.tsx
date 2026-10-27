@@ -9,7 +9,7 @@
  */
 
 import { Field, Select, TextArea, TextInput } from '../form';
-import { FieldErrorNote, FieldHint, describedBy } from '../platforms/field-notes';
+import { FieldErrorNote, describedBy } from '../platforms/field-notes';
 import { type CampoParametro, GRUPOS, type GrupoId, camposVisibles } from './connector-params';
 
 const ORDEN_GRUPOS: GrupoId[] = ['general', 'auth', 'otorgar', 'revocar', 'consultar'];
@@ -20,7 +20,7 @@ export function idParametro(prefijo: string, clave: string): string {
 }
 
 function ParamField({
-  campo, prefijo, valor, error, exigido, onChange,
+  campo, prefijo, valor, error, exigido, condicional, onChange,
 }: {
   campo: CampoParametro;
   prefijo: string;
@@ -28,6 +28,8 @@ function ParamField({
   error?: string;
   /** Obligatorio en el HTML solo fuera de grupos opcionales. */
   exigido: boolean;
+  /** Obligatorio solo si se completa su grupo opcional. */
+  condicional: boolean;
   onChange: (valor: string) => void;
 }) {
   const id = idParametro(prefijo, campo.clave);
@@ -75,7 +77,11 @@ function ParamField({
   return (
     <div>
       <Field label={etiqueta}>{control}</Field>
-      <FieldHint id={pistaId}>{campo.pista}</FieldHint>
+      {/* `FieldHint` es compartido: aquí la pista además corta palabras largas (320 px). */}
+      <span id={pistaId} className="mt-1.5 block break-words text-xs text-label">
+        {campo.pista}
+        {condicional ? ' Obligatorio si completas este grupo.' : ''}
+      </span>
       <div role="alert">
         <FieldErrorNote id={errorId} message={error} />
       </div>
@@ -101,10 +107,14 @@ export function ConnectorParamFields({
         if (campos.length === 0) return null;
         const { titulo, opcional } = GRUPOS[grupo];
         return (
-          <fieldset key={grupo} className="space-y-4 rounded-xl border border-panel-border p-4">
+          <fieldset
+            key={grupo}
+            className="min-w-0 space-y-4 rounded-xl border border-panel-border p-4"
+            aria-describedby={opcional ? `${prefijo}-grupo-${grupo}-nota` : undefined}
+          >
             <legend className="px-2 text-xs font-black uppercase tracking-[0.1em] text-label">{titulo}</legend>
             {opcional ? (
-              <p className="text-sm text-label">
+              <p id={`${prefijo}-grupo-${grupo}-nota`} className="break-words text-sm text-label">
                 Déjalo vacío para no consultar. Si completas un campo, los marcados con * son obligatorios.
               </p>
             ) : null}
@@ -116,6 +126,7 @@ export function ConnectorParamFields({
                 valor={valores[campo.clave] ?? ''}
                 error={errores[campo.clave]}
                 exigido={Boolean(campo.obligatorio) && !opcional}
+                condicional={Boolean(campo.obligatorio) && Boolean(opcional)}
                 onChange={(valor) => onChange(campo.clave, valor)}
               />
             ))}

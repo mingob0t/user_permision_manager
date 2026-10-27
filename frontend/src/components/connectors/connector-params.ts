@@ -143,6 +143,7 @@ function operacionBd(op: 'otorgar' | 'revocar' | 'consultar'): CampoParametro[] 
       clave: `${op}.sentencia`, etiqueta: 'Sentencia', tipo: 'area', grupo: op, obligatorio,
       validar: (v, valores) => {
         if (v.length > 500 || /[\r\n]/.test(v)) return 'Una sola línea de hasta 500 caracteres.';
+        if (/[;'"`\\]|--|#|\/\*|\*\//.test(v)) return 'Sin ";", comillas, comentarios ni barras invertidas.';
         if (!verbos.includes((v.split(/\s+/)[0] ?? '').toUpperCase())) return `Debe empezar con ${verbos.join(' o ')}.`;
         if (/^(UPDATE|DELETE)/i.test(v) && !/\bWHERE\b/i.test(v)) return 'UPDATE y DELETE llevan WHERE.';
         const marcadores = (v.match(/%s/g) ?? []).length;
@@ -195,8 +196,8 @@ export const PARAMETROS_POR_TIPO: Record<ConnectorType, CampoParametro[]> = {
     { clave: 'huellas', etiqueta: 'Huellas de la llave del host', tipo: 'lista', unir: '\n', grupo: 'general',
       validar: (v) => {
         const lista = partes(v);
-        return lista.length >= 1 && lista.length <= 5 && lista.every((h) => /^SHA256:[A-Za-z0-9+/]+={0,2}$/.test(h))
-          ? null : 'De 1 a 5 huellas con el formato SHA256:<base64>.';
+        return lista.length >= 1 && lista.length <= 5 && lista.every((h) => /^SHA256:[A-Za-z0-9+/]{43}$/.test(h))
+          ? null : 'De 1 a 5 huellas con el formato SHA256:<base64> (43 caracteres).';
       },
       pista: 'Una por línea, formato SHA256:<base64> (ssh-keygen -lf). Varias sirven para rotar la llave. Obligatoria salvo que el despliegue tenga un archivo de hosts conocidos.' },
     { clave: 'auth.metodo', etiqueta: 'Método de autenticación', tipo: 'select', grupo: 'auth',
@@ -331,4 +332,25 @@ export function claveDeError(tipo: string, ruta: string): string | null {
     .filter((clave) => ruta === clave || ruta.startsWith(`${clave}.`))
     .sort((a, b) => b.length - a.length);
   return claves[0] ?? null;
+}
+
+/** Texto de lectores de pantalla al cambiar de tipo: cuántos campos y grupos hay. */
+export function resumenParametros(tipoTexto: string, tipo: string, valores: Record<string, string>): string {
+  const visibles = camposVisibles(tipo, valores);
+  const grupos = new Set(visibles.map((c) => c.grupo ?? 'general')).size;
+  if (visibles.length === 0) return `Parámetros de ${tipoTexto}: sin campos editables. Se descartaron los del tipo anterior.`;
+  return `Parámetros de ${tipoTexto}: ${visibles.length} campos en ${grupos} grupos. Se descartaron los del tipo anterior.`;
+}
+
+/** Aviso de los campos que aparecen o se ocultan al cambiar un valor (`visible`). */
+export function avisoVisibilidad(tipo: string, antes: Record<string, string>, despues: Record<string, string>): string {
+  const a = new Set(camposVisibles(tipo, antes).map((c) => c.clave));
+  const d = camposVisibles(tipo, despues);
+  const nuevos = d.filter((c) => !a.has(c.clave)).map((c) => c.etiqueta);
+  const dSet = new Set(d.map((c) => c.clave));
+  const fuera = camposVisibles(tipo, antes).filter((c) => !dSet.has(c.clave)).map((c) => c.etiqueta);
+  return [
+    nuevos.length ? `Aparece: ${nuevos.join(', ')}.` : '',
+    fuera.length ? `Se oculta: ${fuera.join(', ')}.` : '',
+  ].filter(Boolean).join(' ');
 }

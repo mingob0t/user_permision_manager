@@ -26,8 +26,10 @@ import {
   TIPOS_CONECTOR, cuerpoConector, esTipoConocido, formularioDesde, parametrosConservados,
   parametrosDelTipo, validarConector, validarParametros,
 } from './connector-catalog';
+import { avisoVisibilidad, resumenParametros } from './connector-params';
+import { RegionDeAnuncios } from '../region-de-anuncios';
 import { ConnectorParamFields, idParametro } from './connector-param-fields';
-import { describeConnectorSaveError } from './connector-errors';
+import { MENSAJE_REVISA, describeConnectorSaveError } from './connector-errors';
 
 const PREFIJO = 'conector';
 const IDS: Record<Exclude<CampoConector, 'params' | 'active'>, string> = {
@@ -62,6 +64,7 @@ export function ConnectorForm({
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Partial<Record<CampoConector, string>>>({});
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
+  const [anuncio, setAnuncio] = useState('');
 
   const campos = parametrosDelTipo(form.type);
   const conservados = Object.keys(parametrosConservados(guardado, form.type));
@@ -69,14 +72,17 @@ export function ConnectorForm({
 
   /** Al cambiar de tipo se vuelve a lo guardado de ese tipo, o a vacío (se descartan los del anterior). */
   function cambiarTipo(tipo: string) {
-    setForm((prev) => ({
-      ...prev, type: tipo, params: guardado?.type === tipo ? formularioDesde(guardado).params : {},
-    }));
+    const params = guardado?.type === tipo ? formularioDesde(guardado).params : {};
+    setForm((prev) => ({ ...prev, type: tipo, params }));
     setParamErrors({});
+    setAnuncio(resumenParametros(esTipoConocido(tipo) ? TIPOS_CONECTOR[tipo] : tipo, tipo, params));
   }
 
   function cambiarParametro(clave: string, valor: string) {
+    const params = { ...form.params, [clave]: valor };
     setForm((prev) => ({ ...prev, params: { ...prev.params, [clave]: valor } }));
+    const aviso = avisoVisibilidad(form.type, form.params, params);
+    if (aviso) setAnuncio(aviso);
   }
 
   /** Orden de foco: campos base y luego los parámetros visibles. */
@@ -96,7 +102,8 @@ export function ConnectorForm({
     const errores = validarConector(form);
     const erroresParams = validarParametros(form.type, form.params);
     if (Object.keys(errores).length > 0 || Object.keys(erroresParams).length > 0) {
-      setError(null);
+      const total = Object.keys(errores).length + Object.keys(erroresParams).length;
+      setError(total === 1 ? MENSAJE_REVISA : `Revisa ${total} campos marcados.`);
       setFields(errores);
       setParamErrors(erroresParams);
       focusFirstError(ordenCon(erroresParams), { ...errores, ...erroresParams } as Record<string, string>);
@@ -158,6 +165,7 @@ export function ConnectorForm({
   return (
     <form onSubmit={submit} noValidate aria-busy={sending} className="space-y-5" aria-label="Configuración del conector">
       <p className="text-sm text-label">Los campos con * son obligatorios.</p>
+      <RegionDeAnuncios mensaje={anuncio} />
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div>

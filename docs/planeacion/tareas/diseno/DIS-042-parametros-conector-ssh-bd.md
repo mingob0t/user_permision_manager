@@ -50,3 +50,7 @@
 | `npm run build` | 0 |
 | grep de `style=`, `<style`, `.style.`, colores literales e IPs | Sin coincidencias |
 | Tema claro/oscuro, móvil y escritorio en navegador | No verificado (sin captura); solo tokens y clases ya usadas |
+
+## Corrección de auditoría de accesibilidad (2026-10-27)
+- Grupo opcional descrito por su nota; obligatorios condicionales lo dicen en la pista; anuncios al cambiar de tipo y de campos visibles (`RegionDeAnuncios`); resumen de errores del cliente; `min-w-0` y `break-words` (sin tocar `FieldHint`, compartido); huella de 43 caracteres y sentencia sin `;`, comillas ni comentarios.
+- Impacto compartido adicional: ninguno (`connector-form.tsx` y `connector-param-fields.tsx` solo).
