@@ -181,13 +181,14 @@ describe('Menú móvil', () => {
     expect(actuales.map((a) => a.textContent)).toEqual(['Favoritos']);
   });
 
-  it('los enlaces del menú móvil tienen área táctil de 48 px; los de la barra lateral no cambian', async () => {
+  // DIS-008: la barra lateral también se usa con el dedo (tabletas desde `md`): 48 px en ambas.
+  it('los enlaces del menú móvil y de la barra lateral tienen área táctil de 48 px', async () => {
     const panel = abrir(await montar());
     for (const enlace of within(panel).getAllByRole('link')) {
       expect(enlace.className).toContain('min-h-12');
     }
     for (const enlace of within(document.querySelector('aside')!).getAllByRole('link')) {
-      expect(enlace.className).not.toContain('min-h-12');
+      expect(enlace.className).toContain('min-h-12');
     }
     expect(screen.getByRole('button', { name: 'Menú' }).className).toContain('min-h-12');
     expect(within(panel).getByRole('button', { name: 'Cerrar' }).className).toContain('min-h-12');
@@ -212,7 +213,7 @@ describe('Menú móvil', () => {
     expect(oyentes).toHaveLength(0);
   });
 
-  it('botones y enlaces del menú móvil tienen foco visible; la barra lateral no cambia', async () => {
+  it('botones y enlaces del menú móvil y de la barra lateral tienen foco visible', async () => {
     const panel = abrir(await montar());
     const controles = [
       screen.getByRole('button', { name: 'Menú' }),
@@ -224,7 +225,8 @@ describe('Menú móvil', () => {
       expect(control.className).toContain('focus-visible:ring-primary');
     }
     for (const enlace of within(document.querySelector('aside')!).getAllByRole('link')) {
-      expect(enlace.className).not.toContain('focus-visible:ring');
+      expect(enlace.className).toContain('focus-visible:ring-2');
+      expect(enlace.className).toContain('focus-visible:ring-primary');
     }
     expect(panel.className).toContain('border-primary');
   });

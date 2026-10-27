@@ -6,12 +6,14 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Áreas táctiles de 48 px con foco visible: acciones de fila de Usuarios, Áreas y Administrar plataformas, chips de áreas y plataformas, estrella de favorito, entradas de la barra lateral (también en tableta), "Salir", casillas, buscador y filtro del catálogo, entradas de archivo y de color, y enlaces de las páginas de error y de cierre de sesión; una prueba impide controles nuevos de menos de 44 px (DIS-008, 2026-10-27).
 - Texto mínimo de 12 px: insignias, botones, cabeceras de tabla, contador del tour, marca de las casillas, ejes de las gráficas del Inicio e iniciales de Administrar plataformas pasan de 9–11 px a 12 px (token `--text-xs`); se retira el token `--text-2xs` (10 px) y una prueba impide volver a bajar de 12 px (DIS-007, DIS-032, 2026-10-26).
 
 ### Seguridad
 - Next.js: el rewrite de `/api` hacia Flask existe solo con `NODE_ENV=development` (`next build`/`next start` no generan ninguno), se retira el rewrite de `/auth` y `BACKEND_URL` se rechaza si es una IP; cierra la vía de Next hacia Flask con cabeceras `Remote-*` del cliente (FNC-005, FNC-118, 2026-10-26).
 
 ### Agregado
+- Administrar plataformas: cada fila enlaza a su historial en Auditoría (DIS-035, 2026-10-27).
 - Prueba de que la línea base `0001` incluye el efecto de los SQL heredados 001-004 (FNC-028, 2026-10-26).
 - Diálogos: el foco empieza en el primer campo, no sale del diálogo con Tab y vuelve al botón que lo abrió; el texto que explica la acción se anuncia como descripción (aprobar, rechazar, revocar, rol de admin, eliminar conector, reintentar y confirmaciones de borrado); el ✕ mide 48 px. Velo detrás de los diálogos y del menú móvil con token propio por tema, y el fondo no se desplaza mientras están abiertos (DIS-031, DIS-038, 2026-10-26).
 - Ajustes → Directorio (superadmin): configuración efectiva de OpenLDAP en solo lectura, con la variable `LDAP_*` de cada valor y si viene del entorno o es la predeterminada, estados de sin configurar e inválida y "Probar conexión" con mensajes propios; sin campos de contraseña ni mapeos de rol. Las pestañas de Ajustes se recorren con las flechas, Inicio y Fin y miden 48 px (DIS-023, DIS-034, 2026-10-26).

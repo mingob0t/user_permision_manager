@@ -207,9 +207,9 @@ describe('UsersList: acciones de rol', () => {
     render(<UsersList />);
     await screen.findByText('Ana Ruiz');
     expect(screen.getByRole('button', { name: 'Hacer admin de área a Ana Ruiz' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Áreas que administra Luis Paz' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Áreas admin de Luis Paz' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Quitar admin de área a Luis Paz' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Jefa$/ })).toBeTruthy(); // "Accesos de Jefa"
+    expect(screen.queryByRole('button', { name: 'Accesos de Jefa' })).toBeTruthy(); // "Accesos de Jefa"
     expect(screen.queryByRole('button', { name: 'Hacer admin de área a Jefa' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Quitar admin de área a Jefa' })).toBeNull();
   });
