@@ -30,7 +30,7 @@
 | FNC-026 | CI que ejecute pytest, typecheck, lint y los controles del pre-commit | infra | 2 | ci | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 y FNC-024; requiere repositorio remoto |
 | FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | Hecha | 2026-10-13 | 2026-10-26 | | `fnc/FNC-027-retirar-blueprints-heredados` (commit local, sin push) | Origen: H-01. Propone FNC-118 |
 | FNC-028 | Limpiar scratch/ y utils/ (PSX5K) y adoptar Alembic con las migraciones 001-004 | backend | 4 | bd | Media | Hecha | 2026-10-13 | 2026-10-26 | | `fnc/FNC-028-limpiar-scratch-utils` (commit local, sin push) | Origen: H-07, H-08. El reset de admin pasa a FNC-003 |
-| FNC-029 | Dividir app/modules/api/admin.py, crud.py y create_app | backend | 4 | api | Media | Propuesta | 2026-10-13 | | | — | Después de FNC-020 |
+| FNC-029 | Dividir app/modules/api/admin.py, crud.py y create_app | backend | 4 | api | Media | En revisión | 2026-10-13 | | | `fnc/FNC-029-119-dividir-monolitos` (commit local, sin push) | Junto con FNC-119; `url_map` idéntico (68 reglas) |
 | FNC-030 | Unificar helpers duplicados del backend (usuario creado, purga, _payload/_error, auditoría) | backend | 4 | api | Media | Hecha | 2026-10-13 | 2026-10-27 | | `fnc/FNC-030-082-helpers-comunes` (commit local, sin push) | Junto con FNC-082; resuelve D-03, D-04, D-05; propone FNC-119 |
 | FNC-031 | Corregir notificaciones globales marcadas como leídas para todos | backend | 4 | notifications | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-032 | Selector de tema: aplicar la clase en <html> o retirar los temas sin uso | web | 4 | tema | Alta | Propuesta | 2026-10-13 | | | — |  |
@@ -146,4 +146,5 @@
 | FNC-116 | Conector `bd`: probar contra MySQL y PostgreSQL reales con TLS | backend | 5 | conectores | Media | Propuesta | 2026-10-21 | | | — | Origen: FNC-053; depende de P9 |
 | FNC-117 | Cierre de la fase 3: plan completo y propuestas de auditoría reasignadas a fases 4 y 5 | infra | 3 | planeacion | Media | Hecha | 2026-10-26 | 2026-10-26 | | `fnc/FNC-117-cierre-fase-3` | Orquestador (modo autónomo) |
 | FNC-118 | Web: retirar el `rewrite` de `/auth/:path*` en `next.config.ts` (el backend ya no tiene `/auth`) | web | 4 | frontend | Baja | Hecha | 2026-10-26 | 2026-10-26 | | `fnc/FNC-005-118-rewrites-next` (commit local, sin push) | Origen: FNC-027 |
-| FNC-119 | Backend: cuerpo validado en `crud.py`/`admin.py` (`leer_cuerpo`) y enlace de bienvenida sin ruta heredada `/auth/login` | backend | 4 | api | Baja | Propuesta | 2026-10-27 | | | — | Origen: FNC-030; coordinar con FNC-029 |
+| FNC-119 | Backend: cuerpo validado en `crud.py`/`admin.py` (`leer_cuerpo`) y enlace de bienvenida sin ruta heredada `/auth/login` | backend | 4 | api | Baja | En revisión | 2026-10-27 | | | `fnc/FNC-029-119-dividir-monolitos` (commit local, sin push) | Origen: FNC-030; junto con FNC-029; propone FNC-120 |
+| FNC-120 | Backend: lista blanca estricta de campos en usuarios, preferencias, ajustes, SMTP y plantillas | backend | 4 | api | Baja | Propuesta | 2026-10-27 | | | — | Origen: FNC-119; requiere tarea `web` para los formularios |
