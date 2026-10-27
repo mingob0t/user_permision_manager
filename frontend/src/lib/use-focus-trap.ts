@@ -166,12 +166,33 @@ export function useFocusTrap(
       }
     }
 
+    // DIS-049: si el aviso con el foco se cierra o desaparece, el foco cae a `body`: vuelve al diálogo.
+    let focoEnRegion = false;
+    function onFocusIn(event: FocusEvent) {
+      focoEnRegion = event.target instanceof Element && event.target.closest(REGION_FUERA_DE_TRAMPA) !== null;
+    }
+    const observador = new MutationObserver(() => {
+      if (!focoEnRegion || pila[pila.length - 1] !== id || !contenedor) return;
+      const actual = document.activeElement;
+      if (actual && actual !== document.body) return;
+      focoEnRegion = false;
+      enfocarPrimero([...enfocables(contenedor), contenedor]);
+    });
+    observador.observe(document.body, { childList: true, subtree: true });
+
     document.addEventListener('keydown', onKey);
+    document.addEventListener('focusin', onFocusIn);
     return () => {
+      observador.disconnect();
+      document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('keydown', onKey);
       pila.splice(pila.indexOf(id), 1);
       const actual = document.activeElement;
-      const libre = !actual || actual === document.body || contenedor.contains(actual);
+      const libre =
+        !actual ||
+        actual === document.body ||
+        contenedor.contains(actual) ||
+        actual.closest(REGION_FUERA_DE_TRAMPA) !== null;
       if (!libre) return;
       enfocarPrimero([destino?.isConnected ? destino : null, ...destinoAlterno()]);
     };

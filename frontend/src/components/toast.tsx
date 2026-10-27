@@ -11,7 +11,7 @@
  * - Éxito e info se cierran solos tras `TOAST_MS`; el error se queda hasta que
  *   se cierra (no se pierde un fallo por tardar en leerlo). Todos tienen botón
  *   "Cerrar aviso" de 48 px.
- * - DIS-049: el temporizador se pausa mientras el cursor o el foco están sobre
+ * - DIS-049: el temporizador se pausa mientras el cursor (ratón, no toque) o el foco están sobre
  *   el aviso y vuelve a correr completo al salir (WCAG 2.2.1).
  * - DIS-049: con un diálogo abierto, la región de avisos entra en el ciclo de
  *   Tab de la trampa de foco (`data-fuera-de-trampa`), así "Cerrar aviso" se
@@ -68,8 +68,12 @@ function Tarjeta({ aviso, onCerrar, onPausa, onReanudar }: PropsTarjeta) {
   };
   return (
     <div
-      onMouseEnter={() => actualizar({ cursor: true })}
-      onMouseLeave={() => actualizar({ cursor: false })}
+      onPointerEnter={(evento) => {
+        if (evento.pointerType === 'mouse') actualizar({ cursor: true });
+      }}
+      onPointerLeave={(evento) => {
+        if (evento.pointerType === 'mouse') actualizar({ cursor: false });
+      }}
       onFocus={() => actualizar({ foco: true })}
       onBlur={(evento) => {
         if (!evento.currentTarget.contains(evento.relatedTarget)) actualizar({ foco: false });

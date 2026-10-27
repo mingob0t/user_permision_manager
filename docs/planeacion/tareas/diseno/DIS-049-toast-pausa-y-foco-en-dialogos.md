@@ -40,3 +40,9 @@
 - typecheck 0, lint 0, vitest 0 (41 archivos, 1515 pruebas, incluidas las de accesibilidad), build 0.
 - 4 pruebas nuevas en `tests/components/componentes-comunes.test.tsx`: pausa con cursor, con foco, error sin temporizador, Tab con diálogo abierto y raíz `inert`.
 - No verificado en navegador real (sin estilos nuevos, el tema no cambia).
+
+## Correcciones de la auditoría de accesibilidad
+- Decisión del orquestador (pendiente de validar en la prueba de concepto): foco al cerrar el aviso (medio): `useFocusTrap` observa el DOM (`MutationObserver`) y, si el foco venía de una región `data-fuera-de-trampa` y cae a `body`, lo devuelve al diálogo (no depende de `focusout`, que no se dispara al desmontar). Pruebas: cierre con clic y cierre programático.
+- Escape con el foco en el aviso (bajo): ese foco cuenta como `libre` al desmontar la trampa; el foco vuelve al disparador. Prueba incluida.
+- Toque (dudoso): `onPointerEnter`/`onPointerLeave` y pausa solo con `pointerType === 'mouse'`. Prueba con `touch`. Sigue pendiente de probar en un dispositivo táctil real.
+- Verificación: tsc 0, lint 0, vitest 0 (1518), build 0.
