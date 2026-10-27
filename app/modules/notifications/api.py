@@ -12,6 +12,7 @@ from app.authz import admin_required
 from app.modules.api.helpers import error_response, leer_cuerpo
 from app.modules.audit.services import add_audit_log
 from app.modules.notifications.models import (InAppNotification,
+                                              NotificationRead,
                                               NotificationTemplate, SMTPConfig)
 
 notifications_api_bp = Blueprint('api_notifications', __name__,
@@ -212,23 +213,41 @@ def list_notifications():
                             InAppNotification.user_id.is_(None)))
              .order_by(InAppNotification.created_at.desc())
              .limit(50).all())
-    return jsonify([n.to_dict() for n in items])
+    # Una global cuenta como leída solo si este usuario la leyó.
+    leidas = {fila.notification_id for fila in
+              NotificationRead.query.filter_by(user_id=current_user.id).all()}
+    return jsonify([
+        n.to_dict(leida=(n.id in leidas) if n.user_id is None else None)
+        for n in items])
 
 
 @notifications_api_bp.route('/notifications/read', methods=['POST'])
 @login_required
 def mark_notifications_read():
-    """Marca como leídas: todas las propias, o las indicadas."""
+    """Marca como leídas, solo para quien consulta: todas o las indicadas.
+
+    Las propias cambian `is_read`; las globales se registran en
+    `notification_reads` y no afectan a los demás usuarios.
+    """
     cuerpo, error = leer_cuerpo(None)
     if error is not None:
         return error
     ids = cuerpo.get('ids')
-    query = InAppNotification.query.filter(
-        db.or_(InAppNotification.user_id == current_user.id,
-               InAppNotification.user_id.is_(None)))
+
+    propias = InAppNotification.query.filter_by(user_id=current_user.id)
+    globales = InAppNotification.query.filter(
+        InAppNotification.user_id.is_(None))
     if ids:
-        query = query.filter(InAppNotification.id.in_(ids))
-    query.update({'is_read': True}, synchronize_session=False)
+        propias = propias.filter(InAppNotification.id.in_(ids))
+        globales = globales.filter(InAppNotification.id.in_(ids))
+    propias.update({'is_read': True}, synchronize_session=False)
+
+    ya_leidas = {fila.notification_id for fila in
+                 NotificationRead.query.filter_by(user_id=current_user.id)}
+    for aviso in globales.all():
+        if aviso.id not in ya_leidas:
+            db.session.add(NotificationRead(notification_id=aviso.id,
+                                            user_id=current_user.id))
     db.session.commit()
     return jsonify({'status': 'success'})
 

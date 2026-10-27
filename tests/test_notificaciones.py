@@ -7,6 +7,7 @@ prueban con el comportamiento correcto y `xfail(strict=True)` con su tarea.
 import smtplib
 
 import pytest
+from flask import g
 
 from app import db
 from app.authz import ROLE_USER
@@ -433,15 +434,79 @@ def test_marcar_todas_no_toca_las_de_otro(avisos, cliente_como):
     assert _leida(avisos['de_beto']) is False
 
 
-@pytest.mark.xfail(strict=True, reason='FNC-031: POST /notifications/read '
-                   'marca las globales como leídas para todos los usuarios')
+def _por_usuario(cliente_como):
+    """`cliente_como` que descarta el usuario cacheado en `g`.
+
+    El contexto de la app dura toda la prueba y Flask-Login guarda en `g` al
+    usuario de la primera petición: sin esto, un segundo usuario seguiría
+    siendo el primero.
+    """
+    def _como(usuario):
+        g.pop('_login_user', None)
+        return cliente_como(usuario)
+    return _como
+
+
+def _globales(respuesta):
+    return [n for n in respuesta.get_json() if n['title'] == 'Global']
+
+
+def _sin_leer(respuesta):
+    return sum(1 for n in respuesta.get_json() if not n['is_read'])
+
+
 def test_leer_una_global_no_la_marca_para_los_demas(avisos, cliente_como):
-    cliente_como(avisos['ana']).post(f'{A}/notifications/read', json={})
+    como = _por_usuario(cliente_como)
+    como(avisos['ana']).post(f'{A}/notifications/read', json={})
 
-    respuesta = cliente_como(avisos['beto']).get(f'{A}/notifications')
+    respuesta = como(avisos['beto']).get(f'{A}/notifications')
 
-    globales = [n for n in respuesta.get_json() if n['title'] == 'Global']
-    assert globales[0]['is_read'] is False
+    assert _globales(respuesta)[0]['is_read'] is False
+
+
+def test_leer_una_global_la_marca_para_quien_la_leyo(avisos, cliente_como):
+    como = _por_usuario(cliente_como)
+    como(avisos['ana']).post(f'{A}/notifications/read', json={})
+
+    respuesta = como(avisos['ana']).get(f'{A}/notifications')
+
+    assert _globales(respuesta)[0]['is_read'] is True
+
+
+def test_contador_de_no_leidas_por_usuario(avisos, cliente_como):
+    como = _por_usuario(cliente_como)
+    como(avisos['ana']).post(f'{A}/notifications/read', json={})
+
+    assert _sin_leer(como(avisos['ana']).get(f'{A}/notifications')) == 0
+    # Beto conserva la propia y la global sin leer.
+    assert _sin_leer(como(avisos['beto']).get(f'{A}/notifications')) == 2
+
+
+def test_marcar_una_global_por_id_es_solo_para_quien_la_marca(avisos, cliente_como):
+    como = _por_usuario(cliente_como)
+    como(avisos['ana']).post(f'{A}/notifications/read',
+                                     json={'ids': [avisos['global']]})
+
+    assert _sin_leer(como(avisos['ana']).get(f'{A}/notifications')) == 1
+    assert _sin_leer(como(avisos['beto']).get(f'{A}/notifications')) == 2
+
+
+def test_marcar_dos_veces_una_global_no_falla(avisos, cliente_como):
+    como = _por_usuario(cliente_como)
+    cliente = como(avisos['ana'])
+    cliente.post(f'{A}/notifications/read', json={'ids': [avisos['global']]})
+
+    respuesta = cliente.post(f'{A}/notifications/read',
+                             json={'ids': [avisos['global']]})
+
+    assert respuesta.status_code == 200
+
+
+def test_la_global_no_cambia_su_bandera_compartida(avisos, cliente_como):
+    como = _por_usuario(cliente_como)
+    como(avisos['ana']).post(f'{A}/notifications/read', json={})
+
+    assert _leida(avisos['global']) is False
 
 
 def test_borrar_elimina_solo_las_propias(avisos, cliente_como):
