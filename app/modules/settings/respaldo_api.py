@@ -104,7 +104,7 @@ def import_backup():
 
     system_data = payload.get('system_config')
     if system_data:
-        config = SystemConfig.query.first() or SystemConfig()
+        config = SystemConfig.query.first() or SystemConfig.por_defecto()
         for field in ('portal_name', 'portal_identity_type', 'portal_icon',
                       'bg_color', 'text_color'):
             if field in system_data:

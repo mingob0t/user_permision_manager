@@ -137,6 +137,10 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `pool_recycle` | Reciclado de conexiones de BD | 3600 | s | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `SQLITE_URI_POR_DEFECTO` | BD SQLite cuando `DB_ENGINE` no es `mysql` (en `instance/`) | `sqlite:///nexus.db` | — | `app/utils/uri_bd.py` | FNC-001, 2026-10-13; constante con nombre FNC-039 | Vigente |
 | `CARPETA_INSTANCIA` | Dónde resuelve Alembic la ruta SQLite relativa (igual que Flask) | `instance/` de la raíz | — | `migrations/env.py` | FNC-039, 2026-10-14 | Vigente |
+| `PORTAL_NAME_POR_DEFECTO` | Nombre del portal sin configuración guardada | `Nexus Core AI` | — | `app/modules/settings/valores_por_defecto.py` | FNC-121, 2026-10-27 (el valor ya existía en el modelo; sin cambio) | Vigente |
+| `PORTAL_IDENTITY_TYPE_POR_DEFECTO` | Tipo de identidad del portal sin configuración guardada | `icon` | — | `app/modules/settings/valores_por_defecto.py` | FNC-121, 2026-10-27 (sin cambio de valor) | Vigente |
+| `BG_COLOR_POR_DEFECTO` | Color de fondo del portal sin configuración guardada | `#0f172a` | — | `app/modules/settings/valores_por_defecto.py` | FNC-121, 2026-10-27 (sin cambio de valor) | Vigente |
+| `TEXT_COLOR_POR_DEFECTO` | Color de texto del portal sin configuración guardada | `#ffffff` | — | `app/modules/settings/valores_por_defecto.py` | FNC-121, 2026-10-27 (sin cambio de valor) | Vigente |
 | `MAX_LOGO_BYTES` | Tamaño máximo del logo del portal | 512 | KB | `app/modules/settings/logo.py` | FNC-001, 2026-10-13 | Vigente |
 | `ALLOWED_LOGO_TYPES` | Tipos de imagen del logo | png, jpeg, gif, webp, svg+xml | — | `app/modules/settings/logo.py` | FNC-001, 2026-10-13 | Vigente |
 | `PURGE_MIN_DAYS` | Mínimo de días de inactividad para purgar | 7 | días | `app/modules/users/services.py` | FNC-001, 2026-10-13 | Vigente |
