@@ -29,7 +29,6 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 
 ## Fase 4 — Estándares, modularidad y accesibilidad
 - [ ] FNC-027 a FNC-034, DIS-001 a DIS-012
-- [ ] FNC-120 (lista blanca estricta de campos; movida desde la fase 4 el 2026-10-27)
 - [ ] Propuestas de auditorías de fase 3: DIS-030, DIS-031, DIS-032, DIS-033, DIS-035, DIS-036, DIS-037, DIS-038, DIS-039, DIS-040, DIS-041, DIS-042
 
 ## Fase 5 — Seguridad final
@@ -37,6 +36,7 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 > ⏸ **En pausa** (decisión del dueño, 2026-10-27): primero el sistema funcional. Tras la fase 4 sigue la fase 6; la fase 5 se retoma cuando el dueño lo indique. Sigue vigente que el portal no se expone antes de cerrarla.
 - [ ] Auditoría de seguridad completa del proyecto terminado
 - [ ] Correcciones pendientes del diagnóstico inicial (FNC-002 a FNC-018) y de la auditoría final
+- [ ] FNC-120 (lista blanca estricta de campos; movida desde la fase 4 el 2026-10-27)
 - [ ] Propuestas de auditorías de fase 3: FNC-075, FNC-078, FNC-079, FNC-083, FNC-084, FNC-085, FNC-086, FNC-087, FNC-088, FNC-089, FNC-096, FNC-106, FNC-100, FNC-107, FNC-110, FNC-115, FNC-116
 
 ## Fase 6 — Documentación y operación
