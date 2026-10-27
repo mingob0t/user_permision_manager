@@ -58,13 +58,14 @@ export function PlatformCard({
           {platform.name.slice(0, 2).toUpperCase()}
         </span>
 
+        {/* DIS-008: estrella de 48 px con foco visible. */}
         <button
           type="button"
           onClick={toggleFavorite}
           disabled={busy}
           aria-pressed={favorite}
           aria-label={favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-          className="rounded p-1 text-lg leading-none transition-colors hover:bg-surface-container disabled:opacity-50"
+          className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded text-lg leading-none outline-none transition-colors hover:bg-surface-container focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
         >
           <span className={favorite ? 'text-warning-text' : 'text-label'}>
             {favorite ? '★' : '☆'}

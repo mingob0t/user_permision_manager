@@ -30,13 +30,13 @@ export default function ErrorPage({
           <button
             type="button"
             onClick={reset}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white"
+            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Reintentar
           </button>
           <Link
             href="/"
-            className="rounded-lg border border-panel-border px-4 py-2 text-sm text-label"
+            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-panel-border px-4 py-2 text-sm text-label outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Ir al inicio
           </Link>

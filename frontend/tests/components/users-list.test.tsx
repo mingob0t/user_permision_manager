@@ -96,6 +96,24 @@ describe('UsersList: alta y edición con las reglas de FNC-044 y DIS-019', () =>
     expect(usersApi.setManagedAreas).not.toHaveBeenCalled();
   });
 
+  it('DIS-008: acciones de fila y chips de áreas de 48 px con foco visible', async () => {
+    render(<UsersList />);
+    await screen.findByText('Luis Paz');
+    const acciones = ['Editar', 'Accesos de Luis Paz', 'Eliminar', 'Áreas que administra Luis Paz', 'Quitar admin de área a Luis Paz']
+      .map((nombre) => screen.getByRole('button', { name: nombre }));
+    for (const accion of acciones) {
+      expect(accion.className).toContain('min-h-12');
+      expect(accion.className).toContain('min-w-12');
+      expect(accion.className).toContain('focus-visible:ring-primary');
+    }
+    fireEvent.click(acciones[0]);
+    // 'TI': el primer chip toma el nombre de la etiqueta de `Field` (propuesta DIS-045).
+    const chip = await dialogo().findByRole('button', { name: 'TI' });
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
+    expect(chip.className).toContain('min-h-12');
+    expect(chip.className).toContain('focus-visible:ring-primary');
+  });
+
   it('edición de la cuenta de emergencia (superadmin local): ofrece la contraseña', async () => {
     vi.mocked(api.users).mockResolvedValue([EMERGENCIA]);
     render(<UsersList />);
