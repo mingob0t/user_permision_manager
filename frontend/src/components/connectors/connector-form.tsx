@@ -5,7 +5,9 @@
  * `PUT /platforms/<id>/connector`, contrato `conectores-y-ejecuciones.md` 1.1).
  *
  * - Tipo, host, puerto, parámetros del tipo, referencia de la credencial y
- *   activo. Los parámetros cambian con el tipo (`PARAMETROS_POR_TIPO`).
+ *   activo. Los parámetros cambian con el tipo (`PARAMETROS_POR_TIPO`: `api`,
+ *   `ssh` y `bd`, DIS-042) y el error del servidor por `params.<ruta>` se
+ *   marca en su campo.
  * - Ningún campo pide ni muestra contraseñas: la credencial es la referencia
  *   del ítem en el gestor de secretos (ADR-005).
  * - Patrón de `DirectoryAccountForm` (DIS-019): `required` y `aria-required`,
@@ -22,8 +24,9 @@ import { ErrorNote } from '../ui';
 import {
   type CampoConector, type FormularioConector, HOST_MAX, PUERTO_MAX, PUERTO_MIN, REFERENCIA_MAX,
   TIPOS_CONECTOR, cuerpoConector, esTipoConocido, formularioDesde, parametrosConservados,
-  parametrosDelTipo, validarConector,
+  parametrosDelTipo, validarConector, validarParametros,
 } from './connector-catalog';
+import { ConnectorParamFields, idParametro } from './connector-param-fields';
 import { describeConnectorSaveError } from './connector-errors';
 
 const PREFIJO = 'conector';
@@ -58,10 +61,30 @@ export function ConnectorForm({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Partial<Record<CampoConector, string>>>({});
+  const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
 
   const campos = parametrosDelTipo(form.type);
   const conservados = Object.keys(parametrosConservados(guardado, form.type));
   const tipoCambio = guardado !== null && guardado.type !== form.type;
+
+  /** Al cambiar de tipo se vuelve a lo guardado de ese tipo, o a vacío (se descartan los del anterior). */
+  function cambiarTipo(tipo: string) {
+    setForm((prev) => ({
+      ...prev, type: tipo, params: guardado?.type === tipo ? formularioDesde(guardado).params : {},
+    }));
+    setParamErrors({});
+  }
+
+  function cambiarParametro(clave: string, valor: string) {
+    setForm((prev) => ({ ...prev, params: { ...prev.params, [clave]: valor } }));
+  }
+
+  /** Orden de foco: campos base y luego los parámetros visibles. */
+  function ordenCon(errParams: Record<string, string>): [string, string][] {
+    const delTipo: [string, string][] = campos
+      .filter((c) => errParams[c.clave]).map((c) => [c.clave, idParametro(PREFIJO, c.clave)]);
+    return [...ORDEN.slice(0, 4), ...delTipo, ORDEN[4]];
+  }
 
   function cambiar<K extends keyof FormularioConector>(campo: K, valor: FormularioConector[K]) {
     setForm((prev) => ({ ...prev, [campo]: valor }));
@@ -71,26 +94,30 @@ export function ConnectorForm({
     event.preventDefault();
     if (sending) return;
     const errores = validarConector(form);
-    if (Object.keys(errores).length > 0) {
+    const erroresParams = validarParametros(form.type, form.params);
+    if (Object.keys(errores).length > 0 || Object.keys(erroresParams).length > 0) {
       setError(null);
       setFields(errores);
-      focusFirstError(ORDEN, errores as Record<string, string>);
+      setParamErrors(erroresParams);
+      focusFirstError(ordenCon(erroresParams), { ...errores, ...erroresParams } as Record<string, string>);
       return;
     }
     setSending(true);
     setError(null);
     setFields({});
+    setParamErrors({});
     try {
       const result = await connectorsApi.save(platformId, cuerpoConector(form, guardado));
       setSending(false);
       onSaved(result.connector);
     } catch (err) {
-      const view = describeConnectorSaveError(err);
+      const view = describeConnectorSaveError(err, form.type);
       setError(view.message);
       setFields(view.fields);
+      setParamErrors(view.paramFields);
       setSending(false);
       if (view.stale) onStale();
-      focusFirstError(ORDEN, view.fields as Record<string, string>);
+      focusFirstError(ordenCon(view.paramFields), { ...view.fields, ...view.paramFields } as Record<string, string>);
     }
   }
 
@@ -138,7 +165,7 @@ export function ConnectorForm({
             <Select
               id={IDS.type}
               value={form.type}
-              onChange={(event) => cambiar('type', event.target.value)}
+              onChange={(event) => cambiarTipo(event.target.value)}
               required
               aria-required="true"
               {...describedBy([tipoError, fields.type], [tipoPista, true])}
@@ -184,25 +211,15 @@ export function ConnectorForm({
         </legend>
         {campos.length === 0 ? (
           <p className="text-sm text-label">Este tipo no tiene parámetros editables por ahora.</p>
-        ) : campos.map((campo) => {
-          const id = `${PREFIJO}-param-${campo.clave}`;
-          const pistaId = `${id}-pista`;
-          return (
-            <div key={campo.clave}>
-              <Field label={campo.etiqueta}>
-                <TextInput
-                  id={id}
-                  value={form.params[campo.clave] ?? ''}
-                  onChange={(event) => cambiar('params', { ...form.params, [campo.clave]: event.target.value })}
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-describedby={pistaId}
-                />
-              </Field>
-              <FieldHint id={pistaId}>{campo.pista}</FieldHint>
-            </div>
-          );
-        })}
+        ) : (
+          <ConnectorParamFields
+            tipo={form.type}
+            valores={form.params}
+            errores={paramErrors}
+            prefijo={PREFIJO}
+            onChange={cambiarParametro}
+          />
+        )}
         {conservados.length > 0 ? (
           <p className="break-words text-sm text-label">
             Se conservan sin cambios: {conservados.join(', ')}.

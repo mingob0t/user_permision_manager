@@ -7,6 +7,7 @@
 
 import { ApiError } from '@/lib/api';
 import { type CampoConector, MENSAJES_CAMPO } from './connector-catalog';
+import { claveDeError, parametrosDe } from './connector-params';
 
 const SESION = 'Tu sesión terminó. Vuelve a iniciar sesión.';
 const SIN_PERMISO = 'Solo el superadmin configura conectores.';
@@ -17,12 +18,16 @@ const PETICION_INVALIDA = 'La petición no es válida. Recarga la página e int�
 export interface ConnectorErrorView {
   message: string;
   fields: Partial<Record<CampoConector, string>>;
+  /** Errores de `params.<ruta>` por clave del campo del tipo (DIS-042). */
+  paramFields: Record<string, string>;
   /** La plataforma o su configuración cambió: recargar. */
   stale: boolean;
 }
 
-function vista(message: string, stale = false, fields: ConnectorErrorView['fields'] = {}): ConnectorErrorView {
-  return { message, fields, stale };
+function vista(
+  message: string, stale = false, fields: ConnectorErrorView['fields'] = {}, paramFields: Record<string, string> = {},
+): ConnectorErrorView {
+  return { message, fields, paramFields, stale };
 }
 
 function porEstado(err: ApiError, generico: string): string {
@@ -44,7 +49,13 @@ export const MENSAJES_GUARDAR: Record<string, string> = {
   conector_concurrente: 'Otra persona configuró este conector a la vez. Se recargó la configuración: revisa y vuelve a guardar.',
 };
 
-export function describeConnectorSaveError(err: unknown): ConnectorErrorView {
+/** Mensaje propio de un campo de parámetros que el servidor rechazó. */
+function mensajeParametro(tipo: string, clave: string): string {
+  const campo = parametrosDe(tipo).find((c) => c.clave === clave);
+  return campo ? `Revisa «${campo.etiqueta}». ${campo.pista}` : MENSAJES_CAMPO.params;
+}
+
+export function describeConnectorSaveError(err: unknown, tipo = ''): ConnectorErrorView {
   const generico = 'No se pudo guardar el conector. Inténtalo de nuevo.';
   if (!(err instanceof ApiError)) return vista(generico);
   if (err.code === 'plataforma_con_accesos') {
@@ -54,11 +65,16 @@ export function describeConnectorSaveError(err: unknown): ConnectorErrorView {
   if (err.code && MENSAJES_GUARDAR[err.code]) return vista(MENSAJES_GUARDAR[err.code], true);
   if (err.status === 422) {
     const fields: ConnectorErrorView['fields'] = {};
+    const paramFields: Record<string, string> = {};
     for (const clave of Object.keys(err.fields)) {
       const campo = campoDe(clave);
-      if (campo) fields[campo] = MENSAJES_CAMPO[campo];
+      if (!campo) continue;
+      const propio = campo === 'params' && clave.startsWith('params.')
+        ? claveDeError(tipo, clave.slice('params.'.length)) : null;
+      if (propio) paramFields[propio] = mensajeParametro(tipo, propio);
+      else fields[campo] = MENSAJES_CAMPO[campo];
     }
-    return vista(MENSAJE_REVISA, false, fields);
+    return vista(MENSAJE_REVISA, false, fields, paramFields);
   }
   if (err.status === 404) return vista('La plataforma ya no existe. La lista se actualizó.', true);
   return vista(porEstado(err, generico));
