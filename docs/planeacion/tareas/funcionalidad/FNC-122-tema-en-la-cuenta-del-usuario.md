@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | preferencias |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `fnc/FNC-122-tema-en-la-cuenta` |
 | **Creada** | 2026-10-27 |
 | **Requiere migración BD** | Sí (columna `pref_theme`) |
@@ -55,3 +55,5 @@ FNC-032 guarda el tema en `localStorage` (por navegador). `PUT /me/preferences` 
 - `impacto.py`: `/me` y `User` (tabla en *Impacto en elementos compartidos*); sin validar en navegador.
 - Sin `tester`, `revisor` ni `auditor-seguridad` (no se lanzaron desde este agente); la tarea toca datos de usuario: revisión independiente pendiente.
 - No verificado: frontend (fuera de alcance), migración sobre PostgreSQL (las pruebas usan SQLite).
+
+- 2026-10-27: `auditor-seguridad` Aprobado con observaciones: sin IDOR (solo `current_user`), sin asignación masiva nueva, lista blanca estricta, migración 0011 correcta; 225 + 947 pruebas en verde. Observación previa (no la introduce el cambio): `PUT /me/preferences` sin `@escritura_del_portal`, riesgo bajo sin CORS; anotada en FNC-008. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Pendiente: migración en MySQL real.

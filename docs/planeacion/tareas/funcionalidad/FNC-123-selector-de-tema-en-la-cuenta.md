@@ -30,3 +30,5 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-27 | Creada como Propuesta desde FNC-122 |
+
+- 2026-10-27 (auditoría de FNC-122): condición de seguridad: `preferences.theme` de `GET /me` debe pasar por `esTemaValido`/`aplicarTema` de `lib/tema.ts`; nunca `classList.add(theme)` directo.
