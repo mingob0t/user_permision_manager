@@ -130,5 +130,5 @@ def _sincronizar_cuenta(persona):
                       detail="Alta por login de directorio con rol usuario")
         base_url = os.getenv('BASE_URL', '').rstrip('/')
         avisar_usuario_creado(correo, nombre, base_url,
-                              f"{base_url}/auth/login")
+                              f"{base_url}/login")
     return {"status": "success", "user": cuenta}

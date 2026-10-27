@@ -74,7 +74,7 @@
 | `LDAP_USER_OBJECT_CLASSES` | Clases de las cuentas que crea el portal | clases LDAP separadas por coma | `inetOrgPerson` | `inetOrgPerson` | No | No | Sí | `configuracion.py`, `writer.py` | FNC-041, 2026-10-15 | Vigente (sin llamadores hasta FNC-064) |
 | `LDAP_GROUP_PLACEHOLDER_MEMBER` | Miembro de relleno al quitar al último miembro de un `groupOfNames`/`groupOfUniqueNames` | DN de una entrada sin login ni contraseña, fuera de `LDAP_USERS_BASE_DN` (validado al arrancar) | vacío (no se quita el último miembro: `error_permanente`) | `cn=<sin-miembros>,<base>` | No | No | Sí | `configuracion.py`, `writer.py` | FNC-041, 2026-10-15 | Vigente (sin llamadores hasta FNC-049) |
 | `LDAP_PLATFORM_GROUP_TEMPLATE` | Convención del DN de grupo de una plataforma, relativa a `LDAP_GROUPS_BASE_DN`; deriva los grupos cuando no llegan en `POST/PUT /platforms` | RDN con `{plataforma}` y `{nivel}` (obligatorios) y `{area}` (opcional); validada al arrancar | vacío (no se deriva; el superadmin indica los DN) | `cn={plataforma}-{nivel},ou={area}` | No | No | Sí | `configuracion.py`, `app/modules/platforms/grupos.py` | FNC-046, 2026-10-19 | Vigente |
-| `SMTP_FORCE_ENV` | `true`: el SMTP sale siempre del entorno y la interfaz queda en solo lectura | booleano (`1/true/yes/on/si`) | `false` | `false` | No | No | Sí | `notifications/services.py`, `api/admin.py` | FNC-001, 2026-10-13 | Vigente |
+| `SMTP_FORCE_ENV` | `true`: el SMTP sale siempre del entorno y la interfaz queda en solo lectura | booleano (`1/true/yes/on/si`) | `false` | `false` | No | No | Sí | `notifications/services.py`, `notifications/api.py` | FNC-001, 2026-10-13 | Vigente |
 | `SMTP_SERVER` | Servidor SMTP (respaldo o forzado) | nombre de host | ninguno (sin él no hay config de entorno) | `smtp.<dominio>` | Sí si `SMTP_FORCE_ENV` | No | Sí (vacío) | `notifications/services.py` | FNC-001, 2026-10-13 | Vigente |
 | `SMTP_PORT` | Puerto SMTP | entero | `587` | `587` | No | No | Sí | `notifications/services.py` | FNC-001, 2026-10-13 | Vigente |
 | `SMTP_ENCRYPTION` | Cifrado | `starttls` / `ssl` / `none` | `starttls` | `starttls` | No | No | Sí | `notifications/services.py` | FNC-001, 2026-10-13 | Vigente |
@@ -137,11 +137,11 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `pool_recycle` | Reciclado de conexiones de BD | 3600 | s | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `SQLITE_URI_POR_DEFECTO` | BD SQLite cuando `DB_ENGINE` no es `mysql` (en `instance/`) | `sqlite:///nexus.db` | — | `app/utils/uri_bd.py` | FNC-001, 2026-10-13; constante con nombre FNC-039 | Vigente |
 | `CARPETA_INSTANCIA` | Dónde resuelve Alembic la ruta SQLite relativa (igual que Flask) | `instance/` de la raíz | — | `migrations/env.py` | FNC-039, 2026-10-14 | Vigente |
-| `MAX_LOGO_BYTES` | Tamaño máximo del logo del portal | 512 | KB | `app/modules/api/admin.py` | FNC-001, 2026-10-13 | Vigente |
-| `ALLOWED_LOGO_TYPES` | Tipos de imagen del logo | png, jpeg, gif, webp, svg+xml | — | `app/modules/api/admin.py` | FNC-001, 2026-10-13 | Vigente |
-| `PURGE_MIN_DAYS` | Mínimo de días de inactividad para purgar | 7 | días | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
+| `MAX_LOGO_BYTES` | Tamaño máximo del logo del portal | 512 | KB | `app/modules/settings/logo.py` | FNC-001, 2026-10-13 | Vigente |
+| `ALLOWED_LOGO_TYPES` | Tipos de imagen del logo | png, jpeg, gif, webp, svg+xml | — | `app/modules/settings/logo.py` | FNC-001, 2026-10-13 | Vigente |
+| `PURGE_MIN_DAYS` | Mínimo de días de inactividad para purgar | 7 | días | `app/modules/users/services.py` | FNC-001, 2026-10-13 | Vigente |
 | `ASSIGNABLE_ROLES` / `RESERVED_NAMES` | Roles asignables por admin de área / identificadores reservados | `usuario`, `admin_area` / `admin` | — | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
-| Intervalo de refresco | Límites de `pref_refresh_interval` | 15–3600 | s | `app/modules/api/crud.py` | FNC-001, 2026-10-13 | Vigente |
+| Intervalo de refresco | Límites de `pref_refresh_interval` | 15–3600 | s | `app/modules/users/preferencias_api.py` | FNC-001, 2026-10-13 | Vigente |
 | `INTERVALO_POLLING_MIN_S` / `INTERVALO_POLLING_MAX_S` / `INTERVALO_POLLING_POR_DEFECTO_S` | Límites y valor por defecto del polling web (espejo de `pref_refresh_interval`; el máximo es también el tope del *backoff*) | 15 / 3600 / 60 | s | `frontend/src/lib/use-polling.ts` | FNC-071, 2026-10-19 | Vigente |
 | `JITTER_POLLING` | Fracción máxima restada a la espera tras un error | 0.1 | fracción | `frontend/src/lib/use-polling.ts` | FNC-071, 2026-10-19 | Vigente |
 | `MAX_LENGTH` | Longitud máxima de nombres visibles | 100 | caracteres | `app/utils/naming.py` | FNC-001, 2026-10-13 | Vigente |
@@ -153,7 +153,7 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 | `LIMITE_POR_DEFECTO` / `AUDIT_PAGE_SIZE_MAX` | Registros de `GET /audit` sin `page` (`?limit=`, cliente actual) | 100 por defecto, máx. 500 | registros | `app/modules/audit/parametros.py` | FNC-001, 2026-10-13 (`api/routes.py`); constantes con nombre FNC-060 | Vigente |
 | `POR_PAGINA_POR_DEFECTO` / `POR_PAGINA_MAX` / `LARGO_MAX_BUSQUEDA` / `RANGO_MAX_DIAS` / `MAX_DIGITOS_ENTERO` | Auditoría paginada: `per_page` por defecto y tope / largo de `q` / rango `from`–`to` / dígitos de ids y página | 25 / 100 / 100 / 366 / 9 | registros / caracteres / días / dígitos | `app/modules/audit/parametros.py` | FNC-060, 2026-10-19 | Vigente |
 | `ACCESS_INVENTORY_PAGE_SIZE_MAX` | Tope de `per_page` de `GET /access/inventory` (no supera `POR_PAGINA_MAX`) | 100 (= `POR_PAGINA_MAX`) | registros | `app/modules/access/inventario_api.py` | FNC-059, 2026-10-20 | Vigente |
-| Límite de notificaciones | Notificaciones in-app devueltas | 50 | registros | `app/modules/api/admin.py` | FNC-001, 2026-10-13 | Vigente |
+| Límite de notificaciones | Notificaciones in-app devueltas | 50 | registros | `app/modules/notifications/api.py` | FNC-001, 2026-10-13 | Vigente |
 | `LIMITE_BUSQUEDA_PERSONAS` / `MIN_BUSQUEDA`, `MAX_BUSQUEDA` | Búsqueda en directorio: resultados máximos / caracteres del texto | 50 / 2–64 | — | `app/modules/directory/ldap_client.py` / `app/modules/directory/api.py` | FNC-001, 2026-10-13 (`api/admin.py`); constantes con nombre y máximo 64 en FNC-043 | Vigente |
 | Timeouts | SMTP (el de LDAP es `LDAP_TIMEOUT_SECONDS`) | 10 | s | `notifications/services.py` | FNC-001, 2026-10-13; LDAP retirado de `auth/services.py` en FNC-043 | Vigente |
 | `ESQUEMAS_PERMITIDOS` | Esquemas de `LDAP_URL` y puerto por defecto | `ldaps` 636 / `ldap` 389 (StartTLS) | — | `app/modules/directory/configuracion.py` | FNC-040, 2026-10-14 | Vigente |

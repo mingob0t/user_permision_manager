@@ -42,6 +42,9 @@ _Se completa al aprobar la tarea._
 - [ ] Cumple `docs/estandarizacion/` y no duplica código existente
 - [ ] Sin direcciones IP ni secretos
 
+## Recomendaciones agregadas
+- 2026-10-27 (auditoría de FNC-030, vía FNC-119): **exigir `BASE_URL`** (validar al arrancar, sin valor por omisión). Hoy el aviso de bienvenida del login de directorio (`auth/services.py`) usa `BASE_URL` o cadena vacía y el SSO (`api/auth.py`) cae al `Host` de la petición; sin `BASE_URL` el enlace del correo es relativo o depende del encabezado. No se implementa en FNC-119.
+
 ## Impacto cruzado
 - Depende de → —
 
@@ -50,7 +53,10 @@ _Se completa al aprobar la tarea._
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-15 | Deuda registrada por FNC-042: `BASE_URL` sin valor deja relativo el enlace del correo de bienvenida (`auth/services.py`); validarla al arrancar en producción |
+| 2026-10-27 | Recomendación anotada desde FNC-119: exigir `BASE_URL` |
 
 ## Nota (2026-10-13)
 - `load_dotenv()` busca `.env` subiendo carpetas: si el proyecto no tiene uno, carga el de la carpeta superior (es de otro proyecto). Cargar solo el `.env` de la raíz del proyecto.
 - Al implementar: en `tests/test_arranque.py:86,95,105,115` cambiar `pytest.raises(Exception)` por la excepción o mensaje específico; retirar `CLAVE_POR_DEFECTO` (`:15`) cuando se quite la clave por defecto (revisión de FNC-023).
+
+- 2026-10-27 (auditoría de FNC-029/119): ya existente, sin cambio: `app/modules/api/auth.py:120` y `:189` usan `request.host_url` si falta `BASE_URL` (inyectable con la cabecera `Host`); exigir `BASE_URL` lo cierra.

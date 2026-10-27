@@ -16,7 +16,9 @@
 - Next.js: el rewrite de `/api` hacia Flask existe solo con `NODE_ENV=development` (`next build`/`next start` no generan ninguno), se retira el rewrite de `/auth` y `BACKEND_URL` se rechaza si es una IP; cierra la vía de Next hacia Flask con cabeceras `Remote-*` del cliente (FNC-005, FNC-118, 2026-10-26).
 
 ### Cambiado
-- Backend: un solo `error_response`/`json_payload` (se borran `_payload` y `_error` de `crud.py` y `admin.py`), lista blanca de campos y lectura del cuerpo comunes (`campos_no_permitidos`, `campos_prohibidos`, `leer_cuerpo`) usadas por áreas, plataformas, usuarios, solicitudes, accesos, conectores, directorio y reintentos, aviso de usuario creado único (`avisar_usuario_creado`) y purga de inactivos en `users/services.py`; se borra la purga heredada de `auth/services.py`. Sin cambio en códigos HTTP, `code` ni `fields` (FNC-030, FNC-082, 2026-10-27).
+- Backend: `api/admin.py` y `api/crud.py` se dividen por dominio (`users/`, `areas/`, `settings/`, `notifications/`) y `create_app` en funciones pequeñas; mismas rutas, métodos, protección, códigos, `code` y `fields` (FNC-029, 2026-10-27).
+- Backend: un cuerpo JSON que no es objeto en los endpoints de usuarios, áreas, preferencias, ajustes, SMTP, plantillas y notificaciones responde `400 cuerpo_invalido` en lugar de 500, y el enlace del correo de bienvenida del login de directorio apunta a `/login` (FNC-119, 2026-10-27).
+- Backend: un solo `error_response/`json_payload` (se borran `_payload` y `_error` de `crud.py` y `admin.py`), lista blanca de campos y lectura del cuerpo comunes (`campos_no_permitidos`, `campos_prohibidos`, `leer_cuerpo`) usadas por áreas, plataformas, usuarios, solicitudes, accesos, conectores, directorio y reintentos, aviso de usuario creado único (`avisar_usuario_creado`) y purga de inactivos en `users/services.py`; se borra la purga heredada de `auth/services.py`. Sin cambio en códigos HTTP, `code` ni `fields` (FNC-030, FNC-082, 2026-10-27).
 
 ### Agregado
 - Administrar plataformas: cada fila enlaza a su historial en Auditoría (DIS-035, 2026-10-27).
