@@ -14,13 +14,9 @@ interface FallaConocida {
   tarea: string;
 }
 
-const TODOS: NombreContexto[] = ['claro', 'so-oscuro', 'html.dark', 'emerald', 'obsidian', 'rose', 'violet'];
-
-export const FALLAS_CONOCIDAS: FallaConocida[] = [
-  // DIS-006: bordes de campo y panel a 3:1.
-  { par: 'input-border/panel', contextos: TODOS, tarea: 'DIS-006' },
-  { par: 'panel-border/body-bg', contextos: TODOS, tarea: 'DIS-006' },
-];
+// Vacía desde DIS-004, DIS-005 y DIS-006 (2026-10-26): las 25 celdas conocidas cumplen.
+// Una falla nueva se agrega aquí con la tarea DIS que la corregirá.
+export const FALLAS_CONOCIDAS: FallaConocida[] = [];
 
 /** Tarea DIS que corrige el par en ese contexto, o `undefined` si debe cumplir. */
 export function tareaPendiente(par: string, contexto: NombreContexto): string | undefined {

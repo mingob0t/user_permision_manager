@@ -36,7 +36,7 @@ export function Field({
 const INPUT =
   'w-full h-12 bg-surface-container/30 border border-panel-border rounded-xl px-4 ' +
   'text-sm font-bold text-body-text placeholder:text-label/85 ' +
-  'focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ' +
+  'focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all ' +
   'disabled:opacity-50';
 
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {

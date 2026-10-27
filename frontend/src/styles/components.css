@@ -1104,6 +1104,11 @@ input[name="db_engine"]:checked + label .w-5.h-5 .bg-primary {
     box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.15);
 }
 
+/* DIS-006: foco visible con teclado (el halo de 15 % no llega a 3:1). */
+.nexus-checkbox:focus-visible {
+    box-shadow: 0 0 0 2px rgb(var(--color-primary));
+}
+
 /* === NEXUS PREMIUM SCROLLBAR === */
 .custom-scrollbar::-webkit-scrollbar {
     width: 4px;

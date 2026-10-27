@@ -155,4 +155,7 @@ export const PARES: ParContraste[] = [
   // No textuales (bordes de control): 3:1.
   { id: 'input-border/panel', texto: '--color-input-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'panel-border/body-bg', texto: '--color-panel-border', fondo: '--color-body-bg', minimo: MIN_NO_TEXTO },
+  // DIS-006: borde de `TextInput`/`Select`/`TextArea` (`border-panel-border`) y de la casilla sin
+  // marcar (`.nexus-checkbox`, DIS-039) contra `Card` y `.nx-modal-glass` (`--color-panel-fill`).
+  { id: 'panel-border/panel', texto: '--color-panel-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
 ];

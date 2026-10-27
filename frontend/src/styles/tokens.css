@@ -140,7 +140,7 @@ table.dataTable tbody tr {
   --color-panel-header-text: 30 58 138; /* Blue-900: Contraste alto sobre Slate-200 */
 
   --color-panel-fill: 255 255 255;
-  --color-panel-border: 203 213 225;   /* Slate-300: borde perceptible */
+  --color-panel-border: 131 145 165;   /* DIS-006: Slate-300 → Slate-500 lo mínimo para 3:1 */
   --color-panel-shadow: 37 99 235 / 0.07;
 
   --color-surface-container-bg: 241 245 249;   /* Slate-100: neutro */
@@ -184,7 +184,7 @@ table.dataTable tbody tr {
   ───────────────────────────────────────────── */
   --color-input-bg: 255 255 255;
   --color-input-text: #0f172a;
-  --color-input-border: 203 213 225;   /* Slate-300: consistencia con bordes */
+  --color-input-border: 131 145 165;   /* DIS-006: igual que panel-border, 3:1 */
   --color-input-focus: var(--color-primary);
   --color-label-text: 51 65 85;        /* Slate-700: contraste AA */
 
@@ -271,7 +271,7 @@ table.dataTable tbody tr {
     --badge-cyan-bg: 34 211 238 / 0.15;    --badge-cyan-text: 103 232 249;
 
     --color-panel-fill: 15 23 42;           /* Slate-900: estándar industry */
-    --color-panel-border: 51 65 85;         /* Slate-600: sólido y legible */
+    --color-panel-border: 88 102 123;       /* DIS-006: Slate-600 → Slate-400 lo mínimo para 3:1 */
     --color-panel-shadow: 0 0 0 / 0;
 
     --color-surface-container-bg: 30 41 59; /* Slate-800: mayor separación */
@@ -291,7 +291,7 @@ table.dataTable tbody tr {
 
     --color-input-bg: 30 41 59;             /* Slate-800: elevación real */
     --color-input-text: #e2e8f0;
-    --color-input-border: 51 65 85;         /* Slate-600: sólido */
+    --color-input-border: 88 102 123;       /* DIS-006: igual que panel-border, 3:1 */
     --color-label-text: 148 163 184;        /* Slate-400: menos saturado, legible */
 
     --color-ntf-panel-bg: 6 13 31;
@@ -359,7 +359,7 @@ html.dark {
   --color-info-text: 147 197 253;     /* DIS-002: Blue-300 */
 
   --color-panel-fill: 15 23 42;           /* Slate-900 */
-  --color-panel-border: 51 65 85;         /* Slate-600: sólido */
+  --color-panel-border: 88 102 123;       /* DIS-006: Slate-600 → Slate-400 lo mínimo para 3:1 */
   --color-panel-shadow: 0 0 0 / 0;
 
   --color-surface-container-bg: 30 41 59; /* Slate-800 */
@@ -379,7 +379,7 @@ html.dark {
 
   --color-input-bg: 30 41 59;             /* Slate-800 */
   --color-input-text: #e2e8f0;
-  --color-input-border: 51 65 85;
+  --color-input-border: 88 102 123;       /* DIS-006: 3:1 */
   --color-label-text: 148 163 184;        /* Slate-400 */
 
   --color-ntf-panel-bg: 3 7 18;
@@ -430,7 +430,7 @@ html.theme-emerald-light {
   --color-panel-header-bg: 209 250 229; /* Emerald-100 */
 
   --color-panel-fill: 255 255 255;
-  --color-panel-border: 214 211 209;    /* Stone-300 */
+  --color-panel-border: 149 143 139;    /* DIS-006: Stone-300 → Stone-500 lo mínimo para 3:1 */
   --color-panel-shadow: 5 150 105 / 0.07;
 
   --color-surface-container-bg: 245 245 244;   /* Stone-100 */
@@ -458,7 +458,7 @@ html.theme-emerald-light {
 
   --color-input-bg: 255 255 255;
   --color-input-text: #1c1917;
-  --color-input-border: 214 211 209;
+  --color-input-border: 149 143 139;    /* DIS-006: 3:1 */
   --color-input-focus: var(--color-primary);
   --color-label-text: 87 83 78;
 
@@ -525,7 +525,7 @@ html.theme-obsidian-dark {
   --badge-cyan-bg: 34 211 238 / 0.15;    --badge-cyan-text: 103 232 249;
 
   --color-panel-fill: 24 24 27;         /* Zinc-900 */
-  --color-panel-border: 63 63 70;       /* Zinc-700 */
+  --color-panel-border: 101 101 109;    /* DIS-006: Zinc-700 → Zinc-500 lo mínimo para 3:1 */
   --color-panel-shadow: 0 0 0 / 0;
 
   --color-surface-container-bg: 39 39 42;  /* Zinc-800 */
@@ -553,7 +553,7 @@ html.theme-obsidian-dark {
 
   --color-input-bg: 39 39 42;
   --color-input-text: #e4e4e7;
-  --color-input-border: 63 63 70;
+  --color-input-border: 101 101 109;    /* DIS-006: 3:1 */
   --color-input-focus: var(--color-primary);
   --color-label-text: 161 161 170;
 
@@ -605,7 +605,7 @@ html.theme-rose-light {
   --color-panel-header-bg: 255 228 230; /* Rose-100 */
 
   --color-panel-fill: 255 255 255;
-  --color-panel-border: 225 214 211;    /* Stone-300 con tinte rosa */
+  --color-panel-border: 146 138 134;    /* DIS-006: Stone con tinte rosa, hacia Stone-500 lo mínimo para 3:1 */
   --color-panel-shadow: 244 63 94 / 0.07;
 
   --color-surface-container-bg: 255 241 242;   /* Rose-50 */
@@ -633,7 +633,7 @@ html.theme-rose-light {
 
   --color-input-bg: 255 255 255;
   --color-input-text: #1c1917;
-  --color-input-border: 254 205 211;
+  --color-input-border: 223 113 137;    /* DIS-006: Rose-200 hacia Rose-700 lo mínimo para 3:1 */
   --color-input-focus: var(--color-primary);
   --color-label-text: 87 83 78;
 
@@ -700,7 +700,7 @@ html.theme-violet-dark {
   --badge-cyan-bg: 34 211 238 / 0.15;    --badge-cyan-text: 103 232 249;
 
   --color-panel-fill: 17 12 46;         /* Deep violet surface */
-  --color-panel-border: 76 59 130;      /* Violet-tinted border */
+  --color-panel-border: 104 84 167;     /* DIS-006: violeta aclarado hacia Violet-400 lo mínimo para 3:1 */
   --color-panel-shadow: 0 0 0 / 0;
 
   --color-surface-container-bg: 30 24 64; /* Elevated violet */
@@ -728,7 +728,7 @@ html.theme-violet-dark {
 
   --color-input-bg: 30 24 64;
   --color-input-text: #e2e0f0;
-  --color-input-border: 76 59 130;
+  --color-input-border: 104 84 167;     /* DIS-006: 3:1 */
   --color-input-focus: var(--color-primary);
   --color-label-text: 167 139 250;
 
