@@ -96,6 +96,42 @@ describe('UsersList: alta y edición con las reglas de FNC-044 y DIS-019', () =>
     expect(usersApi.setManagedAreas).not.toHaveBeenCalled();
   });
 
+  it('DIS-008: acciones de fila y chips de áreas de 48 px con foco visible', async () => {
+    render(<UsersList />);
+    await screen.findByText('Luis Paz');
+    const acciones = ['Editar Luis Paz', 'Accesos de Luis Paz', 'Eliminar Luis Paz', 'Áreas admin de Luis Paz', 'Quitar admin de área a Luis Paz']
+      .map((nombre) => screen.getByRole('button', { name: nombre }));
+    for (const accion of acciones) {
+      expect(accion.className).toContain('min-h-12');
+      expect(accion.className).toContain('min-w-12');
+      expect(accion.className).toContain('focus-visible:ring-primary');
+    }
+    fireEvent.click(acciones[0]);
+    const chip = await dialogo().findByRole('button', { name: 'Finanzas' });
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
+    expect(chip.className).toContain('min-h-12');
+    expect(chip.className).toContain('focus-visible:ring-primary');
+  });
+
+  it('DIS-045: los chips van en grupos con leyenda; el primer chip conserva su nombre y la leyenda no lo activa', async () => {
+    render(<UsersList />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar Luis Paz' }));
+    const modal = dialogo();
+    const grupo = await modal.findByRole('group', { name: 'Áreas a las que pertenece' });
+    const primero = within(grupo).getByRole('button', { name: 'Finanzas' });
+    expect(primero.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(modal.getByText('Áreas a las que pertenece'));
+    expect(primero.getAttribute('aria-pressed')).toBe('false');
+    expect(modal.getByRole('group', { name: 'Plataformas asignadas' }).getAttribute('aria-describedby')).toBeTruthy();
+  });
+
+  it('DIS-046: Editar y Eliminar nombran al usuario y "Áreas admin" empieza con su texto visible', async () => {
+    render(<UsersList />);
+    expect(await screen.findByRole('button', { name: 'Editar Luis Paz' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Eliminar Luis Paz' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Áreas admin de Luis Paz' }).textContent).toBe('Áreas admin');
+  });
+
   it('edición de la cuenta de emergencia (superadmin local): ofrece la contraseña', async () => {
     vi.mocked(api.users).mockResolvedValue([EMERGENCIA]);
     render(<UsersList />);

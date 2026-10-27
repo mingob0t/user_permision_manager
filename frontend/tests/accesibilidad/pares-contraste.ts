@@ -169,4 +169,9 @@ export const PARES: ParContraste[] = [
   // DIS-006: borde de `TextInput`/`Select`/`TextArea` (`border-panel-border`) y de la casilla sin
   // marcar (`.nexus-checkbox`, DIS-039) contra `Card` y `.nx-modal-glass` (`--color-panel-fill`).
   { id: 'panel-border/panel', texto: '--color-panel-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
+  // DIS-003: gráfica de Panel (`dashboard.tsx`). Texto de ejes y del tooltip: `label-text/panel` y
+  // `body-text/panel` (ya medidos). Barras (`--color-primary`) y rejilla/línea de ejes
+  // (`--color-panel-border`) son no textuales, 3:1 sobre `Card`; el tooltip se compone sobre el panel.
+  { id: 'grafica-serie/panel', texto: '--color-primary', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
+  { id: 'grafica-rejilla/panel', texto: '--color-panel-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
 ];

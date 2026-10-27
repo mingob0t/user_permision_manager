@@ -88,14 +88,14 @@ function PortalTab() {
       <div className="grid grid-cols-2 gap-4">
         <Field label="Color de fondo">
           <TextInput
-            type="color" className="h-10 p-1"
+            type="color" className="p-1"
             value={value.bg_color}
             onChange={(e) => setForm({ ...value, bg_color: e.target.value })}
           />
         </Field>
         <Field label="Color de texto">
           <TextInput
-            type="color" className="h-10 p-1"
+            type="color" className="p-1"
             value={value.text_color}
             onChange={(e) => setForm({ ...value, text_color: e.target.value })}
           />
@@ -123,7 +123,7 @@ function PortalTab() {
               const file = e.target.files?.[0];
               if (file) pickLogo(file);
             }}
-            className="text-sm text-label"
+            className="min-h-12 text-sm text-label"
           />
           {value.portal_identity_type === 'image' ? (
             <Button
@@ -221,7 +221,7 @@ function BackupTab() {
             const file = e.target.files?.[0];
             if (file) restore(file);
           }}
-          className="mt-3 block text-sm text-label"
+          className="mt-3 block min-h-12 text-sm text-label"
         />
       </div>
     </Card>

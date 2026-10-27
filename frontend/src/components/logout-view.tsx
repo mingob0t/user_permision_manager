@@ -36,7 +36,7 @@ export function LogoutView() {
         {done ? (
           <a
             href="/login"
-            className="mt-3 inline-block text-sm text-primary-text hover:underline"
+            className="mt-3 inline-flex min-h-12 min-w-12 items-center text-sm text-primary-text hover:underline outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Volver a iniciar sesión
           </a>

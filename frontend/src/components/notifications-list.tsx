@@ -56,7 +56,7 @@ export function NotificationsList() {
             {unread > 0 ? `${unread} sin leer.` : 'Todo al día.'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {unread > 0 ? (
             <Button variant="secondary" onClick={markAll} disabled={busy}>
               Marcar todas como leídas

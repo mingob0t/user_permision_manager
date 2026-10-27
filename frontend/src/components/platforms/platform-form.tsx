@@ -213,7 +213,7 @@ export function PlatformForm({
               type="color"
               value={form.bg_color ?? ''}
               onChange={(e) => set('bg_color', e.target.value)}
-              className="h-10 p-1"
+              className="p-1"
               {...describedBy(['platform-colors-error', false],
                 ['platform-colors-hint', !form.bg_color])}
             />
@@ -223,7 +223,7 @@ export function PlatformForm({
               type="color"
               value={form.text_color ?? ''}
               onChange={(e) => set('text_color', e.target.value)}
-              className="h-10 p-1"
+              className="p-1"
               {...describedBy(['platform-colors-error', false],
                 ['platform-colors-hint', !form.text_color])}
             />

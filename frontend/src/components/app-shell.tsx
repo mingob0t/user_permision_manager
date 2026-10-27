@@ -35,10 +35,11 @@ const NAV: NavItem[] = [
 
 /**
  * Lista del menú filtrada por rol. La usan la barra lateral (`md` y mayores) y
- * el menú móvil (DIS-025); `touch` da áreas de 48 px y `onNavigate` cierra el
- * menú móvil al elegir una opción.
+ * el menú móvil (DIS-025); `onNavigate` cierra el menú móvil al elegir una
+ * opción. Entradas de 48 px y foco visible en ambos (DIS-008: la barra lateral
+ * también se usa con el dedo en tabletas).
  */
-function Nav({ touch = false, onNavigate }: { touch?: boolean; onNavigate?: () => void }) {
+function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const { session } = useSession();
   const pathname = usePathname();
   if (!session) return null;
@@ -57,11 +58,7 @@ function Nav({ touch = false, onNavigate }: { touch?: boolean; onNavigate?: () =
             href={item.href}
             aria-current={active ? 'page' : undefined}
             onClick={onNavigate}
-            className={`${
-              touch
-                ? 'flex min-h-12 items-center outline-none focus-visible:ring-2 focus-visible:ring-primary '
-                : ''
-            }rounded-lg px-3 py-2 text-sm transition-colors ${
+            className={`flex min-h-12 items-center rounded-lg px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary ${
               active
                 ? 'bg-primary/15 font-medium text-primary-text'
                 : 'text-label hover:bg-surface-container hover:text-body-text'
@@ -116,7 +113,7 @@ function Frame({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-4 border-b border-panel-border bg-panel-fill px-6 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <MobileMenu>{(close) => <Nav touch onNavigate={close} />}</MobileMenu>
+            <MobileMenu>{(close) => <Nav onNavigate={close} />}</MobileMenu>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{session.name}</p>
               <p className="truncate text-xs text-label">
@@ -129,7 +126,7 @@ function Frame({ children }: { children: React.ReactNode }) {
           </div>
           <a
             href="/logout"
-            className="rounded-lg border border-panel-border px-3 py-1.5 text-sm text-label hover:text-body-text"
+            className="inline-flex min-h-12 shrink-0 items-center rounded-lg border border-panel-border px-3 text-sm text-label outline-none hover:text-body-text focus-visible:ring-2 focus-visible:ring-primary"
           >
             Salir
           </a>

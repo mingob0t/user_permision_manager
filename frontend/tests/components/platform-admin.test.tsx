@@ -340,6 +340,32 @@ describe('PlatformAdmin: accesibilidad (revisión de DIS-017)', () => {
     expect(screen.getByRole('button', { name: 'Eliminar Contabilidad' })).toBeTruthy();
   });
 
+  it('DIS-035: enlace al historial de la plataforma y acciones de fila de 48 px con foco visible', async () => {
+    render(<PlatformAdmin />);
+    const historial = await screen.findByRole('link', { name: 'Historial de Contabilidad en Auditoría' });
+    expect(historial.getAttribute('href')).toBe('/audit/platforms/12');
+    const acciones = [
+      historial,
+      screen.getByRole('button', { name: 'Editar Contabilidad' }),
+      screen.getByRole('button', { name: 'Eliminar Contabilidad' }),
+    ];
+    for (const accion of acciones) {
+      expect(accion.className).toContain('min-h-12');
+      expect(accion.className).toContain('min-w-12');
+      expect(accion.className).toContain('focus-visible:ring-primary');
+    }
+    expect(acciones[2].className).toContain('text-error-text');
+  });
+
+  it('DIS-008: la tabla desplazable es una región con nombre, enfocable y con foco visible; la cabecera de acciones tiene texto', async () => {
+    render(<PlatformAdmin />);
+    const region = await screen.findByRole('region', { name: 'Plataformas' });
+    expect(region.getAttribute('tabindex')).toBe('0');
+    expect(region.className).toContain('overflow-x-auto');
+    expect(region.className).toContain('focus-visible:ring-primary');
+    expect(screen.getByRole('columnheader', { name: 'Acciones' })).toBeTruthy();
+  });
+
   it.each([
     [404, 'La plataforma ya no existe o no está en tu alcance. Recarga la lista.'],
     [409, 'No se puede eliminar una plataforma con accesos vigentes.'],

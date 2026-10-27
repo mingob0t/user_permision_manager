@@ -61,12 +61,13 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={`${INPUT} ${props.className ?? ''}`} />;
 }
 
+/** Casilla con su etiqueta; la etiqueta da el área táctil de 48 px (DIS-008). */
 export function Checkbox({
   label,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <label className="flex items-center gap-3 text-sm font-bold text-body-text">
+    <label className="flex min-h-12 items-center gap-3 text-sm font-bold text-body-text">
       <input type="checkbox" {...props} className="nexus-checkbox" />
       {label}
     </label>
@@ -170,7 +171,7 @@ export function Modal({
         </div>
         <div ref={cuerpo} className="space-y-5 px-6 py-5">{children}</div>
         {footer ? (
-          <div className="flex justify-end gap-3 border-t border-panel-border px-6 py-4">
+          <div className="flex flex-wrap justify-end gap-3 border-t border-panel-border px-6 py-4">
             {footer}
           </div>
         ) : null}

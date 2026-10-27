@@ -2,12 +2,13 @@
 
 /** Usuarios: alta, edición, baja y asignación de áreas y plataformas. */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import type {
   Area, DirectoryUser, InactiveUser, ManagedUser, Platform, UserInput,
 } from '@/lib/types';
+import { ACCION_FILA, ACCION_FILA_PELIGRO } from './acciones-fila';
 import { Button, Checkbox, ConfirmDialog, Field, Modal, TextInput } from './form';
 import { useSession } from './session-provider';
 import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
@@ -19,16 +20,37 @@ import { AdminAreasDialog, RemoveAdminDialog } from './users/admin-role-dialog';
 const DIRECTORY_IMPORT_PENDING =
   'El alta de cuentas del directorio aún no está disponible en el portal.';
 
-/** Acciones de rol (DIS-019): 48 px y foco visible; mismo aspecto que las demás de la fila. */
-const ACCION_ROL =
-  'min-h-12 rounded px-2 py-1 text-xs text-primary-text outline-none hover:bg-primary/10 ' +
-  'focus-visible:ring-2 focus-visible:ring-primary';
 
 const ROLE_LABELS: Record<string, string> = {
   administrador: 'Admin global',
   admin_area: 'Admin de área',
   usuario: 'Usuario',
 };
+
+/**
+ * Grupo de chips con `fieldset`/`legend` (DIS-045): la leyenda, con el estilo de la etiqueta de
+ * `Field`, nombra al grupo sin asociarse al primer chip como haría un `<label>`.
+ */
+function GrupoChips({
+  legend,
+  hint,
+  children,
+}: {
+  legend: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  const pistaId = useId();
+  return (
+    <fieldset aria-describedby={hint ? pistaId : undefined}>
+      <legend className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-label">
+        {legend}
+      </legend>
+      {children}
+      {hint ? <p id={pistaId} className="mt-1.5 text-xs text-label/85">{hint}</p> : null}
+    </fieldset>
+  );
+}
 
 /** Selector de etiquetas múltiple. */
 function TagPicker<T extends { id: number; name: string }>({
@@ -49,6 +71,7 @@ function TagPicker<T extends { id: number; name: string }>({
     <div className="flex flex-wrap gap-2">
       {options.map((option) => {
         const on = selected.includes(option.id);
+        // DIS-008: chip de 48 px con foco visible.
         return (
           <button
             key={option.id}
@@ -57,7 +80,7 @@ function TagPicker<T extends { id: number; name: string }>({
             onClick={() =>
               onChange(on ? selected.filter((id) => id !== option.id) : [...selected, option.id])
             }
-            className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+            className={`inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border px-3 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary ${
               on
                 ? 'border-primary bg-primary/15 text-primary-text'
                 : 'border-panel-border text-label hover:text-body-text'
@@ -185,20 +208,20 @@ function UserForm({
         </Field>
       ) : null}
 
-      <Field label="Áreas a las que pertenece">
+      <GrupoChips legend="Áreas a las que pertenece">
         <TagPicker
           options={areas} selected={areaIds} onChange={setAreaIds}
           empty="No hay áreas en tu alcance."
         />
-      </Field>
+      </GrupoChips>
 
       {user ? (
-        <Field label="Plataformas asignadas" hint="Vacío deja las actuales sin cambios.">
+        <GrupoChips legend="Plataformas asignadas" hint="Vacío deja las actuales sin cambios.">
           <TagPicker
             options={platforms} selected={platformIds} onChange={setPlatformIds}
             empty="No hay plataformas en tu alcance."
           />
-        </Field>
+        </GrupoChips>
       ) : null}
 
       <Checkbox
@@ -555,11 +578,13 @@ export function UsersList() {
                   ) : null}
                 </div>
 
+                {/* Acciones de 48 px (DIS-008; las de rol, DIS-019); bajan de línea si no caben. */}
                 <div className="mt-3 flex flex-wrap gap-1 border-t border-panel-border pt-3">
                   <button
                     type="button"
                     onClick={() => setEditing(user)}
-                    className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
+                    aria-label={`Editar ${user.name}`}
+                    className={ACCION_FILA}
                   >
                     Editar
                   </button>
@@ -570,14 +595,15 @@ export function UsersList() {
                       setAccessOf(user);
                     }}
                     aria-label={`Accesos de ${user.name}`}
-                    className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
+                    className={ACCION_FILA}
                   >
                     Accesos
                   </button>
                   <button
                     type="button"
                     onClick={() => setRemoving(user)}
-                    className="rounded px-2 py-1 text-xs text-error-text hover:bg-error/10"
+                    aria-label={`Eliminar ${user.name}`}
+                    className={ACCION_FILA_PELIGRO}
                   >
                     Eliminar
                   </button>
@@ -587,7 +613,7 @@ export function UsersList() {
                       type="button"
                       onClick={(event) => abrirRol(event.currentTarget, user, 'areas')}
                       aria-label={`Hacer admin de área a ${user.name}`}
-                      className={ACCION_ROL}
+                      className={ACCION_FILA}
                     >
                       Hacer admin
                     </button>
@@ -597,8 +623,8 @@ export function UsersList() {
                       <button
                         type="button"
                         onClick={(event) => abrirRol(event.currentTarget, user, 'areas')}
-                        aria-label={`Áreas que administra ${user.name}`}
-                        className={ACCION_ROL}
+                        aria-label={`Áreas admin de ${user.name}`}
+                        className={ACCION_FILA}
                       >
                         Áreas admin
                       </button>
@@ -606,7 +632,7 @@ export function UsersList() {
                         type="button"
                         onClick={(event) => abrirRol(event.currentTarget, user, 'quitar')}
                         aria-label={`Quitar admin de área a ${user.name}`}
-                        className={ACCION_ROL}
+                        className={ACCION_FILA}
                       >
                         Quitar admin
                       </button>

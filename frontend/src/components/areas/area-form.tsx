@@ -131,7 +131,7 @@ export function AreaForm({
           hint={form.color ? undefined : 'Si no eliges uno, se usa el color por omisión.'}
         >
           <TextInput
-            type="color" className="h-10 p-1"
+            type="color" className="p-1"
             value={form.color ?? ''}
             onChange={(e) => setForm({ ...form, color: e.target.value })}
             {...invalido('area-color-error', fields.color)}
