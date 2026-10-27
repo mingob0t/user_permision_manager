@@ -15,7 +15,8 @@
  * También se exige llamador a cada id, a cada selector de elemento (`select`,
  * `thead`...) y a cada atributo (`input[type="color"]`, `[data-desplazable]`):
  * el elemento, el atributo o el valor deben aparecer en el código.
- * Los comentarios (CSS y TS/TSX) no cuentan. `tokens.css` queda fuera (DIS-047).
+ * Los comentarios (CSS y TS/TSX) no cuentan. `tokens.css` se exige solo de
+ * variables (DIS-047): ninguna regla de componente, ninguna animación.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
@@ -148,4 +149,26 @@ describe('CSS sin uso en components.css y global.css', () => {
       expect(new RegExp(`var\\(\\s*${escapar(variable)}\\b`).test(css + codigo), `${variable} no tiene referencias`).toBe(true);
     });
   }
+});
+
+describe('tokens.css solo tiene variables (DIS-047)', () => {
+  const tokens = sinComentarios(readFileSync(join(RAIZ_SRC, 'styles', 'tokens.css'), 'utf8'));
+  const declaraciones = [...tokens.matchAll(/([\w-]+)\s*:[^;{}]*;/g)].map((m) => m[1]);
+
+  it('lee las variables (la extracción no está rota)', () => {
+    expect(declaraciones.filter((d) => d.startsWith('--')).length).toBeGreaterThan(100);
+  });
+
+  it('toda declaración es una variable --*', () => {
+    expect(declaraciones.filter((d) => !d.startsWith('--'))).toEqual([]);
+  });
+
+  it('no define @keyframes', () => {
+    expect(tokens).not.toMatch(/@keyframes/);
+  });
+
+  it('solo selecciona :root, html y los temas', () => {
+    const sel = [...tokens.matchAll(/([^{};]+)\{/g)].map((m) => m[1].trim()).filter((s) => !s.startsWith('@'));
+    expect(sel.filter((s) => !/^(:root|html)\b/.test(s))).toEqual([]);
+  });
 });

@@ -1,40 +1,3 @@
-html, body {
-  background-color: var(--color-body-bg);
-  color: var(--color-body-text);
-  margin: 0;
-  padding: 0;
-}
-
-/* === FORCED NUCLEAR GRID REFACTOR v3 === */
-.dt-container {
-    display: grid !important;
-    grid-template-rows: 1fr auto !important;
-    height: 100% !important;
-    grid-gap: 0 !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-}
-
-.dt-layout-row.dt-layout-table {
-    grid-row: 1 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.dt-layout-row:has(.dt-paging) {
-    grid-row: 2 !important;
-    height: 52px !important;
-    background: rgb(var(--color-surface-container-bg)) !important;
-    border-top: 2px solid rgb(var(--color-primary)) !important; /* Señal visual de fijación */
-}
-
-
-table.dataTable tbody tr {
-    height: var(--row-h, 52px) !important;
-    overflow: hidden !important;
-}
-
 /*
  * ╔══════════════════════════════════════════════════════════════╗
  * ║         NEXUS DESIGN TOKENS — v2.0 "Deep Sapphire"          ║
@@ -313,19 +276,6 @@ table.dataTable tbody tr {
     --color-status-active: 52 211 153;
   }
 }
-
-/* Premium Validation Animations */
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
-  75% { transform: translateX(-5px); }
-}
-
-.animate-shake {
-  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-}
-
 
 /* ══════════════════════════════════════════════════════════════
    CLASE .dark — Mirror del media query para control JS
