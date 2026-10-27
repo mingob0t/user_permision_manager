@@ -113,9 +113,14 @@ export function MyRequests({ estadoInicial }: { estadoInicial?: RequestStatus })
     { clave: r.status, texto: `Solicitud de ${r.platform.name}: ${ESTADOS_SOLICITUD[r.status].texto}` },
     {
       clave: r.access?.status ?? '',
-      texto: `Acceso a ${r.platform.name}: ${r.access ? ESTADOS_ACCESO[r.access.status].texto : ''}`,
+      texto: r.access ? `Acceso a ${r.platform.name}: ${ESTADOS_ACCESO[r.access.status].texto}` : '',
     },
-  ]);
+  ], {
+    total: data?.total ?? 0,
+    salida: status
+      ? (r) => `Solicitud de ${r.platform.name} ya no está en “${ESTADOS_SOLICITUD[status].texto}”`
+      : undefined,
+  });
 
   return (
     <div className="space-y-4">

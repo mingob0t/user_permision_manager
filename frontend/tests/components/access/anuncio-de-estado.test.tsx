@@ -86,3 +86,35 @@ describe('Anuncio de cambios de estado (DIS-050)', () => {
     expect(region().textContent).toBe(`Acceso a ${SOLICITUD.platform.name}: Con acceso`);
   });
 });
+
+describe('Salidas por filtro y acceso que desaparece (DIS-050, auditoría)', () => {
+  it('accesos: con filtro, el acceso que pasa a revocado y sale de la lista se anuncia', async () => {
+    vi.mocked(grantsApi.mine)
+      .mockResolvedValueOnce(pagina([EN_PROCESO]))
+      .mockResolvedValue(pagina([]));
+    render(<MyAccess />);
+    await avanzar(0);
+    await avanzar(61_000);
+    expect(region().textContent).toBe(`Acceso a ${EN_PROCESO.platform.name} ya no está en “Vigentes”`);
+  });
+
+  it('solicitudes: sin filtro no se anuncia la salida', async () => {
+    vi.mocked(requestsApi.mine)
+      .mockResolvedValueOnce(pagina([SOLICITUD]))
+      .mockResolvedValue(pagina([]));
+    render(<MyRequests />);
+    await avanzar(0);
+    await avanzar(61_000);
+    expect(region().textContent).toBe('');
+  });
+
+  it('solicitudes: el acceso que desaparece no deja un anuncio vacío', async () => {
+    vi.mocked(requestsApi.mine)
+      .mockResolvedValueOnce(pagina([SOLICITUD]))
+      .mockResolvedValue(pagina([{ ...SOLICITUD, access: null }]));
+    render(<MyRequests />);
+    await avanzar(0);
+    await avanzar(61_000);
+    expect(region().textContent).toBe('');
+  });
+});

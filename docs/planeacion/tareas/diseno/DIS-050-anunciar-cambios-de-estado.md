@@ -37,7 +37,14 @@
 ## Verificación
 - `tests/components/access/anuncio-de-estado.test.tsx`: anuncia un cambio, no anuncia sin cambios, no anuncia en la carga inicial (+ solicitudes).
 - typecheck 0, lint 0, vitest 0 (1525), build 0; pruebas de accesibilidad 0 fallas (1070 ok).
-- No verificado en navegador ni con lector de pantalla real. `auditor-accesibilidad` pendiente de ejecutar.
+- No verificado en navegador ni con lector de pantalla real.
 
 ## Bitácora
 - 2026-10-27: Propuesta → En curso → En revisión (autoaprobada en modo autónomo).
+- 2026-10-27: auditoría de accesibilidad «Requiere cambios»; corregidos H1 y H2 (pruebas escritas primero y vistas fallar).
+
+## Correcciones de auditoría
+- H1: el hook acepta `{ total, salida }` y anuncia «Acceso a X ya no está en “Vigentes”» / «Solicitud de X ya no está en “Pendiente”» solo con filtro de estado activo, en el mismo contexto (filtro y página) y si el `total` bajó.
+- H2: un texto vacío no se anuncia; sin acceso derivado ya no sale «Acceso a X: ».
+- Decisión del orquestador (pendiente de validar en la prueba de concepto): la etiqueta del filtro es la de la lista desplegable (en solicitudes, singular: «Pendiente»).
+- Pruebas: `tests/lib/use-cambios-de-estado.test.ts` (4) y 3 casos nuevos en `anuncio-de-estado.test.tsx`. typecheck 0, lint 0, vitest 0 (1532), build 0.

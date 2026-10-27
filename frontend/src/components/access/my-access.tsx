@@ -116,7 +116,10 @@ export function MyAccess({ estadoInicial }: { estadoInicial?: Filtro }) {
 
   const anuncio = useCambiosDeEstado(data?.items, `${status}:${page}`, (a) => [
     { clave: a.status, texto: `Acceso a ${a.platform.name}: ${ESTADOS[a.status].texto}` },
-  ]);
+  ], {
+    total: data?.total ?? 0,
+    salida: (a) => `Acceso a ${a.platform.name} ya no está en “${FILTROS.find((f) => f.valor === status)?.texto}”`,
+  });
 
   return (
     <div className="space-y-4">
