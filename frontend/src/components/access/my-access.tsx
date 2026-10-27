@@ -8,17 +8,20 @@
  * - Por defecto `vigente` (contrato `accesos.md`); el filtro vuelve a la página 1.
  * - Refresco con `usePolling` y el intervalo de la preferencia del usuario, solo
  *   con accesos `en_proceso` o `revocando` en la página (DIS-033).
+ * - Anuncia a lectores de pantalla solo los cambios de estado entre respuestas (DIS-050).
  * - Tabla en escritorio y lista en móvil con el mismo marcado (`dl` por fila).
  */
 
 import { useState } from 'react';
 import { grantsApi } from '@/lib/access/grants';
 import type { Access, AccessListParams, AccessOrigin, AccessStatus } from '@/lib/access/types';
+import { useCambiosDeEstado } from '@/lib/use-cambios-de-estado';
 import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
+import { RegionDeAnuncios } from '../region-de-anuncios';
 import { useSession } from '../session-provider';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
-import { AccessStatusBadge, NIVELES, hayAccesosTransitorios } from './access-status-badge';
+import { AccessStatusBadge, ESTADOS, NIVELES, hayAccesosTransitorios } from './access-status-badge';
 import { formatearFecha } from './fecha';
 import { ListPager } from './list-pager';
 import { listLoadError } from './request-errors';
@@ -111,8 +114,16 @@ export function MyAccess({ estadoInicial }: { estadoInicial?: Filtro }) {
 
   const data = lista.data;
 
+  const anuncio = useCambiosDeEstado(data?.items, `${status}:${page}`, (a) => [
+    { clave: a.status, texto: `Acceso a ${a.platform.name}: ${ESTADOS[a.status].texto}` },
+  ], {
+    total: data?.total ?? 0,
+    salida: (a) => `Acceso a ${a.platform.name} ya no está en “${FILTROS.find((f) => f.valor === status)?.texto}”`,
+  });
+
   return (
     <div className="space-y-4">
+      <RegionDeAnuncios mensaje={anuncio} />
       <Select
         value={status}
         onChange={(event) => {

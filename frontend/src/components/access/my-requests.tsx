@@ -7,17 +7,20 @@
  * - Paginada en el servidor; el filtro por estado vuelve a la página 1.
  * - Refresco con `usePolling` y el intervalo de la preferencia del usuario, solo
  *   con una solicitud `pendiente` o un acceso transitorio en la página (DIS-033).
+ * - Anuncia a lectores de pantalla solo los cambios de estado entre respuestas (DIS-050).
  * - Tabla en escritorio y lista en móvil con el mismo marcado (`dl` por fila).
  */
 
 import { useState } from 'react';
 import { requestsApi } from '@/lib/access/requests';
 import type { AccessRequest, RequestStatus } from '@/lib/access/types';
+import { useCambiosDeEstado } from '@/lib/use-cambios-de-estado';
 import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
+import { RegionDeAnuncios } from '../region-de-anuncios';
 import { useSession } from '../session-provider';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
-import { AccessStatusBadge, NIVELES } from './access-status-badge';
+import { AccessStatusBadge, ESTADOS as ESTADOS_ACCESO, NIVELES } from './access-status-badge';
 import { formatearFecha } from './fecha';
 import { ListPager } from './list-pager';
 import { listLoadError } from './request-errors';
@@ -106,8 +109,22 @@ export function MyRequests({ estadoInicial }: { estadoInicial?: RequestStatus })
 
   const data = lista.data;
 
+  const anuncio = useCambiosDeEstado(data?.items, `${status}:${page}`, (r) => [
+    { clave: r.status, texto: `Solicitud de ${r.platform.name}: ${ESTADOS_SOLICITUD[r.status].texto}` },
+    {
+      clave: r.access?.status ?? '',
+      texto: r.access ? `Acceso a ${r.platform.name}: ${ESTADOS_ACCESO[r.access.status].texto}` : '',
+    },
+  ], {
+    total: data?.total ?? 0,
+    salida: status
+      ? (r) => `Solicitud de ${r.platform.name} ya no está en “${ESTADOS_SOLICITUD[status].texto}”`
+      : undefined,
+  });
+
   return (
     <div className="space-y-4">
+      <RegionDeAnuncios mensaje={anuncio} />
       <Select
         value={status}
         onChange={(event) => {
