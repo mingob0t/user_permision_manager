@@ -5,21 +5,20 @@
   `$proxy_add_x_forwarded_for`; equivale a `ProxyFix(x_for=1)`).
 - Si llega de otro origen, `X-Forwarded-For` se ignora y vale `remote_addr`.
 - No se aplica `ProxyFix` global: cambiaría `request.remote_addr`, que la
-  verificación del SSO compara con `TRUSTED_PROXIES` (`api/auth.py`).
+  verificación del SSO compara con `TRUSTED_PROXIES` (`api/auth.py`, vía `app/utils/proxy_confiable.py`).
 """
 
 from flask import request
+
+from app.utils.proxy_confiable import es_proxy_confiable
 
 CABECERA_REENVIO = 'X-Forwarded-For'
 
 
 def ip_cliente():
     """Dirección del cliente de la petición en curso."""
-    # Importación diferida: `api/auth.py` importa este módulo vía `services`.
-    from app.modules.api.auth import _trusted_proxy
-
     origen = request.remote_addr
-    if not _trusted_proxy():
+    if not es_proxy_confiable():
         return origen
     saltos = [s.strip() for s in request.headers.get(CABECERA_REENVIO, '').split(',')
               if s.strip()]
