@@ -6,6 +6,9 @@
  *
  * - El catálogo no se pagina (acotado por áreas, contrato 1.1): el filtro por
  *   área y la búsqueda se resuelven en el cliente con una sola carga.
+ * - DIS-030: con `mias` (las plataformas que ya puede abrir, `GET /platforms`) es
+ *   la vista única del catálogo: cada tarjeta suma enlace y favorito, y las
+ *   abribles que el catálogo no trae se agregan. Sin `mias` se comporta como antes.
  * - Tras solicitar, la tarjeta pasa a "pendiente" sin recargar y el resultado
  *   se anuncia en una región `status` que recibe el foco.
  */
@@ -13,11 +16,14 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { requestsApi } from '@/lib/access/requests';
 import type { AccessRequest, CatalogItem } from '@/lib/access/types';
+import type { Platform } from '@/lib/types';
 import { useAsync } from '@/lib/use-async';
+import { FILTRO_BUSQUEDA, FILTRO_SELECTOR, FilterBar } from '../filter-bar';
 import { Button, Select, TextInput } from '../form';
 import { useSession } from '../session-provider';
 import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
 import { NIVELES } from './access-status-badge';
+import { unirCatalogo } from './catalog-union';
 import { RequestCatalogCard, puedeSolicitar } from './request-catalog-card';
 import { describeCatalogError } from './request-errors';
 import { RequestFormModal } from './request-form-modal';
@@ -39,7 +45,15 @@ function coincide(item: CatalogItem, needle: string): boolean {
     || (item.platform.description ?? '').toLowerCase().includes(needle);
 }
 
-export function RequestCatalog() {
+/** Estado de la carga de `GET /platforms` (lo resuelve quien monta la vista). */
+export interface MisPlataformas {
+  data: Platform[] | null;
+  loading: boolean;
+  error: string | null;
+  reload: () => void;
+}
+
+export function RequestCatalog({ mias }: { mias?: MisPlataformas } = {}) {
   const { session } = useSession();
   const esSuperadmin = session?.permissions.is_admin ?? false;
   const administradas = useMemo(
@@ -62,9 +76,13 @@ export function RequestCatalog() {
     [],
   );
 
+  const unido = useMemo(
+    () => unirCatalogo(catalogo.data ?? [], mias?.data ?? []),
+    [catalogo.data, mias?.data],
+  );
   const items = useMemo(
-    () => aplicarSolicitadas(catalogo.data ?? [], solicitadas),
-    [catalogo.data, solicitadas],
+    () => aplicarSolicitadas(unido.items, solicitadas),
+    [unido.items, solicitadas],
   );
 
   const areas = useMemo(() => {
@@ -84,6 +102,7 @@ export function RequestCatalog() {
     if (esSuperadmin) return 'Como superadmin ya tienes acceso a todas las plataformas.';
     if (administradas.has(item.area.id)) return 'Administras esta área: tienes acceso automático.';
     if (item.my_level === 'admin') return 'Ya tienes el nivel más alto.';
+    if (unido.mias.has(item.platform.id)) return '';
     return 'No disponible para solicitar.';
   }
 
@@ -123,7 +142,9 @@ export function RequestCatalog() {
         <p className="mt-1 text-sm text-label">
           {esSuperadmin
             ? 'Plataformas de todas las áreas. Como superadmin solo puedes consultarlas.'
-            : 'Solicita acceso a las plataformas de tus áreas.'}
+            : mias
+              ? 'Abre tus plataformas y solicita acceso a las de tus áreas.'
+              : 'Solicita acceso a las plataformas de tus áreas.'}
         </p>
       </div>
 
@@ -138,7 +159,7 @@ export function RequestCatalog() {
         ) : null}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+      <FilterBar label="Filtros del catálogo">
         <TextInput
           id={BUSCADOR_ID}
           type="search"
@@ -146,21 +167,30 @@ export function RequestCatalog() {
           onChange={(event) => setTerm(event.target.value)}
           placeholder="Buscar plataforma…"
           aria-label="Buscar en el catálogo"
+          className={FILTRO_BUSQUEDA}
         />
         <Select
           value={areaId ?? ''}
           onChange={(event) => setAreaId(event.target.value ? Number(event.target.value) : null)}
           aria-label="Filtrar el catálogo por área"
-          className="sm:w-56"
+          className={FILTRO_SELECTOR}
         >
           <option value="">Todas las áreas</option>
           {areas.map((area) => (
             <option key={area.id} value={area.id}>{area.name}</option>
           ))}
         </Select>
-      </div>
+      </FilterBar>
 
-      {catalogo.loading && !catalogo.data ? <Spinner label="Cargando catálogo…" /> : null}
+      {(catalogo.loading && !catalogo.data) || (mias?.loading && !catalogo.error)
+        ? <Spinner label="Cargando catálogo…" /> : null}
+
+      {mias?.error && !mias.loading ? (
+        <div className="space-y-3">
+          <ErrorNote message="No se pudieron cargar los enlaces y favoritos de tus plataformas." />
+          <Button variant="secondary" onClick={mias.reload}>Reintentar enlaces</Button>
+        </div>
+      ) : null}
 
       {catalogo.error ? (
         <div className="space-y-3">
@@ -169,7 +199,8 @@ export function RequestCatalog() {
         </div>
       ) : null}
 
-      {catalogo.data && !catalogo.error ? (
+      {/* Sin permiso para el catálogo pero con plataformas propias: se muestran solas. */}
+      {!mias?.loading && (catalogo.data || (catalogo.error && mias?.data?.length)) ? (
         shown.length === 0 ? (
           <EmptyNote
             message={filtrando
@@ -182,6 +213,7 @@ export function RequestCatalog() {
               <RequestCatalogCard
                 key={item.platform.id}
                 item={item}
+                mine={unido.mias.get(item.platform.id)}
                 reason={puedeSolicitar(item) ? '' : motivo(item)}
                 onRequest={abrir}
               />
