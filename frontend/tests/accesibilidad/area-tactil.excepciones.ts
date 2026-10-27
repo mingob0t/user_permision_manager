@@ -15,4 +15,8 @@ export const EXCEPCIONES: Record<string, ExcepcionAreaTactil> = {
     cantidad: 1,
     motivo: 'El contador del inicio es un `Link` `block` que envuelve un `StatTile` completo (más de 48 px de alto y a todo lo ancho de su celda).',
   },
+  'components/platform-card.tsx': {
+    cantidad: 1,
+    motivo: 'El enlace es el nombre, pero su pseudo-elemento `after:absolute after:inset-0` cubre toda la tarjeta (más de 48 px de alto y a todo lo ancho), DIS-051.',
+  },
 };
