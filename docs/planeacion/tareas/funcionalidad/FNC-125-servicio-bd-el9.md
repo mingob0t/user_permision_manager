@@ -8,7 +8,7 @@
 | **Fase** | 6 |
 | **Módulo / Área** | deploy |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `fnc/FNC-125-servicio-bd-el9` |
 | **Creada** | 2026-10-27 |
 
@@ -104,3 +104,5 @@
 - 2026-10-27 — devops: ampliación de la copia al prefijo (`.env`); implementación y verificación; En revisión.
 - 2026-10-27 — devops: ampliación 2 (paquetes de dnf y cliente `mysql` opcional); En revisión.
 - 2026-10-27 — devops: ampliación 3 (hallazgo Alto de auditor-seguridad: `.env` enlace); En revisión, pendiente de nueva revisión de auditor-seguridad.
+
+- 2026-10-27: `auditor-seguridad`: Bloqueante en `e983548` (hallazgo Alto: `.env` como enlace simbólico → `chown` de root sobre archivos ajenos) y Aprobado con observaciones en `4d46165` (cerrado con `O_NOFOLLOW` + `fchown`/`fchmod`, probado incluida la carrera; sin inyección en el Python embebido). Observación menor: el comentario de `copia_proyecto.sh` dice que `install` borra el destino, pero usa `O_EXCL`. Riesgo previo Media (`EnvironmentFile=` leído por systemd como root) registrado como FNC-126 en la fase 5. Pendiente: probar en servidor el9 real. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
