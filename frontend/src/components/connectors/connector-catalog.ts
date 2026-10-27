@@ -7,12 +7,18 @@
  *   `params` sin secretos).
  * - La credencial es solo la referencia del ítem del gestor (ADR-005): el
  *   portal nunca pide ni muestra el secreto.
- * - Parámetros por tipo: el contrato solo documenta `base_path` de `api`; los
- *   de `ssh` y `bd` llegan con FNC-052 y FNC-053 (P9, versión aditiva).
+ * - Parámetros por tipo (`api`, `ssh` y `bd`, contrato 1.4): en
+ *   `connector-params.ts` (DIS-042); aquí se re-exportan.
  */
 
 import type { Connector, ConnectorInput, ConnectorType } from '@/lib/access/types';
 import type { Badge } from '../ui';
+import {
+  PARAMETROS_POR_TIPO, construirParams, parametrosDe, parametrosSinEditor, validarParametros, valoresDesde,
+} from './connector-params';
+
+export { PARAMETROS_POR_TIPO, validarParametros };
+export type { CampoParametro } from './connector-params';
 
 type Tono = React.ComponentProps<typeof Badge>['tone'];
 
@@ -20,19 +26,6 @@ export const TIPOS_CONECTOR: Record<ConnectorType, string> = {
   api: 'API',
   ssh: 'SSH',
   bd: 'Base de datos',
-};
-
-export interface CampoParametro {
-  clave: string;
-  etiqueta: string;
-  pista: string;
-}
-
-/** Parámetros con editor por tipo (sin secretos; opcionales). */
-export const PARAMETROS_POR_TIPO: Record<ConnectorType, CampoParametro[]> = {
-  api: [{ clave: 'base_path', etiqueta: 'Ruta base', pista: 'Opcional. Ruta de la API, por ejemplo /usuarios.' }],
-  ssh: [],
-  bd: [],
 };
 
 export const ESTADOS_CREDENCIAL: Record<Connector['credential_status'], { texto: string; tono: Tono }> = {
@@ -59,7 +52,7 @@ export interface FormularioConector {
   host: string;
   port: string;
   credential_ref: string;
-  /** Valores de los parámetros con editor del tipo elegido. */
+  /** Valores de texto de los parámetros del tipo elegido (clave con puntos). */
   params: Record<string, string>;
   active: boolean;
 }
@@ -85,24 +78,15 @@ export function esTipoConocido(tipo: string): tipo is ConnectorType {
   return tipo in TIPOS_CONECTOR;
 }
 
-function camposDe(tipo: string): CampoParametro[] {
-  return esTipoConocido(tipo) ? PARAMETROS_POR_TIPO[tipo] : [];
-}
-
 /** Formulario con la configuración guardada (o vacío si no hay). */
 export function formularioDesde(connector: Connector | null): FormularioConector {
   if (!connector) return { ...FORMULARIO_VACIO, params: {} };
-  const params: Record<string, string> = {};
-  for (const campo of camposDe(connector.type)) {
-    const valor = connector.params[campo.clave];
-    params[campo.clave] = typeof valor === 'string' ? valor : '';
-  }
   return {
     type: connector.type,
     host: connector.host,
     port: String(connector.port),
     credential_ref: connector.credential_ref,
-    params,
+    params: valoresDesde(connector),
     active: connector.active,
   };
 }
@@ -111,11 +95,7 @@ export function formularioDesde(connector: Connector | null): FormularioConector
  * Parámetros guardados sin editor aquí (se conservan tal cual al guardar si
  * no cambia el tipo). Solo se muestran sus nombres.
  */
-export function parametrosConservados(connector: Connector | null, tipo: string): Record<string, unknown> {
-  if (!connector || connector.type !== tipo) return {};
-  const conEditor = new Set(camposDe(tipo).map((c) => c.clave));
-  return Object.fromEntries(Object.entries(connector.params).filter(([clave]) => !conEditor.has(clave)));
-}
+export const parametrosConservados = parametrosSinEditor;
 
 export function validarConector(form: FormularioConector): Partial<Record<CampoConector, string>> {
   const errores: Partial<Record<CampoConector, string>> = {};
@@ -136,13 +116,9 @@ export function validarConector(form: FormularioConector): Partial<Record<CampoC
   return errores;
 }
 
-/** Cuerpo del contrato (lista blanca): parámetros vacíos no se envían. */
+/** Cuerpo del contrato (lista blanca): parámetros vacíos u ocultos no se envían. */
 export function cuerpoConector(form: FormularioConector, guardado: Connector | null): ConnectorInput {
-  const params: Record<string, unknown> = { ...parametrosConservados(guardado, form.type) };
-  for (const campo of camposDe(form.type)) {
-    const valor = (form.params[campo.clave] ?? '').trim();
-    if (valor) params[campo.clave] = valor;
-  }
+  const params = { ...parametrosConservados(guardado, form.type), ...construirParams(form.type, form.params) };
   return {
     type: form.type as ConnectorType,
     host: form.host.trim(),
@@ -153,4 +129,4 @@ export function cuerpoConector(form: FormularioConector, guardado: Connector | n
   };
 }
 
-export { camposDe as parametrosDelTipo };
+export { parametrosDe as parametrosDelTipo };
