@@ -31,6 +31,7 @@ const NAV: NavItem[] = [
   { href: '/inventory', label: 'Inventario', requires: 'any_admin' },
   { href: '/audit', label: 'Auditoría' },
   { href: '/admin/connectors', label: 'Conectores', requires: 'admin' },
+  { href: '/admin/jobs', label: 'Ejecuciones', requires: 'any_admin' },
   { href: '/settings', label: 'Ajustes' },
 ];
 

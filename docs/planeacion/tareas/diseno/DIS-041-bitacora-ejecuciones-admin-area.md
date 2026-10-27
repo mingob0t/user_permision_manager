@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | configuracion-conectores |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
+| **Estatus** | En revisión |
 | **Creada** | 2026-10-21 |
 
 ## Contexto
@@ -26,3 +26,15 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-21 | Creada como Propuesta desde DIS-022 |
+| 2026-10-27 | En curso por aprobación en modo autónomo. Decisión del orquestador (pendiente de validar en la prueba de concepto): ruta nueva `/admin/jobs` con guarda `any_admin` y entrada «Ejecuciones» en el menú para admin de área y superadmin (el superadmin conserva la bitácora en Conectores); título «Ejecuciones» |
+| 2026-10-27 | Hecha: página `app/admin/jobs/page.tsx` reutilizando `JobsLog` sin cambios (DataTable/filtros/`usePolling`/`SuccessNote` ya dentro). El backend ya filtra por áreas (`any_admin_required`, prueba `test_admin_solo_ve_las_de_sus_areas`): no se crea FNC |
+
+## Impacto en elementos compartidos
+- `NAV` de `components/app-shell.tsx`: entrada nueva «Ejecuciones» (`any_admin`); la ven admin de área y superadmin en barra lateral y menú móvil
+- `JobsLog` y `RequireRole`: reutilizados sin modificar
+- Pruebas actualizadas por la entrada nueva: `navegacion-por-rol.test.tsx` y `menu-movil.test.tsx` (12 a 13 entradas)
+
+## Verificación
+- En `frontend/`: typecheck 0, lint 0, vitest 0 (1568 pruebas, accesibilidad incluida 0 fallas), build 0
+- Prueba nueva `tests/components/connectors/jobs-page.test.tsx`: por rol y estados carga, vacío y error
+- No verificado en navegador (temas y móvil); revisor y auditor-accesibilidad pendientes
