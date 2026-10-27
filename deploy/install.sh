@@ -48,7 +48,13 @@ DOMAIN=""
 # haya en el sistema; --python fuerza uno concreto.
 PY_MIN_MINOR=11
 PY_BIN=""
-NODE_MAJOR="22"
+NODE_MAJOR="22"                # Node LTS que se instala
+# Mínimo de Node: el mismo rango que "engines" de frontend/package.json
+# (^22.13.0 || >=24.0.0). Lo fijan vitest 4 y jsdom 29; Next 15 pide menos.
+# Node 23 (impar, sin LTS) queda fuera porque vitest no lo admite.
+NODE_MIN_MINOR=13              # menor mínima dentro de NODE_MAJOR
+NODE_NEXT_MAJOR=24             # primera mayor posterior que se acepta completa
+NODE_RANGO="^${NODE_MAJOR}.${NODE_MIN_MINOR}.0 || >=${NODE_NEXT_MAJOR}.0.0"
 SKIP_PKGS=0
 # Proxy de salida. Se toma de --proxy o del entorno; vacío = conexión directa.
 PROXY_URL="${PROXY_URL:-${https_proxy:-${HTTPS_PROXY:-${http_proxy:-${HTTP_PROXY:-}}}}}"
@@ -90,6 +96,15 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 log()  { printf "\n==> %s\n" "$1"; }
 note() { printf "    %s\n" "$1"; }
 die()  { printf "\nERROR: %s\n" "$1" >&2; exit 1; }
+
+# ¿La versión de Node ($1, salida de `node --version`) cumple NODE_RANGO?
+node_cumple_minimo() {
+    local v=${1#v} mayor menor
+    mayor=${v%%.*}; v=${v#*.}; menor=${v%%.*}
+    [[ "$mayor" =~ ^[0-9]+$ && "$menor" =~ ^[0-9]+$ ]] || return 1
+    (( 10#$mayor == NODE_MAJOR && 10#$menor >= NODE_MIN_MINOR )) \
+        || (( 10#$mayor >= NODE_NEXT_MAJOR ))
+}
 
 trap 'die "falló en la línea $LINENO. Nada más se ha modificado."' ERR
 
@@ -153,6 +168,9 @@ if (( SKIP_PKGS )); then
     [[ -n "$PY_BIN" && -x "$PY_BIN" ]] \
         || die "no hay Python >= 3.${PY_MIN_MINOR}; ejecutar sin --skip-packages"
     note "usando $PY_BIN"
+    node_cumple_minimo "$(node --version 2>/dev/null || true)" \
+        || die "no hay Node ${NODE_RANGO}; ejecutar sin --skip-packages"
+    note "usando Node $(node --version)"
 else
     log "Paquetes del sistema"
 
@@ -175,10 +193,7 @@ else
         PY_BIN="$(resolve_python)" || die "Python instalado pero no localizado"
     fi
 
-    node_major_now=0
-    command -v node >/dev/null 2>&1 && \
-        node_major_now=$(node --version | sed 's/^v//;s/\..*//')
-    if (( node_major_now < 18 )); then
+    if ! node_cumple_minimo "$(node --version 2>/dev/null || true)"; then
         note "instalando Node ${NODE_MAJOR}"
         if dnf -y module list "nodejs:${NODE_MAJOR}" >/dev/null 2>&1; then
             dnf -y module reset nodejs >/dev/null 2>&1 || true
@@ -191,6 +206,9 @@ else
             curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
             dnf -y install nodejs
         fi
+        # Si ya había otro Node de dnf, `install` no lo cambia de versión.
+        node_cumple_minimo "$(node --version 2>/dev/null || true)" \
+            || die "Node $(node --version 2>/dev/null || echo ausente) no cumple ${NODE_RANGO}; cambiar con 'dnf module switch-to nodejs:${NODE_MAJOR}' o quitar el Node anterior"
     else
         note "Node $(node --version) ya presente"
     fi

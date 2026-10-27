@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Corregido
+- Despliegue: `preflight.sh` e `install.sh` exigen el mismo Node que `engines` de `frontend/package.json` (`^22.13.0 || >=24.0.0`, por Vitest 4 y jsdom 29); antes aceptaban Node 18 y el instalador no cambiaba un Node 18–21 presente (FNC-073, 2026-10-27).
 - Notificaciones: marcar una global como leída ya no la marca para todos los usuarios; la lectura se guarda por usuario en `notification_reads` (migración 0010) y la respuesta de la API mantiene su forma (FNC-031, 2026-10-27).
 
 ### Cambiado

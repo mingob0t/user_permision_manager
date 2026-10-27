@@ -156,7 +156,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). La misma lista (`Nav`) 
 
 ## 7. Cómo arrancar y verificar
 
-Requiere Node 22 LTS (mínimo 18.18) y el backend corriendo.
+Requiere Node `^22.13.0 || >=24.0.0` (`engines` de `package.json`, FNC-073) y el backend corriendo.
 
 ```bash
 cd frontend
@@ -171,7 +171,7 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url con nombre de host> npm ru
 
 **Pruebas (FNC-025):**
 - `npm test`: corre todas las pruebas una vez (Vitest + Testing Library + jsdom). `npm run test:watch`: modo vigilancia.
-- Requiere Node 20.19+ o 22.13+ (por Vitest y jsdom).
+- Mismo Node que arriba: Vitest 4 y jsdom 29 fijan el mínimo (22.13; Node 20 ya no tiene soporte y Vitest no admite el 23).
 - Las pruebas viven en `frontend/tests/`; configuración en `vitest.config.ts`.
 - `tests/lib/api.test.ts`: cliente de la API con `fetch` simulado (éxito, error HTTP, 401).
 - `tests/lib/use-polling.test.ts`: `usePolling` con temporizadores simulados (intervalo, pausa, *backoff*, sin solape, 401, desmontaje).

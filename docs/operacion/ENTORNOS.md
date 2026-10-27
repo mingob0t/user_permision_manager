@@ -36,7 +36,7 @@ Evaluación previa que **no modifica nada**; termina con código 1 si hay algo b
 2. Privilegios (root o sudo).
 3. Recursos: 2 GB de disco y 1 GB de RAM.
 4. Python ≥ 3.11 con `venv` (busca intérpretes ya instalados).
-5. Node ≥ 18.18 y npm (recomienda 22 LTS) y disponibilidad del módulo `nodejs:22`.
+5. Node `^22.13.0 || >=24.0.0` (el rango de `engines` de `frontend/package.json`; FNC-073) y npm, y disponibilidad del módulo `nodejs:22`.
 6. Cabeceras de compilación y salida a Internet (directa o por `PROXY_URL`, con credenciales enmascaradas).
 7. Conectividad real a la BD y a Redis leyendo `DB_HOST`/`DB_PORT`/`REDIS_HOST`/`REDIS_PORT` del `.env`, y que `SECRET_KEY` esté definida. Desde FNC-067 Redis es **bloqueante**: no responde, `REDIS_HOST` es una IP o `REDIS_PASS` está vacía → `FALTA` (el worker no arrancaría).
 8. Puertos 5001 y 3000 libres.
@@ -48,7 +48,7 @@ Evaluación previa que **no modifica nada**; termina con código 1 si hay algo b
 
 Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defecto `/opt/<nombre>`), `--logdir` (por defecto `/var/log/<nombre>`), `--title`, `--user`, `--create-user`, `--domain`, `--python`, `--proxy`, `--no-proxy`, `--skip-packages`.
 
-1. Paquetes del sistema: Python 3.11 si no hay uno válido, Node 22 (AppStream o NodeSource), nginx y cabeceras de compilación.
+1. Paquetes del sistema: Python 3.11 si no hay uno válido, Node 22 (AppStream o NodeSource) si el presente no cumple `^22.13.0 || >=24.0.0` (con `--skip-packages` solo lo comprueba), nginx y cabeceras de compilación.
 2. Cuenta de servicio: usa la indicada (o quien invoca sudo); solo la crea con `--create-user`.
 3. Copia del proyecto al prefijo; el `.env` queda legible solo por la cuenta de servicio.
 4. Backend: `venv` y `pip install -r requirements.txt`.
