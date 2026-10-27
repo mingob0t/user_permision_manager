@@ -15,22 +15,40 @@ import ldap3
 from app import db
 from app.modules.auth.models import AuthConfig
 from app.modules.directory import ldap_client
-from tests.directory.conftest import (CUENTA_SERVICIO, ENTORNO_VALIDO,
-                                      GRUPOS_BASE_DN, USUARIOS_BASE_DN,
-                                      dn_persona)
-from tests.matriz_proteccion import CONTRASENA_FICTICIA
+from tests.matriz_proteccion import CONTRASENA_FICTICIA, HOST_LDAP_FICTICIO
 
 BASE_DN = 'dc=pruebas,dc=local'
+USUARIOS_BASE_DN = f'ou=personas,{BASE_DN}'
+GRUPOS_BASE_DN = f'ou=grupos,{BASE_DN}'
+CUENTA_SERVICIO = f'cn=servicio,{BASE_DN}'
 DOMINIO_CORREO = 'pruebas.local'
 
+ENTORNO_VALIDO = {
+    'LDAP_URL': f'ldaps://{HOST_LDAP_FICTICIO}',
+    'LDAP_BIND_DN': CUENTA_SERVICIO,
+    'LDAP_BIND_PASSWORD': CONTRASENA_FICTICIA,
+    'LDAP_USERS_BASE_DN': USUARIOS_BASE_DN,
+    'LDAP_GROUPS_BASE_DN': GRUPOS_BASE_DN,
+}
 
-class DirectorioFalso:
-    """Personas y grupos del directorio, y los filtros que pidió el login."""
+
+def dn_persona(uid):
+    return f'uid={uid},{USUARIOS_BASE_DN}'
+
+
+def dn_grupo(nombre):
+    return f'cn={nombre},{GRUPOS_BASE_DN}'
+
+
+class ServidorSimulado:
+    """Base única del LDAP simulado (FNC-074): entradas en un `MOCK_SYNC`.
+
+    Crea la cuenta de servicio y las unidades de personas y grupos. Los dobles
+    `DirectorioFalso` (login, API) y `DirectorioMock` (cliente) la extienden.
+    """
 
     def __init__(self, servidor):
         self.servidor = servidor
-        self.filtros = []       # filtros de búsqueda recibidos, en orden
-        self.error = None       # excepción a lanzar al conectar, si se define
         self._carga = ldap3.Connection(servidor,
                                        client_strategy=ldap3.MOCK_SYNC)
         self._agregar(CUENTA_SERVICIO, objectClass='person', cn='servicio',
@@ -41,6 +59,15 @@ class DirectorioFalso:
 
     def _agregar(self, dn, **atributos):
         self._carga.strategy.add_entry(dn, atributos)
+
+
+class DirectorioFalso(ServidorSimulado):
+    """Personas y grupos del directorio, y los filtros que pidió el login."""
+
+    def __init__(self, servidor):
+        super().__init__(servidor)
+        self.filtros = []       # filtros de búsqueda recibidos, en orden
+        self.error = None       # excepción a lanzar al conectar, si se define
 
     def agregar(self, uid, contrasena, correo=None, nombre=None, grupos=()):
         """Persona `inetOrgPerson`; `grupos` son DN de `groupOfNames`.
