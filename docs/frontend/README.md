@@ -6,7 +6,7 @@
 
 - **Next.js 15.5.7 (App Router) + React 19.2.0 + TypeScript 5.7.3 (strict) + Tailwind CSS 3.4.17.** Gráficas con `recharts` 2.15.4.
 - **Sin acceso a BD:** toda la información sale de la API Flask `/api/v1`. La sesión es la cookie que emite Flask (`credentials: 'include'`); no se guardan tokens en `localStorage`.
-- **Mismo origen:** en dev, `next.config.ts` define `rewrites` de `/api/*` y `/auth/*` hacia `BACKEND_URL` (por defecto el backend local en el puerto 5001). En producción enruta nginx y los rewrites quedan inertes.
+- **Mismo origen:** `next.config.ts` (vía `rewrites-dev.ts`) define el rewrite de `/api/*` hacia `BACKEND_URL` (por defecto `http://localhost:5001`, nunca una IP) **solo con `NODE_ENV=development`**; no hay rewrite de `/auth` (FNC-005, FNC-118). `next build` y `next start` no generan ninguno: en producción enruta nginx (`/` a Next, `/api/` a Flask). El cliente usa siempre la ruta relativa `/api/v1` en el navegador.
 - **Build `output: 'standalone'`:** se arranca `.next/standalone/server.js` (no `next start`); hay que copiar `.next/static` (y `public/` si existe) dentro de `standalone` (ver `deploy/README.md`).
 - Todas las pantallas autenticadas son componentes cliente (`'use client'`) envueltos en `AppShell`.
 - Alias de importación `@/*` → `src/*`.
@@ -152,13 +152,13 @@ Requiere Node 22 LTS (mínimo 18.18) y el backend corriendo.
 ```bash
 cd frontend
 npm ci                 # instala según package-lock.json
-npm run dev            # http://localhost:3000, reenvía /api y /auth al backend
+npm run dev            # http://localhost:3000, reenvía /api al backend (solo en dev)
 npm run typecheck      # tsc --noEmit
 npm run lint           # next lint
 npm run build          # build standalone
 ```
 
-Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
+Para apuntar a otro backend en dev: `BACKEND_URL=<url con nombre de host> npm run dev` (una IP se rechaza). Con el backend en `localhost:5001` no hace falta ninguna variable. Prueba: `tests/lib/next-config.test.ts`.
 
 **Pruebas (FNC-025):**
 - `npm test`: corre todas las pruebas una vez (Vitest + Testing Library + jsdom). `npm run test:watch`: modo vigilancia.
