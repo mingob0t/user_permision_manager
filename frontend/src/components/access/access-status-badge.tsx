@@ -22,6 +22,13 @@ export const ESTADOS: Record<AccessStatus, { texto: string; tono: Tono }> = {
   fallo_revocacion: { texto: 'Fallo al revocar', tono: 'error' },
 };
 
+/** Estados que todavía cambian: con ellos se refresca (contrato `accesos.md`, "Refresco"). */
+export const ESTADOS_ACCESO_TRANSITORIOS: readonly AccessStatus[] = ['en_proceso', 'revocando'];
+
+export function hayAccesosTransitorios(accesos: ReadonlyArray<{ status: AccessStatus }>): boolean {
+  return accesos.some((a) => ESTADOS_ACCESO_TRANSITORIOS.includes(a.status));
+}
+
 /** `status` null (o `revocado`) se muestra como "Sin acceso". */
 export function AccessStatusBadge({
   status,

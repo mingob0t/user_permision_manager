@@ -89,9 +89,9 @@ describe('RoleSummary', () => {
     vi.mocked(homeApi.summary).mockResolvedValue(USUARIO);
     render(<RoleSummary />);
     expect(await screen.findByRole('heading', { name: TITULOS.propio })).toBeTruthy();
-    expect(enlace('Pendientes: 1. Ir a Mis solicitudes').getAttribute('href')).toBe(RUTAS_INICIO.solicitudes);
-    expect(enlace('Con acceso: 2. Ir a Mis accesos').getAttribute('href')).toBe(RUTAS_INICIO.solicitudes);
-    expect(enlace('En proceso: 1. Ir a Mis accesos').getAttribute('href')).toBe(RUTAS_INICIO.solicitudes);
+    expect(enlace('Pendientes: 1. Ir a Mis solicitudes').getAttribute('href')).toBe('/requests?status=pendiente');
+    expect(enlace('Con acceso: 2. Ir a Mis accesos').getAttribute('href')).toBe('/requests?tab=accesos&status=activo');
+    expect(enlace('En proceso: 1. Ir a Mis accesos').getAttribute('href')).toBe('/requests?tab=accesos&status=en_proceso');
     // Indicación de hover con un token existente sobre el borde del `Card` (auditor-accesibilidad).
     expect(enlace('En proceso: 1. Ir a Mis accesos').className).toContain('[&:hover>div]:border-primary');
     expect(screen.queryByRole('link', { name: /Ir a Aprobaciones/ })).toBeNull();
@@ -103,11 +103,11 @@ describe('RoleSummary', () => {
     vi.mocked(homeApi.summary).mockResolvedValue(ADMIN);
     render(<RoleSummary />);
     expect(await screen.findByRole('heading', { name: TITULOS.areas })).toBeTruthy();
-    expect(enlace('Por aprobar: 4. Ir a Aprobaciones').getAttribute('href')).toBe(RUTAS_INICIO.aprobaciones);
-    expect(enlace('Accesos con falla: 1. Ir a Inventario').getAttribute('href')).toBe(RUTAS_INICIO.inventario);
+    expect(enlace('Por aprobar: 4. Ir a Aprobaciones').getAttribute('href')).toBe('/approvals?status=pendiente');
+    expect(enlace('Accesos con falla: 1. Ir a Inventario').getAttribute('href')).toBe('/inventory?status=fallido');
     expect(enlace('Áreas: 2. Ir a Áreas').getAttribute('href')).toBe(RUTAS_INICIO.areas);
     expect(enlace('Plataformas: 7. Ir a Administrar plataformas').getAttribute('href')).toBe(RUTAS_INICIO.plataformas);
-    expect(enlace('Accesos activos: 35. Ir a Inventario').getAttribute('href')).toBe(RUTAS_INICIO.inventario);
+    expect(enlace('Accesos activos: 35. Ir a Inventario').getAttribute('href')).toBe('/inventory?status=activo');
     expect(screen.getByRole('heading', { name: 'Tus áreas' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Mis solicitudes' })).toBeTruthy();
     expect(screen.getByText(/La solicitud pendiente más antigua es del/)).toBeTruthy();

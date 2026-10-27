@@ -14,6 +14,7 @@
  * - Refresco con `usePolling` y el intervalo de la preferencia del usuario.
  */
 
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { requestsApi } from '@/lib/access/requests';
@@ -23,10 +24,11 @@ import { useAsync } from '@/lib/use-async';
 import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
 import { useSession } from '../session-provider';
-import { Card, EmptyNote, ErrorNote, Spinner } from '../ui';
+import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
 import { AccessStatusBadge, NIVELES } from './access-status-badge';
 import { ApproveDialog } from './approve-dialog';
 import { formatearFecha } from './fecha';
+import { valorPermitido } from './filtro-url';
 import { ListPager } from './list-pager';
 import { RejectDialog } from './reject-dialog';
 import { listLoadError } from './request-errors';
@@ -158,7 +160,11 @@ export function ApprovalsInbox() {
   const { session } = useSession();
   const esSuperadmin = session?.permissions.is_admin ?? false;
 
-  const [status, setStatus] = useState<RequestStatus>('pendiente');
+  // Estado que llega por la URL (DIS-036); lo inválido se ignora.
+  const params = useSearchParams();
+  const [status, setStatus] = useState<RequestStatus>(
+    () => valorPermitido(params?.get('status'), ESTADOS) ?? 'pendiente',
+  );
   const [areaId, setAreaId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   /** Solicitudes decididas aquí, con la respuesta del servidor (por `id`). */
@@ -227,7 +233,7 @@ export function ApprovalsInbox() {
         {aviso ? (
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-bold text-success-text">{aviso}</p>
+              <SuccessNote>{aviso}</SuccessNote>
               <Button variant="secondary" onClick={cerrarAviso}>Cerrar aviso</Button>
             </div>
           </Card>

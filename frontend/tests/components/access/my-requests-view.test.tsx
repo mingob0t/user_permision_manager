@@ -5,7 +5,7 @@
  * - Solicitudes: estado, motivo de rechazo, filtro, paginación, vacío y error.
  * - Accesos: `vigente` por defecto, estado explicado, origen, vacío y error.
  */
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Access, AccessRequest, Paginated } from '@/lib/access/types';
 
@@ -252,5 +252,69 @@ describe('Mis accesos', () => {
     vi.mocked(grantsApi.mine).mockRejectedValue(new ApiError(401, 'Unauthorized'));
     await abrirAccesos();
     expect((await screen.findByRole('alert')).textContent).toBe('Tu sesión terminó. Vuelve a iniciar sesión.');
+  });
+});
+
+describe('Refresco solo con estados transitorios (DIS-033)', () => {
+  afterEach(() => { vi.useRealTimers(); });
+
+  async function avanzar(ms: number) {
+    await act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+  }
+
+  it('solicitudes: sin pendientes ni accesos en proceso se detiene; con ellos refresca', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.mocked(requestsApi.mine).mockResolvedValue(pagina([RECHAZADA]));
+    render(<MyRequestsView />);
+    await avanzar(0);
+    await avanzar(120_000);
+    expect(requestsApi.mine).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    vi.mocked(requestsApi.mine).mockClear();
+    vi.mocked(requestsApi.mine).mockResolvedValue(pagina([APROBADA]));
+    render(<MyRequestsView />);
+    await avanzar(0);
+    await avanzar(61_000);
+    expect(vi.mocked(requestsApi.mine).mock.calls.length).toBeGreaterThanOrEqual(2);
+
+    cleanup();
+    vi.mocked(requestsApi.mine).mockClear();
+    vi.mocked(requestsApi.mine).mockResolvedValue(pagina([{ ...RECHAZADA, status: 'pendiente' }]));
+    render(<MyRequestsView />);
+    await avanzar(0);
+    await avanzar(61_000);
+    expect(vi.mocked(requestsApi.mine).mock.calls.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('solicitudes: deja de refrescar cuando la respuesta ya no trae transitorios', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.mocked(requestsApi.mine)
+      .mockResolvedValueOnce(pagina([APROBADA]))
+      .mockResolvedValue(pagina([{ ...APROBADA, access: { id: 90, status: 'activo' } }]));
+    render(<MyRequestsView />);
+    await avanzar(0);
+    await avanzar(61_000);
+    expect(requestsApi.mine).toHaveBeenCalledTimes(2);
+    await avanzar(180_000);
+    expect(requestsApi.mine).toHaveBeenCalledTimes(2);
+  });
+
+  it('accesos: solo en_proceso o revocando refrescan', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    render(<MyRequestsView />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Mis accesos' }));
+    await avanzar(0);
+    await avanzar(120_000);
+    expect(grantsApi.mine).toHaveBeenCalledTimes(1);
+
+    cleanup();
+    vi.mocked(grantsApi.mine).mockClear();
+    vi.mocked(grantsApi.mine).mockResolvedValue(pagina([{ ...ACTIVO, status: 'revocando' }]));
+    render(<MyRequestsView />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Mis accesos' }));
+    await avanzar(0);
+    await avanzar(61_000);
+    expect(vi.mocked(grantsApi.mine).mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 });

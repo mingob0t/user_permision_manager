@@ -84,9 +84,8 @@ export function Button({
   const variants = {
     primary: 'nexus-btn-primary',
     secondary: 'nexus-btn-secondary',
-    // El portal aplica el color con un override sobre la variante primaria.
-    // DIS-004: relleno y texto de peligro por token (antes blanco sobre `error`, 3,76:1).
-    danger: 'nexus-btn-primary !bg-error-solid !text-on-error shadow-error/20',
+    // DIS-004: relleno y texto de peligro por token. DIS-010: clase propia `.nexus-btn-danger`.
+    danger: 'nexus-btn-danger',
   };
   return (
     <button

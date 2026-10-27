@@ -8,11 +8,13 @@
  * llama a la API.
  */
 
+import { useSearchParams } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { useSession } from '../session-provider';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
-import { MyAccess } from './my-access';
-import { MyRequests } from './my-requests';
+import { valorPermitido } from './filtro-url';
+import { FILTROS, MyAccess } from './my-access';
+import { ESTADOS, MyRequests } from './my-requests';
 
 type Pestana = 'solicitudes' | 'accesos';
 
@@ -40,7 +42,14 @@ const panelId = (id: Pestana) => `mis-${id}-panel`;
 
 export function MyRequestsView() {
   const { session, loading, error } = useSession();
-  const [pestana, setPestana] = useState<Pestana>('solicitudes');
+  // Pestaña y estado que llegan por la URL (DIS-036); lo inválido se ignora.
+  const params = useSearchParams();
+  const [inicial] = useState(() => ({
+    pestana: valorPermitido(params?.get('tab'), PESTANAS.map((p) => p.id)) ?? 'solicitudes',
+    solicitud: valorPermitido(params?.get('status'), ESTADOS),
+    acceso: valorPermitido(params?.get('status'), FILTROS.map((f) => f.valor)),
+  }));
+  const [pestana, setPestana] = useState<Pestana>(inicial.pestana);
   const botones = useRef<(HTMLButtonElement | null)[]>([]);
 
   if (loading) return <Spinner label="Cargando sesión…" />;
@@ -107,7 +116,9 @@ export function MyRequestsView() {
             tabIndex={0}
             className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            {pestana === 'solicitudes' ? <MyRequests /> : <MyAccess />}
+            {pestana === 'solicitudes'
+              ? <MyRequests estadoInicial={inicial.pestana === 'solicitudes' ? inicial.solicitud : undefined} />
+              : <MyAccess estadoInicial={inicial.pestana === 'accesos' ? inicial.acceso : undefined} />}
           </div>
         </>
       )}

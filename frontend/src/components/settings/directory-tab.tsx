@@ -18,7 +18,7 @@ import type { DirectoryConfig } from '@/lib/access/types';
 import { useAsync } from '@/lib/use-async';
 import { Dato } from '../audit/audit-detail-modal';
 import { Button } from '../form';
-import { Badge, Card, EmptyNote, ErrorNote, Spinner } from '../ui';
+import { Badge, Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
 import {
   AVISO_FUENTE, CAMPOS_DIRECTORIO, ESTADOS_DIRECTORIO, ETIQUETA_CONTRASENA, MENSAJE_INVALIDA,
   MENSAJE_SIN_CONFIGURAR, PISTA_PRUEBA, PISTA_PRUEBA_NO_DISPONIBLE, TEXTO_CONTRASENA,
@@ -88,7 +88,7 @@ export function DirectoryTab() {
         <div role="status">
           {aviso?.tono === 'exito' ? (
             <Card>
-              <p className="text-sm font-bold text-success-text">{aviso.texto}</p>
+              <SuccessNote>{aviso.texto}</SuccessNote>
             </Card>
           ) : null}
         </div>

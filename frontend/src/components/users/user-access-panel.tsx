@@ -24,7 +24,7 @@ import type { ManagedUser } from '@/lib/types';
 import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
 import { useSession } from '../session-provider';
-import { Card, EmptyNote, ErrorNote, Spinner } from '../ui';
+import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
 import { AccessStatusBadge, NIVELES } from '../access/access-status-badge';
 import { formatearFecha } from '../access/fecha';
 import { ListPager } from '../access/list-pager';
@@ -225,7 +225,7 @@ function AccessList({ user }: { user: ManagedUser }) {
         {aviso ? (
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-bold text-success-text">{aviso}</p>
+              <SuccessNote>{aviso}</SuccessNote>
               <Button variant="secondary" onClick={cerrarAviso}>Cerrar aviso</Button>
             </div>
           </Card>

@@ -5,6 +5,8 @@
 import { useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
+import { FILTRO_BUSQUEDA, FILTRO_SELECTOR, FilterBar } from './filter-bar';
+import { Select, TextInput } from './form';
 import { PlatformCard } from './platform-card';
 import { EmptyNote, ErrorNote, Spinner } from './ui';
 
@@ -40,22 +42,22 @@ export function PlatformCatalog() {
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <input
+      <FilterBar label="Filtros de plataformas">
+        <TextInput
           type="search"
           value={term}
           onChange={(event) => setTerm(event.target.value)}
           placeholder="Buscar plataforma…"
           aria-label="Buscar plataforma"
-          className="min-h-12 min-w-56 flex-1 rounded-lg border border-panel-border bg-panel-fill px-3 py-2 text-sm outline-none placeholder:text-label focus:border-primary focus-visible:ring-2 focus-visible:ring-primary"
+          className={FILTRO_BUSQUEDA}
         />
-        <select
+        <Select
           value={areaId ?? ''}
           onChange={(event) =>
             setAreaId(event.target.value ? Number(event.target.value) : null)
           }
           aria-label="Filtrar por área"
-          className="min-h-12 rounded-lg border border-panel-border bg-panel-fill px-3 py-2 text-sm outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary"
+          className={FILTRO_SELECTOR}
         >
           <option value="">Todas las áreas</option>
           {(areas.data ?? []).map((area) => (
@@ -63,8 +65,8 @@ export function PlatformCatalog() {
               {area.name}
             </option>
           ))}
-        </select>
-      </div>
+        </Select>
+      </FilterBar>
 
       {platforms.loading ? <Spinner /> : null}
       {platforms.error ? <ErrorNote message={platforms.error} /> : null}

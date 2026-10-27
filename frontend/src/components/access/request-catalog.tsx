@@ -16,7 +16,7 @@ import type { AccessRequest, CatalogItem } from '@/lib/access/types';
 import { useAsync } from '@/lib/use-async';
 import { Button, Select, TextInput } from '../form';
 import { useSession } from '../session-provider';
-import { Card, EmptyNote, ErrorNote, Spinner } from '../ui';
+import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
 import { NIVELES } from './access-status-badge';
 import { RequestCatalogCard, puedeSolicitar } from './request-catalog-card';
 import { describeCatalogError } from './request-errors';
@@ -131,7 +131,7 @@ export function RequestCatalog() {
         {aviso ? (
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-bold text-success-text">{aviso}</p>
+              <SuccessNote>{aviso}</SuccessNote>
               <Button variant="secondary" onClick={cerrarAviso}>Cerrar aviso</Button>
             </div>
           </Card>
