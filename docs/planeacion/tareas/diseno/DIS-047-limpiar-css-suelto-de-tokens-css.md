@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | estilos |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `dis/DIS-047-css-suelto-tokens` |
 | **Creada** | 2026-10-27 |
 
@@ -37,3 +37,5 @@
 ## Verificación
 - typecheck 0, lint 0, vitest 0 (40 archivos, 1496 pruebas; incluye css-sin-uso y el resto de accesibilidad), build 0.
 - No verificado en navegador.
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado, sin hallazgos (sin llamadores de lo borrado; `html, body` igual en los 7 temas; vitest 1496 en verde). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
