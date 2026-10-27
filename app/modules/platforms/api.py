@@ -26,10 +26,9 @@ from app.authz import (any_admin_required, can_manage_area,
                        can_manage_platform, is_admin,
                        platform_manage_required)
 from app.modules.access.area_admin_sync import sincronizar_plataforma
-from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     NO_ENCONTRADO, REEMPLAZO_ASIGNACION,
+from app.modules.api.helpers import (NO_ENCONTRADO, REEMPLAZO_ASIGNACION,
                                      endpoint_retirado, error_response,
-                                     json_object, validation_error)
+                                     leer_cuerpo, validation_error)
 from app.modules.audit.events import Evento
 from app.modules.audit.services import add_audit_log
 from app.modules.core.models import Area, Platform
@@ -40,8 +39,8 @@ from app.modules.platforms.estado import (accesos_que_impiden_mover,
 from app.modules.platforms.tipos import (CAMPOS_DN, GRUPOS_SIN_VERIFICAR,
                                          NIVEL_ADMIN, NIVEL_USUARIO,
                                          TIPO_CONECTOR)
-from app.modules.platforms.validacion import (MENSAJE_DN_BASE,
-                                              campos_fuera_de_lista,
+from app.modules.platforms.validacion import (CAMPOS_PERMITIDOS,
+                                              MENSAJE_DN_BASE,
                                               validar_campos)
 
 platforms_api_bp = Blueprint('api_platforms', __name__, url_prefix='/api/v1')
@@ -85,11 +84,9 @@ class Rechazo(Exception):
 
 
 def _leer_cuerpo():
-    datos = json_object()
-    if datos is None:
-        raise Rechazo(error_response(*CUERPO_INVALIDO))
-    if campos_fuera_de_lista(datos):
-        raise Rechazo(error_response(*CAMPO_NO_PERMITIDO))
+    datos, error = leer_cuerpo(CAMPOS_PERMITIDOS)
+    if error is not None:
+        raise Rechazo(error)
     if not is_admin() and any(c in datos for c in CAMPOS_DN.values()):
         raise Rechazo(error_response(*DN_SOLO_SUPERADMIN))
     return datos

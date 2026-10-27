@@ -28,11 +28,6 @@ COLOR_POR_OMISION = '#6366f1'
 ESTADO_POR_OMISION = 'Activo'
 
 
-def campos_no_permitidos(datos):
-    """True si el cuerpo trae campos fuera de la lista blanca."""
-    return bool(set(datos) - CAMPOS_PERMITIDOS)
-
-
 def validar(datos, es_alta):
     """(valores, errores): valores limpios y errores por campo (`422`).
 

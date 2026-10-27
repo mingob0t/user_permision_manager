@@ -1,7 +1,8 @@
 """Respuestas comunes de la API v1 (contrato `docs/contratos/README.md`).
 
-Primer paso del duplicado D-03 (FNC-044): las respuestas de error con `code`
-y sus mensajes salen de aquí; `admin.py` converge después.
+Duplicado D-03 (FNC-044, FNC-030): las respuestas de error con `code`, la
+lectura del cuerpo JSON y la lista blanca de campos (FNC-082) salen de aquí;
+`crud.py` y `admin.py` ya no tienen `_payload` ni `_error` propios.
 """
 
 from flask import jsonify, request
@@ -71,6 +72,43 @@ def json_object():
     if datos is None:
         return {}
     return datos if isinstance(datos, dict) else None
+
+
+def json_payload():
+    """Cuerpo JSON tal cual o `{}` si no hay (lectura laxa de `crud` y `admin`).
+
+    No valida que sea un objeto: los endpoints nuevos usan `json_object()` o
+    `leer_cuerpo()`, que responden `400 cuerpo_invalido`.
+    """
+    return request.get_json(silent=True) or {}
+
+
+def campos_no_permitidos(datos, permitidos=()):
+    """Lista blanca (SEC-AUTHZ-09): campos de `datos` fuera de `permitidos`.
+
+    Devuelve la lista ordenada de los rechazados; vacía si todo es válido.
+    Con `permitidos` vacío cualquier campo se rechaza (cuerpo `{}`).
+    """
+    return sorted(set(datos) - set(permitidos))
+
+
+def campos_prohibidos(datos, prohibidos):
+    """Lista negra: campos de `datos` que están en `prohibidos`, ordenados."""
+    return sorted(set(prohibidos) & set(datos))
+
+
+def leer_cuerpo(permitidos=()):
+    """Cuerpo JSON validado: `(datos, None)` o `(None, respuesta de error)`.
+
+    `400 cuerpo_invalido` si no es un objeto y `400 campo_no_permitido` si
+    trae campos fuera de `permitidos` (por omisión, ninguno).
+    """
+    datos = json_object()
+    if datos is None:
+        return None, error_response(*CUERPO_INVALIDO)
+    if campos_no_permitidos(datos, permitidos):
+        return None, error_response(*CAMPO_NO_PERMITIDO)
+    return datos, None
 
 
 def is_id_list(valor):

@@ -33,12 +33,6 @@ MENSAJE_URL = 'Usa una dirección https://.'
 MENSAJE_DN_BASE = 'El grupo debe estar en la OU de plataformas.'
 
 
-def campos_fuera_de_lista(datos):
-    """Campos fuera de la lista blanca (distinto de `users/roles.py`, que es
-    una lista negra)."""
-    return sorted(set(datos) - CAMPOS_PERMITIDOS)
-
-
 def _texto(valor, minimo, maximo):
     if not isinstance(valor, str):
         return None, 'Debe ser texto.'
