@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MobileMenu } from './mobile-menu';
 import { meetsRequirement, type RoleRequirement } from './require-role';
+import { ThemeSelector } from './theme-selector';
 import { SessionProvider, useSession } from './session-provider';
 import { ErrorNote, Spinner } from './ui';
 
@@ -124,12 +125,15 @@ function Frame({ children }: { children: React.ReactNode }) {
               </p>
             </div>
           </div>
+          <div className="flex shrink-0 items-center gap-3">
+          <ThemeSelector />
           <a
             href="/logout"
             className="inline-flex min-h-12 shrink-0 items-center rounded-lg border border-panel-border px-3 text-sm text-label outline-none hover:text-body-text focus-visible:ring-2 focus-visible:ring-primary"
           >
             Salir
           </a>
+          </div>
         </header>
 
         {/* Contenedor que se desplaza (`useScrollLock` lo bloquea) y destino alterno del foco
