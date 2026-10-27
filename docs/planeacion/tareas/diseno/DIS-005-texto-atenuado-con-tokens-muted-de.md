@@ -8,14 +8,14 @@
 | **Fase** | 4 |
 | **Módulo / Área** | tokens |
 | **Prioridad** | Media |
-| **Estatus** | En curso |
+| **Estatus** | En revisión |
 | **Responsable** | disenador-web |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-26 |
 | **Finalizada** | |
-| **Estatus Git** | Rama local |
+| **Estatus Git** | Commit local, sin push |
 | **Rama** | `dis/DIS-004-005-006-contraste` (conjunta con DIS-004, DIS-005 y DIS-006) |
-| **Commits / PR** | |
+| **Commits / PR** | `6509484` (DIS-004), `a00e391` (DIS-005), `e638568` (DIS-006) y cierre de documentación |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -70,6 +70,35 @@ Tarjetas con opacidad: medidas con un script de composición (texto y fondo comp
 | Tarjeta de notificación leída | Menos atenuada | `/notifications` |
 | `PlatformCard` sin enlace | Ya no se atenúa | `/platforms`, favoritos |
 
+## Verificación (2026-10-26, rama `dis/DIS-004-005-006-contraste`, en `frontend/`)
+| Comando | Resultado real |
+|---|---|
+| `npm run typecheck` | código 0 |
+| `npm run lint` y `npx eslint tests vitest.config.ts` | código 0, sin avisos |
+| `npx vitest run` | código 0: 29 archivos, 1079 pasan, 0 `it.fails` (antes 1050 + 25 esperadas). Una corrida de cuatro dio 1 fallo intermitente que no se repitió en 3 corridas más (ver DIS-040) |
+| `npm run build` | código 0 |
+| `grep` del diff (`style=`, `<style`, `.style.`, `#hex`, `rgb(` numérico, IP) | sin resultados fuera de `tokens.css` |
+
+- Fallas de contraste conocidas: **25 → 0** (DIS-004: 3; DIS-005: 8; DIS-006: 14). `fallas-contraste-conocidas.ts` queda vacío.
+- **No verificado:** vista en navegador de temas claro y oscuro, móvil y escritorio (no se levantó la app); revisor, tester y auditor-accesibilidad no se lanzaron por indicación del orquestador.
+- Límite: la prueba mide tokens, no el CSS final; las tarjetas con opacidad se midieron con un script de composición.
+
+## Impacto en elementos compartidos (`impacto.py`, contra `develop`)
+Falsos positivos: `body` (variable local de `platform-card.tsx`) y `--color-body-text` (sin cambio de valor; solo hay líneas nuevas junto a él).
+
+**⚠ Impacto en elementos compartidos** (comparado contra `develop`): este cambio toca 8 elemento(s) usados en otras secciones: app/modules, frontend/src, frontend/tests, migrations/versions, tests, tests/notifications. Valida cada una antes de integrar.
+
+| Elemento modificado | Tipo | Definido en | Usado en (fuera de la tarea) | Áreas afectadas | ¿Validado? |
+|---|---|---|---|---|---|
+| `--color-body-text` | token CSS | `frontend/src/styles/tokens.css` | `frontend/src/styles/global.css` | frontend/src | ☐ |
+| `--color-on-primary` | token CSS | `frontend/src/styles/tokens.css` | `frontend/tests/accesibilidad/hover-botones.test.ts` | frontend/tests | ☐ |
+| `--color-panel-border` | token CSS | `frontend/src/styles/tokens.css` | `frontend/src/styles/global.css` | frontend/src | ☐ |
+| `Button` | función | `frontend/src/components/form.tsx` | `frontend/src/components/access/approvals-inbox.tsx`, `frontend/src/components/access/approve-dialog.tsx`, `frontend/src/components/access/inventory-filters.tsx`, `frontend/src/components/access/inventory.tsx`, `frontend/src/components/access/list-pager.tsx`, `frontend/src/components/access/my-access.tsx`, `frontend/src/components/access/my-requests.tsx`, `frontend/src/components/access/reject-dialog.tsx` (+29) | frontend/src | ☐ |
+| `Field` | función | `frontend/src/components/form.tsx` | `frontend/src/components/access/inventory-filters.tsx`, `frontend/src/components/access/reject-dialog.tsx`, `frontend/src/components/access/request-form-modal.tsx`, `frontend/src/components/access/scope-filters.tsx`, `frontend/src/components/areas/area-admins-panel.tsx`, `frontend/src/components/areas/area-form.tsx`, `frontend/src/components/audit/audit-filters.tsx`, `frontend/src/components/connectors/connector-form.tsx` (+10) | frontend/src | ☐ |
+| `PlatformCatalog` | función | `frontend/src/components/platform-catalog.tsx` | `frontend/src/app/platforms/page.tsx` | frontend/src | ☐ |
+| `body` | función/componente | `frontend/src/components/platform-card.tsx` | `app/modules/api/admin.py`, `app/modules/connectors/http_transporte.py`, `app/modules/notifications/models.py`, `app/modules/notifications/services.py`, `frontend/src/app/layout.tsx`, `frontend/src/components/access/approvals-inbox.tsx`, `frontend/src/components/access/approve-dialog.tsx`, `frontend/src/components/access/inventory-table.tsx` (+40) | app/modules, frontend/src, frontend/tests, migrations/versions, tests, tests/notifications | ☐ |
+| `nexus-checkbox` | clase CSS | `frontend/src/styles/components.css` | `frontend/src/components/users/area-checklist.tsx` | frontend/src | ☐ |
+
 ## Criterios de aceptación
 - [ ] Hallazgos de origen corregidos y verificados
 - [ ] Prueba de regresión que primero falla (si corrige un defecto)
@@ -86,3 +115,4 @@ Tarjetas con opacidad: medidas con un script de composición (texto y fondo comp
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-19 | FNC-070 (auditor-accesibilidad): `EmptyNote` `text-label/60` (3.35 claro, 3.31 oscuro) ya cubierto aquí; lo usan también las rutas reservadas de FNC-070 |
 | 2026-10-19 | DIS-017 (auditor-accesibilidad): pista `text-label/60` de `Field` (`form.tsx:29`, 3.35 claro, 3.31 oscuro); DIS-017 usa su propia pista `text-label` fuera de `Field`; `form.tsx` sin tocar |
+| 2026-10-26 | En revisión: implementada junto con DIS-004/005/006 en modo autónomo; fallas conocidas 25 → 0; typecheck, lint, vitest y build en 0; sin verificación visual en navegador; pendientes revisor y auditor-accesibilidad |
