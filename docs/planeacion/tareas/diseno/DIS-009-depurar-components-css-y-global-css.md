@@ -98,7 +98,7 @@ Origen (diagnóstico inicial, FNC-001):
 |---|---|
 | `npx tsc --noEmit` | código 0 |
 | `npx next lint` | código 0, sin avisos |
-| `npx vitest run` | 39 archivos de pruebas (más 3 propias) y 1460 pruebas pasaron, código 0 (ver nota) |
+| `npx vitest run` | 39 archivos y 1460 pruebas pasaron, código 0 (repetido 5 veces después; ver nota) |
 | `npx next build` | código 0; CSS 80 449 → 47 666 bytes |
 - Nota: una corrida de `vitest` dio código 1 una vez (no se guardó el detalle) y las 5 siguientes dieron 0; coincide con la intermitencia conocida de `areas-list.test.tsx` (DIS-040). No se atribuye a este cambio, pero no se pudo reproducir para comprobarlo.
 - No verificado en navegador (no se levantó la app): tema claro/oscuro, móvil/escritorio ni la apariencia de la perilla del deslizador y la ✓. Se espera aspecto idéntico (mismos valores); validar en obsidian la ✓.

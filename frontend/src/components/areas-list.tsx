@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import type { Area } from '@/lib/types';
+import { variablesCss } from '@/lib/variables-css';
 import { ACCION_FILA, ACCION_FILA_PELIGRO } from './acciones-fila';
 import { AreaAdminsPanel } from './areas/area-admins-panel';
 import { mensajeDeError } from './areas/area-errors';
@@ -93,8 +94,8 @@ function AreasScreen() {
                 <Card key={area.id}>
                   <div className="flex items-start justify-between gap-3">
                     <span
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-xs font-semibold"
-                      style={{ background: `${area.color}22`, color: area.color }}
+                      className="nx-chip-tint grid h-9 w-9 shrink-0 place-items-center rounded-lg text-xs font-semibold"
+                      style={variablesCss({ '--chip-color': area.color })}
                       aria-hidden
                     >
                       {area.name.slice(0, 2).toUpperCase()}

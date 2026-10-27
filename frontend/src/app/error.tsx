@@ -30,7 +30,7 @@ export default function ErrorPage({
           <button
             type="button"
             onClick={reset}
-            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             Reintentar
           </button>

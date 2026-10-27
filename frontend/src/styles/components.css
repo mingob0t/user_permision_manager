@@ -292,3 +292,16 @@ input[type="range"]::-moz-range-thumb {
     border: 4px solid rgb(var(--color-primary));
     box-shadow: 0 4px 12px rgb(var(--color-shadow) / 0.15);
 }
+
+/* DIS-012: color que solo se conoce al ejecutar (plataforma o área, vienen de los datos).
+   El componente pasa `--chip-*` con `variablesCss()` y estas clases los consumen. */
+.nx-chip-solid {
+    background: var(--chip-bg);
+    color: var(--chip-fg);
+}
+
+/* Fondo teñido al 13 % (equivale al antiguo sufijo hexadecimal `22`) y texto del mismo color. */
+.nx-chip-tint {
+    background: color-mix(in srgb, var(--chip-color) 13%, transparent);
+    color: var(--chip-color);
+}

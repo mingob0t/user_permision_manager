@@ -22,8 +22,6 @@ export interface TopeLiterales {
 }
 
 export const EXCEPCIONES: Record<string, TopeLiterales> = {
-  'app/error.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-004 / DIS-012' },
-  'app/not-found.tsx': { hex: 0, funcion: 0, paleta: 1, tarea: 'DIS-004 / DIS-012' },
   // DIS-012 (decisión del orquestador, pendiente de validar): no es estilo, es un
   // dato. El valor de `<input type="color">` exige `#rrggbb` y estos son los
   // valores por defecto de `Settings.bg_color` / `text_color` (el backend usa
