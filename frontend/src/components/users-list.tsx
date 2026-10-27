@@ -2,7 +2,7 @@
 
 /** Usuarios: alta, edición, baja y asignación de áreas y plataformas. */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import type {
@@ -26,6 +26,31 @@ const ROLE_LABELS: Record<string, string> = {
   admin_area: 'Admin de área',
   usuario: 'Usuario',
 };
+
+/**
+ * Grupo de chips con `fieldset`/`legend` (DIS-045): la leyenda, con el estilo de la etiqueta de
+ * `Field`, nombra al grupo sin asociarse al primer chip como haría un `<label>`.
+ */
+function GrupoChips({
+  legend,
+  hint,
+  children,
+}: {
+  legend: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  const pistaId = useId();
+  return (
+    <fieldset aria-describedby={hint ? pistaId : undefined}>
+      <legend className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-label">
+        {legend}
+      </legend>
+      {children}
+      {hint ? <p id={pistaId} className="mt-1.5 text-xs text-label/85">{hint}</p> : null}
+    </fieldset>
+  );
+}
 
 /** Selector de etiquetas múltiple. */
 function TagPicker<T extends { id: number; name: string }>({
@@ -183,20 +208,20 @@ function UserForm({
         </Field>
       ) : null}
 
-      <Field label="Áreas a las que pertenece">
+      <GrupoChips legend="Áreas a las que pertenece">
         <TagPicker
           options={areas} selected={areaIds} onChange={setAreaIds}
           empty="No hay áreas en tu alcance."
         />
-      </Field>
+      </GrupoChips>
 
       {user ? (
-        <Field label="Plataformas asignadas" hint="Vacío deja las actuales sin cambios.">
+        <GrupoChips legend="Plataformas asignadas" hint="Vacío deja las actuales sin cambios.">
           <TagPicker
             options={platforms} selected={platformIds} onChange={setPlatformIds}
             empty="No hay plataformas en tu alcance."
           />
-        </Field>
+        </GrupoChips>
       ) : null}
 
       <Checkbox
@@ -558,6 +583,7 @@ export function UsersList() {
                   <button
                     type="button"
                     onClick={() => setEditing(user)}
+                    aria-label={`Editar ${user.name}`}
                     className={ACCION_FILA}
                   >
                     Editar
@@ -576,6 +602,7 @@ export function UsersList() {
                   <button
                     type="button"
                     onClick={() => setRemoving(user)}
+                    aria-label={`Eliminar ${user.name}`}
                     className={ACCION_FILA_PELIGRO}
                   >
                     Eliminar
@@ -596,7 +623,7 @@ export function UsersList() {
                       <button
                         type="button"
                         onClick={(event) => abrirRol(event.currentTarget, user, 'areas')}
-                        aria-label={`Áreas que administra ${user.name}`}
+                        aria-label={`Áreas admin de ${user.name}`}
                         className={ACCION_FILA}
                       >
                         Áreas admin

@@ -135,3 +135,12 @@ Revisión manual:
 
 - 2026-10-20 (auditoría DIS-018): en `users-list.tsx` los botones de fila "Editar", "Eliminar" y el nuevo "Accesos" (`px-2 py-1 text-xs`) miden ~28 px; llevarlos juntos a 48 px (`min-h-12` o `Button variant="secondary"`).
 - 2026-10-27: aprobada en modo autónomo y En curso; implementada junto con DIS-035 en `dis/DIS-008-035-areas-tactiles`; En revisión (sin revisor ni auditores; no verificada en navegador).
+
+## Correcciones tras auditor-accesibilidad (2026-10-27)
+El auditor aprobó sin fallas de contraste ni controles < 44 px. Corregido en la misma rama:
+- DIS-045 (resuelta en DIS-008): `TagPicker` de `UserForm` va en `fieldset`/`legend` (`GrupoChips`, pista con `aria-describedby`) y no dentro del `<label>` de `Field`; el primer chip conserva su nombre y la leyenda no lo activa
+- DIS-046 (resuelta en DIS-008): `aria-label` "Editar {nombre}" y "Eliminar {nombre}" en Usuarios; "Áreas admin" pasa a "Áreas admin de {nombre}" (2.5.3: el nombre empieza con el texto visible)
+- `platform-admin.tsx`: `<th>` de acciones con `<span className="sr-only">Acciones</span>`; la tabla desplazable va en `div role="region" aria-label="Plataformas" tabIndex={0}` con `focus-visible:ring-primary`. Es la única región con `overflow-x-auto` en `src` (revisado con grep)
+- Pruebas: `users-list.test.tsx` (DIS-045, DIS-046), `platform-admin.test.tsx` (región); se actualizaron dos nombres en `admin-role-dialog.test.tsx`
+- Nota de contraste: el tema `emerald-light` tiene márgenes justos en los pares medidos (4,86:1 y 4,57:1 frente a 4,5:1); un cambio de tokens ahí puede romper AA
+- Verificación: typecheck 0, lint 0, vitest 0 (36 archivos, 1280), build 0; contraste conocido y texto mínimo en 0. No verificado en navegador

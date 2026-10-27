@@ -8,7 +8,9 @@
 | **Fase** | 4 |
 | **Módulo / Área** | usuarios |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
+| **Estatus** | Hecha |
+| **Aprobada** | 2026-10-27 (modo autónomo; hallazgo de auditor-accesibilidad en DIS-008) |
+| **Rama** | `dis/DIS-008-035-areas-tactiles` |
 | **Creada** | 2026-10-27 |
 
 ## Contexto
@@ -21,3 +23,6 @@
 
 ## Impacto cruzado
 - Origen ← DIS-008
+
+## Resolución
+- Resuelta en DIS-008 (2026-10-27); ver "Correcciones tras auditor-accesibilidad" en su ficha. Pruebas en `frontend/tests/components/users-list.test.tsx`

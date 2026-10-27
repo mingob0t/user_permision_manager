@@ -152,7 +152,14 @@ function PlatformAdminContent() {
         (platforms.data ?? []).length === 0 ? (
           <EmptyNote message="No hay plataformas en tu alcance." />
         ) : (
-          <Card className="overflow-x-auto p-0">
+          <Card className="p-0">
+            {/* Región desplazable con nombre y foco visible para quien usa teclado (DIS-008). */}
+            <div
+              role="region"
+              aria-label="Plataformas"
+              tabIndex={0}
+              className="overflow-x-auto rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
             <table className="w-full min-w-[44rem] text-sm">
               <thead className="border-b border-panel-border text-left text-xs uppercase tracking-wide text-label">
                 <tr>
@@ -160,7 +167,7 @@ function PlatformAdminContent() {
                   <th className="px-4 py-3 font-medium">Área</th>
                   <th className="px-4 py-3 font-medium">Enlace</th>
                   <th className="px-4 py-3 font-medium">Estado</th>
-                  <th className="px-4 py-3" />
+                  <th className="px-4 py-3"><span className="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-panel-border">
@@ -234,6 +241,7 @@ function PlatformAdminContent() {
                 ))}
               </tbody>
             </table>
+            </div>
           </Card>
         )
       ) : null}

@@ -357,6 +357,15 @@ describe('PlatformAdmin: accesibilidad (revisión de DIS-017)', () => {
     expect(acciones[2].className).toContain('text-error-text');
   });
 
+  it('DIS-008: la tabla desplazable es una región con nombre, enfocable y con foco visible; la cabecera de acciones tiene texto', async () => {
+    render(<PlatformAdmin />);
+    const region = await screen.findByRole('region', { name: 'Plataformas' });
+    expect(region.getAttribute('tabindex')).toBe('0');
+    expect(region.className).toContain('overflow-x-auto');
+    expect(region.className).toContain('focus-visible:ring-primary');
+    expect(screen.getByRole('columnheader', { name: 'Acciones' })).toBeTruthy();
+  });
+
   it.each([
     [404, 'La plataforma ya no existe o no está en tu alcance. Recarga la lista.'],
     [409, 'No se puede eliminar una plataforma con accesos vigentes.'],
