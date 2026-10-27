@@ -2,6 +2,9 @@
 
 ## [Sin publicar]
 
+### Seguridad
+- Next.js: el rewrite de `/api` hacia Flask existe solo con `NODE_ENV=development` (`next build`/`next start` no generan ninguno), se retira el rewrite de `/auth` y `BACKEND_URL` se rechaza si es una IP; cierra la vía de Next hacia Flask con cabeceras `Remote-*` del cliente (FNC-005, FNC-118, 2026-10-26).
+
 ### Agregado
 - Diálogos: el foco empieza en el primer campo, no sale del diálogo con Tab y vuelve al botón que lo abrió; el texto que explica la acción se anuncia como descripción (aprobar, rechazar, revocar, rol de admin, eliminar conector, reintentar y confirmaciones de borrado); el ✕ mide 48 px. Velo detrás de los diálogos y del menú móvil con token propio por tema, y el fondo no se desplaza mientras están abiertos (DIS-031, DIS-038, 2026-10-26).
 - Ajustes → Directorio (superadmin): configuración efectiva de OpenLDAP en solo lectura, con la variable `LDAP_*` de cada valor y si viene del entorno o es la predeterminada, estados de sin configurar e inválida y "Probar conexión" con mensajes propios; sin campos de contraseña ni mapeos de rol. Las pestañas de Ajustes se recorren con las flechas, Inicio y Fin y miden 48 px (DIS-023, DIS-034, 2026-10-26).
