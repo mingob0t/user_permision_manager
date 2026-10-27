@@ -20,7 +20,10 @@ frontend/src/
 │   ├── types.ts    # Contrato de tipos con la API
 │   ├── access/     # Cliente y tipos del gestor de accesos por sección (FNC-069)
 │   ├── use-async.ts# Hook de carga con estado loading/error y reload()
-│   └── use-polling.ts# useAsync con refresco periódico (ADR-006, FNC-071)
+│   ├── use-polling.ts# useAsync con refresco periódico (ADR-006, FNC-071)
+│   ├── use-focus-trap.ts# Trampa de foco de Modal y menú móvil (DIS-031)
+│   ├── use-scroll-lock.ts# Bloqueo del fondo e inert en la raíz (DIS-038, DIS-044)
+│   └── raiz-app.ts # Id de la raíz desplazable de layout.tsx (DIS-044)
 └── styles/         # tokens.css, global.css, components.css (portados del portal original)
 ```
 
@@ -71,12 +74,13 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). La misma lista (`Nav`) 
 | Componente | Archivo | Rol |
 |---|---|---|
 | `AppShell` | `app-shell.tsx` | Marco: barra lateral (`md` y mayores), cabecera con menú móvil, nombre, rol y "Salir"; estados de carga y error de sesión. |
-| `MobileMenu` | `mobile-menu.tsx` | Bajo `md`: botón "Menú" (`aria-expanded`, `aria-controls`) y panel `role="dialog"` con la misma `Nav` por rol; cierra con Escape, al elegir opción y con clic fuera; foco al primer enlace, de vuelta al botón y atrapado con Tab; áreas de 48 px. Trampa de foco local hasta DIS-031 (DIS-025). |
+| `MobileMenu` | `mobile-menu.tsx` | Bajo `md`: botón "Menú" (`aria-expanded`, `aria-controls`) y panel `role="dialog"` con la misma `Nav` por rol; cierra con Escape, al elegir opción y con clic fuera; foco al primer enlace, de vuelta al botón y atrapado con Tab (`useFocusTrap`, DIS-031); panel en portal, velo `bg-overlay` y bloqueo del fondo (DIS-038); áreas de 48 px (DIS-025). |
 | `SessionProvider` / `useSession` | `session-provider.tsx` | Pide `/me` una vez; sin sesión redirige a `/login`. |
 | `RequireRole` / `meetsRequirement` | `require-role.tsx` | Guarda de ruta y regla de visibilidad por rol (FNC-070). |
 | `RoleSummary`, `gruposDelResumen`, `RUTAS_INICIO` | `home/role-summary.tsx` | Resumen de inicio por rol: grupos de contadores según los campos del contrato `inicio.md`; cada contador es `StatTile` dentro de `Link` con nombre accesible "Etiqueta: n. Ir a Pantalla"; carga, vacío (usuario: enlace al catálogo) y error con Reintentar (DIS-024). |
 | `Card`, `PanelHeader`, `StatTile`, `Spinner`, `ErrorNote`, `EmptyNote`, `Badge` | `ui.tsx` | Piezas base con clases del portal original (estados de carga, vacío y error). |
-| `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). |
+| `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). `Modal`: foco inicial en el primer campo (o el panel), atrapado con Tab y devuelto al cerrar, `describedBy` para el texto que explica la acción, nombre con `aria-labelledby`, ✕ de 48 px, Escape que respeta `defaultPrevented`; se pinta en un portal en `body` (DIS-031); velo `bg-overlay` (`--color-overlay`) y bloqueo del fondo con `scroll-bloqueado` e `inert` en la raíz (DIS-038, DIS-044). `ConfirmDialog` usa `aria-disabled` mientras envía. Confirmaciones destructivas con `variant="danger"` (rechazar, revocar, quitar admin, eliminar, `ConfirmDialog`); las demás, primario (DIS-043). |
+| `useFocusTrap`, `useScrollLock` | `lib/use-focus-trap.ts`, `lib/use-scroll-lock.ts` | Trampa de foco y bloqueo de desplazamiento comunes de `Modal` y `MobileMenu` (DIS-031, DIS-038). |
 | `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace (solo `https://`, `enlaceSeguro`). |
 | `PlatformForm`, `PlatformIntegrationFields`, `PlatformSaveNotice`, `field-notes`, `platform-payload`, `platform-save-errors` | `platforms/` | Formulario, sección Integración, aviso con `warnings` (región `status`), errores por campo con `aria-describedby` y foco, validación y cuerpo por rol (DIS-017). |
 | `RequestCatalog`, `RequestCatalogCard`, `RequestFormModal`, `AccessStatusBadge`, `describeRequestError` | `access/` | Catálogo solicitable, tarjeta con estado y motivo sin acción, modal con nivel y justificación (≤ 500, `aria-describedby`, foco), insignia de estado de acceso reutilizable y mensajes de `POST /access-requests` (DIS-013). |
@@ -203,3 +207,7 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 | 10 | Título "Nexus" fijo en `layout.tsx` y en la barra lateral, aunque el nombre del portal es configurable en `system_config`. | `app/layout.tsx`, `app-shell.tsx`, `mobile-menu.tsx` |
 
 > Límites de las pruebas automáticas: la de contraste mide los tokens de `tokens.css`, no el CSS final (reglas con `!important` pueden ignorarlos); la de colores literales no detecta colores con nombre, `oklch()`/`lab()` ni valores arbitrarios de Tailwind.
+
+## Desplazamiento (DIS-044)
+- `html` y `body` no se desplazan (`global.css`, heredado). Se desplaza la raíz `#raiz-app` de `layout.tsx` (`h-dvh overflow-y-auto`, páginas sin `AppShell`) o, con `AppShell`, su `<main>` (`min-h-0 flex-1 overflow-y-auto`, `tabIndex={-1}`); cabecera fija y barra lateral con desplazamiento propio.
+- Los contenedores desplazables llevan `data-desplazable`; `useScrollLock` los bloquea con `scroll-bloqueado` en la raíz y la marca `inert` mientras hay un diálogo o el menú móvil abiertos (ambos en portal en `body`).

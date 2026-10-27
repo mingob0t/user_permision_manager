@@ -6,11 +6,13 @@
  *
  * - Explica el efecto antes de confirmar: la ejecución vuelve a `pendiente` y
  *   el acceso a "en proceso" o "revocando"; queda en la auditoría.
- * - Patrón de `RevokeAccessDialog` (DIS-018): botón primario y `aria-disabled`
- *   durante el envío para que el foco no caiga en `body`.
+ * - Patrón de `RevokeAccessDialog` (DIS-018): botón primario (reintentar no
+ *   es destructivo) y `aria-disabled` durante el envío para que el foco no
+ *   caiga en `body`.
+ * - El efecto y su detalle describen el diálogo (`describedBy`, DIS-031).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { provisioningApi } from '@/lib/access/provisioning';
 import type { Job, JobDetail } from '@/lib/access/types';
 import { Button, Modal } from '../form';
@@ -37,6 +39,8 @@ export function JobRetryDialog({
 }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const efectoId = useId();
+  const detalleId = useId();
 
   async function confirmar() {
     if (sending) return;
@@ -57,6 +61,7 @@ export function JobRetryDialog({
     <Modal
       title="Reintentar ejecución"
       onClose={onClose}
+      describedBy={`${efectoId} ${detalleId}`}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancelar</Button>
@@ -71,8 +76,8 @@ export function JobRetryDialog({
       }
     >
       <div aria-busy={sending} className="space-y-3">
-        <p className="text-sm text-body-text">{efectoReintento(job)}</p>
-        <p className="text-sm text-label">
+        <p id={efectoId} className="text-sm text-body-text">{efectoReintento(job)}</p>
+        <p id={detalleId} className="text-sm text-label">
           La ejecución n.º {job.id} vuelve a pendiente con nuevos intentos y el reintento queda en la
           auditoría.
         </p>

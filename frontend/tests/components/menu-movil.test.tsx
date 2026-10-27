@@ -1,8 +1,10 @@
 /**
  * DIS-025: menú de navegación en móvil (botón y panel de `AppShell`).
+ * DIS-031: trampa de foco compartida con `Modal` (`useFocusTrap`).
+ * DIS-038: velo por token y bloqueo del desplazamiento con clase en `<html>`.
  */
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Session } from '@/lib/types';
 
 const ruta = vi.hoisted(() => ({ actual: '/' }));
@@ -14,6 +16,8 @@ vi.mock('@/lib/api', () => ({
 
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/app-shell';
+import { CLASE_SCROLL_BLOQUEADO } from '@/lib/use-scroll-lock';
+import { crearRaiz, simularCajas } from '../utils/dom-simulado';
 
 const sesionSimulada = vi.mocked(api.session);
 
@@ -40,10 +44,21 @@ function sesion(rol: Rol): Session {
   };
 }
 
+let raiz: HTMLElement;
+
+beforeEach(() => {
+  simularCajas();
+  raiz = crearRaiz();
+});
+
 async function montar(rol: Rol = 'usuario') {
   sesionSimulada.mockResolvedValue(sesion(rol));
-  render(<AppShell>contenido</AppShell>);
-  return screen.findByRole('button', { name: 'Menú' });
+  // Como en el navegador: la pantalla dentro de la raíz de `layout.tsx`.
+  render(<AppShell>contenido</AppShell>, { container: raiz });
+  const boton = await screen.findByRole('button', { name: 'Menú' });
+  // El panel va en un portal que se crea al montar en el cliente.
+  await waitFor(() => expect(document.getElementById(boton.getAttribute('aria-controls')!)).not.toBeNull());
+  return boton;
 }
 
 function abrir(boton: HTMLElement) {
@@ -212,5 +227,37 @@ describe('Menú móvil', () => {
       expect(enlace.className).not.toContain('focus-visible:ring');
     }
     expect(panel.className).toContain('border-primary');
+  });
+
+  it('con el panel abierto hay velo por token, la raíz queda bloqueada e inert (clase, sin estilos inline)', async () => {
+    const boton = await montar();
+    expect(raiz.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
+    const panel = abrir(boton);
+    expect(raiz.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(true);
+    expect(raiz.hasAttribute('inert')).toBe(true);
+    // El panel va en un portal fuera de la raíz: no queda `inert`.
+    expect(raiz.contains(panel)).toBe(false);
+    expect(raiz.getAttribute('style')).toBeNull();
+    expect(document.body.getAttribute('style')).toBeNull();
+    const velo = panel.parentElement!.querySelector('[aria-hidden="true"]')!;
+    expect(velo.className).toContain('bg-overlay');
+
+    // El clic en el velo cuenta como clic fuera: cierra, libera la raíz y el foco vuelve al botón.
+    fireEvent.pointerDown(velo);
+    expect(boton.getAttribute('aria-expanded')).toBe('false');
+    expect(raiz.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
+    expect(raiz.hasAttribute('inert')).toBe(false);
+    expect(document.activeElement).toBe(boton);
+  });
+
+  it('el área de contenido es el contenedor desplazable y el foco alterno', async () => {
+    await montar();
+    const main = screen.getByRole('main');
+    expect(main.hasAttribute('data-desplazable')).toBe(true);
+    expect(main.className).toContain('overflow-y-auto');
+    expect(main.className).toContain('min-h-0');
+    expect(main.getAttribute('tabindex')).toBe('-1');
+    // El marco ocupa la ventana: la cabecera y la barra lateral no se desplazan con el contenido.
+    expect(main.closest('.h-dvh')).not.toBeNull();
   });
 });

@@ -8,7 +8,10 @@
  * `.nexus-btn`, casillas `.nexus-checkbox` y modales `.nx-modal-glass`.
  */
 
-import { useEffect, useRef } from 'react';
+import { useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { CAMPOS, esVisible, useFocusTrap } from '@/lib/use-focus-trap';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 export function Field({
   label,
@@ -93,37 +96,51 @@ export function Button({
   );
 }
 
-/** Diálogo modal, con el cristal del portal (.nx-modal-glass). */
+/**
+ * Diálogo modal, con el cristal del portal (.nx-modal-glass).
+ *
+ * - DIS-031: foco inicial en el primer campo del cuerpo (o en el panel si no
+ *   hay campos), atrapado con Tab y devuelto al cerrar (`useFocusTrap`); el
+ *   panel se enfoca solo al abrir, aunque `onClose` cambie en cada render.
+ * - `describedBy`: id (o ids separados por espacio) del texto que explica la
+ *   acción; va a `aria-describedby` del `role="dialog"`.
+ * - DIS-038: velo `bg-overlay` (token `--color-overlay`) y bloqueo del
+ *   desplazamiento del fondo (`useScrollLock`).
+ * - Se pinta en un portal en `document.body`, fuera de la raíz de la app, que
+ *   queda `inert` mientras está abierto (H2). Nombre del diálogo con
+ *   `aria-labelledby` al título (H6). Solo se monta tras una acción del
+ *   usuario: en el servidor no se pinta.
+ */
 export function Modal({
   title,
   onClose,
   children,
   footer,
+  describedBy,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  describedBy?: string;
 }) {
   const panel = useRef<HTMLDivElement>(null);
+  const cuerpo = useRef<HTMLDivElement>(null);
+  const tituloId = useId();
 
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-    }
-    document.addEventListener('keydown', onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    panel.current?.focus();
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previous;
-    };
-  }, [onClose]);
+  // Primero el bloqueo: al cerrar, la raíz deja de ser `inert` antes de devolver el foco.
+  useScrollLock();
+  useFocusTrap(panel, {
+    alEscape: onClose,
+    focoInicial: () =>
+      Array.from(cuerpo.current?.querySelectorAll<HTMLElement>(CAMPOS) ?? []).filter(esVisible),
+  });
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-overlay backdrop-blur-sm p-4 sm:items-center"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -132,31 +149,34 @@ export function Modal({
         ref={panel}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby={tituloId}
+        aria-describedby={describedBy}
         tabIndex={-1}
         className="nx-modal-glass w-full max-w-lg rounded-2xl shadow-2xl outline-none"
       >
         <div className="flex items-center justify-between border-b border-panel-border px-6 py-4">
-          <h2 className="text-sm font-black uppercase tracking-[0.15em] text-panel-header-text">
+          <h2 id={tituloId} className="text-sm font-black uppercase tracking-[0.15em] text-panel-header-text">
             {title}
           </h2>
+          {/* DIS-031: área táctil de 48 px (antes 36). */}
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="w-9 h-9 flex items-center justify-center rounded-base text-label hover:bg-surface-container transition-colors"
+            className="min-w-12 min-h-12 flex items-center justify-center rounded-base text-label hover:bg-surface-container transition-colors"
           >
             ✕
           </button>
         </div>
-        <div className="space-y-5 px-6 py-5">{children}</div>
+        <div ref={cuerpo} className="space-y-5 px-6 py-5">{children}</div>
         {footer ? (
           <div className="flex justify-end gap-3 border-t border-panel-border px-6 py-4">
             {footer}
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -175,22 +195,33 @@ export function ConfirmDialog({
   onCancel: () => void;
   busy?: boolean;
 }) {
+  const mensajeId = useId();
   return (
     <Modal
       title={title}
       onClose={onCancel}
+      describedBy={mensajeId}
       footer={
         <>
           <Button variant="secondary" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={busy}>
+          {/* H3: `aria-disabled` mientras se envía (con `disabled` el foco caería en `body`);
+              el clic se ignora. */}
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (!busy) onConfirm();
+            }}
+            aria-disabled={busy || undefined}
+            className="aria-disabled:opacity-40"
+          >
             {busy ? 'Eliminando…' : confirmLabel}
           </Button>
         </>
       }
     >
-      <p className="text-sm font-bold text-label">{message}</p>
+      <p id={mensajeId} className="text-sm font-bold text-label">{message}</p>
     </Modal>
   );
 }
