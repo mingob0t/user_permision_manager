@@ -2,14 +2,18 @@
 
 /**
  * Administración de plataformas: crear, editar y eliminar, con el tipo de
- * integración y los grupos de acceso por nivel (DIS-017).
+ * integración y los grupos de acceso por nivel (DIS-017). Cada fila enlaza a
+ * su historial en Auditoría (DIS-035).
  */
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import { useAsync } from '@/lib/use-async';
 import type { Platform, PlatformWarning } from '@/lib/types';
+import { ACCION_FILA, ACCION_FILA_PELIGRO } from './acciones-fila';
+import { rutaHistorialPlataforma } from './audit/audit-routes';
 import { Button, ConfirmDialog } from './form';
 import { PlatformForm } from './platforms/platform-form';
 import { describeDeleteError } from './platforms/platform-save-errors';
@@ -194,27 +198,37 @@ function PlatformAdminContent() {
                         {platform.status}
                       </Badge>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-right">
-                      {canManage ? (
-                        <div className="flex justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => open(e, () => setEditing(platform))}
-                            aria-label={`Editar ${platform.name}`}
-                            className="rounded px-2 py-1 text-xs text-primary-text hover:bg-primary/10"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => open(e, () => setRemoving(platform))}
-                            aria-label={`Eliminar ${platform.name}`}
-                            className="rounded px-2 py-1 text-xs text-error-text hover:bg-error/10"
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      ) : null}
+                    <td className="whitespace-nowrap px-4 py-1 text-right">
+                      {/* DIS-035: historial en Auditoría y acciones de 48 px (DIS-008), en una línea. */}
+                      <div className="flex justify-end gap-1">
+                        <Link
+                          href={rutaHistorialPlataforma(platform.id)}
+                          aria-label={`Historial de ${platform.name} en Auditoría`}
+                          className={ACCION_FILA}
+                        >
+                          Historial
+                        </Link>
+                        {canManage ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => open(e, () => setEditing(platform))}
+                              aria-label={`Editar ${platform.name}`}
+                              className={ACCION_FILA}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => open(e, () => setRemoving(platform))}
+                              aria-label={`Eliminar ${platform.name}`}
+                              className={ACCION_FILA_PELIGRO}
+                            >
+                              Eliminar
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
