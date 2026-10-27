@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | tema |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
@@ -81,3 +81,5 @@ No verificado: navegador real (destello al cargar, contraste visual del selector
 
 - 2026-10-27 (orquestador): no hay CSP configurada hoy; el script en línea de `<head>` necesitará hash o nonce si la fase 5 agrega `script-src` sin `unsafe-inline`.
 | 2026-10-27 | Auditoría de accesibilidad «Requiere cambios»: (1) cabecera desbordada a 320 px: selector `w-28 min-w-0 sm:w-40`, bloque derecho sin `shrink-0` (`min-w-0`), huecos `gap-2 sm:gap-4`; el nombre y el rol se truncan primero. (2) `color-scheme` por tema en `global.css` (`:root` = `light dark`; claros `light`; oscuros `dark`), no en `tokens.css` porque `css-sin-uso.test.ts` exige solo variables allí (DIS-047). Registrado en VARIABLES e HISTORIAL. Pruebas nuevas en `tests/lib/tema-diseno.test.ts`. Decisiones del orquestador, pendientes de validar en la prueba de concepto |
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado tras corregir el desborde a 320 px y agregar `color-scheme` (`9c14d7a`). Contraste AA medido en los 7 temas (selector 13,3–17,4:1; foco ≥ 3,45:1). Pendiente de ver en navegador: cabecera a 320 px y lista nativa del `select` en temas oscuros. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).

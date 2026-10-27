@@ -33,7 +33,7 @@
 | FNC-029 | Dividir app/modules/api/admin.py, crud.py y create_app | backend | 4 | api | Media | Propuesta | 2026-10-13 | | | — | Después de FNC-020 |
 | FNC-030 | Unificar helpers duplicados del backend (usuario creado, purga, _payload/_error, auditoría) | backend | 4 | api | Media | Hecha | 2026-10-13 | 2026-10-27 | | `fnc/FNC-030-082-helpers-comunes` (commit local, sin push) | Junto con FNC-082; resuelve D-03, D-04, D-05; propone FNC-119 |
 | FNC-031 | Corregir notificaciones globales marcadas como leídas para todos | backend | 4 | notifications | Media | Propuesta | 2026-10-13 | | | — |  |
-| FNC-032 | Selector de tema: aplicar la clase en <html> o retirar los temas sin uso | web | 4 | tema | Alta | En revisión | 2026-10-13 | 2026-10-27 | | `fnc/FNC-032-selector-de-tema` (sin merge) | Tema por dispositivo (localStorage); sin campo en la API: ver FNC-122 (Propuesta) |
+| FNC-032 | Selector de tema: aplicar la clase en <html> o retirar los temas sin uso | web | 4 | tema | Alta | Hecha | 2026-10-13 | 2026-10-27 | 2026-10-27 | `fnc/FNC-032-selector-de-tema` (merge a develop, push) | Tema por dispositivo (localStorage); sin campo en la API: ver FNC-122 (Propuesta); auditor-accesibilidad Aprobado tras corrección; genera FNC-122 |
 | FNC-033 | Validar el contraste de los colores elegidos por el usuario (onColor) | web | 4 | tema | Media | Propuesta | 2026-10-13 | | | — | Depende de DIS-001 |
 | FNC-034 | Semántica accesible: aria-label contextual, scope en th y texto del tipo de notificación | web | 4 | global | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-035 | Depurar documentación obsoleta (business_rules, ARCHITECTURE, README raíz, deploy/README) | infra | 6 | docs | Baja | Propuesta | 2026-10-13 | | | — |  |
