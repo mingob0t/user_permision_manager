@@ -262,7 +262,7 @@ describe('UsersList: alta en el directorio', () => {
     const aviso = await screen.findByText('Se creó la cuenta de Ana Ruiz.');
     expect(screen.queryByRole('dialog')).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(aviso.closest('[role="status"]')));
-    expect(api.users).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(api.users).toHaveBeenCalledTimes(2));
   });
 
   it('superadmin: ve todas las áreas', async () => {
