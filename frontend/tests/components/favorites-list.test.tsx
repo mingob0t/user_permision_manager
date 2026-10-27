@@ -47,6 +47,13 @@ describe('PlatformCard: sin interactivos anidados', () => {
     fireEvent.click(enlace);
     expect(api.registerVisit).toHaveBeenCalledWith(1);
   });
+
+  it('el enlace cubre la tarjeta (sostiene la excepción de área táctil)', () => {
+    render(<PlatformCard platform={A} />);
+    const enlace = screen.getByRole('link', { name: 'Alfa' });
+    expect(enlace.className).toContain('after:absolute');
+    expect(enlace.className).toContain('after:inset-0');
+  });
 });
 
 describe('FavoritesList: foco al quitar un favorito', () => {

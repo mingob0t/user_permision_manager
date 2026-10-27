@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-27 |
 
 ## Contexto
@@ -40,3 +40,5 @@
 
 ## Bitácora
 - 2026-10-27: implementada; En revisión.
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado: excepción de área táctil bien acotada (el pseudo-elemento cubre la tarjeta; `min-h-12` rompería el truncado). El orquestador agregó la prueba que sostiene la excepción (`after:absolute after:inset-0` en el enlace). Orden de tabulación estrella → nombre, coincide con el visual. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
