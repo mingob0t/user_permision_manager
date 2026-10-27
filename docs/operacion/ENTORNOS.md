@@ -119,7 +119,7 @@ Una sola cuenta (`LDAP_BIND_DN`) lee y escribe (decisión del dueño, 2026-10-15
 - `mail` no editable por el propio usuario (ACL de OpenLDAP): las cuentas vinculadas del portal confían en él.
 - Authelia usa el mismo OpenLDAP: una cuenta `sso` puede entrar por directorio y una `ldap` por SSO.
 
-## Discrepancias detectadas en `deploy/README.md`
+## Discrepancias de `deploy/README.md` (corregidas en FNC-035, 2026-10-27)
 
-- La instalación manual menciona `deploy/nexus-*.service` y `deploy/nginx-nexus.conf`, que **no existen**; los archivos reales son plantillas (`*.service.tmpl`, `nginx.conf.tmpl`) con marcadores `@APP_NAME@`, `@PREFIX@`, etc., que rellena `install.sh`.
-- Los ejemplos de `--no-proxy` incluyen rangos de red numéricos; en este proyecto deben expresarse con nombres de host o dominios cuando sea posible.
+- Instalación manual: ahora apunta a las plantillas `*.service.tmpl` y `nginx.conf.tmpl` (antes, a `deploy/nexus-*.service` y `deploy/nginx-nexus.conf`, que no existen).
+- `--no-proxy` y la tabla de servicios: sin direcciones numéricas (dominio y `loopback`).
