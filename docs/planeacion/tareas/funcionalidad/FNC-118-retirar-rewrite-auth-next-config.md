@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | frontend |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-26 |
 | **Inicio** | 2026-10-26 |
 | **Requiere auditor-seguridad** | No |

@@ -8,7 +8,7 @@
 | **Fase** | 5 |
 | **Módulo / Área** | config |
 | **Prioridad** | Crítica |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-26 |
