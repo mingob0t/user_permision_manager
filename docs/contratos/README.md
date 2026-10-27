@@ -14,6 +14,7 @@ Acuerdos de API `/api/v1` del gestor de accesos (fase 3). Se integran a `develop
 | [conectores-y-ejecuciones.md](conectores-y-ejecuciones.md) | 1.4 (2026-10-26) | backend | web | FNC-061, FNC-062, FNC-051, FNC-052, FNC-053 |
 | [usuarios-directorio.md](usuarios-directorio.md) | 1 (2026-10-14) | backend | web | FNC-064 |
 | [inicio.md](inicio.md) | 1 (2026-10-14) | backend | web | FNC-066 |
+| [preferencias.md](preferencias.md) | 1 (2026-10-27, Propuesta) | backend | web | FNC-122, FNC-123; cambio en FNC-132, DIS-054 |
 
 Consumidor web: tipos y cliente en FNC-069; refresco en FNC-071.
 
