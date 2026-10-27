@@ -29,7 +29,7 @@
 | FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (85e220c) | Depende de FNC-024; fallas de contraste a DIS-001 a DIS-006 |
 | FNC-026 | CI que ejecute pytest, typecheck, lint y los controles del pre-commit | infra | 2 | ci | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 y FNC-024; requiere repositorio remoto |
 | FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | Hecha | 2026-10-13 | 2026-10-26 | | `fnc/FNC-027-retirar-blueprints-heredados` (commit local, sin push) | Origen: H-01. Propone FNC-118 |
-| FNC-028 | Limpiar scratch/ y utils/ (PSX5K) y adoptar Alembic con las migraciones 001-004 | backend | 4 | bd | Media | En revisión | 2026-10-13 | 2026-10-26 | | `fnc/FNC-028-limpiar-scratch-utils` (commit local, sin push) | Origen: H-07, H-08. El reset de admin pasa a FNC-003 |
+| FNC-028 | Limpiar scratch/ y utils/ (PSX5K) y adoptar Alembic con las migraciones 001-004 | backend | 4 | bd | Media | Hecha | 2026-10-13 | 2026-10-26 | | `fnc/FNC-028-limpiar-scratch-utils` (commit local, sin push) | Origen: H-07, H-08. El reset de admin pasa a FNC-003 |
 | FNC-029 | Dividir app/modules/api/admin.py, crud.py y create_app | backend | 4 | api | Media | Propuesta | 2026-10-13 | | | — | Después de FNC-020 |
 | FNC-030 | Unificar helpers duplicados del backend (usuario creado, purga, _payload/_error, auditoría) | backend | 4 | api | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-031 | Corregir notificaciones globales marcadas como leídas para todos | backend | 4 | notifications | Media | Propuesta | 2026-10-13 | | | — |  |
