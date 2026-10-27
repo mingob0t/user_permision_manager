@@ -81,7 +81,7 @@ export function NotificationsList() {
             {(data ?? []).map((item) => (
               <Card
                 key={item.id}
-                className={item.is_read ? 'opacity-85' : 'border-primary/40'}
+                className={item.is_read ? undefined : 'border-primary/40'}
               >
                 <div className="flex gap-3">
                   <span
@@ -90,7 +90,8 @@ export function NotificationsList() {
                   >
                     {ICONS[item.type] ?? 'i'}
                   </span>
-                  <div className="min-w-0 flex-1">
+                  {/* DIS-005: leída = solo el texto atenuado (`opacity-85`, ≥ 5,18:1); el chip conserva su contraste. */}
+                  <div className={`min-w-0 flex-1 ${item.is_read ? 'opacity-85' : ''}`}>
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <p className="font-medium">{item.title}</p>
                       <span className="text-xs text-label">{item.time}</span>

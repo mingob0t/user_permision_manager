@@ -99,6 +99,18 @@ Falsos positivos: `body` (variable local de `platform-card.tsx`) y `--color-body
 | `body` | función/componente | `frontend/src/components/platform-card.tsx` | `app/modules/api/admin.py`, `app/modules/connectors/http_transporte.py`, `app/modules/notifications/models.py`, `app/modules/notifications/services.py`, `frontend/src/app/layout.tsx`, `frontend/src/components/access/approvals-inbox.tsx`, `frontend/src/components/access/approve-dialog.tsx`, `frontend/src/components/access/inventory-table.tsx` (+40) | app/modules, frontend/src, frontend/tests, migrations/versions, tests, tests/notifications | ☐ |
 | `nexus-checkbox` | clase CSS | `frontend/src/styles/components.css` | `frontend/src/components/users/area-checklist.tsx` | frontend/src | ☐ |
 
+## Correcciones de auditor-accesibilidad (2026-10-26)
+Veredicto: aprobado, los pares cumplen y no hay regresiones. Hallazgos corregidos en la misma rama:
+| Hallazgo | Corrección | Tarea |
+|---|---|---|
+| H1 | Notificación leída: sin opacidad en la `Card`; `opacity-85` solo en título, hora y mensaje (≥ 5,18:1). El chip de tono vuelve a su contraste (con la tarjeta al 85 % bajaba a 3,5–4,4:1). Pares `chip-notificacion-{success,error,warning,primary}` | DIS-005 |
+| H2 | `.nexus-checkbox:hover`: borde `rgb(var(--color-primary))` (antes `/ 0.5`: 1,9–2,2:1); par `checkbox-hover/panel` (3,45–6,91) | DIS-006 |
+| H3 | `.nexus-btn-secondary:hover`: borde `rgb(var(--color-primary))` (antes `/ 0.4`); pares `btn-secondary-hover-borde/panel` y `/body-bg` | DIS-004 |
+| H4 | Los divisores y bordes quedan más marcados en todas las pantallas (`--color-panel-border` a 3:1). **El dueño debe validarlo** en la prueba de concepto | DIS-006 |
+| H6 | `--color-input-border` de rose `223 113 137` → `219 102 128` (2,79 → 3,07:1 sobre `--color-body-bg`; 3,37 sobre panel); par `input-border/body-bg` | DIS-006 |
+
+Verificación tras las correcciones (en `frontend/`): `npm run typecheck` 0; `npm run lint` 0; `npx eslint tests vitest.config.ts` 0; `npx vitest run` 0 (29 archivos, 1135 pasan, 0 `it.fails`); `npm run build` 0. Fallas conocidas: 0. Sin verificación visual en navegador.
+
 ## Criterios de aceptación
 - [ ] Hallazgos de origen corregidos y verificados
 - [ ] Prueba de regresión que primero falla (si corrige un defecto)
@@ -116,3 +128,4 @@ Falsos positivos: `body` (variable local de `platform-card.tsx`) y `--color-body
 | 2026-10-19 | FNC-070 (auditor-accesibilidad): `EmptyNote` `text-label/60` (3.35 claro, 3.31 oscuro) ya cubierto aquí; lo usan también las rutas reservadas de FNC-070 |
 | 2026-10-19 | DIS-017 (auditor-accesibilidad): pista `text-label/60` de `Field` (`form.tsx:29`, 3.35 claro, 3.31 oscuro); DIS-017 usa su propia pista `text-label` fuera de `Field`; `form.tsx` sin tocar |
 | 2026-10-26 | En revisión: implementada junto con DIS-004/005/006 en modo autónomo; fallas conocidas 25 → 0; typecheck, lint, vitest y build en 0; sin verificación visual en navegador; pendientes revisor y auditor-accesibilidad |
+| 2026-10-26 | auditor-accesibilidad: aprobado; corregidos H1, H2, H3 y H6 y anotado H4 (ver «Correcciones de auditor-accesibilidad»). Sigue En revisión |
