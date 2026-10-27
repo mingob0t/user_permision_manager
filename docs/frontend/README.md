@@ -96,6 +96,7 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). La misma lista (`Nav`) 
 | `AreaForm`, `AreaAdminsPanel`, `mensajeDeError` | `areas/` | Alta/edición de área con errores por campo; administradores del área (superadmin); mensajes del contrato `areas-y-roles.md` (DIS-016). |
 | `variablesCss`, `.nx-chip-solid`, `.nx-chip-tint` | `lib/variables-css.ts`, `styles/components.css` | Color de los datos (plataforma, área) como variables `--chip-*`, sin `style` visual en línea (DIS-012). | `PlatformCard`, `PlatformAdmin`, `AreasList`. |
 | `useTokenColors` | `lib/use-token-colors.ts` | Lee tokens `--color-*` con `getComputedStyle` para librerías SVG sin `var()`; se actualiza al cambiar el tema (DIS-003). |
+| `ThemeSelector`, `lib/tema.ts` | `components/theme-selector.tsx`, `lib/tema.ts` | Selector de tema en la cabecera de `AppShell` (FNC-032): pone la clase (`light`, `dark`, `theme-*`; sin clase = sistema) en `<html>` y la guarda en `localStorage` (`nexus-tema`). `SCRIPT_RESTAURAR_TEMA`, en `<head>` de `layout.tsx`, la restaura antes de pintar. Por navegador; en la cuenta: FNC-122. |
 | Pantallas | `dashboard.tsx`, `platform-catalog.tsx`, `favorites-list.tsx`, `notifications-list.tsx`, `platform-admin.tsx`, `areas-list.tsx`, `users-list.tsx`, `audit-log.tsx`, `settings-panel.tsx`, `login-form.tsx`, `logout-view.tsx` | Una por ruta. `settings-panel.tsx` (634 líneas desde DIS-023; su división es DIS-011) y `users-list.tsx` (695) concentran varias responsabilidades. |
 
 ## 5. Cliente de la API (`src/lib/api.ts`)
