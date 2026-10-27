@@ -5,6 +5,9 @@
 
 ## [Sin publicar]
 
+### Agregado
+- Despliegue: `install.sh --web-port`/`--api-port` (también `WEB_PORT`/`API_PORT` por entorno o en `<prefijo>/.env`; por defecto 3000 y 5001, 1024-65535, distintos) para servidores con el 3000 ocupado (p. ej. Grafana); nginx, unidades y `preflight.sh` usan el mismo valor (FNC-127, 2026-10-27).
+
 ### Documentación
 - Retirados `docs/business_rules.md` y `docs/ARCHITECTURE.md` (contradecían el sistema: prohibían `/api/v1` y SSH); README raíz reescrito para el gestor de accesos y `deploy/README.md` corregido (plantillas reales, sin IPs, `SMTP_*` en VARIABLES.md) (FNC-035, 2026-10-27).
 

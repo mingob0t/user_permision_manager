@@ -14,8 +14,10 @@ Group=@SVC_GROUP@
 # así que el WorkingDirectory debe ser standalone, no frontend/.
 WorkingDirectory=@PREFIX@/frontend/.next/standalone
 Environment=NODE_ENV=production
-Environment=PORT=3000
+Environment=PORT=@WEB_PORT@
 Environment=HOSTNAME=127.0.0.1
+# SSR: Next habla con Flask por loopback, en el mismo puerto que nginx (FNC-127).
+Environment=BACKEND_URL=http://localhost:@API_PORT@
 # Con `output: standalone` hay que arrancar este server.js, no `next start`.
 ExecStart=/usr/bin/node server.js
 Restart=on-failure

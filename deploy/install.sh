@@ -6,6 +6,7 @@
 #                            [--domain nexus.example.com] [--python /usr/bin/python3.11]
 #                            [--proxy http://proxy:3128] [--no-proxy localhost,.intranet.example]
 #                            [--db-service mariadb]
+#                            [--web-port 3000] [--api-port 5001]
 #
 # --name define el nombre del despliegue: unidades NOMBRE-backend,
 # NOMBRE-frontend y NOMBRE-worker, prefijo /opt/NOMBRE, registros /var/log/NOMBRE y
@@ -20,6 +21,10 @@
 # Las unidades arrancan después del servicio de la BD local, que se detecta
 # (mysqld, mariadb o mysql); --db-service lo fuerza. Sin BD local no dependen
 # de ninguno.
+#
+# --web-port y --api-port fijan los puertos de loopback del frontend y del
+# backend (por defecto 3000 y 5001; enteros de 1024 a 65535, distintos).
+# Precedencia: opción > variable WEB_PORT/API_PORT > .env del prefijo > defecto.
 #
 # Ejecutar antes ./deploy/preflight.sh: este script asume que la evaluación pasó.
 # Es idempotente: se puede repetir para actualizar una instalación existente.
@@ -67,6 +72,10 @@ DB_SERVICE="${DB_SERVICE:-}"
 # Proxy de salida. Se toma de --proxy o del entorno; vacío = conexión directa.
 PROXY_URL="${PROXY_URL:-${https_proxy:-${HTTPS_PROXY:-${http_proxy:-${HTTP_PROXY:-}}}}}"
 NO_PROXY_LIST="${no_proxy:-${NO_PROXY:-localhost,127.0.0.1,::1}}"
+# Puertos de loopback (FNC-127). Vacío: se toman del .env del prefijo o del
+# valor por defecto de deploy/puertos.sh.
+WEB_PORT="${WEB_PORT:-}"
+API_PORT="${API_PORT:-}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -81,8 +90,10 @@ while [[ $# -gt 0 ]]; do
         --create-user) CREATE_USER=1; shift ;;
         --no-proxy) NO_PROXY_LIST="$2"; shift 2 ;;
         --db-service) DB_SERVICE="$2"; shift 2 ;;
+        --web-port) WEB_PORT="$2"; shift 2 ;;
+        --api-port) API_PORT="$2"; shift 2 ;;
         --skip-packages) SKIP_PKGS=1; shift ;;
-        -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,32p' "$0"; exit 0 ;;
         *) echo "Opción desconocida: $1" >&2; exit 2 ;;
     esac
 done
@@ -106,9 +117,24 @@ SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$SRC/deploy/servicio_bd.sh"
 # shellcheck source=deploy/copia_proyecto.sh
 . "$SRC/deploy/copia_proyecto.sh"
+# shellcheck source=deploy/puertos.sh
+. "$SRC/deploy/puertos.sh"
 if [[ -n "$DB_SERVICE" ]]; then
     DB_SERVICE="$(servicio_bd_valido "$DB_SERVICE")" \
         || { echo "ERROR: --db-service debe ser un nombre de unidad (letras, dígitos, ':', '_', '.', '@' o '-'), p. ej. mariadb" >&2; exit 2; }
+fi
+# Puertos indicados por opción o entorno: se validan ya, antes de pedir root.
+# Los del .env se validan al leerlo (paso 3).
+for par in "WEB_PORT:--web-port" "API_PORT:--api-port"; do
+    var=${par%%:*}
+    if [[ -n "${!var}" ]] && ! puerto_servicio_valido "${!var}"; then
+        echo "ERROR: ${par#*:} / ${var} debe ser un entero entre ${PUERTO_SERVICIO_MIN} y ${PUERTO_SERVICIO_MAX}" >&2
+        exit 2
+    fi
+done
+if [[ -n "$WEB_PORT" && -n "$API_PORT" ]] && (( 10#$WEB_PORT == 10#$API_PORT )); then
+    echo "ERROR: --web-port y --api-port no pueden ser iguales" >&2
+    exit 2
 fi
 
 log()  { printf "\n==> %s\n" "$1"; }
@@ -288,6 +314,14 @@ fi
 # a través de un enlace (FNC-125): ver asegurar_env_prefijo.
 asegurar_env_prefijo "$PREFIX" "$SVC_USER" "$SVC_GROUP" "$PY_BIN" \
     || die "el .env del prefijo no es seguro; ver el mensaje anterior."
+# Puertos (FNC-127): el .env solo se consulta para WEB_PORT y API_PORT, línea
+# a línea y sin cargarlo; asegurar_env_prefijo ya descartó un enlace.
+WEB_PORT="$(resolver_puerto "$WEB_PORT" "$PREFIX/.env" WEB_PORT "$WEB_PORT_POR_DEFECTO")" \
+    || die "WEB_PORT del .env debe ser un entero entre ${PUERTO_SERVICIO_MIN} y ${PUERTO_SERVICIO_MAX}"
+API_PORT="$(resolver_puerto "$API_PORT" "$PREFIX/.env" API_PORT "$API_PORT_POR_DEFECTO")" \
+    || die "API_PORT del .env debe ser un entero entre ${PUERTO_SERVICIO_MIN} y ${PUERTO_SERVICIO_MAX}"
+(( WEB_PORT != API_PORT )) || die "WEB_PORT y API_PORT no pueden ser iguales (${WEB_PORT})"
+note "puertos de loopback: frontend ${WEB_PORT}, backend ${API_PORT}"
 # Vaultwarden y bind LDAP (FNC-068): mismas reglas que preflight; los valores
 # los pone una persona en el .env, nunca el instalador.
 # shellcheck source=deploy/secretos.sh
@@ -347,7 +381,7 @@ render() {
         -e "s|@SVC_USER@|${SVC_USER}|g" \
         -e "s|@SVC_GROUP@|${SVC_GROUP}|g" \
         -e "s|@DOMAIN@|${DOMAIN:-_}|g" \
-        "$1" | aplicar_servicio_bd "$DB_SERVICE"
+        "$1" | aplicar_servicio_bd "$DB_SERVICE" | aplicar_puertos "$WEB_PORT" "$API_PORT"
 }
 
 render "$PREFIX/deploy/backend.service.tmpl"  > "/etc/systemd/system/${BACKEND_UNIT}.service"
@@ -411,8 +445,8 @@ cat <<FIN
 
 Instalación terminada.
 
-  backend    ${PREFIX} (127.0.0.1:5001)
-  frontend   ${PREFIX}/frontend (127.0.0.1:3000)
+  backend    ${PREFIX} (127.0.0.1:${API_PORT})
+  frontend   ${PREFIX}/frontend (127.0.0.1:${WEB_PORT})
   worker     ${WORKER_UNIT} (no escucha; journalctl -u ${WORKER_UNIT} -f)
   registros  /var/log/nexus, journalctl -u nexus-backend -f
 
@@ -420,9 +454,9 @@ Pendiente:
   1. Migraciones, si es una actualización (después reiniciar backend y worker):
        cd ${PREFIX} && venv/bin/alembic upgrade head   (BD existente de NEXUS: antes, una vez, alembic stamp 0001)
   2. Certificados y server_name en /etc/nginx/conf.d/nexus.conf
-  3. Comprobar:  curl -s localhost:5001/api/v1/auth/context
-                 curl -s -o /dev/null -w '%{http_code}\\n' localhost:3000/login
+  3. Comprobar:  curl -s localhost:${API_PORT}/api/v1/auth/context
+                 curl -s -o /dev/null -w '%{http_code}\\n' localhost:${WEB_PORT}/login
 
-Los puertos 5001 y 3000 escuchan solo en loopback a propósito: el backend
+Los puertos ${API_PORT} y ${WEB_PORT} escuchan solo en loopback a propósito: el backend
 deduce la identidad del SSO de cabeceras que solo nginx debe poder inyectar.
 FIN

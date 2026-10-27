@@ -36,12 +36,12 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
   es **obligatorio** (lo exige el worker), `REDIS_HOST` debe ser un nombre de
   host y `REDIS_PASS` debe tener valor (no se imprime)
 - Que `SECRET_KEY` esté definida
-- Puertos 5001 y 3000 libres
+- Puertos del backend y del frontend libres (por defecto 5001 y 3000; ver «Puertos»)
 - nginx, SELinux (`httpd_can_network_connect`) y firewalld
 
 `install.sh` acepta `--prefix` (por defecto `/opt/nexus`), `--user`,
-`--domain`, `--python`, `--proxy`, `--no-proxy`, `--db-service`, `--create-user` y
-`--skip-packages`. Es idempotente: repetirlo actualiza la instalación.
+`--domain`, `--python`, `--proxy`, `--no-proxy`, `--db-service`, `--web-port`,
+`--api-port`, `--create-user` y `--skip-packages`. Es idempotente: repetirlo actualiza la instalación.
 
 ### El `.env` vive en el prefijo
 
@@ -50,6 +50,23 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 - El `.env` debe ser un **archivo regular**: si es un enlace simbólico, un directorio o tiene otro enlace duro, el instalador se detiene. Dueño y permisos se aplican sobre el archivo ya abierto sin seguir enlaces (`O_NOFOLLOW` + `fchown`/`fchmod`), y `chown -R -h` no sigue enlaces del prefijo.
 - La copia (`rsync --delete`) tampoco toca lo local del prefijo: `.env.*` (salvo `.env.example`), `instance/`, `backups/`, `uploads/`, `storage/` y `logs/`.
 - Prueba: `pytest tests/deploy/test_copia_proyecto_sh.py`.
+
+### Puertos del backend y del frontend
+
+- `--web-port` (frontend Next.js, por defecto `3000`) y `--api-port` (backend Gunicorn, por defecto `5001`) (FNC-127).
+- Precedencia: opción > variable `WEB_PORT`/`API_PORT` > `<prefijo>/.env` > por defecto.
+- Del `.env` solo se leen esas dos líneas (sin cargarlo ni imprimir nada más).
+- Enteros de 1024 a 65535 y distintos entre sí; si no, el instalador se detiene.
+- Siempre en loopback (`127.0.0.1`): solo cambia el número. nginx, las unidades y el `BACKEND_URL` del SSR usan el mismo valor.
+- `preflight.sh` comprueba los mismos puertos (entorno > `.env` > por defecto).
+- Caso típico: Grafana ya ocupa el 3000.
+
+```bash
+WEB_PORT=3100 APP_NAME=portal ./deploy/preflight.sh
+sudo ./deploy/install.sh --name portal --web-port 3100 …
+```
+
+- Prueba: `pytest tests/deploy/test_puertos_sh.py`.
 
 ### Servicio de la base de datos
 
