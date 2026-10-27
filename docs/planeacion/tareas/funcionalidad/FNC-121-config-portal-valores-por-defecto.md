@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | settings |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `fnc/FNC-121-config-portal-por-defecto` |
 | **Creada** | 2026-10-27 |
 
@@ -49,3 +49,5 @@
 
 ## Bitácora
 - 2026-10-27: implementada (pytest completo registrado en el cierre).
+
+- 2026-10-27: verificado por el orquestador: pytest completo 2397 passed, 15 xfailed, código de salida 0 (capturado directamente). Sin auditor-seguridad: no toca autenticación, permisos ni datos de usuarios (solo valores por defecto de la respuesta). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
