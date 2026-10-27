@@ -6,23 +6,21 @@
  * su historial en Auditoría (DIS-035).
  */
 
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import { useAsync } from '@/lib/use-async';
 import type { Platform, PlatformWarning } from '@/lib/types';
-import { variablesCss } from '@/lib/variables-css';
-import { ACCION_FILA, ACCION_FILA_PELIGRO } from './acciones-fila';
-import { rutaHistorialPlataforma } from './audit/audit-routes';
-import { DataTable, type DataColumn } from './data-table';
+import { DataTable } from './data-table';
 import { Button, ConfirmDialog } from './form';
+import { columnasPlataformas } from './platforms/platform-columns';
+import { MissingLinkNote } from './platforms/missing-link-note';
 import { PlatformForm } from './platforms/platform-form';
 import { describeDeleteError } from './platforms/platform-save-errors';
 import { PlatformSaveNotice, type SaveNotice } from './platforms/platform-save-notice';
 import { RequireRole } from './require-role';
 import { useSession } from './session-provider';
-import { Badge, Card, EmptyNote, ErrorNote } from './ui';
+import { EmptyNote, ErrorNote } from './ui';
 
 export function PlatformAdmin() {
   return (
@@ -74,88 +72,11 @@ function PlatformAdminContent() {
     session?.permissions.is_admin || session?.permissions.is_area_admin;
 
   // DIS-010: columnas de la tabla común (`DataTable`).
-  const columnas: DataColumn<Platform>[] = [
-    {
-      key: 'plataforma',
-      header: 'Plataforma',
-      cell: (platform) => (
-        <div className="flex items-center gap-2">
-          <span
-            className="nx-chip-solid grid h-7 w-7 shrink-0 place-items-center rounded text-xs font-semibold"
-            style={variablesCss({ '--chip-bg': platform.bg_color, '--chip-fg': platform.text_color })}
-            aria-hidden
-          >
-            {platform.name.slice(0, 2).toUpperCase()}
-          </span>
-          <span className="truncate font-medium">{platform.name}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'area',
-      header: 'Área',
-      cellClassName: 'px-4 py-2.5 text-label',
-      cell: (platform) => platform.area_name ?? '—',
-    },
-    {
-      key: 'enlace',
-      header: 'Enlace',
-      cellClassName: 'max-w-xs px-4 py-2.5',
-      cell: (platform) =>
-        enlaceSeguro(platform.direct_link) ? (
-          <span className="block truncate text-label" title={platform.direct_link ?? undefined}>
-            {platform.direct_link}
-          </span>
-        ) : (
-          <Badge tone="warning">Sin enlace</Badge>
-        ),
-    },
-    {
-      key: 'estado',
-      header: 'Estado',
-      cell: (platform) => (
-        <Badge tone={platform.status === 'Activo' ? 'success' : 'warning'}>{platform.status}</Badge>
-      ),
-    },
-    {
-      key: 'acciones',
-      header: 'Acciones',
-      headerSrOnly: true,
-      cellClassName: 'whitespace-nowrap px-4 py-1 text-right',
-      cell: (platform) => (
-        // DIS-035: historial en Auditoría y acciones de 48 px (DIS-008), en una línea.
-        <div className="flex justify-end gap-1">
-          <Link
-            href={rutaHistorialPlataforma(platform.id)}
-            aria-label={`Historial de ${platform.name} en Auditoría`}
-            className={ACCION_FILA}
-          >
-            Historial
-          </Link>
-          {canManage ? (
-            <>
-              <button
-                type="button"
-                onClick={(e) => open(e, () => setEditing(platform))}
-                aria-label={`Editar ${platform.name}`}
-                className={ACCION_FILA}
-              >
-                Editar
-              </button>
-              <button
-                type="button"
-                onClick={(e) => open(e, () => setRemoving(platform))}
-                aria-label={`Eliminar ${platform.name}`}
-                className={ACCION_FILA_PELIGRO}
-              >
-                Eliminar
-              </button>
-            </>
-          ) : null}
-        </div>
-      ),
-    },
-  ];
+  const columnas = columnasPlataformas({
+    canManage: Boolean(canManage),
+    onEdit: (e, platform) => open(e, () => setEditing(platform)),
+    onRemove: (e, platform) => open(e, () => setRemoving(platform)),
+  });
 
   async function remove() {
     if (!removing) return;
@@ -221,15 +142,7 @@ function PlatformAdminContent() {
         <EmptyNote message="No hay áreas en tu alcance: da de alta un área antes de crear plataformas." />
       ) : null}
 
-      {missingLink.length > 0 ? (
-        <Card className="border-warning/40 bg-warning/10">
-          <p className="text-sm">
-            <strong>{missingLink.length}</strong>{' '}
-            {missingLink.length === 1 ? 'plataforma no tiene' : 'plataformas no tienen'}{' '}
-            enlace configurado, así que no se pueden abrir desde el catálogo.
-          </p>
-        </Card>
-      ) : null}
+      <MissingLinkNote count={missingLink.length} />
 
       <DataTable
         label="Plataformas"

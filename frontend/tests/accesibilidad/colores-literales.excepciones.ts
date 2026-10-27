@@ -9,7 +9,7 @@
  * - `nombre`: nombres de color (`white`, `black`...) en declaraciones CSS.
  *
  * Historial: DIS-002 quitó los de estado; DIS-038 cambió `bg-black/60` del velo
- * por `--color-overlay`; DIS-009 y DIS-012 (2026-10-27) dejaron en 0 los CSS y
+ * por `--color-overlay`; FNC-121 y DIS-011 quitaron el último respaldo literal (`portal-tab.tsx`); DIS-009 y DIS-012 (2026-10-27) dejaron en 0 los CSS y
  * `text-white` de `app/error.tsx` y `app/not-found.tsx` (ahora `text-on-primary`).
  */
 
@@ -22,10 +22,4 @@ export interface TopeLiterales {
 }
 
 export const EXCEPCIONES: Record<string, TopeLiterales> = {
-  // DIS-012 (decisión del orquestador, pendiente de validar): no es estilo, es un
-  // dato. El valor de `<input type="color">` exige `#rrggbb` y estos son los
-  // valores por defecto de `Settings.bg_color` / `text_color` (el backend usa
-  // `#0f172a` en `app/modules/settings/models.py`). No se pasan por un token
-  // porque el usuario los elige y se guardan en la base de datos.
-  'components/settings-panel.tsx': { hex: 2, funcion: 0, paleta: 0, tarea: 'DIS-012 (dato, no estilo)' },
 };
