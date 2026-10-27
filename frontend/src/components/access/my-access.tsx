@@ -89,9 +89,10 @@ function Fila({ access }: { access: Access }) {
   );
 }
 
-export function MyAccess() {
+/** `estadoInicial`: filtro que llegó por la URL (DIS-036). */
+export function MyAccess({ estadoInicial }: { estadoInicial?: Filtro }) {
   const { session } = useSession();
-  const [status, setStatus] = useState<Filtro>(FILTRO_POR_DEFECTO);
+  const [status, setStatus] = useState<Filtro>(estadoInicial ?? FILTRO_POR_DEFECTO);
   const [page, setPage] = useState(1);
 
   const [transitorios, setTransitorios] = useState(true);

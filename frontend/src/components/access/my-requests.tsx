@@ -29,7 +29,7 @@ const NOMBRE_LISTA = 'tus solicitudes';
 /** Columnas en escritorio: plataforma, nivel, estado, fechas. */
 const COLUMNAS = 'md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,2fr)]';
 
-const ESTADOS = Object.keys(ESTADOS_SOLICITUD) as RequestStatus[];
+export const ESTADOS = Object.keys(ESTADOS_SOLICITUD) as RequestStatus[];
 
 function Fila({ request }: { request: AccessRequest }) {
   const rechazo = request.status === 'rechazada' ? request.rejection_reason : null;
@@ -84,9 +84,10 @@ function Fila({ request }: { request: AccessRequest }) {
   );
 }
 
-export function MyRequests() {
+/** `estadoInicial`: filtro que llegó por la URL (DIS-036). */
+export function MyRequests({ estadoInicial }: { estadoInicial?: RequestStatus }) {
   const { session } = useSession();
-  const [status, setStatus] = useState<RequestStatus | ''>('');
+  const [status, setStatus] = useState<RequestStatus | ''>(estadoInicial ?? '');
   const [page, setPage] = useState(1);
 
   const [transitorios, setTransitorios] = useState(true);

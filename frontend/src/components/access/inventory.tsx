@@ -12,12 +12,14 @@
  */
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { inventoryApi } from '@/lib/access/inventory';
 import type { InventoryParams } from '@/lib/access/types';
 import { useAsync } from '@/lib/use-async';
 import { rutaHistorialPlataforma } from '../audit/audit-routes';
 import { Button } from '../form';
+import { valorPermitido } from './filtro-url';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
 import {
   FILTROS_INICIALES,
@@ -28,6 +30,7 @@ import {
 import { InventoryTable } from './inventory-table';
 import { ListPager } from './list-pager';
 import { listLoadError } from './request-errors';
+import { FILTROS } from './my-access';
 import { useOpcionesAlcance } from './scope-filters';
 
 const NOMBRE_LISTA = 'los accesos del inventario';
@@ -49,7 +52,12 @@ export function aParametros(filtros: FiltrosInventario, page: number): Inventory
 }
 
 export function Inventory() {
-  const [filtros, setFiltros] = useState<FiltrosInventario>(FILTROS_INICIALES);
+  // Estado que llega por la URL (DIS-036); lo inválido se ignora.
+  const params = useSearchParams();
+  const [filtros, setFiltros] = useState<FiltrosInventario>(() => ({
+    ...FILTROS_INICIALES,
+    status: valorPermitido(params?.get('status'), FILTROS.map((f) => f.valor)) ?? FILTROS_INICIALES.status,
+  }));
   const [page, setPage] = useState(1);
 
   const parametros = aParametros(filtros, page);
