@@ -100,7 +100,7 @@ Levantados del código y de `deploy/preflight.sh` en FNC-001.
 | Reverse proxy | nginx con TLS en el mismo dominio para API y frontend | SELinux `httpd_can_network_connect` activo; firewalld con `http`/`https` |
 | Autenticación | Authelia y OpenLDAP existentes, accesibles por nombre de host | Authelia vía `auth_request` en nginx; LDAP solo lectura |
 | Correo | Servidor SMTP (nombre de host) | Configurable por interfaz o por `.env` |
-| Paquetes de compilación | `gcc`, `make`, `openssl-devel`, `libffi-devel`, `openldap-devel` | Para `cryptography` y `ldap3` sin rueda binaria |
+| Paquetes de compilación | `gcc`, `make`, `openssl-devel`, `libffi-devel` | Para `cryptography`, `cffi`, `bcrypt` y `PyNaCl` sin rueda binaria; PyMySQL y ldap3 son puro Python (FNC-125) |
 | Recursos | 2 GB de disco libres; 1 GB de RAM | Más RAM o swap para `next build` |
 | Puertos locales | 5001 (backend) y 3000 (frontend) libres, solo en loopback | Solo nginx expone 443 |
 | Salida a Internet | Directa o vía proxy corporativo | Necesaria para `dnf`, `pip` y `npm` durante la instalación |

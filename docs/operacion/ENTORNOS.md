@@ -48,9 +48,9 @@ Evaluación previa que **no modifica nada**; termina con código 1 si hay algo b
 
 Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defecto `/opt/<nombre>`), `--logdir` (por defecto `/var/log/<nombre>`), `--title`, `--user`, `--create-user`, `--domain`, `--python`, `--proxy`, `--no-proxy`, `--db-service` (FNC-125), `--skip-packages`.
 
-1. Paquetes del sistema: Python 3.11 si no hay uno válido, Node 22 (AppStream o NodeSource) si el presente no cumple `^22.13.0 || >=24.0.0` (con `--skip-packages` solo lo comprueba), nginx y cabeceras de compilación.
+1. Paquetes del sistema: Python 3.11 si no hay uno válido, Node 22 (AppStream o NodeSource) si el presente no cumple `^22.13.0 || >=24.0.0` (con `--skip-packages` solo lo comprueba), nginx y cabeceras de compilación; cliente `mysql` opcional (paquete `mariadb` o `mysql` según el servidor, solo si falta; un fallo es aviso) (FNC-125).
 2. Cuenta de servicio: usa la indicada (o quien invoca sudo); solo la crea con `--create-user`.
-3. Copia del proyecto al prefijo sin tocar lo local (`.env`, `instance/`, `backups/`, `uploads/`, `storage/`, `logs/`); el `.env` solo se copia del origen si el prefijo no tiene uno, y queda legible solo por la cuenta de servicio (FNC-125).
+3. Copia del proyecto al prefijo sin tocar lo local (`.env`, `instance/`, `backups/`, `uploads/`, `storage/`, `logs/`); el `.env` solo se copia del origen si el prefijo no tiene uno, y queda legible solo por la cuenta de servicio; si `.env` es un enlace o no es un archivo regular, se detiene (FNC-125).
 4. Backend: `venv` y `pip install -r requirements.txt`.
 5. Frontend: `npm ci`, `npm run build` y copia de estáticos a `.next/standalone`.
 6. Unidades systemd a partir de las plantillas: backend, frontend y worker, con el servicio de BD local detectado (`mysqld`, `mariadb` o `mysql`) o el de `--db-service` en `After=`/`Wants=`; sin BD local, sin esa dependencia (FNC-125) (`reset-failed` del worker antes de `enable --now`).

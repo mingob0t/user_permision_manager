@@ -104,3 +104,116 @@ def test_sin_env_en_ningun_lado_no_crea_uno(tmp_path):
     prefix.mkdir()
     _copiar(src, prefix)
     assert not (prefix / '.env').exists()
+
+
+# --- .env del prefijo: nunca a través de un enlace (hallazgo Alto) -----------
+# El prefijo es de la cuenta de servicio: con `ln -sf /etc/shadow .env`, el
+# chown/chmod de root seguía el enlace y le daba el destino a esa cuenta.
+
+import getpass
+import grp
+import os
+import sys
+
+INSTALL = SCRIPT.parent / 'install.sh'
+
+
+def _asegurar(prefix):
+    usuario = getpass.getuser()
+    grupo = grp.getgrgid(os.getgid()).gr_name
+    return subprocess.run(
+        ['bash', '-c', f'set -Eeuo pipefail; . "{SCRIPT}"; '
+         'asegurar_env_prefijo "$1" "$2" "$3" "$4"', '_', str(prefix),
+         usuario, grupo, sys.executable],
+        capture_output=True, text=True, timeout=30)
+
+
+def _fuera(tmp_path):
+    fuera = tmp_path / 'fuera'
+    fuera.mkdir()
+    destino = fuera / 'sensible'
+    destino.write_text('no-tocar\n')
+    destino.chmod(0o644)
+    return destino
+
+
+def test_env_enlace_aborta_sin_tocar_destino(tmp_path):
+    destino = _fuera(tmp_path)
+    antes = destino.stat()
+    prefix = tmp_path / 'opt'
+    prefix.mkdir()
+    (prefix / '.env').symlink_to(destino)
+    r = _asegurar(prefix)
+    assert r.returncode != 0
+    assert 'enlace' in (r.stdout + r.stderr)
+    despues = destino.stat()
+    assert stat.S_IMODE(despues.st_mode) == 0o644
+    assert (despues.st_uid, despues.st_gid) == (antes.st_uid, antes.st_gid)
+    assert destino.read_text() == 'no-tocar\n'
+
+
+def test_env_directorio_aborta(tmp_path):
+    prefix = tmp_path / 'opt'
+    (prefix / '.env').mkdir(parents=True)
+    r = _asegurar(prefix)
+    assert r.returncode != 0
+    assert 'regular' in (r.stdout + r.stderr)
+
+
+def test_env_enlace_duro_aborta(tmp_path):
+    destino = _fuera(tmp_path)
+    prefix = tmp_path / 'opt'
+    prefix.mkdir()
+    os.link(destino, prefix / '.env')
+    r = _asegurar(prefix)
+    assert r.returncode != 0
+    assert 'enlace' in (r.stdout + r.stderr)
+    assert stat.S_IMODE(destino.stat().st_mode) == 0o644
+
+
+def test_env_ausente_aborta(tmp_path):
+    prefix = tmp_path / 'opt'
+    prefix.mkdir()
+    r = _asegurar(prefix)
+    assert r.returncode != 0
+    assert 'no existe' in (r.stdout + r.stderr)
+
+
+def test_env_regular_queda_600(tmp_path):
+    prefix = tmp_path / 'opt'
+    prefix.mkdir()
+    env = prefix / '.env'
+    env.write_text(ENV_PREFIJO)
+    env.chmod(0o644)
+    r = _asegurar(prefix)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert stat.S_IMODE(env.stat().st_mode) == 0o600
+    assert env.read_text() == ENV_PREFIJO
+
+
+def test_env_del_origen_enlace_no_se_copia(tmp_path):
+    destino = _fuera(tmp_path)
+    src = _origen(tmp_path, con_env=False)
+    (src / '.env').symlink_to(destino)
+    prefix = tmp_path / 'opt'
+    prefix.mkdir()
+    r = subprocess.run(
+        ['bash', '-c', f'set -Eeuo pipefail; . "{SCRIPT}"; '
+         'copiar_proyecto "$1" "$2"', '_', str(src), str(prefix)],
+        capture_output=True, text=True, timeout=30)
+    assert r.returncode != 0
+    assert 'enlace' in (r.stdout + r.stderr)
+    assert not (prefix / '.env').exists() and not (prefix / '.env').is_symlink()
+
+
+def test_install_no_sigue_enlaces():
+    texto = INSTALL.read_text()
+    assert 'asegurar_env_prefijo "$PREFIX"' in texto
+    assert 'chmod 600 "$PREFIX/.env"' not in texto
+    lineas = [l.strip() for l in texto.splitlines()
+              if l.strip().startswith('chown ')]
+    assert lineas, 'sin chown en install.sh'
+    for linea in lineas:
+        if ' -R' in linea:
+            assert ' -h' in linea or '--no-dereference' in linea, linea
+        assert ' -L' not in linea, linea

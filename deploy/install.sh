@@ -179,6 +179,18 @@ else
     note "no configurado; se asume conexión directa"
 fi
 
+# --- 0b. Servicio de la base de datos ----------------------------------------
+# Antes de los paquetes: decide el cliente mysql y las unidades systemd.
+log "Servicio de la base de datos"
+if [[ -n "$DB_SERVICE" ]]; then
+    note "servicio de BD: $DB_SERVICE (indicado)"
+elif DB_SERVICE="$(detectar_servicio_bd)"; then
+    note "servicio de BD local: $DB_SERVICE (las unidades arrancan después)"
+else
+    DB_SERVICE=""
+    note "sin servicio de BD local (BD remota): las unidades no dependen de ella"
+fi
+
 # --- 1. Paquetes -------------------------------------------------------------
 if (( SKIP_PKGS )); then
     log "Paquetes del sistema (omitido por --skip-packages)"
@@ -231,11 +243,14 @@ else
         note "Node $(node --version) ya presente"
     fi
 
-    # cryptography, ldap3 y PyMySQL compilan si no hay rueda para la plataforma.
-    note "cabeceras de compilación y utilidades"
-    dnf -y install gcc make openssl-devel libffi-devel openldap-devel \
-                   mariadb-devel mysql nginx policycoreutils-python-utils \
+    # cryptography, cffi, bcrypt y PyNaCl compilan si no hay rueda para la
+    # plataforma. PyMySQL y ldap3 son puro Python: no hacen falta
+    # mariadb-devel ni openldap-devel (FNC-125).
+    note "cabeceras de compilación y nginx"
+    dnf -y install gcc make openssl-devel libffi-devel nginx \
         || die "no se pudieron instalar los paquetes; revisar los repositorios"
+    # Cliente mysql: opcional y acorde al servidor (FNC-125).
+    instalar_cliente_bd "$DB_SERVICE"
 fi
 
 # --- 2. Usuario de servicio --------------------------------------------------
@@ -265,16 +280,14 @@ if [[ "$(realpath "$SRC")" == "$(realpath "$PREFIX")" ]]; then
 else
     # Sin venv, node_modules, .next ni scratch, y sin tocar lo local del
     # prefijo (.env, instance/, backups/, uploads/, storage/, logs/): FNC-125.
-    copiar_proyecto "$SRC" "$PREFIX"
+    copiar_proyecto "$SRC" "$PREFIX" || die "no se pudo copiar el proyecto; ver el mensaje anterior."
     note "copiado (sin venv, node_modules, .next ni scratch; .env y datos locales del prefijo intactos)"
 fi
 
-if [[ ! -f "$PREFIX/.env" ]]; then
-    die ".env no existe en $PREFIX. Copiarlo y rellenar las credenciales antes de seguir."
-fi
-# Contiene credenciales de base de datos: solo el usuario del servicio.
-chown "$SVC_USER:$SVC_GROUP" "$PREFIX/.env"
-chmod 600 "$PREFIX/.env"
+# Contiene credenciales de base de datos: solo el usuario del servicio. Nunca
+# a través de un enlace (FNC-125): ver asegurar_env_prefijo.
+asegurar_env_prefijo "$PREFIX" "$SVC_USER" "$SVC_GROUP" "$PY_BIN" \
+    || die "el .env del prefijo no es seguro; ver el mensaje anterior."
 # Vaultwarden y bind LDAP (FNC-068): mismas reglas que preflight; los valores
 # los pone una persona en el .env, nunca el instalador.
 # shellcheck source=deploy/secretos.sh
@@ -284,7 +297,8 @@ if ! salida_vw="$(revisar_vaultwarden "$PREFIX/.env")"; then
     die "Corregir las variables de Vaultwarden del .env (ver deploy/README.md)."
 fi
 printf '%s\n' "$salida_vw" | sed 's/^/    /'
-chown -R "$SVC_USER:$SVC_GROUP" "$PREFIX" "$LOGDIR"
+# -h: cambia el enlace, no su destino (FNC-125). Sin -L: no entra en enlaces.
+chown -R -h "$SVC_USER:$SVC_GROUP" "$PREFIX" "$LOGDIR"
 
 # --- 4. Backend --------------------------------------------------------------
 log "Backend (venv y dependencias)"
@@ -335,15 +349,6 @@ render() {
         -e "s|@DOMAIN@|${DOMAIN:-_}|g" \
         "$1" | aplicar_servicio_bd "$DB_SERVICE"
 }
-
-if [[ -n "$DB_SERVICE" ]]; then
-    note "servicio de BD: $DB_SERVICE (indicado)"
-elif DB_SERVICE="$(detectar_servicio_bd)"; then
-    note "servicio de BD local: $DB_SERVICE (las unidades arrancan después)"
-else
-    DB_SERVICE=""
-    note "sin servicio de BD local (BD remota): las unidades no dependen de ella"
-fi
 
 render "$PREFIX/deploy/backend.service.tmpl"  > "/etc/systemd/system/${BACKEND_UNIT}.service"
 render "$PREFIX/deploy/frontend.service.tmpl" > "/etc/systemd/system/${FRONTEND_UNIT}.service"

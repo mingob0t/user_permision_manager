@@ -9,6 +9,7 @@
 - Retirados `docs/business_rules.md` y `docs/ARCHITECTURE.md` (contradecían el sistema: prohibían `/api/v1` y SSH); README raíz reescrito para el gestor de accesos y `deploy/README.md` corregido (plantillas reales, sin IPs, `SMTP_*` en VARIABLES.md) (FNC-035, 2026-10-27).
 
 ### Corregido
+- Despliegue: `install.sh` ya no instala `mariadb-devel`, `openldap-devel` ni `policycoreutils-python-utils` (PyMySQL y ldap3 son puro Python; `semanage` no se usa), y el cliente `mysql` pasa a opcional: solo si falta, con el paquete `mariadb` o `mysql` según el servidor (en RHEL 9 chocaban y detenían la instalación); si falla, es un aviso (FNC-125, 2026-10-27).
 - Despliegue: `install.sh` ya no borra ni pisa el `.env` del prefijo al copiar con `rsync --delete` (antes terminaba con «.env no existe»); tampoco toca `.env.*`, `instance/`, `backups/`, `uploads/`, `storage/` ni `logs/` del prefijo, y el `.env` del origen se copia una sola vez si falta (FNC-125, 2026-10-27).
 - Despliegue: las unidades del backend y del worker arrancan después del servicio real de la BD local (`mysqld`, `mariadb` o `mysql`, detectado o con `--db-service`); antes fijaban `mysql.service`, que en RHEL 9 no existe. Sin BD local no dependen de ninguno; `preflight.sh` informa cuál detectó (FNC-125, 2026-10-27).
 - Despliegue: `preflight.sh` e `install.sh` exigen el mismo Node que `engines` de `frontend/package.json` (`^22.13.0 || >=24.0.0`, por Vitest 4 y jsdom 29); antes aceptaban Node 18 y el instalador no cambiaba un Node 18–21 presente (FNC-073, 2026-10-27).
@@ -23,6 +24,7 @@
 - Texto mínimo de 12 px: insignias, botones, cabeceras de tabla, contador del tour, marca de las casillas, ejes de las gráficas del Inicio e iniciales de Administrar plataformas pasan de 9–11 px a 12 px (token `--text-xs`); se retira el token `--text-2xs` (10 px) y una prueba impide volver a bajar de 12 px (DIS-007, DIS-032, 2026-10-26).
 
 ### Seguridad
+- Despliegue: `install.sh` se detiene si `<prefijo>/.env` es un enlace simbólico, un directorio o tiene otro enlace duro, y aplica dueño y permisos sobre el archivo abierto sin seguir enlaces; `chown -R -h` del prefijo. Cierra la escalada a root con `ln -sf /etc/shadow <prefijo>/.env` desde la cuenta de servicio, abierta al conservar el `.env` en la copia (FNC-125, 2026-10-27).
 - Next.js: el rewrite de `/api` hacia Flask existe solo con `NODE_ENV=development` (`next build`/`next start` no generan ninguno), se retira el rewrite de `/auth` y `BACKEND_URL` se rechaza si es una IP; cierra la vía de Next hacia Flask con cabeceras `Remote-*` del cliente (FNC-005, FNC-118, 2026-10-26).
 
 ### Cambiado

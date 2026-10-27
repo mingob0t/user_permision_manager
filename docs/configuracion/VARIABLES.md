@@ -124,6 +124,14 @@ Se pasan al invocar `deploy/preflight.sh` o `deploy/install.sh`; no van en `.env
 | `NO_PROXY` / `no_proxy` | ambos | Excepciones del proxy | localhost y loopback | No |
 | `DB_SERVICE` | install | Servicio systemd de la BD local para `After=`/`Wants=` de backend y worker (equivale a `--db-service`; se valida como nombre de unidad). FNC-125 | se detecta (`SERVICIOS_BD`); ninguno si la BD es remota | No |
 
+## Variables del sistema leídas por las pruebas
+
+No son configuración del proyecto ni van en `.env`/`.env.example`.
+
+| Variable | Dónde | Propósito | Alta |
+|---|---|---|---|
+| `PATH` | `tests/deploy/test_servicio_bd_sh.py` | Anteponer un `systemctl` falso al PATH del sistema (el resto de herramientas siguen siendo las reales) | FNC-125, 2026-10-27 |
+
 ## Plantilla anterior retirada
 
 La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `LOG_DIR`, `LOG_LEVEL`, `DB_PASSWORD` y `NEXT_PUBLIC_API_URL`. **Ninguna la lee el código**: la contraseña de BD se llama `DB_PASS` y el frontend no usa `NEXT_PUBLIC_API_URL`. Se dan de baja en HISTORIAL.md. `APP_ENV` se reactivó en FNC-077 (2026-10-19), ahora leída por `auth/acceso_local.py` (fila en la tabla de arriba).

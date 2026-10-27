@@ -53,3 +53,26 @@ aplicar_servicio_bd() {
             -e 's/ @DB_SERVICE@//g'
     fi
 }
+
+# Paquete del cliente `mysql` acorde al servidor: en el9 el paquete `mysql`
+# choca con el cliente de MariaDB. Sin BD local se asume MySQL (ADR-001).
+paquete_cliente_bd() {
+    [[ "$1" == mariadb.service ]] && printf 'mariadb' || printf 'mysql'
+}
+
+# Instala el cliente `mysql` (opcional: sirve para respaldar antes de migrar)
+# solo si no hay uno. Si dnf falla es un aviso, nunca detiene la instalación.
+instalar_cliente_bd() {
+    local paquete
+    if command -v mysql >/dev/null 2>&1; then
+        printf '    cliente mysql ya presente; no se instala otro\n'
+        return 0
+    fi
+    paquete="$(paquete_cliente_bd "$1")"
+    if dnf -y install "$paquete"; then
+        printf '    cliente mysql instalado (paquete %s)\n' "$paquete"
+    else
+        printf '    AVISO: no se pudo instalar el cliente mysql (opcional, para respaldos); instalar a mano con: dnf install %s\n' "$paquete"
+    fi
+    return 0
+}

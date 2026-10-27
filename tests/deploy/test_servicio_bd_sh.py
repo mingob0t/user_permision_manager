@@ -182,3 +182,79 @@ def test_reemplazo_sin_servicio(plantilla):
     else:
         assert _directivas(texto, 'After') == [['network.target']]
         assert _directivas(texto, 'Wants') == []
+
+
+# --- Cliente mysql opcional (dnf falso) --------------------------------------
+
+DNF_FALSO = r'''#!/bin/bash
+printf '%s\n' "$*" >> "$REGISTRO_DNF"
+exit "${SALIDA_DNF:-0}"
+'''
+
+
+def _con_dnf_falso(tmp_path, con_mysql=False, salida_dnf=0):
+    """PATH solo con el dnf falso (y un mysql falso si se pide): `command -v
+    mysql` no ve el cliente real de la máquina que corre las pruebas."""
+    bin_dir = tmp_path / 'bin_dnf'
+    bin_dir.mkdir()
+    falsos = {'dnf': DNF_FALSO}
+    if con_mysql:
+        falsos['mysql'] = '#!/bin/bash\nexit 0\n'
+    for nombre, cuerpo in falsos.items():
+        (bin_dir / nombre).write_text(cuerpo)
+        (bin_dir / nombre).chmod(0o755)
+    registro = tmp_path / 'dnf.log'
+    registro.write_text('')
+    entorno = {'PATH': str(bin_dir), 'REGISTRO_DNF': str(registro),
+               'SALIDA_DNF': str(salida_dnf)}
+    return entorno, registro
+
+
+def _instalar_cliente(tmp_path, servicio, **kw):
+    entorno, registro = _con_dnf_falso(tmp_path, **kw)
+    r = subprocess.run(
+        ['/bin/bash', '-c',
+         f'set -Eeuo pipefail; . "{SCRIPT}"; instalar_cliente_bd "$1"',
+         '_', servicio], capture_output=True, text=True, timeout=10,
+        env=entorno)
+    return r, registro.read_text().splitlines()
+
+
+def test_cliente_presente_no_instala(tmp_path):
+    r, llamadas = _instalar_cliente(tmp_path, 'mariadb.service',
+                                    con_mysql=True)
+    assert r.returncode == 0, r.stderr
+    assert llamadas == []
+
+
+@pytest.mark.parametrize('servicio, paquete', [
+    ('mariadb.service', 'mariadb'),
+    ('mysqld.service', 'mysql'),
+    ('mysql.service', 'mysql'),
+    ('', 'mysql'),
+])
+def test_cliente_segun_servicio(tmp_path, servicio, paquete):
+    r, llamadas = _instalar_cliente(tmp_path, servicio)
+    assert r.returncode == 0, r.stderr
+    assert llamadas == [f'-y install {paquete}']
+
+
+@pytest.mark.parametrize('servicio, paquete', [
+    ('mariadb.service', 'mariadb'), ('mysqld.service', 'mysql')])
+def test_cliente_falla_es_aviso(tmp_path, servicio, paquete):
+    r, llamadas = _instalar_cliente(tmp_path, servicio, salida_dnf=1)
+    assert r.returncode == 0, r.stderr
+    assert 'AVISO' in r.stdout
+    assert f'dnf install {paquete}' in r.stdout
+
+
+def test_install_sin_paquetes_de_bd_ni_ldap():
+    """mysqlclient y python-ldap no se usan (PyMySQL y ldap3 son puro
+    Python); el cliente mysql va aparte y es opcional."""
+    texto = INSTALL.read_text()
+    inicio = texto.index('dnf -y install gcc')
+    linea = texto[inicio:texto.index('|| die', inicio)]
+    for paquete in ('mariadb-devel', 'openldap-devel', ' mysql ',
+                    'policycoreutils-python-utils'):
+        assert paquete not in linea + ' ', paquete
+    assert 'instalar_cliente_bd "$DB_SERVICE"' in texto

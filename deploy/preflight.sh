@@ -163,12 +163,11 @@ fi
 
 # --- 6. Cabeceras de compilación --------------------------------------------
 head2 "Dependencias de compilación"
-# cryptography, PyMySQL y ldap3 compilan extensiones si no hay rueda binaria.
+# cryptography, cffi, bcrypt y PyNaCl compilan si no hay rueda binaria.
+# PyMySQL y ldap3 son puro Python (FNC-125): sin mariadb-devel ni openldap-devel.
 for pkg in gcc openssl-devel libffi-devel; do
     rpm -q "$pkg" >/dev/null 2>&1 && ok "$pkg" || warn "$pkg ausente (lo instala el script)"
 done
-rpm -q openldap-devel >/dev/null 2>&1 && ok "openldap-devel" \
-    || warn "openldap-devel ausente (necesario para ldap3 en algunos casos)"
 
 # --- 6b. Salida a Internet ---------------------------------------------------
 head2 "Salida a Internet"
@@ -239,7 +238,7 @@ head2 "Base de datos y Redis"
 if command -v mysql >/dev/null 2>&1; then
     ok "cliente mysql presente"
 else
-    warn "cliente mysql ausente; útil para respaldar la base antes de migrar"
+    warn "cliente mysql ausente; útil para respaldar la base antes de migrar (el instalador intenta instalarlo: paquete mariadb o mysql según el servidor)"
 fi
 
 # Los valores del .env no son de confianza (el script corre como root): host y

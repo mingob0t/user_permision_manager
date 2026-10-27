@@ -27,9 +27,9 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 - Distribución y arquitectura
 - Espacio (2 GB) y memoria (1 GB; `next build` es lo que más consume)
 - Python **3.11 o superior** con `venv`, y Node `^22.13.0 || >=24.0.0` (FNC-073)
-- Cabeceras de compilación (`gcc`, `openssl-devel`, `libffi-devel`,
-  `openldap-devel`), que `cryptography` y `ldap3` necesitan si no hay rueda
-  binaria para la plataforma
+- Cabeceras de compilación (`gcc`, `openssl-devel`, `libffi-devel`), que
+  `cryptography`, `cffi`, `bcrypt` y `PyNaCl` necesitan si no hay rueda
+  binaria para la plataforma; PyMySQL y ldap3 son puro Python (FNC-125)
 - Servicio de BD local detectado (`mysqld`, `mariadb` o `mysql`), o ninguno
   si la BD es remota
 - Conectividad real con la base de datos y con Redis, leyendo `.env`; Redis
@@ -47,6 +47,7 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 
 - El instalador **nunca sobrescribe ni borra** `<prefijo>/.env` (FNC-125).
 - Si el prefijo no tiene `.env` y la carpeta clonada sí, se copia **una sola vez** (permisos 600).
+- El `.env` debe ser un **archivo regular**: si es un enlace simbólico, un directorio o tiene otro enlace duro, el instalador se detiene. Dueño y permisos se aplican sobre el archivo ya abierto sin seguir enlaces (`O_NOFOLLOW` + `fchown`/`fchmod`), y `chown -R -h` no sigue enlaces del prefijo.
 - La copia (`rsync --delete`) tampoco toca lo local del prefijo: `.env.*` (salvo `.env.example`), `instance/`, `backups/`, `uploads/`, `storage/` y `logs/`.
 - Prueba: `pytest tests/deploy/test_copia_proyecto_sh.py`.
 
@@ -56,6 +57,7 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 - Detección, en este orden: `mysqld.service`, `mariadb.service`, `mysql.service` (los alias no cuentan).
 - Sin ninguno (BD remota): la dependencia se quita de `After=`/`Wants=`.
 - Forzarlo: `--db-service mariadb` (o `DB_SERVICE=mariadb`); se valida como nombre de unidad.
+- Cliente `mysql` (opcional, para respaldos): solo si no hay uno; paquete `mariadb` con MariaDB y `mysql` en los demás casos (en el9 chocan). Si falla, es un aviso y sigue.
 - Prueba: `pytest tests/deploy/test_servicio_bd_sh.py`.
 
 ### Nombre del despliegue
