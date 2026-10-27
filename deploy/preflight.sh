@@ -25,8 +25,10 @@ NODE_NEXT_MAJOR=24             # primera mayor posterior que se acepta completa
 NODE_RANGO="^${NODE_MAJOR}.${NODE_MIN_MINOR}.0 || >=${NODE_NEXT_MAJOR}.0.0"
 MIN_DISK_MB=2048               # node_modules + venv + build
 MIN_RAM_MB=1024                # `next build` es lo que más consume
-API_PORT="${API_PORT:-5001}"
-WEB_PORT="${WEB_PORT:-3000}"
+# Puertos de loopback (FNC-127): entorno > .env > por defecto (3000/5001),
+# igual que install.sh; se resuelven en la sección de puertos.
+API_PORT="${API_PORT:-}"
+WEB_PORT="${WEB_PORT:-}"
 # Nombre del despliegue: define las unidades systemd y las rutas que se
 # comprobarán. Debe coincidir con el --name que se pase al instalador.
 APP_NAME="${APP_NAME:-nexus}"
@@ -40,6 +42,9 @@ warnings=0
 # Servicio systemd de la BD local (FNC-125).
 # shellcheck source=deploy/servicio_bd.sh
 . "$(dirname "${BASH_SOURCE[0]}")/servicio_bd.sh"
+# Puertos de backend y frontend (FNC-127).
+# shellcheck source=deploy/puertos.sh
+. "$(dirname "${BASH_SOURCE[0]}")/puertos.sh"
 
 # Color solo en terminal: al redirigir a un fichero o a un pipe, texto plano.
 if [[ -t 1 ]]; then
@@ -307,7 +312,19 @@ fi
 
 # --- 8. Puertos --------------------------------------------------------------
 head2 "Puertos"
+# Del .env solo se leen estas dos claves, sin cargarlo (como REDIS_HOST).
+puertos_ok=1
+API_PORT="$(resolver_puerto "$API_PORT" .env API_PORT "$API_PORT_POR_DEFECTO")" \
+    || { bad "API_PORT no válido (entero de ${PUERTO_SERVICIO_MIN} a ${PUERTO_SERVICIO_MAX})"; puertos_ok=0; }
+WEB_PORT="$(resolver_puerto "$WEB_PORT" .env WEB_PORT "$WEB_PORT_POR_DEFECTO")" \
+    || { bad "WEB_PORT no válido (entero de ${PUERTO_SERVICIO_MIN} a ${PUERTO_SERVICIO_MAX})"; puertos_ok=0; }
+if (( puertos_ok )) && (( API_PORT == WEB_PORT )); then
+    bad "WEB_PORT y API_PORT no pueden ser iguales (${WEB_PORT})"
+    puertos_ok=0
+fi
+(( puertos_ok )) && ok "puertos elegidos: frontend ${WEB_PORT}, backend ${API_PORT}"
 for p in "$API_PORT" "$WEB_PORT"; do
+    [[ -n "$p" ]] || continue
     if ss -ltn 2>/dev/null | grep -q ":${p}\b"; then
         who=$(ss -ltnp 2>/dev/null | grep ":${p}\b" | grep -oP 'users:\(\("\K[^"]+' | head -1)
         bad "puerto ${p} ocupado por ${who:-otro proceso}"

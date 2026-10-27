@@ -9,12 +9,12 @@
 # inyectar.
 
 upstream @APP_NAME@_api {
-    server 127.0.0.1:5001;
+    server 127.0.0.1:@API_PORT@;
     keepalive 16;
 }
 
 upstream @APP_NAME@_web {
-    server 127.0.0.1:3000;
+    server 127.0.0.1:@WEB_PORT@;
     keepalive 16;
 }
 

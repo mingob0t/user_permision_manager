@@ -92,7 +92,7 @@
 |---|---|---|
 | `FLASK_APP` | Solo la usa el CLI `flask` (`flask run`); `run.py` no la necesita. | Vigente (CLI) |
 | `FLASK_ENV` | Obsoleta en Flask 3; no tiene efecto. | Sin uso |
-| `PORT_APP` | `run.py` fija el puerto 5001 y Gunicorn usa `--bind` en la unidad systemd; la variable no se lee. | Sin uso |
+| `PORT_APP` | Solo desarrollo (`run.py`), que fija el puerto 5001 y no la lee. En staging/prod el puerto del backend es `API_PORT` (FNC-127). | Sin uso |
 | `AUTHELIA_SSO_URL` | Ningún archivo la lee. | Sin uso |
 | `DEBUG_AUTH` | Ningún archivo la lee. | Sin uso |
 | `NGINX_CONF_PATH` | Solo la leía `utils/toggle_authelia.py`, retirado en FNC-028; se quitó de `.env.example`. | Baja |
@@ -111,13 +111,13 @@
 
 ## Variables de los scripts de despliegue
 
-Se pasan al invocar `deploy/preflight.sh` o `deploy/install.sh`; no van en `.env`.
+Se pasan al invocar `deploy/preflight.sh` o `deploy/install.sh`; no van en `.env`, salvo `WEB_PORT` y `API_PORT`, que también se leen del `.env` del prefijo (FNC-127).
 
 | Variable | Script | Propósito | Por defecto | Sensible |
 |---|---|---|---|---|
 | `APP_NAME` | preflight | Nombre del despliegue (equivale a `--name`) | `nexus` | No |
-| `API_PORT` | preflight | Puerto del backend a comprobar | `5001` | No |
-| `WEB_PORT` | preflight | Puerto del frontend a comprobar | `3000` | No |
+| `API_PORT` | ambos | Puerto de loopback del backend (Gunicorn `--bind`, upstream de nginx, `BACKEND_URL` del SSR); equivale a `--api-port`. Precedencia: opción > entorno > `<prefijo>/.env` (comentada en `.env.example`) > defecto. Entero 1024-65535, distinto de `WEB_PORT`. FNC-127 | `5001` (`API_PORT_POR_DEFECTO`, `deploy/puertos.sh`) | No |
+| `WEB_PORT` | ambos | Puerto de loopback del frontend (`PORT` de Next, upstream de nginx); equivale a `--web-port`. Misma precedencia y validación. FNC-127 | `3000` (`WEB_PORT_POR_DEFECTO`, `deploy/puertos.sh`) | No |
 | `SVC_USER` | preflight | Cuenta de servicio a comprobar | quien invoca sudo | No |
 | `CREATE_USER` | install | `1` crea la cuenta de servicio (equivale a `--create-user`) | `0` | No |
 | `PROXY_URL` (o `HTTPS_PROXY`/`HTTP_PROXY` en mayúsculas o minúsculas) | ambos | Proxy de salida para dnf, pip y npm | ninguno | **Sí** si lleva credenciales |
