@@ -40,7 +40,7 @@
 | `TZ` | Respaldo de `TZ_APP` | zona IANA | `America/Mexico_City` | — | No | No | No (estándar del sistema) | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `BASE_URL` | URL pública de la app para enlaces en correos y el retorno del cierre SSO | URL con dominio | En `api/auth.py`: la del host de la petición. En `auth/services.py`: vacío (enlace relativo; antes una IP literal, quitada en FNC-042) | `http://localhost:5001` (dev) / `https://<dominio>` | Sí en prod | No | Sí | `api/auth.py`, `auth/services.py` | FNC-001, 2026-10-13 | Vigente |
 | `FRONTEND_URL` | Destino de las redirecciones heredadas y del login sin sesión | URL o vacío (mismo dominio) | vacío | — | No | No | No (retirada) | ninguno | FNC-001, 2026-10-13 | **Obsoleta** (2026-10-26, FNC-027): el backend ya no redirige; sin sesión responde 401 JSON |
-| `AUTHELIA_ENABLED` | Activa el SSO por cabeceras | `true` / `false` | `false` | `false` | No | No | Sí | `api/auth.py`, `utils/toggle_authelia.py` | FNC-001, 2026-10-13 | Vigente |
+| `AUTHELIA_ENABLED` | Activa el SSO por cabeceras | `true` / `false` | `false` | `false` | No | No | Sí | `api/auth.py` | FNC-001, 2026-10-13 | Vigente |
 | `AUTHELIA_SLO_URL` | URL de cierre de sesión de Authelia | URL | ninguna | `https://<host de authelia>/logout` | Sí si SSO | No | Sí | `api/auth.py` | FNC-001, 2026-10-13 | Vigente |
 | `AUTHELIA_HEADER_USER` | Cabecera con el correo del usuario | nombre de cabecera | `Remote-Email` | `Remote-Email` | No | No | Sí | `api/auth.py` | FNC-001, 2026-10-13 | Vigente |
 | `AUTHELIA_HEADER_NAME` | Cabecera con el nombre visible | nombre de cabecera | `Remote-Name` | `Remote-Name` | No | No | Sí | `api/auth.py` | FNC-001, 2026-10-13 | Vigente |
@@ -85,7 +85,6 @@
 | `SMTP_SENDER_EMAIL` | Dirección del remitente | correo | `SMTP_USER` | `noreply@<dominio>` | No | No | Sí (vacío) | `notifications/services.py` | FNC-001, 2026-10-13 | Vigente |
 | `ENABLE_NOTIFICATIONS` | Interruptor global de correo | `true` / `false` | `true` | `true` | No | No | Sí | `notifications/services.py` | FNC-001, 2026-10-13 | Vigente |
 | `DEBUG_SMTP` | Traza del diálogo SMTP en consola | `true` / `false` | `false` | `false` | No | No | Sí | `notifications/services.py` | FNC-001, 2026-10-13 | Vigente |
-| `NGINX_CONF_PATH` | Archivo de nginx que edita `toggle_authelia.py` (lo lee del `.env` como texto, no con `getenv`) | ruta | `/etc/nginx/conf.d/vivaro.conf` | `/etc/nginx/conf.d/<nombre>.conf` | No | No | Sí | `utils/toggle_authelia.py` | FNC-001, 2026-10-13 | Vigente |
 
 ### Presentes en `.env.example` pero no leídas por el código
 
@@ -96,6 +95,7 @@
 | `PORT_APP` | `run.py` fija el puerto 5001 y Gunicorn usa `--bind` en la unidad systemd; la variable no se lee. | Sin uso |
 | `AUTHELIA_SSO_URL` | Ningún archivo la lee. | Sin uso |
 | `DEBUG_AUTH` | Ningún archivo la lee. | Sin uso |
+| `NGINX_CONF_PATH` | Solo la leía `utils/toggle_authelia.py`, retirado en FNC-028; se quitó de `.env.example`. | Baja |
 
 ## Variables de entorno — frontend (Next.js)
 

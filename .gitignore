@@ -84,3 +84,6 @@ docker-compose.override.yml
 *.tar
 !logs/.gitkeep
 !.env.example
+
+# Scripts manuales y descartables (retirados en FNC-028; no volver a versionar)
+scratch/

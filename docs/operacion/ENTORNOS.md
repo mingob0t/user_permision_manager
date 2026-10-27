@@ -56,7 +56,7 @@ Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defe
 6. Unidades systemd a partir de las plantillas: backend, frontend y worker (`reset-failed` del worker antes de `enable --now`).
 7. nginx en `/etc/nginx/conf.d/<nombre>.conf`, SELinux y firewalld.
 
-**No aplica migraciones**: se ejecuta `venv/bin/alembic upgrade head` a mano antes de reiniciar (ver `docs/backend/README.md` §7). `utils/migrations/` queda como histórico.
+**No aplica migraciones**: se ejecuta `venv/bin/alembic upgrade head` a mano antes de reiniciar (ver `docs/backend/README.md` §7). Los SQL sueltos `utils/migrations/` se retiraron en FNC-028 (la línea base `0001` ya los incluye).
 
 ## Servicios systemd
 

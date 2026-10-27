@@ -221,7 +221,7 @@ head2 "Base de datos y Redis"
 if command -v mysql >/dev/null 2>&1; then
     ok "cliente mysql presente"
 else
-    warn "cliente mysql ausente; útil para aplicar las migraciones de utils/migrations"
+    warn "cliente mysql ausente; útil para respaldar la base antes de migrar"
 fi
 
 # Los valores del .env no son de confianza (el script corre como root): host y

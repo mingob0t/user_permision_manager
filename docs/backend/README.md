@@ -72,7 +72,7 @@ Tres roles (columna `users.role`, comparada en minúsculas):
 
 ## 3. Modelo de datos
 
-Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue activo al arrancar. `utils/nexus_structure.sql` es un volcado parcial (no incluye `areas`, `platforms` ni las tablas de relación).
+Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue activo al arrancar. El volcado parcial `utils/nexus_structure.sql` se retiró en FNC-028.
 
 | Tabla | Modelo | Campos clave |
 |---|---|---|
@@ -399,7 +399,7 @@ Los siete blueprints heredados de NEXUS (`auth`, `core`, `audit`, `settings`, `n
 ### LDAP heredado (`auth_config`)
 - Obsoleta desde FNC-043: la API ya no la edita y nada la lee; `ldap_pass` vacía (migración 0004).
 - `validate_ldap_connection` retirada (FNC-043); `DEBUG_LDAP` pasó a `directory/depuracion.py`.
-- `utils/test_ldap.py` y `utils/nexus_health.py` aún la importan (ya fallaban: la llamaban sin argumentos); limpieza en FNC-028.
+- `utils/test_ldap.py` y `utils/nexus_health.py`, que la importaban, se retiraron en FNC-028.
 
 ### Authelia (SSO por cabeceras)
 - Nginx consulta Authelia (`auth_request`, comentado en la plantilla) y reinyecta `Remote-Email`, `Remote-Name`, `Remote-Groups`; antes borra esas cabeceras si vienen del cliente.
@@ -456,7 +456,7 @@ venv/bin/python run.py        # API en el puerto 5001
   Sin `REDIS_PASS` o sin Redis, el comando sale con código 1 y el motivo.
 - Sin Authelia: entra la cuenta de emergencia (`admin`) con el login local; otras cuentas locales solo con `APP_ENV=development` y `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true` (ver `docs/operacion/ENTORNOS.md`, FNC-077).
 - El frontend se arranca aparte (ver `docs/frontend/README.md`); su `rewrite` reenvía `/api/*` y `/auth/*` a este backend.
-- Utilidades de mantenimiento en `utils/` (usan `create_app()`): `check_db.py`, `db_check.py`, `db_inspector.py`, `db_migrate.py`, `reset_admin.py`, `emergency_reset.py`, `seed_users.py`, `test_ldap.py`, `test_smtp.py`, `nexus_health.py`, `toggle_authelia.py` (edita el `.env` y la config de nginx).
+- Sin scripts sueltos: `scratch/` y `utils/` se retiraron en FNC-028 (31 archivos heredados de PSX5K). El esquema se gestiona con Alembic (§7). El primer superadmin y el reinicio de la cuenta de emergencia quedan para un comando Flask CLI de FNC-003 (fase 5); la prueba de SMTP es `POST /api/v1/smtp/test`; el SSO se activa con `AUTHELIA_ENABLED`.
 - **Pruebas** (FNC-019): suite pytest en `tests/`, sin `.env` ni servicios externos.
   ```bash
   venv/bin/pip install -r requirements.txt -r requirements-dev.txt
@@ -489,7 +489,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/smtp_falso.py`: `instalar_smtp(monkeypatch)` simula `smtplib` (mensajes enviados, conexiones, logins, fallo con `.error`).
   - `test_arranque.py` llama `create_app()` sin overrides; `instance/` va a un directorio temporal.
   - SSO en pruebas: el cliente llega desde loopback (de confianza por defecto); otro origen se simula con `TRUSTED_PROXIES` y `REMOTE_ADDR` ficticios.
-  - `utils/test_*.py` y `scratch/test_*.py` son scripts manuales con conexiones reales: pytest no los recoge.
+  - Línea base (FNC-028): `tests/test_linea_base_cubre_sql_heredadas.py` comprueba que `0001` ya incluye las columnas `pref_*` y no trae lo que quitaron 002 y 004.
   - `create_app(config_overrides=None)`: el parámetro opcional solo lo usan las pruebas; sin él no cambia nada.
 
 ## 7. Migraciones
@@ -515,14 +515,14 @@ Alembic 1.20.0 directo (ADR-002, FNC-039). Sin Flask-Migrate: `migrations/env.py
 | Ver el SQL sin aplicarlo (MySQL) | `venv/bin/alembic upgrade head --sql` |
 | Marcar una BD existente como en la línea base | `venv/bin/alembic stamp 0001` |
 
-### BD existente de NEXUS (creada con `create_all()` + `utils/migrations/`)
+### BD existente de NEXUS (creada con `create_all()` + SQL sueltos 001-004, retirados)
 - Respaldo previo (`docs/operacion/RESPALDOS.md`).
 - Confirmar que 001, 002 y 004 están aplicadas (columnas `pref_*` en `users`; sin `storage_stats`, `drive_activity` ni `access_requests`).
 - `venv/bin/alembic stamp 0001`: registra la línea base sin tocar tablas.
 - `venv/bin/alembic check`: si reporta diferencias, se abre una tarea con una migración que las corrija (no se edita `0001`).
 
 ### Convivencia con `create_all()`
-- `create_all()` sigue en `create_app()` hasta FNC-003/FNC-028 (ADR-002); crea tablas que falten, nunca altera.
+- `create_all()` sigue en `create_app()` hasta FNC-003 (ADR-002); crea tablas que falten, nunca altera.
 - Orden obligatorio: **migrar primero, arrancar después**. Si la app arrancó antes en una BD nueva, `upgrade` falla con "table already exists": usar `alembic stamp head` (las tablas ya coinciden con los modelos).
 - Una migración que cree una tabla nueva falla si la app arrancó con ese modelo antes de migrar: en despliegues, `upgrade head` va antes de reiniciar el servicio (`docs/operacion/RELEASES.md`).
 
@@ -533,15 +533,15 @@ Alembic 1.20.0 directo (ADR-002, FNC-039). Sin Flask-Migrate: `migrations/env.py
 - Dos ramas con migraciones en paralelo: el integrador fusiona cabezas (`alembic merge heads`); la prueba `test_hay_una_sola_cabeza` lo exige.
 - Pruebas: `tests/test_migraciones.py` (upgrade sobre SQLite vacío = modelos, autogenerate vacío, downgrade a `base`, una sola cabeza).
 
-### Histórico (`utils/migrations/`, ya no se usan)
-Quedan como referencia; la línea base `0001` ya refleja su resultado. FNC-028 decide su retiro.
+### Histórico: `utils/migrations/001-004` (retirados en FNC-028)
+La línea base `0001` ya contiene su efecto (verificado con `tests/test_linea_base_cubre_sql_heredadas.py`); no hizo falta una migración `0010`. Siguen en el historial de git.
 
-| Archivo | Tipo | Qué hizo |
+| Archivo | Qué hizo | Cobertura |
 |---|---|---|
-| `001_user_prefs.sql` | SQL (MySQL) | Agregó las columnas `pref_*` a `users`. |
-| `002_drop_drive.sql` | SQL (MySQL) | Eliminó `storage_stats`, `drive_activity` y columnas de archivos de `platforms`. Irreversible sin respaldo. |
-| `003_logo_to_db.py` | Python | Pasa el logo del portal de archivo a data URI en `system_config` (datos, no esquema). Idempotente. |
-| `004_drop_access_requests.sql` | SQL (MySQL) | Eliminó la tabla huérfana `access_requests`. |
+| `001_user_prefs.sql` | Columnas `pref_*` en `users` | `0001` las crea |
+| `002_drop_drive.sql` | Quitó `storage_stats`, `drive_activity` y columnas de archivos de `platforms` | `0001` no las crea |
+| `003_logo_to_db.py` | Datos, no esquema: pasaba el logo de archivo a data URI en `system_config` | Una sola vez, ya aplicada; hoy la API guarda el logo como data URI. Un logo heredado en ruta se vuelve a subir desde Ajustes |
+| `004_drop_access_requests.sql` | Quitó la tabla huérfana `access_requests` | `0001` no la crea |
 
 ## 8. Deuda conocida
 
@@ -563,5 +563,5 @@ Quedan como referencia; la línea base `0001` ya refleja su resultado. FNC-028 d
 | 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `api/admin.py` |
 | 15 | Control de migraciones resuelto con Alembic (FNC-039). Pruebas del backend completas: suite base (FNC-019), protección por rol (FNC-020), alcance por área (FNC-021), autenticación (FNC-022) y servicios, respaldo, heredadas, CSRF y arranque (FNC-023). | — |
 | 16 | `purge_inactive_users` de `auth/services.py` devuelve un mensaje de error de LDAP no relacionado; la API usa su propia implementación en `crud.py` (duplicado). | `auth/services.py`, `api/crud.py` |
-| 17 | `utils/seed_users.py` usa roles `admin`/`user` que el código ya no reconoce. | `utils/seed_users.py` |
+| 17 | ~~`utils/seed_users.py` usa roles que el código ya no reconoce~~ Resuelta en FNC-028: script borrado. | — |
 | 18 | Mensajes de error que devuelven el texto de la excepción al cliente (LDAP, SMTP, respaldo). | `api/admin.py` |
