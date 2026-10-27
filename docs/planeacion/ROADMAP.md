@@ -40,4 +40,6 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 - [ ] Propuestas de auditorías de fase 3: FNC-075, FNC-078, FNC-079, FNC-083, FNC-084, FNC-085, FNC-086, FNC-087, FNC-088, FNC-089, FNC-096, FNC-106, FNC-100, FNC-107, FNC-110, FNC-115, FNC-116
 
 ## Fase 6 — Documentación y operación (en curso desde 2026-10-27)
-- [ ] FNC-035
+- [x] FNC-035
+- [ ] FNC-073
+- [ ] FNC-124

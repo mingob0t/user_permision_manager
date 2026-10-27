@@ -8,7 +8,7 @@
 | **Fase** | 6 |
 | **Módulo / Área** | docs |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | devops |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
@@ -84,3 +84,5 @@ No verificado: los comandos del README no se ejecutaron de punta a punta (se tom
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-27 | Aprobada en modo autónomo; En curso (devops) |
 | 2026-10-27 | Retirados `business_rules.md` y `ARCHITECTURE.md`; README raíz reescrito; `deploy/README.md` actualizado. En revisión |
+
+- 2026-10-27: revisado por el orquestador (solo documentación, sin enlaces rotos). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Genera FNC-124 con los 3 hallazgos previos de `validar_proyecto.py`. Pendiente: ejecutar de punta a punta los comandos del README.
