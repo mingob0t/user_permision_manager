@@ -23,7 +23,7 @@ def get_settings():
     """La identidad del portal la lee cualquiera: la interfaz la necesita."""
     config = SystemConfig.query.first()
     if config is None:
-        return jsonify(SystemConfig().to_dict())
+        return jsonify(SystemConfig.por_defecto().to_dict())
     return jsonify(config.to_dict())
 
 
@@ -33,7 +33,7 @@ def get_settings():
 def save_settings():
     config = SystemConfig.query.first()
     if config is None:
-        config = SystemConfig()
+        config = SystemConfig.por_defecto()
         db.session.add(config)
 
     data, error = leer_cuerpo(None)
