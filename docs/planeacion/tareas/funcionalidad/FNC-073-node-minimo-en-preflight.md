@@ -8,7 +8,7 @@
 | **Fase** | 6 |
 | **Módulo / Área** | deploy |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 
 ## Contexto
@@ -53,3 +53,5 @@ Afecta a todos los entornos que se instalen con `deploy/`: un servidor con Node 
 
 ## Bitácora
 - 2026-10-27: aprobada en modo autónomo; En curso → En revisión. Commit en `fnc/FNC-073-node-minimo`.
+
+- 2026-10-27: el orquestador ajustó `README.md` y `deploy/README.md` al rango nuevo tras integrar FNC-035. Pendiente: `preflight.sh` e `install.sh` completos en un servidor Rocky. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).

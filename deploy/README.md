@@ -26,7 +26,7 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 
 - Distribución y arquitectura
 - Espacio (2 GB) y memoria (1 GB; `next build` es lo que más consume)
-- Python **3.11 o superior** con `venv`, y Node ≥ 18.18
+- Python **3.11 o superior** con `venv`, y Node `^22.13.0 || >=24.0.0` (FNC-073)
 - Cabeceras de compilación (`gcc`, `openssl-devel`, `libffi-devel`,
   `openldap-devel`), que `cryptography` y `ldap3` necesitan si no hay rueda
   binaria para la plataforma
