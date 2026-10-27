@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | utils |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-14 |
 
 ## Contexto
@@ -29,3 +29,5 @@
 
 ## Bitácora
 - 2026-10-27: En curso → En revisión. Decisión del orquestador (pendiente de validar en la prueba de concepto): nombre `es_proxy_confiable`, archivo `proxy_confiable.py`; sin cambio de comportamiento ni de variables (`TRUSTED_PROXIES` ya registrada).
+
+- 2026-10-27: revisión del orquestador del diff en lugar de `auditor-seguridad` (decisión del orquestador, pendiente de validar en la prueba de concepto): movimiento literal, misma lógica (`TRUSTED_PROXIES`, loopback por defecto, `request.remote_addr in allowed`), sin restos de `_trusted_proxy` en `app/` ni `tests/`; pytest 2397 passed, 15 xfailed, código 0. Hecha.
