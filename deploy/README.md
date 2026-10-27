@@ -275,6 +275,5 @@ entrar como administrador.
 - El backend no sirve ningún archivo estático. El logo del portal se guarda
   como data URI en la base de datos, así que no hace falta volumen persistente
   más allá de la BD.
-- `FRONTEND_URL` indica al backend dónde redirigir a quien llega sin sesión (`/login`). Tras
-  Nginx puede quedar vacío (mismo dominio); en desarrollo, apuntar al puerto de
-  Next.js.
+- `FRONTEND_URL` se retiró (FNC-027): el backend ya no redirige a ninguna
+  pantalla; sin sesión responde `401` JSON y el frontend lleva al login.

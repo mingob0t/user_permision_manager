@@ -62,8 +62,9 @@ server {
     # }
 
     # --- Backend Flask -----------------------------------------------------
-    # La API (incluida la autenticación en `/api/v1/auth`). La cookie de sesión se emite aquí, y como todo
-    # se sirve bajo el mismo dominio, el frontend la envía sin CORS.
+    # La API (incluida la autenticación en `/api/v1/auth`). La cookie de sesión
+    # se emite aquí, y como todo se sirve bajo el mismo dominio, el frontend la
+    # envía sin CORS.
     location /api/ {
         proxy_pass http://@APP_NAME@_api;
         proxy_http_version 1.1;
@@ -80,6 +81,17 @@ server {
     location / {
         proxy_pass http://@APP_NAME@_web;
         proxy_http_version 1.1;
+        # Al definir `proxy_set_header` aquí, Nginx NO hereda los del nivel
+        # `server`: se repiten, sobre todo el borrado de `Remote-*` (FNC-004),
+        # porque Next reenvía `/auth/*` al backend desde loopback (proxy de
+        # confianza). La prueba `tests/deploy/test_nginx_cabeceras.py` lo exige.
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Remote-Email  "";
+        proxy_set_header Remote-Name   "";
+        proxy_set_header Remote-Groups "";
         proxy_set_header Upgrade    $http_upgrade;
         proxy_set_header Connection "upgrade";
     }

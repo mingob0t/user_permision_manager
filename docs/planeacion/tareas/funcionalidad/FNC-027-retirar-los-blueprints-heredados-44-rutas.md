@@ -48,7 +48,9 @@ Retirar los siete blueprints heredados de NEXUS (44 rutas), sus registros y exen
 - **`_deny` (authz) siempre devuelve 403 JSON**: su rama HTML hacía `url_for('core.index')`, que dejaría de existir y habría lanzado `BuildError`. Toda ruta protegida es de `/api/v1`, así que el comportamiento observable no cambia. Se quitó `_wants_json` (sin otro uso).
 - **Nginx:** se retiró `location /auth/` (solo servía rutas heredadas); `/auth/*` pasa al frontend.
 - **`login_manager.login_view`** se quitó: el `unauthorized_handler` propio nunca la usaba.
-- `FRONTEND_URL` se conserva (la usa el `unauthorized_handler`); solo cambió su descripción (HISTORIAL.md).
+- `FRONTEND_URL` se retiró (correcciones de la auditoría de seguridad): el `unauthorized_handler` ahora siempre responde 401 JSON; variable dada de baja en VARIABLES, HISTORIAL y `.env.example`.
+- **Nginx, `location /`:** al definir sus propios `proxy_set_header` anulaba los del nivel `server` (sin borrar `Remote-*` ni fijar `Host`/`X-Forwarded-*`), y con `/auth/*` cayendo ahí Next lo reenvía al backend desde loopback. Se repiten en `location /`; prueba nueva `tests/deploy/test_nginx_cabeceras.py` (falló primero en `/`). El riesgo de fondo se cierra con FNC-005/FNC-118 (rewrites solo en dev) y FNC-006 (secreto compartido del proxy); `next.config.ts` no se toca aquí.
+- Guardia de rutas: compara con `'/api/v1/'`, no con `startswith('/api/v1')`.
 - Sin plantillas ni estáticos que retirar (`template_folder=None`, `static_folder=None`).
 
 ## Usos revisados antes de borrar
@@ -60,6 +62,7 @@ Retirar los siete blueprints heredados de NEXUS (44 rutas), sus registros y exen
 ## Verificación
 - Regresión primero en rojo: `venv/bin/python -m pytest tests/test_rutas_retiradas.py` con los blueprints aún presentes: 92 failed, 2 passed (fallaban las 90 de rutas con y sin sesión, las rutas fuera de `/api/v1` y `app.decorators` importable; pasaban solo los dos conteos). La prueba del 403 JSON de `_deny` (petición con `Accept: text/html`) no se vio fallar de forma aislada: tras quitar los blueprints sin tocar `authz`, la app ni siquiera arrancaba; pasa con el cambio.
 - `venv/bin/python -m pytest -q -p no:cacheprovider` (suite completa tras el cambio): **2335 passed, 15 xfailed** en 18 min 9 s, código de salida 0. Los 15 xfail son los previos (SEG-xx con su tarea).
+- Tras las correcciones de la auditoría de seguridad: `tests/deploy/test_nginx_cabeceras.py` falló primero solo en `location /` (1 failed, 3 passed) y pasa con el cambio; pytest completo `venv/bin/python -m pytest -q -p no:cacheprovider`: **2339 passed, 15 xfailed** en 10 min 38 s, código de salida 0.
 - No verificado: el despliegue real con Nginx (la plantilla se edita sin ejecutar `install.sh`); el frontend (typecheck, lint, vitest) no se ejecutó porque no se tocó; revisor y auditorías no lanzados por indicación.
 
 ## Impacto en elementos compartidos
@@ -75,4 +78,5 @@ Lectura: la herramienta marca `can_manage_user` por estar en `app/authz.py`, per
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-26 | Correcciones del auditor-seguridad (aprobó): cabeceras de Nginx en `location /`, retiro de `FRONTEND_URL`, prefijo exacto en la guardia |
 | 2026-10-26 | Aprobada en modo autónomo; implementada y en revisión (rama `fnc/FNC-027-retirar-blueprints-heredados`) |

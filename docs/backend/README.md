@@ -7,7 +7,7 @@
 - **Punto de entrada:** `run.py` llama a `create_app()` (`app/__init__.py`). En dev arranca el servidor de Flask en el puerto 5001 con `debug=True`; en producción lo sirve Gunicorn (`run:app`, 4 workers, ver `deploy/backend.service.tmpl`).
 - **Solo API:** Flask se crea con `template_folder=None` y `static_folder=None`. No sirve interfaz ni estáticos; toda la UI vive en `frontend/` (Next.js). Los errores 404/500/CSRF se responden en JSON.
 - **Sesión:** Flask-Login con cookie `nexus_session`, sesión permanente de 7 días (`PERMANENT_SESSION_LIFETIME`), `login_user(..., remember=True)`. La cookie la emite Flask y viaja al frontend porque ambos servicios van bajo el mismo dominio (nginx en prod, `rewrites` de Next.js en dev).
-- **Sin sesión:** el `unauthorized_handler` devuelve `401` JSON si la petición es de API (`/api/` en la ruta, JSON aceptado o `X-Requested-With`); si no, redirige a `FRONTEND_URL + /login` (sin ruta heredada de por medio).
+- **Sin sesión:** el `unauthorized_handler` devuelve siempre `401` JSON (el backend ya no redirige; `FRONTEND_URL` se retiró en FNC-027).
 - **CSRF:** Flask-WTF `CSRFProtect` se inicializa, pero **todos** los blueprints están exentos (los de la API v1 porque usan cookie y JSON). Los blueprints heredados se retiraron en FNC-027. En la práctica no hay protección CSRF activa (ver deuda).
 - **Extensiones:** Flask-SQLAlchemy (`pool_pre_ping`, `pool_recycle=3600`), Flask-Login, Flask-WTF, Flask-Compress.
 - **Zona horaria:** al importar `app` se fija `TZ` del proceso con `TZ_APP` (o `TZ`), por defecto `America/Mexico_City`.

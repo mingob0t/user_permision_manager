@@ -94,20 +94,9 @@ def create_app(config_overrides=None):
 
     @login_manager.unauthorized_handler
     def unauthorized():
-        """Sin sesión: JSON para las llamadas de API, redirección para el resto."""
-        from flask import redirect, request as req
-        wants_json = (
-            req.is_json
-            or '/api/' in req.path
-            or req.headers.get('X-Requested-With') == 'XMLHttpRequest'
-            or req.accept_mimetypes['application/json']
-            >= req.accept_mimetypes['text/html']
-        )
-        if wants_json:
-            return jsonify({'status': 'error',
-                            'message': 'Sesión no válida.'}), 401
-        target = (os.getenv('FRONTEND_URL', '') or '') + '/login'
-        return redirect(target)
+        """Sin sesión: 401 JSON (toda ruta protegida es de `/api/v1`)."""
+        return jsonify({'status': 'error',
+                        'message': 'Sesión no válida.'}), 401
 
     # Configuración de Redis
     from app.utils.redis_client import registry as redis_registry
