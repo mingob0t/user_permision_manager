@@ -152,6 +152,6 @@
 | D-11 | Colores de estado (`emerald/red/amber`) con `dark:` | `settings-panel.tsx:17,189,377,617`, `notifications-list.tsx:16-18`, `platform-card.tsx:66`, `platform-admin.tsx:202` | Tonos de `Badge`/mensajes por token |
 | D-12 | Color por defecto `#6366f1` | `crud.py:51,165`, `core/models.py:10,47,69`, `routes.py:93`, `platform-admin.tsx:17,137`, `areas-list.tsx:30,86`, `dashboard.tsx:79` | Constante en backend y token en frontend |
 | D-13 | Capa de modal duplicada en CSS | `components.css:1551-1621` y `global.css:204-335` (`nexus-modal`, `modal-*`) | Ninguna: ambas son código muerto (el `Modal` usa Tailwind) |
-| D-14 | Scripts de BD con la misma cadena de conexión | `scratch/list_dbs.py:5`, `cross_db_search_v2.py:8`, `multi_fix_db.py:8` | Borrar `scratch/` |
+| D-14 | Scripts de BD con la misma cadena de conexión | `scratch/list_dbs.py:5`, `cross_db_search_v2.py:8`, `multi_fix_db.py:8` | Resuelto (FNC-028): `scratch/` y `utils/` borrados; `scratch/` en `.gitignore` |
 | D-15 | Páginas `page.tsx` con la misma estructura | `frontend/src/app/*/page.tsx` (10 archivos, 5 líneas útiles) | Aceptable: patrón de Next.js |
 | D-16 | Definición de "color literal" | `frontend/tests/accesibilidad/colores-literales.test.ts:16-25` (hex, rgb/hsl y paleta Tailwind); `scripts/lineamientos/reglas.py:21-23` (hex y rgb/hsl) | Fines distintos (tope en repo vs. bloqueo en pre-commit); mantener alineadas al cambiar una |
