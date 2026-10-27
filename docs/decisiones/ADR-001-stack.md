@@ -62,4 +62,4 @@ El proyecto es un clon de NEXUS (portal de catálogo de plataformas por área, m
 - Las tareas nuevas deben respetar Next.js 15 + Flask API + MySQL; cambiar de stack requiere un ADR nuevo.
 - Hay que fijar versiones de las dependencias Python sin versión y retirar las que no se usan (registrar como tarea Propuesta).
 - La convención de atributos LDAP del código es de Active Directory (`sAMAccountName`, `memberOf`); con OpenLDAP se configura `ldap_user_attr` desde la interfaz y se verifica el overlay `memberOf` (punto abierto en `docs/REQUERIMIENTOS.md`).
-- Documentos previos que contradicen este stack (Docker obligatorio, MariaDB en contenedor, "prohibido `/api/v1`") quedan obsoletos: ver la nota en `docs/business_rules.md` y `docs/ARCHITECTURE.md`.
+- Documentos previos que contradicen este stack (Docker obligatorio, MariaDB en contenedor, "prohibido `/api/v1`") quedan obsoletos. `docs/business_rules.md` y `docs/ARCHITECTURE.md` se retiraron en FNC-035 (2026-10-27); lo vigente está en `docs/REQUERIMIENTOS.md`, `docs/backend/README.md` y `docs/frontend/README.md`.
