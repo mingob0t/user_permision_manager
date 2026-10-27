@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | estilos |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-20 |
 | **Inicio** | 2026-10-26 |
 | **Rama** | `dis/DIS-007-032-texto-minimo` (junto con DIS-007) |
