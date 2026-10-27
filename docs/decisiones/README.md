@@ -8,3 +8,4 @@
 | [ADR-004](ADR-004-grupos-esquema-openldap.md) | Grupos y esquema de OpenLDAP | Aceptada | 2026-10-13 |
 | [ADR-005](ADR-005-credenciales-vaultwarden-ejecucion.md) | Credenciales de conectores desde Vaultwarden en ejecución | Propuesta | 2026-10-13 |
 | [ADR-006](ADR-006-refresco-interfaz.md) | Refresco de datos en la interfaz | Aceptada | 2026-10-13 |
+| [ADR-007](ADR-007-dos-temas-y-modelo-de-tokens.md) | Dos temas y modelo de tokens | Propuesta | 2026-10-27 |

@@ -24,3 +24,5 @@
 ## Impacto cruzado
 - Origen ← FNC-033, DIS-048
 - Si se retira el campo de la API: tarea FNC backend vinculada.
+- Relacionada → fase 7 ([PLAN-FASE-7](../../PLAN-FASE-7-diseno-visual.md) §6): decidir antes de DIS-066 (pantallas de sistema, que incluyen Administrar plataformas y Ajustes › Portal); se ejecuta tras DIS-059 (campos). Recomendada la opción A: la B contradice el principio P3 (colores libres sin contraste garantizado).
+- 2026-10-27: vinculada a la fase 7 por el planificador (DIS-059, DIS-066); sigue en Propuesta a la espera de la decisión del dueño.
