@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | catalogo |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-27 |
 
 ## Contexto
@@ -39,3 +39,5 @@
 ## Bitácora
 - 2026-10-27: división hecha; sin cambio de comportamiento
 - `impacto.py` lista `RequestCatalog` y funciones locales (`coincide`, `motivo`, `creada`, `cerrarAviso`) por coincidencia de nombre; son internas, el único consumidor real es `PlatformsView`
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado (semántica, ids, estados, aviso y foco conservados). Menor: `EstadoCarga.data` es `unknown`. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
