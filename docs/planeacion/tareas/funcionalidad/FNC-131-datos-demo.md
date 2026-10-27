@@ -7,7 +7,7 @@
 | **Fase** | 6 |
 | **Módulo / Área** | demo |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `fnc/FNC-131-datos-demo` |
 | **Creada** | 2026-10-27 |
 
@@ -59,3 +59,5 @@
 
 ## Bitácora
 - 2026-10-27: creada, aprobada por el dueño e implementada. Pendiente: revisor y auditor-seguridad (toca cuentas y contraseñas).
+
+- 2026-10-27: `auditor-seguridad` Aprobado con observaciones (Bajas): regla de entorno duplicada con `acceso_local` (conviene hacer pública su función), acepta mayúsculas y espacios como `acceso_local`, y en una BD vacía `create_app` siembra `admin` antes del chequeo (previo; contraseña fija ya en FNC-003). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
