@@ -7,7 +7,7 @@
 | **Fase** | 6 |
 | **Módulo / Área** | deploy |
 | **Prioridad** | Alta (urgente: el dueño está instalando) |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `fnc/FNC-129-instalar-en-sitio` |
 | **Creada** | 2026-10-27 |
 
@@ -91,3 +91,5 @@ Decisión del orquestador; adelanta parte de FNC-126.
 ## Bitácora
 - 2026-10-27: creada y aprobada por el dueño (urgente). Implementada en sitio + `--force` (ampliación del dueño el mismo día). Pendiente: `revisor` y `auditor-seguridad` (toca borrado de rutas y permisos del `.env`).
 - 2026-10-27: `auditor-seguridad` Bloqueante en `6c0d70d` (SEG-1 Alta, SEG-2 y SEG-3 Bajas); corregidos en esta rama. Pendiente: nueva pasada de `auditor-seguridad`.
+
+- 2026-10-27: `auditor-seguridad`: Bloqueante en `6c0d70d` (SEG-1 Alta: root ejecutaba código escribible por la cuenta de servicio; SEG-2 y SEG-3 Bajas) y Aprobado con observaciones en `32cf722` (código de root, datos y logdir de la cuenta, `.env` root:grupo 640, revalidación en `--force`, logdir bajo `/var/log`). Observaciones O-1 a O-3 registradas como FNC-130 (fase 5). Pendiente: instalación real en el servidor del dueño. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
