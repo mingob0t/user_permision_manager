@@ -7,8 +7,8 @@
 - **Punto de entrada:** `run.py` llama a `create_app()` (`app/__init__.py`). En dev arranca el servidor de Flask en el puerto 5001 con `debug=True`; en producción lo sirve Gunicorn (`run:app`, 4 workers, ver `deploy/backend.service.tmpl`).
 - **Solo API:** Flask se crea con `template_folder=None` y `static_folder=None`. No sirve interfaz ni estáticos; toda la UI vive en `frontend/` (Next.js). Los errores 404/500/CSRF se responden en JSON.
 - **Sesión:** Flask-Login con cookie `nexus_session`, sesión permanente de 7 días (`PERMANENT_SESSION_LIFETIME`), `login_user(..., remember=True)`. La cookie la emite Flask y viaja al frontend porque ambos servicios van bajo el mismo dominio (nginx en prod, `rewrites` de Next.js en dev).
-- **Sin sesión:** el `unauthorized_handler` devuelve `401` JSON si la petición es de API (`/api/` en la ruta, JSON aceptado o `X-Requested-With`); si no, redirige a `FRONTEND_URL + /login`.
-- **CSRF:** Flask-WTF `CSRFProtect` se inicializa, pero **todos** los blueprints están exentos (los de la API v1 porque usan cookie y JSON; los heredados porque solo redirigen o devuelven 410). En la práctica no hay protección CSRF activa (ver deuda).
+- **Sin sesión:** el `unauthorized_handler` devuelve `401` JSON si la petición es de API (`/api/` en la ruta, JSON aceptado o `X-Requested-With`); si no, redirige a `FRONTEND_URL + /login` (sin ruta heredada de por medio).
+- **CSRF:** Flask-WTF `CSRFProtect` se inicializa, pero **todos** los blueprints están exentos (los de la API v1 porque usan cookie y JSON). Los blueprints heredados se retiraron en FNC-027. En la práctica no hay protección CSRF activa (ver deuda).
 - **Extensiones:** Flask-SQLAlchemy (`pool_pre_ping`, `pool_recycle=3600`), Flask-Login, Flask-WTF, Flask-Compress.
 - **Zona horaria:** al importar `app` se fija `TZ` del proceso con `TZ_APP` (o `TZ`), por defecto `America/Mexico_City`.
 - **Redis:** `app/utils/redis_client.py` crea un cliente global (`registry`) y lo conecta al arrancar. Si falla solo imprime el error; **ningún módulo lo usa hoy**.
@@ -21,7 +21,6 @@
 app/
 ├── __init__.py        # create_app(): config, extensiones, blueprints, create_all
 ├── authz.py           # Autorización centralizada: roles, alcance por área, decoradores
-├── decorators.py      # Compatibilidad: reexporta decoradores de authz
 ├── utils/
 │   ├── naming.py      # sanitize_display_name(): limpia nombres visibles (máx. 100)
 │   ├── uri_bd.py      # construir_uri_bd(): URI de la BD desde DB_* (app y Alembic)
@@ -33,20 +32,20 @@ app/
     │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, respaldo; notificaciones in-app
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
     │   └── helpers.py # error_response(), validation_error(), json_object(), is_id_list() y errores del contrato (FNC-044)
-    ├── auth/          # Modelos User/AuthConfig (obsoleto) y login; rutas heredadas (redirigen/410)
+    ├── auth/          # Modelos User/AuthConfig (obsoleto) y servicios de login
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
-    ├── core/          # Modelos Area/Platform; rutas heredadas
+    ├── core/          # Modelos Area/Platform
     ├── access_requests/ # Solicitudes: models, tipos, catalogo (P1 y estado del actor), services (crear), serializacion, api.py (catalog, POST, mine) (FNC-056); approvals (bandeja, aprobar, rechazar) y rutas inbox/approve/reject (FNC-057); consultas (`mias`, FNC-066)
     ├── access/        # Accesos otorgados: models, tipos, rules, services (otorgar/revocar), manejadores (resultado del ejecutor), consultas (FNC-054); api.py y serializacion.py (FNC-058); inventario e inventario_api (FNC-059)
     ├── provisioning/  # Ejecutor de aprovisionamiento: models, queue (encolar), ejecucion, worker, providers, ldap_provider, cli (FNC-049); api, consultas, serializacion y reintento (FNC-062)
     ├── secretos/      # Vaultwarden (FNC-068): configuracion (VAULTWARDEN_*), cifrado (Bitwarden del lado del cliente), vaultwarden (cliente de solo lectura)
     ├── connectors/    # Conectores (FNC-050): base (interfaz), registry (tipos), models (platform_connectors), validacion, credenciales (fuente y caché), provider (proveedor `conector`), consultas, noop (solo dev/pruebas), configuracion (CONNECTOR_*); api y prueba (FNC-061)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión; `tiene_conector` desde FNC-050) (FNC-046)
-    ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060); rutas heredadas
-    ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); rutas heredadas
-    ├── settings/      # Modelo SystemConfig; rutas heredadas
+    ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060)
+    ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py)
+    ├── settings/      # Modelo SystemConfig
     ├── users/         # api.py (managed-areas, alta en directorio), directory_accounts.py (FNC-064), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
-    ├── areas/         # api.py, validacion.py, baja.py (FNC-045); routes.py heredadas
+    ├── areas/         # api.py, validacion.py, baja.py (FNC-045)
     └── home/          # Inicio: services.py (resumen por rol) y api.py (`/home/summary`) (FNC-066)
 alembic.ini            # Configuración de Alembic (sin URL ni secretos)
 migrations/
@@ -273,9 +272,9 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 | `POST /auth-config/test` | `admin_required` | Bind de la cuenta de servicio con la configuración efectiva; cuerpo con campos → `400`; inactivo → `409 directorio_no_configurado`; fallo → `503 directorio_no_disponible` genérico. Audita `PRUEBA LDAP`. |
 | `GET /directory/search?q=` | `admin_required` | `buscar_personas` (atributo `LDAP_USER_ATTR`, `mail`, `cn`, `displayName`; filtro escapado); `q` de 2–64 caracteres (`400 parametro_invalido`); máx. 50; marca `exists`. `409`/`503` como la prueba. |
 
-### 4.5 Rutas heredadas
+### 4.5 Rutas heredadas (retiradas, FNC-027)
 
-Los blueprints `auth` (`/auth`), `core` (`/`), `audit` (`/audit`), `settings` (`/settings`), `notifications`, `users_module` (`/admin`) y `areas_module` (`/admin/areas`) ya no procesan datos: las rutas de pantalla redirigen a `FRONTEND_URL + <ruta>` y las de datos responden `410` con el endpoint que las reemplaza.
+Los siete blueprints heredados de NEXUS (`auth`, `core`, `audit`, `settings`, `notifications`, `users_module`, `areas_module`; 44 rutas) y `app/decorators.py` se eliminaron. Esas rutas responden `404`, sin `410` para clientes viejos (el frontend solo usa `/api/v1`). Fuera de `/api/v1` el backend no tiene rutas; la guardia `tests/test_guardia_rutas.py` lo exige. Las denegaciones de los decoradores de `app/authz.py` son siempre `403` JSON.
 
 ## 5. Integraciones
 
@@ -486,7 +485,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/directory/conftest.py`: `directorio` / `crear_directorio(**LDAP_*)` usan `ldap3` `MOCK_SYNC` con el cliente centralizado; `tests/directory/test_tls.py` abre TLS real solo hacia `localhost`.
   - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` (con `target=` para el correo).
   - Auditoría (FNC-047): `tests/audit/` (registro ampliado, inmutabilidad y regresión de SEG-25).
-  - Servicios (FNC-023): `test_notificaciones.py`, `test_auditoria_crud.py`, `test_respaldo.py`, `test_secretos_en_respuestas.py`, `test_rutas_heredadas.py`, `test_csrf.py`, `test_arranque.py`; 13 `xfail` con su tarea (lista en la ficha).
+  - Servicios (FNC-023): `test_notificaciones.py`, `test_auditoria_crud.py`, `test_respaldo.py`, `test_secretos_en_respuestas.py`, `test_rutas_retiradas.py` (FNC-027), `test_csrf.py`, `test_arranque.py`; 13 `xfail` con su tarea (lista en la ficha).
   - `tests/smtp_falso.py`: `instalar_smtp(monkeypatch)` simula `smtplib` (mensajes enviados, conexiones, logins, fallo con `.error`).
   - `test_arranque.py` llama `create_app()` sin overrides; `instance/` va a un directorio temporal.
   - SSO en pruebas: el cliente llega desde loopback (de confianza por defecto); otro origen se simula con `TRUSTED_PROXIES` y `REMOTE_ADDR` ficticios.

@@ -32,13 +32,6 @@ def test_sin_token_csrf_responde_400_en_json(app_con_ruta_protegida):
                                     'message': 'Token CSRF ausente o no válido.'}
 
 
-def test_rutas_heredadas_no_quedan_ocultas_por_el_csrf(client):
-    """Están exentas: responden su 410 en JSON, no el 400 del CSRF."""
-    respuesta = client.post('/settings/save')
-
-    assert respuesta.status_code == 410
-
-
 @pytest.mark.xfail(strict=True, reason='SEG-06 / FNC-008: la cookie de sesión '
                    'no declara SameSite')
 def test_cookie_de_sesion_con_samesite(app):

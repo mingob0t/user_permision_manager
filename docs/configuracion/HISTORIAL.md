@@ -4,6 +4,7 @@
 
 | Fecha | Variable | Entorno | Antes | Después | Motivo | Tarea / ADR | Autor |
 |---|---|---|---|---|---|---|---|
+| 2026-10-26 | `FRONTEND_URL` | todos | destino de las redirecciones de las rutas heredadas y del login sin sesión | solo destino del login sin sesión (mismo valor y por defecto) | Se retiraron los siete blueprints heredados que la leían; solo la usa el `unauthorized_handler` | FNC-027 | desarrollador |
 | 2026-10-13 | (todas las de VARIABLES.md) | todos | — | alta | Estructura inicial del proyecto | FNC-001 | — |
 | 2026-10-13 | (todas las variables de entorno y constantes de VARIABLES.md) | todos | — | alta | Registro inicial de variables heredadas de NEXUS. Motivo: incorporación FNC-001 | FNC-001 | agente de documentación |
 | 2026-10-13 | `APP_ENV`, `LOG_DIR`, `LOG_LEVEL`, `DB_PASSWORD`, `NEXT_PUBLIC_API_URL` | todos | alta (plantilla) | baja | Venían de la plantilla genérica y el código no las lee (la contraseña de BD es `DB_PASS`). Motivo: incorporación FNC-001 | FNC-001 | agente de documentación |

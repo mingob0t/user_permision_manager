@@ -89,9 +89,6 @@ def create_app(config_overrides=None):
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
-    # La pantalla de acceso vive en el frontend; sin esto, Flask redirigiría a
-    # su ruta heredada y el navegador daría un salto de más.
-    login_manager.login_view = 'auth.login'
     login_manager.login_message = "Por favor, inicie sesión para acceder."
     login_manager.login_message_category = "info"
 
@@ -130,13 +127,6 @@ def create_app(config_overrides=None):
             return None
 
     # Registro de Blueprints
-    from app.modules.core.routes import core_bp
-    from app.modules.settings.routes import settings_bp
-    from app.modules.audit.routes import audit_bp
-    from app.modules.notifications.routes import notifications_bp
-    from app.modules.auth.routes import auth_bp
-    from app.modules.users.routes import users_bp
-    from app.modules.areas.routes import areas_bp
     from app.modules.api.routes import api_bp
     from app.modules.api.crud import crud_bp
     from app.modules.api.admin import admin_bp
@@ -159,13 +149,6 @@ def create_app(config_overrides=None):
 
 
     
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(core_bp)
-    app.register_blueprint(audit_bp)
-    app.register_blueprint(settings_bp)
-    app.register_blueprint(notifications_bp)
-    app.register_blueprint(users_bp)
-    app.register_blueprint(areas_bp)
     # La API v1 usa la cookie de sesión y no formularios, así que no
     # participa del CSRF de Flask-WTF.
     for bp in (api_bp, crud_bp, admin_bp, auth_api_bp, users_api_bp,
@@ -186,12 +169,6 @@ def create_app(config_overrides=None):
     from app.modules.connectors import registrar as registrar_conectores
     registrar_conectores(app)
 
-    # Los blueprints heredados ya no procesan datos: solo redirigen o devuelven
-    # 410. Sin exentarlos, el CSRF los intercepta antes y responde un 400 en
-    # HTML, ocultando la indicación del endpoint que los reemplaza.
-    for bp in (auth_bp, users_bp, areas_bp, audit_bp, notifications_bp,
-               settings_bp, core_bp):
-        csrf.exempt(bp)
 
 
 
