@@ -20,7 +20,10 @@ export function PreferencesTab() {
   async function save() {
     setState({ saving: true, saved: false, error: null });
     try {
-      const result = await api.savePreferences(prefs!);
+      // FNC-123: el tema lo guarda solo el selector; aquí se omite para no pisarlo con el de la sesión.
+      const sinTema = { ...prefs! };
+      delete sinTema.theme;
+      const result = await api.savePreferences(sinTema);
       setPrefs(result.preferences);
       setState({ saving: false, saved: true, error: null });
     } catch (err) {

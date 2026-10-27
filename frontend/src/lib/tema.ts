@@ -62,6 +62,19 @@ export function elegirTema(id: string): void {
   }
 }
 
+/**
+ * Tema que viene de la cuenta (`preferences.theme` de `/me`, FNC-123). Es un dato
+ * externo: pasa por `esTemaValido` y `aplicarTema`, nunca se usa como clase directa;
+ * un valor desconocido cae a «sistema». Ausente (`undefined`/`null`) = conserva el
+ * del navegador. Devuelve el id aplicado, o `null` si no hubo nada que aplicar.
+ */
+export function aplicarTemaDeCuenta(valor: unknown): string | null {
+  if (valor === undefined || valor === null) return null;
+  const id = esTemaValido(valor) ? valor : TEMA_POR_DEFECTO;
+  elegirTema(id);
+  return id;
+}
+
 /** Aplica el tema guardado (lo usa el selector al montar y las pruebas). */
 export function restaurarTema(): string {
   const id = leerTema();
