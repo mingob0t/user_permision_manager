@@ -8,8 +8,9 @@
  *   contador ligado con `aria-describedby`, error del campo con el foco.
  * - Sin motivo válido el botón "Rechazar" queda deshabilitado y la pista dice
  *   por qué (ligada también al botón).
- * - Botón primario, no `danger`: el blanco sobre `--color-error` da 3,76:1
- *   (falla AA; lo corrige DIS-004).
+ * - Botón `danger` (DIS-043): rechazar es destructivo y, desde DIS-004, el
+ *   texto sobre `--color-error-solid` pasa AA (4,83:1).
+ * - El resumen de la solicitud describe el diálogo (`describedBy`, DIS-031).
  */
 
 import { useState } from 'react';
@@ -25,6 +26,7 @@ const FORM_ID = 'rechazo-solicitud';
 const MOTIVO_ID = 'rechazo-motivo';
 const PISTA_ID = 'rechazo-motivo-pista';
 const MOTIVO_ERROR_ID = 'rechazo-motivo-error';
+const RESUMEN_ID = 'rechazo-resumen';
 
 /** Pista del motivo según su largo (recortado, como lo valida el servidor). */
 export function pistaMotivo(largo: number): string {
@@ -81,12 +83,14 @@ export function RejectDialog({
     <Modal
       title="Rechazar solicitud"
       onClose={onClose}
+      describedBy={RESUMEN_ID}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
           <Button
+            variant="danger"
             type="submit"
             form={FORM_ID}
             disabled={!valido}
@@ -101,7 +105,7 @@ export function RejectDialog({
       }
     >
       <form id={FORM_ID} onSubmit={submit} noValidate aria-busy={sending} className="space-y-5">
-        <p className="text-sm text-label">
+        <p id={RESUMEN_ID} className="text-sm text-label">
           {request.requester.name} · {request.platform.name} ({request.area.name}) · Nivel{' '}
           {NIVELES[request.level]}
         </p>

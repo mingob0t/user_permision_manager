@@ -13,6 +13,13 @@ body {
     overflow: hidden;
 }
 
+/* DIS-038: bloqueo del desplazamiento del fondo con Modal o el menú móvil
+   abiertos. La clase la pone `useScrollLock` (src/lib/use-scroll-lock.ts). */
+html.scroll-bloqueado,
+html.scroll-bloqueado body {
+    overflow: hidden;
+}
+
 /* === LAYOUT SYSTEM: STABLE FULL-VIEWPORT SHELL === */
 /*
  * Root flex container (#root shell: sidebar + mainContent)

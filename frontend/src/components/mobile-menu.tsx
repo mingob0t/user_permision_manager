@@ -7,14 +7,15 @@
  * - Se cierra con Escape, al elegir una opción (`close` que recibe el
  *   contenido) y al hacer clic fuera del panel.
  * - Al abrir, el foco va al primer enlace; al cerrar, vuelve al botón; con el
- *   panel abierto, Tab y Mayús+Tab no salen de él.
- * - La trampa de foco es mínima y local: el patrón compartido para `Modal` es
- *   DIS-031; cuando exista, este menú debería reutilizarlo.
+ *   panel abierto, Tab y Mayús+Tab no salen de él. Trampa compartida con
+ *   `Modal`: `useFocusTrap` (DIS-031).
+ * - Con el panel abierto: velo `bg-overlay` detrás y desplazamiento del fondo
+ *   bloqueado con clase en `<html>` (`useScrollLock`, DIS-038).
  */
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-
-const ENFOCABLES = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+import { useFocusTrap } from '@/lib/use-focus-trap';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 /** Desde `md` (768 px, breakpoint de Tailwind) el menú móvil no se muestra: se cierra. */
 const CONSULTA_MD = '(min-width: 768px)';
@@ -27,47 +28,22 @@ export function MobileMenu({
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const wasOpen = useRef(false);
   const panelId = useId();
 
   const close = useCallback(() => setOpen(false), []);
 
-  // Foco al abrir (primer enlace) y al cerrar (el botón).
-  useEffect(() => {
-    if (open) {
-      wasOpen.current = true;
-      panel.current?.querySelector<HTMLElement>('a[href]')?.focus();
-    } else if (wasOpen.current) {
-      wasOpen.current = false;
-      button.current?.focus();
-    }
-  }, [open]);
+  // Foco al primer enlace al abrir, atrapado con Tab, Escape cierra y el foco vuelve al botón.
+  useFocusTrap(panel, {
+    activo: open,
+    alEscape: close,
+    devolverA: button,
+    focoInicial: (contenedor) => contenedor.querySelector<HTMLElement>('a[href]'),
+  });
+  useScrollLock(open);
 
-  // Escape, trampa de foco y clic fuera, solo con el panel abierto.
+  // Clic fuera y cruce de `md`, solo con el panel abierto.
   useEffect(() => {
     if (!open) return;
-
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setOpen(false);
-        return;
-      }
-      if (event.key !== 'Tab' || !panel.current) return;
-      const items = Array.from(panel.current.querySelectorAll<HTMLElement>(ENFOCABLES));
-      if (items.length === 0) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-      const outside = !panel.current.contains(active);
-      if (event.shiftKey && (active === first || outside)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (active === last || outside)) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
 
     function onPointerDown(event: PointerEvent) {
       const target = event.target as Node | null;
@@ -88,11 +64,9 @@ export function MobileMenu({
       return;
     }
 
-    document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onPointerDown);
     md?.addEventListener('change', onMedia);
     return () => {
-      document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onPointerDown);
       md?.removeEventListener('change', onMedia);
     };
@@ -112,11 +86,14 @@ export function MobileMenu({
       </button>
 
       <div id={panelId} hidden={!open} className="md:hidden">
+        {/* Velo (DIS-038): el clic en él cierra por el oyente de clic fuera. */}
+        <div aria-hidden="true" className="fixed inset-0 z-40 bg-overlay" />
         <div
           ref={panel}
           role="dialog"
           aria-modal="true"
           aria-label="Menú"
+          tabIndex={-1}
           className="fixed inset-y-0 left-0 z-50 w-72 max-w-full overflow-y-auto border-r-2 border-primary bg-panel-fill p-4 shadow-2xl"
         >
           <div className="flex items-center justify-between gap-2 pb-4">

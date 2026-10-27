@@ -1,5 +1,7 @@
 /**
  * DIS-025: menú de navegación en móvil (botón y panel de `AppShell`).
+ * DIS-031: trampa de foco compartida con `Modal` (`useFocusTrap`).
+ * DIS-038: velo por token y bloqueo del desplazamiento con clase en `<html>`.
  */
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -14,6 +16,7 @@ vi.mock('@/lib/api', () => ({
 
 import { api } from '@/lib/api';
 import { AppShell } from '@/components/app-shell';
+import { CLASE_SCROLL_BLOQUEADO } from '@/lib/use-scroll-lock';
 
 const sesionSimulada = vi.mocked(api.session);
 
@@ -212,5 +215,23 @@ describe('Menú móvil', () => {
       expect(enlace.className).not.toContain('focus-visible:ring');
     }
     expect(panel.className).toContain('border-primary');
+  });
+
+  it('con el panel abierto hay velo por token y el fondo no se desplaza (clase, sin estilos inline)', async () => {
+    const html = document.documentElement;
+    const boton = await montar();
+    expect(html.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
+    const panel = abrir(boton);
+    expect(html.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(true);
+    expect(html.getAttribute('style')).toBeNull();
+    expect(document.body.getAttribute('style')).toBeNull();
+    const velo = panel.parentElement!.querySelector('[aria-hidden="true"]')!;
+    expect(velo.className).toContain('bg-overlay');
+
+    // El clic en el velo cuenta como clic fuera: cierra y libera el desplazamiento.
+    fireEvent.pointerDown(velo);
+    expect(boton.getAttribute('aria-expanded')).toBe('false');
+    expect(html.classList.contains(CLASE_SCROLL_BLOQUEADO)).toBe(false);
+    expect(document.activeElement).toBe(boton);
   });
 });

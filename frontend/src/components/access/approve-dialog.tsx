@@ -6,7 +6,7 @@
  * no es destructivo (`ConfirmDialog` es para eliminar).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { requestsApi } from '@/lib/access/requests';
 import type { AccessRequest } from '@/lib/access/types';
 import { Button, Modal } from '../form';
@@ -37,6 +37,9 @@ export function ApproveDialog({
   onStale: () => void;
 }) {
   const [sending, setSending] = useState(false);
+  // DIS-031: el efecto y el detalle describen el diálogo (`aria-describedby`).
+  const efectoId = useId();
+  const detalleId = useId();
   const [error, setError] = useState<string | null>(null);
 
   async function aprobar() {
@@ -58,6 +61,7 @@ export function ApproveDialog({
     <Modal
       title="Aprobar solicitud"
       onClose={onClose}
+      describedBy={`${efectoId} ${detalleId}`}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -71,8 +75,8 @@ export function ApproveDialog({
       }
     >
       <div aria-busy={sending} className="space-y-3">
-        <p className="text-sm text-body-text">{efectoAprobacion(request)}</p>
-        <p className="text-sm text-label">
+        <p id={efectoId} className="text-sm text-body-text">{efectoAprobacion(request)}</p>
+        <p id={detalleId} className="text-sm text-label">
           Área {request.area.name}. El acceso se aplicará en la plataforma y quedará en proceso hasta
           que termine.
         </p>

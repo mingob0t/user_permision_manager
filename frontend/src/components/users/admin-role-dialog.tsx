@@ -13,10 +13,12 @@
  *   sus áreas administradas y revoca sus accesos automáticos (FNC-055).
  * - Es una acción sensible: el diálogo es la confirmación y explica el efecto
  *   con las áreas concretas antes de enviar. Patrón de `ApproveDialog`
- *   (DIS-015): botón primario y `aria-disabled` durante el envío.
+ *   (DIS-015): `aria-disabled` durante el envío; el texto del efecto describe
+ *   el diálogo (`describedBy`, DIS-031). Hacer admin usa el botón primario;
+ *   Quitar admin, `danger` (DIS-043: retira permisos y accesos automáticos).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { api } from '@/lib/api';
 import { usersApi } from '@/lib/access/users';
 import type { AreaRef, ManagedUser } from '@/lib/types';
@@ -82,6 +84,7 @@ export function AdminAreasDialog({
   const [error, setError] = useState<string | null>(null);
   const [errorAreas, setErrorAreas] = useState<string | undefined>();
   const quien = user.name || user.email;
+  const efectoId = useId();
 
   async function guardar() {
     if (sending) return;
@@ -119,6 +122,7 @@ export function AdminAreasDialog({
     <Modal
       title={elevar ? `Hacer admin a ${quien}` : `Áreas que administra ${quien}`}
       onClose={onClose}
+      describedBy={efectoId}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
@@ -143,7 +147,7 @@ export function AdminAreasDialog({
           loadError={areasError}
           empty="No hay áreas registradas."
         />
-        <div aria-live="polite" className="space-y-2">
+        <div id={efectoId} aria-live="polite" className="space-y-2">
           {efectoAdmin(user, areas, ids).map((linea) => (
             <p key={linea} className="text-sm text-body-text">{linea}</p>
           ))}
@@ -169,6 +173,8 @@ export function RemoveAdminDialog({
   const [error, setError] = useState<string | null>(null);
   const quien = user.name || user.email;
   const areas = user.managed_areas.map((a) => a.name).join(', ');
+  const efectoId = useId();
+  const avisoId = useId();
 
   async function quitar() {
     if (sending) return;
@@ -189,24 +195,25 @@ export function RemoveAdminDialog({
     <Modal
       title={`Quitar admin a ${quien}`}
       onClose={onClose}
+      describedBy={`${efectoId} ${avisoId}`}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          {/* Primario, no `danger`: el blanco sobre `--color-error` falla AA (DIS-004). */}
-          <Button onClick={quitar} aria-disabled={sending || undefined} className="aria-disabled:opacity-40">
+          {/* `danger` (DIS-043): acción destructiva; el texto sobre `--color-error-solid` pasa AA (DIS-004). */}
+          <Button variant="danger" onClick={quitar} aria-disabled={sending || undefined} className="aria-disabled:opacity-40">
             {sending ? 'Quitando…' : 'Quitar admin'}
           </Button>
         </>
       }
     >
       <div aria-busy={sending} className="space-y-3">
-        <p className="text-sm text-body-text">
+        <p id={efectoId} className="text-sm text-body-text">
           {quien} volverá a ser Usuario
           {areas ? ` y dejará de administrar: ${areas}.` : '.'}
         </p>
-        <p className="text-sm text-label">
+        <p id={avisoId} className="text-sm text-label">
           Se revocarán sus accesos automáticos de admin de área. Sus áreas de pertenencia y sus
           accesos solicitados no cambian.
         </p>

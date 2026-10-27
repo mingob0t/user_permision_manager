@@ -6,12 +6,12 @@
  *
  * - Explica el efecto antes de confirmar. El servidor lo impide con accesos
  *   vigentes (`409 plataforma_con_accesos`).
- * - Patrón de `RevokeAccessDialog` (DIS-018): botón de confirmar primario (el
- *   blanco sobre `--color-error` falla AA hasta DIS-004) y `aria-disabled`
- *   durante el envío.
+ * - Patrón de `RevokeAccessDialog` (DIS-018): botón de confirmar `danger`
+ *   (DIS-043; pasa AA desde DIS-004) y `aria-disabled` durante el envío.
+ * - El efecto y su detalle describen el diálogo (`describedBy`, DIS-031).
  */
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { connectorsApi } from '@/lib/access/connectors';
 import type { Platform } from '@/lib/types';
 import { Button, Modal } from '../form';
@@ -31,6 +31,8 @@ export function ConnectorDeleteDialog({
 }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const efectoId = useId();
+  const detalleId = useId();
 
   async function confirmar() {
     if (sending) return;
@@ -51,10 +53,12 @@ export function ConnectorDeleteDialog({
     <Modal
       title="Eliminar conector"
       onClose={onClose}
+      describedBy={`${efectoId} ${detalleId}`}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>Cancelar</Button>
           <Button
+            variant="danger"
             onClick={confirmar}
             aria-disabled={sending || undefined}
             className="aria-disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary"
@@ -65,10 +69,10 @@ export function ConnectorDeleteDialog({
       }
     >
       <div aria-busy={sending} className="space-y-3">
-        <p className="text-sm text-body-text">
+        <p id={efectoId} className="text-sm text-body-text">
           Se borrará la configuración del conector de {platform.name}.
         </p>
-        <p className="text-sm text-label">
+        <p id={detalleId} className="text-sm text-label">
           Hasta configurarlo de nuevo, los accesos que se aprueben en esta plataforma no podrán
           aplicarse. No se borra el ítem del gestor de secretos. Si hay accesos vigentes, no se
           puede eliminar.

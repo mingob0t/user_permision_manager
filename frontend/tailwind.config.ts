@@ -49,6 +49,8 @@ export default {
         'surface-container': 'rgb(var(--color-surface-container-bg) / <alpha-value>)',
         'surface-container-border':
           'rgb(var(--color-surface-container-border) / <alpha-value>)',
+        // DIS-038: velo de diálogos y menú móvil; el token ya trae su opacidad.
+        overlay: 'rgb(var(--color-overlay))',
 
         // Buttons & Interaction
         'button-bg': 'rgb(var(--color-button-bg) / <alpha-value>)',

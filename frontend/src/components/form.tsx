@@ -8,7 +8,9 @@
  * `.nexus-btn`, casillas `.nexus-checkbox` y modales `.nx-modal-glass`.
  */
 
-import { useEffect, useRef } from 'react';
+import { useId, useRef } from 'react';
+import { CAMPOS, useFocusTrap } from '@/lib/use-focus-trap';
+import { useScrollLock } from '@/lib/use-scroll-lock';
 
 export function Field({
   label,
@@ -93,37 +95,42 @@ export function Button({
   );
 }
 
-/** Diálogo modal, con el cristal del portal (.nx-modal-glass). */
+/**
+ * Diálogo modal, con el cristal del portal (.nx-modal-glass).
+ *
+ * - DIS-031: foco inicial en el primer campo del cuerpo (o en el panel si no
+ *   hay campos), atrapado con Tab y devuelto al cerrar (`useFocusTrap`); el
+ *   panel se enfoca solo al abrir, aunque `onClose` cambie en cada render.
+ * - `describedBy`: id (o ids separados por espacio) del texto que explica la
+ *   acción; va a `aria-describedby` del `role="dialog"`.
+ * - DIS-038: velo `bg-overlay` (token `--color-overlay`) y bloqueo del
+ *   desplazamiento del fondo con clase en `<html>` (`useScrollLock`).
+ */
 export function Modal({
   title,
   onClose,
   children,
   footer,
+  describedBy,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  describedBy?: string;
 }) {
   const panel = useRef<HTMLDivElement>(null);
+  const cuerpo = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-    }
-    document.addEventListener('keydown', onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    panel.current?.focus();
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previous;
-    };
-  }, [onClose]);
+  useFocusTrap(panel, {
+    alEscape: onClose,
+    focoInicial: () => cuerpo.current?.querySelector<HTMLElement>(CAMPOS) ?? null,
+  });
+  useScrollLock();
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-overlay backdrop-blur-sm p-4 sm:items-center"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -133,6 +140,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        aria-describedby={describedBy}
         tabIndex={-1}
         className="nx-modal-glass w-full max-w-lg rounded-2xl shadow-2xl outline-none"
       >
@@ -140,16 +148,17 @@ export function Modal({
           <h2 className="text-sm font-black uppercase tracking-[0.15em] text-panel-header-text">
             {title}
           </h2>
+          {/* DIS-031: área táctil de 48 px (antes 36). */}
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="w-9 h-9 flex items-center justify-center rounded-base text-label hover:bg-surface-container transition-colors"
+            className="min-w-12 min-h-12 flex items-center justify-center rounded-base text-label hover:bg-surface-container transition-colors"
           >
             ✕
           </button>
         </div>
-        <div className="space-y-5 px-6 py-5">{children}</div>
+        <div ref={cuerpo} className="space-y-5 px-6 py-5">{children}</div>
         {footer ? (
           <div className="flex justify-end gap-3 border-t border-panel-border px-6 py-4">
             {footer}
@@ -175,10 +184,12 @@ export function ConfirmDialog({
   onCancel: () => void;
   busy?: boolean;
 }) {
+  const mensajeId = useId();
   return (
     <Modal
       title={title}
       onClose={onCancel}
+      describedBy={mensajeId}
       footer={
         <>
           <Button variant="secondary" onClick={onCancel}>
@@ -190,7 +201,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-sm font-bold text-label">{message}</p>
+      <p id={mensajeId} className="text-sm font-bold text-label">{message}</p>
     </Modal>
   );
 }
