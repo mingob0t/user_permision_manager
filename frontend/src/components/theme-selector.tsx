@@ -37,7 +37,7 @@ export function ThemeSelector() {
     try {
       await api.savePreferences({ theme: id });
     } catch {
-      avisar('error', 'No se pudo guardar el tema en tu cuenta. Rige solo en este navegador.');
+      avisar('error', 'No se pudo guardar el tema en tu cuenta. Puede volver al anterior al cambiar de pantalla.');
     }
   }
 

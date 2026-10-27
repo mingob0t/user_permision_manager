@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | tema |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `fnc/FNC-123-selector-tema-en-cuenta` |
 | **Creada** | 2026-10-27 |
 | **Requiere migración BD** | No |
@@ -56,3 +56,5 @@
 - Sin cambios visuales ni de tokens.
 
 - 2026-10-27: implementada; En revisión.
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado; verificó que `preferences.theme` siempre pasa por `esTemaValido` (prueba con valor de ataque). Observación aplicada por el orquestador: el aviso de error decía «Rige solo en este navegador», falso tras cambiar de pantalla (cada página remonta `SessionProvider` y reaplica el tema de la cuenta); ahora dice «Puede volver al anterior al cambiar de pantalla». Las pruebas no se escribieron antes del código. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
