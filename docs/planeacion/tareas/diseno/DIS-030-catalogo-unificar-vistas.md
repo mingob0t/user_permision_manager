@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | catalogo |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-20 |
 
 ## Contexto
@@ -52,3 +52,5 @@ Los demás nombres que reporta `impacto.py` (`Page`, `body`, `coincide`, `motivo
 ## Bitácora
 | 2026-10-27 | Aprobada en modo autónomo, En curso y En revisión; implementada |
 | 2026-10-27 | Correcciones de la auditoría independiente de accesibilidad (4 puntos, con prueba previa); propone DIS-051 y DIS-052 |
+
+- 2026-10-27: `auditor-accesibilidad` independiente Aprobado tras corregir nombre fijo y foco del favorito, aviso de pestaña nueva y «Abrir» solo con acceso activo (`6ca3c85`). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
