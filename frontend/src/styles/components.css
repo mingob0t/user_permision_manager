@@ -1082,7 +1082,7 @@ input[name="db_engine"]:checked + label .w-5.h-5 .bg-primary {
 }
 
 .nexus-checkbox:hover {
-    border-color: rgb(var(--color-primary) / 0.5);
+    border-color: rgb(var(--color-primary)); /* DIS-006: 3:1 (con / 0.5 daba 1,9–2,2) */
 }
 
 .nexus-checkbox:checked {
@@ -1102,6 +1102,11 @@ input[name="db_engine"]:checked + label .w-5.h-5 .bg-primary {
 
 .nexus-checkbox:focus {
     box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.15);
+}
+
+/* DIS-006: foco visible con teclado (el halo de 15 % no llega a 3:1). */
+.nexus-checkbox:focus-visible {
+    box-shadow: 0 0 0 2px rgb(var(--color-primary));
 }
 
 /* === NEXUS PREMIUM SCROLLBAR === */
@@ -1541,7 +1546,7 @@ input[name="db_engine"]:checked + label .w-5.h-5 .bg-primary {
 }
 
 .nexus-btn-secondary:hover {
-    border-color: rgb(var(--color-primary) / 0.4) !important;
+    border-color: rgb(var(--color-primary)) !important; /* DIS-004: borde a 3:1 */
     color: rgb(var(--color-primary-text)) !important;
     background: rgb(var(--color-primary) / 0.05) !important;
 }

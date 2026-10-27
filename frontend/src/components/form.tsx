@@ -26,7 +26,7 @@ export function Field({
       </span>
       {children}
       {hint ? (
-        <span className="mt-1.5 block text-xs text-label/60">{hint}</span>
+        <span className="mt-1.5 block text-xs text-label/85">{hint}</span>
       ) : null}
     </label>
   );
@@ -36,7 +36,7 @@ export function Field({
 const INPUT =
   'w-full h-12 bg-surface-container/30 border border-panel-border rounded-xl px-4 ' +
   'text-sm font-bold text-body-text placeholder:text-label/85 ' +
-  'focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all ' +
+  'focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all ' +
   'disabled:opacity-50';
 
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
@@ -81,7 +81,8 @@ export function Button({
     primary: 'nexus-btn-primary',
     secondary: 'nexus-btn-secondary',
     // El portal aplica el color con un override sobre la variante primaria.
-    danger: 'nexus-btn-primary !bg-error shadow-error/20',
+    // DIS-004: relleno y texto de peligro por token (antes blanco sobre `error`, 3,76:1).
+    danger: 'nexus-btn-primary !bg-error-solid !text-on-error shadow-error/20',
   };
   return (
     <button

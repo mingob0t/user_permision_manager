@@ -61,6 +61,7 @@
 - `PUT /platforms/<id>/users` y `PUT /users/<id>/platforms` (asignación directa de plataformas) responden `410 endpoint_retirado` con `use: POST /access-requests` y ya no escriben; `user_platforms` queda obsoleta, sin borrar ni migrar (P4: sus filas se descartan). Quien veía una plataforma solo por esa tabla ya no la ve (FNC-063) y debe solicitar acceso (FNC-065, 2026-10-21).
 
 ### Corregido
+- Contraste AA en los 7 temas: botón de peligro con relleno y texto propios (4,83:1), tokens de botón por tema, texto atenuado (`bi-text-muted`, `secondary`, pistas de campo y tarjetas atenuadas) a 4.5:1, bordes de panel, campos y casillas a 3:1 y anillo de foco visible en campos y casillas; la lista de fallas de contraste conocidas queda vacía (DIS-004, DIS-005, DIS-006, 2026-10-26).
 - Web: borrar un conector envía el cuerpo `{}` que exige el contrato 1.1 (antes el servidor respondía `415`) (DIS-022, 2026-10-21).
 - Botón primario con contraste AA en los temas obsidian, rose, emerald y violet: `.nexus-btn-primary` usa `--color-primary-solid` y `--color-on-primary` (DIS-015, 2026-10-20).
 - Contraste AA del texto de estado (éxito, error, advertencia, estrella de favorito) con tokens `*-text` por tema, sin clases de paleta fija (DIS-002, 2026-10-19).

@@ -102,8 +102,10 @@ export function PlatformCard({
   const shell =
     'flex flex-col rounded-xl border border-panel-border bg-panel-fill p-4 transition-colors';
 
+  // DIS-005: sin opacidad; la insignia "Sin enlace" ya indica el estado (con `opacity-70` el texto
+  // bajaba a 3,6:1 y la insignia de advertencia a 2,8:1).
   if (disabled) {
-    return <div className={`${shell} opacity-70`}>{body}</div>;
+    return <div className={shell}>{body}</div>;
   }
 
   return (

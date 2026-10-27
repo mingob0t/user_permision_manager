@@ -13,6 +13,7 @@ generales (`~/.claude/agentes/LINEAMIENTOS.md`): tokens, breakpoints, componente
 - `--color-primary`, `brand`, `accent`, `accent-sky`, `accent-peach`: solo rellenos, bordes y tintes.
 - Texto: `--color-<rol>-text` (`text-primary-text`…), definido en los 7 contextos de `tokens.css` a >= 4.5:1.
 - Texto sobre relleno de marca: `--color-on-primary` sobre `--color-primary-solid`.
+- Texto sobre relleno de peligro: `--color-on-error` sobre `--color-error-solid` (`Button variant="danger"`, DIS-004).
 - Token nuevo: un valor en cada contexto y su par en `frontend/tests/accesibilidad/pares-contraste.ts`.
 
 ## Regla: color de estado como texto (DIS-002)

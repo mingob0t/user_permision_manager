@@ -175,7 +175,8 @@ Para apuntar a otro backend en dev: `BACKEND_URL=<url del backend> npm run dev`.
 - `tests/components/settings/directory-tab.test.tsx`: pestaña Directorio (valores con variable y origen, sin controles editables ni contraseña, sin configurar, inválida, error y 403 sin texto del servidor, reintento, prueba con texto propio en `status`/`alert`, foco, 409 recarga, `aria-disabled`) y pestañas de Ajustes (teclado, `tabpanel`, Directorio solo superadmin) (DIS-023, DIS-034).
 - `tests/components/navegacion-por-rol.test.tsx`: entradas del menú por rol y `RequireRole` (sin permiso no monta ni llama a la API).
 - `tests/accesibilidad/contraste.test.ts`: contraste WCAG de los tokens en los 7 temas (4.5:1 texto, 3:1 bordes).
-- Los pares que hoy fallan están en `fallas-contraste-conocidas.ts` con su tarea DIS y se marcan `it.fails`. Si una tarea los corrige, la prueba avisa: quita el par de la lista.
+- Los pares que fallan van en `fallas-contraste-conocidas.ts` con su tarea DIS y se marcan `it.fails`. Si una tarea los corrige, la prueba avisa: quita el par de la lista. Desde DIS-004, DIS-005 y DIS-006 (2026-10-26) la lista está vacía: todo par nuevo debe cumplir.
+- Botón de peligro: `Button variant="danger"` usa `--color-error-solid` y `--color-on-error` (DIS-004). Foco de campos: anillo `ring-primary` sólido (DIS-006).
 - `tests/accesibilidad/colores-literales.test.ts`: falla si aparece un color literal nuevo (`#hex`, `rgb()`, clases como `text-red-600`) en `src/components` o `src/app`.
 - Los literales que ya existían tienen tope por archivo en `colores-literales.excepciones.ts`. Si corriges uno, baja el tope.
 - `next lint` no revisa `tests/`; para lint de pruebas: `npx eslint tests vitest.config.ts`.
