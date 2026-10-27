@@ -170,6 +170,8 @@
   --color-ntf-text-subject: 37 99 235;
   --color-ntf-border: 37 99 235 / 0.12;
   --color-status-active: 37 99 235;
+  --color-texto-sobre-fondo-oscuro: 255 255 255;  /* DIS-048: texto del chip sobre fondo libre oscuro (>= 4,5:1) */
+  --color-texto-sobre-fondo-claro: 0 0 0;         /* DIS-048: texto del chip sobre fondo libre claro (>= 4,5:1) */
 
 
   /* ─────────────────────────────────────────────
@@ -274,6 +276,8 @@
     --color-ntf-text-editor: 96 165 250;
     --color-ntf-text-subject: 147 197 253;
     --color-status-active: 52 211 153;
+    --color-texto-sobre-fondo-oscuro: 255 255 255;  /* DIS-048: texto del chip sobre fondo libre oscuro (>= 4,5:1) */
+    --color-texto-sobre-fondo-claro: 0 0 0;         /* DIS-048: texto del chip sobre fondo libre claro (>= 4,5:1) */
   }
 }
 
@@ -352,6 +356,8 @@ html.dark {
   --color-ntf-text-editor: 96 165 250;
   --color-ntf-text-subject: 148 163 184;
   --color-status-active: 52 211 153;
+  --color-texto-sobre-fondo-oscuro: 255 255 255;  /* DIS-048: texto del chip sobre fondo libre oscuro (>= 4,5:1) */
+  --color-texto-sobre-fondo-claro: 0 0 0;         /* DIS-048: texto del chip sobre fondo libre claro (>= 4,5:1) */
 }
 
 
@@ -436,6 +442,8 @@ html.theme-emerald-light {
   --color-ntf-text-subject: 4 120 87;   /* DIS-002: Emerald-700 (Emerald-600 3.77:1) */
   --color-ntf-border: 5 150 105 / 0.12;
   --color-status-active: 4 120 87;      /* DIS-002: Emerald-700 */
+  --color-texto-sobre-fondo-oscuro: 255 255 255;  /* DIS-048: texto del chip sobre fondo libre oscuro (>= 4,5:1) */
+  --color-texto-sobre-fondo-claro: 0 0 0;         /* DIS-048: texto del chip sobre fondo libre claro (>= 4,5:1) */
 }
 
 
@@ -533,6 +541,8 @@ html.theme-obsidian-dark {
   --color-ntf-text-editor: 161 161 170;
   --color-ntf-text-subject: 161 161 170;
   --color-status-active: 74 222 128;
+  --color-texto-sobre-fondo-oscuro: 255 255 255;  /* DIS-048: texto del chip sobre fondo libre oscuro (>= 4,5:1) */
+  --color-texto-sobre-fondo-claro: 0 0 0;         /* DIS-048: texto del chip sobre fondo libre claro (>= 4,5:1) */
 }
 
 
@@ -617,6 +627,8 @@ html.theme-rose-light {
   --color-ntf-text-subject: 190 18 60;  /* DIS-002: Rose-700 (Rose-500 3.67:1) */
   --color-ntf-border: 244 63 94 / 0.12;
   --color-status-active: 190 18 60;     /* DIS-002: Rose-700 */
+  --color-texto-sobre-fondo-oscuro: 255 255 255;  /* DIS-048: texto del chip sobre fondo libre oscuro (>= 4,5:1) */
+  --color-texto-sobre-fondo-claro: 0 0 0;         /* DIS-048: texto del chip sobre fondo libre claro (>= 4,5:1) */
 }
 
 
@@ -714,4 +726,6 @@ html.theme-violet-dark {
   --color-ntf-text-editor: 167 139 250;
   --color-ntf-text-subject: 167 139 250;
   --color-status-active: 52 211 153;
+  --color-texto-sobre-fondo-oscuro: 255 255 255;  /* DIS-048: texto del chip sobre fondo libre oscuro (>= 4,5:1) */
+  --color-texto-sobre-fondo-claro: 0 0 0;         /* DIS-048: texto del chip sobre fondo libre claro (>= 4,5:1) */
 }

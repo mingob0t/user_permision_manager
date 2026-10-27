@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { Platform } from '@/lib/types';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
+import { atributoTexto, variablesChipPlataforma } from '@/lib/color-legible';
 import { variablesCss } from '@/lib/variables-css';
 import { ACCION_FILA, ACCION_FILA_PELIGRO } from '../acciones-fila';
 import { rutaHistorialPlataforma } from '../audit/audit-routes';
@@ -26,7 +27,8 @@ export function columnasPlataformas({
         <div className="flex items-center gap-2">
           <span
             className="nx-chip-solid grid h-7 w-7 shrink-0 place-items-center rounded text-xs font-semibold"
-            style={variablesCss({ '--chip-bg': platform.bg_color, '--chip-fg': platform.text_color })}
+            data-texto={atributoTexto(platform.bg_color)}
+            style={variablesCss(variablesChipPlataforma(platform.bg_color))}
             aria-hidden
           >
             {platform.name.slice(0, 2).toUpperCase()}

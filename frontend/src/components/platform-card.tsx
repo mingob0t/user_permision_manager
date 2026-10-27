@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
+import { atributoTexto, variablesChipPlataforma } from '@/lib/color-legible';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Platform } from '@/lib/types';
 import { variablesCss } from '@/lib/variables-css';
@@ -57,7 +58,8 @@ export function PlatformCard({
       <div className="flex items-start justify-between gap-3">
         <span
           className="nx-chip-solid grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-semibold"
-          style={variablesCss({ '--chip-bg': platform.bg_color, '--chip-fg': platform.text_color })}
+          data-texto={atributoTexto(platform.bg_color)}
+          style={variablesCss(variablesChipPlataforma(platform.bg_color))}
           aria-hidden
         >
           {platform.name.slice(0, 2).toUpperCase()}
