@@ -20,7 +20,9 @@ frontend/src/
 │   ├── types.ts    # Contrato de tipos con la API
 │   ├── access/     # Cliente y tipos del gestor de accesos por sección (FNC-069)
 │   ├── use-async.ts# Hook de carga con estado loading/error y reload()
-│   └── use-polling.ts# useAsync con refresco periódico (ADR-006, FNC-071)
+│   ├── use-polling.ts# useAsync con refresco periódico (ADR-006, FNC-071)
+│   ├── use-focus-trap.ts# Trampa de foco de Modal y menú móvil (DIS-031)
+│   └── use-scroll-lock.ts# Bloqueo de scroll con clase en <html> (DIS-038)
 └── styles/         # tokens.css, global.css, components.css (portados del portal original)
 ```
 
@@ -71,12 +73,13 @@ Definido en `components/app-shell.tsx` (`NAV`, FNC-070). La misma lista (`Nav`) 
 | Componente | Archivo | Rol |
 |---|---|---|
 | `AppShell` | `app-shell.tsx` | Marco: barra lateral (`md` y mayores), cabecera con menú móvil, nombre, rol y "Salir"; estados de carga y error de sesión. |
-| `MobileMenu` | `mobile-menu.tsx` | Bajo `md`: botón "Menú" (`aria-expanded`, `aria-controls`) y panel `role="dialog"` con la misma `Nav` por rol; cierra con Escape, al elegir opción y con clic fuera; foco al primer enlace, de vuelta al botón y atrapado con Tab; áreas de 48 px. Trampa de foco local hasta DIS-031 (DIS-025). |
+| `MobileMenu` | `mobile-menu.tsx` | Bajo `md`: botón "Menú" (`aria-expanded`, `aria-controls`) y panel `role="dialog"` con la misma `Nav` por rol; cierra con Escape, al elegir opción y con clic fuera; foco al primer enlace, de vuelta al botón y atrapado con Tab (`useFocusTrap`, DIS-031); velo `bg-overlay` y bloqueo de scroll por clase (DIS-038); áreas de 48 px (DIS-025). |
 | `SessionProvider` / `useSession` | `session-provider.tsx` | Pide `/me` una vez; sin sesión redirige a `/login`. |
 | `RequireRole` / `meetsRequirement` | `require-role.tsx` | Guarda de ruta y regla de visibilidad por rol (FNC-070). |
 | `RoleSummary`, `gruposDelResumen`, `RUTAS_INICIO` | `home/role-summary.tsx` | Resumen de inicio por rol: grupos de contadores según los campos del contrato `inicio.md`; cada contador es `StatTile` dentro de `Link` con nombre accesible "Etiqueta: n. Ir a Pantalla"; carga, vacío (usuario: enlace al catálogo) y error con Reintentar (DIS-024). |
 | `Card`, `PanelHeader`, `StatTile`, `Spinner`, `ErrorNote`, `EmptyNote`, `Badge` | `ui.tsx` | Piezas base con clases del portal original (estados de carga, vacío y error). |
-| `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). |
+| `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `Modal`, `ConfirmDialog` | `form.tsx` | Controles de formulario y modales (`.nexus-btn`, `.nexus-checkbox`, `.nx-modal-glass`). `Modal`: foco inicial en el primer campo (o el panel), atrapado con Tab y devuelto al cerrar, `describedBy` para el texto que explica la acción, ✕ de 48 px (DIS-031); velo `bg-overlay` (`--color-overlay`) y bloqueo de scroll con la clase `scroll-bloqueado` en `<html>` (DIS-038). Confirmaciones destructivas con `variant="danger"` (rechazar, revocar, quitar admin, eliminar, `ConfirmDialog`); las demás, primario (DIS-043). |
+| `useFocusTrap`, `useScrollLock` | `lib/use-focus-trap.ts`, `lib/use-scroll-lock.ts` | Trampa de foco y bloqueo de desplazamiento comunes de `Modal` y `MobileMenu` (DIS-031, DIS-038). |
 | `PlatformCard` | `platform-card.tsx` | Tarjeta de plataforma con favorito y apertura del enlace (solo `https://`, `enlaceSeguro`). |
 | `PlatformForm`, `PlatformIntegrationFields`, `PlatformSaveNotice`, `field-notes`, `platform-payload`, `platform-save-errors` | `platforms/` | Formulario, sección Integración, aviso con `warnings` (región `status`), errores por campo con `aria-describedby` y foco, validación y cuerpo por rol (DIS-017). |
 | `RequestCatalog`, `RequestCatalogCard`, `RequestFormModal`, `AccessStatusBadge`, `describeRequestError` | `access/` | Catálogo solicitable, tarjeta con estado y motivo sin acción, modal con nivel y justificación (≤ 500, `aria-describedby`, foco), insignia de estado de acceso reutilizable y mensajes de `POST /access-requests` (DIS-013). |
