@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | solicitudes |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `dis/DIS-050-anunciar-cambios-de-estado` |
 | **Creada** | 2026-10-27 |
 
@@ -48,3 +48,5 @@
 - H2: un texto vacío no se anuncia; sin acceso derivado ya no sale «Acceso a X: ».
 - Decisión del orquestador (pendiente de validar en la prueba de concepto): la etiqueta del filtro es la de la lista desplegable (en solicitudes, singular: «Pendiente»).
 - Pruebas: `tests/lib/use-cambios-de-estado.test.ts` (4) y 3 casos nuevos en `anuncio-de-estado.test.tsx`. typecheck 0, lint 0, vitest 0 (1532), build 0.
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado tras corregir H1 (salida del filtro) y H2 (texto vacío) en `094f80f`. Residual menor: en páginas > 1, si sale del filtro un elemento de otra página, se anuncia la salida del que se desplazó (opción: anunciar salidas solo en la página 1). La salida dice el filtro, no el estado nuevo. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin probar con lector de pantalla real.
