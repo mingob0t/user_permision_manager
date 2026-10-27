@@ -10,6 +10,7 @@
 import {
   Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
+import { useState } from 'react';
 import { api } from '@/lib/api';
 import type { Stats } from '@/lib/types';
 import { useAsync } from '@/lib/use-async';
@@ -21,6 +22,7 @@ import { Card, ErrorNote, Spinner, StatTile } from './ui';
 export function Dashboard() {
   const { session } = useSession();
   const { data: stats, loading, error } = useAsync(() => api.stats(), []);
+  const [resumenFallo, setResumenFallo] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -33,11 +35,11 @@ export function Dashboard() {
         </p>
       </div>
 
-      <RoleSummary />
+      <RoleSummary onFallo={setResumenFallo} />
 
       {loading ? <Spinner /> : null}
       {error ? <ErrorNote message={error} /> : null}
-      {stats ? <Estadisticas stats={stats} /> : null}
+      {stats ? <Estadisticas stats={stats} resumenFallo={resumenFallo} /> : null}
     </div>
   );
 }
@@ -52,21 +54,21 @@ const TOKENS_GRAFICA = {
 };
 
 /** Contadores, gráfica y más visitadas de `/stats`. */
-function Estadisticas({ stats }: { stats: Stats }) {
-  const { session } = useSession();
+function Estadisticas({ stats, resumenFallo }: { stats: Stats; resumenFallo: boolean }) {
+  const { session, loading: cargandoSesion } = useSession();
   const colores = useTokenColors(TOKENS_GRAFICA);
   const byArea = stats.platforms_by_area.filter((row) => row.count > 0);
-  // DIS-037: el resumen por rol ya muestra Áreas y Plataformas a quien administra.
-  const resumenLasMuestra = Boolean(
-    session?.permissions.is_admin || session?.permissions.is_area_admin,
-  );
+  // DIS-037: el resumen por rol ya muestra Áreas y Plataformas a quien administra. No se muestran
+  // hasta conocer el rol (sin saltos) y reaparecen si el resumen falla (respaldo).
+  const administra = Boolean(session?.permissions.is_admin || session?.permissions.is_area_admin);
+  const verAreasYPlataformas = !cargandoSesion && (!administra || resumenFallo);
 
   return (
     <>
       <h2 className="text-lg font-semibold">Actividad del portal</h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {resumenLasMuestra ? null : <StatTile label="Áreas" value={stats.areas} />}
-        {resumenLasMuestra ? null : <StatTile label="Plataformas" value={stats.platforms} />}
+        {verAreasYPlataformas ? <StatTile label="Áreas" value={stats.areas} /> : null}
+        {verAreasYPlataformas ? <StatTile label="Plataformas" value={stats.platforms} /> : null}
         <StatTile label="Visitas" value={stats.visits} />
         {stats.users !== undefined ? (
           <StatTile label="Usuarios" value={stats.users} />

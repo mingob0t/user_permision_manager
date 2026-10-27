@@ -27,6 +27,8 @@
 - Se retiran "Áreas" y "Plataformas" de "Actividad del portal" para `is_admin` e `is_area_admin`: el resumen (`totals`) ya los muestra en "Todo el sistema" / "Tus áreas", con enlace a su pantalla
 - Se conservan para el usuario sin rol de administración, cuyo resumen no trae totales: así no se pierde información
 - Se conservan "Visitas", "Usuarios" (si llega), "Más visitadas" y la gráfica; `/stats` no cambia
+- Sin salto: Áreas y Plataformas no se muestran hasta conocer el rol (sesión cargada); `RoleSummary` avisa con `onFallo` si el resumen falla y entonces el admin los recupera de `/stats` (respaldo). Decisión del orquestador (pendiente de validar en la prueba de concepto)
+- Para validar por el dueño (auditor, D1): para el admin de área, "Plataformas" del resumen (solo sus áreas) puede ser menor que el de `/stats` (suma accesos activos en otras áreas)
 - Pruebas: admin y admin de área sin duplicados; usuario conserva los dos contadores
 
 ## Impacto en elementos compartidos (`impacto.py`, contra `develop`)

@@ -11,6 +11,7 @@
  */
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { homeApi } from '@/lib/access/home';
 import type { HomeSummary } from '@/lib/access/types';
 import { usePolling } from '@/lib/use-polling';
@@ -172,7 +173,8 @@ function Contenido({ resumen }: { resumen: HomeSummary }) {
   );
 }
 
-export function RoleSummary() {
+/** `onFallo` avisa si el resumen no se pudo cargar (DIS-037: respaldo del Panel). */
+export function RoleSummary({ onFallo }: { onFallo?: (fallo: boolean) => void }) {
   const { session } = useSession();
   const resumen = usePolling(
     () => homeApi.summary().catch((err: unknown) => {
@@ -181,6 +183,10 @@ export function RoleSummary() {
     { intervalSeconds: session?.preferences.refresh_interval },
   );
   const data = resumen.data;
+  const fallo = Boolean(resumen.error) && !data;
+  useEffect(() => {
+    onFallo?.(fallo);
+  }, [fallo, onFallo]);
 
   return (
     <section aria-labelledby={TITULO_ID} className="space-y-4">

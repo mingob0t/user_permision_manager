@@ -11,12 +11,19 @@ import { useEffect, useState } from 'react';
 
 export type ColoresDeToken<K extends string> = Record<K, string>;
 
+/** Valor de token a color CSS: hex y funciones de color tal cual; "r g b [/ a]" dentro de `rgb()`. */
+export function aColor(valor: string): string {
+  const v = valor.trim();
+  if (!v) return 'currentColor';
+  if (v.startsWith('#') || /^[a-z-]+\(/i.test(v)) return v;
+  return `rgb(${v})`;
+}
+
 function leer<K extends string>(tokens: Record<K, string>): ColoresDeToken<K> {
   const estilo = getComputedStyle(document.documentElement);
   const colores = {} as ColoresDeToken<K>;
   for (const clave of Object.keys(tokens) as K[]) {
-    const valor = estilo.getPropertyValue(tokens[clave]).trim();
-    colores[clave] = valor ? `rgb(${valor})` : 'currentColor';
+    colores[clave] = aColor(estilo.getPropertyValue(tokens[clave]));
   }
   return colores;
 }
