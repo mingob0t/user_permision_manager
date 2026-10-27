@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | pruebas |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-13 |
 
 ## Contexto
@@ -29,3 +29,5 @@
 
 ## Impacto en elementos compartidos
 - `tests/directory/conftest.py` y `tests/directorio_falso.py`: lo usan las pruebas de `tests/directory/`, login, usuarios, plataformas, accesos y secretos; todas pasan.
+
+- 2026-10-27: verificado por el orquestador: sin cambios en `app/`; pytest antes y después 2397 passed, 15 xfailed, código 0 en ambos. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
