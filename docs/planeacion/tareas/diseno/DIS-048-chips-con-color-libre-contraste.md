@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `dis/DIS-048-chips-contraste` |
 | **Creada** | 2026-10-27 |
 
@@ -48,3 +48,5 @@
 
 ## Bitácora
 - 2026-10-27: implementada la opción A; En revisión.
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado, medido con WCAG en los 7 temas: chip de área ≥ 9,49:1 con 10 colores extremos (`#6366f1` 12,2–15,2:1); ícono ≥ 4,58:1 en toda la malla RGB. Observación opcional: el borde del tinte y el fondo del ícono pueden no distinguirse del panel (son decorativos, `aria-hidden`); si el dueño quiere delimitarlos, `outline` de 1 px con `--color-panel-border`. Pendiente del dueño: pruebas del parser hex (`color-legible-hex.PENDIENTE.test.tsx`, sin versionar). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
