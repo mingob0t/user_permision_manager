@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | global |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | desarrollador |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
@@ -70,3 +70,5 @@ No verificado en navegador ni con lector de pantalla.
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-27 | Aprobada en modo autónomo; revisada contra develop: 3 de 4 puntos ya resueltos. Se agrega texto sr-only del tipo (`Éxito`/`Error`/`Advertencia`/`Información`) y `tests/components/semantica-accesible.test.tsx` |
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado; confirmó por grep y lectura los 3 puntos ya resueltos en develop. Hueco menor: la prueba nueva de nombres contextuales cubre Áreas; Usuarios y Plataformas dependen de sus pruebas previas. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
