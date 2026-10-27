@@ -95,7 +95,7 @@ Levantados del código y de `deploy/preflight.sh` en FNC-001.
 | Python | 3.11 con módulo `venv` | 3.11 o 3.12; Rocky 8 trae 3.6, se instala `python311` de AppStream si no hay otro |
 | Node.js / npm | 18.18 | 22 LTS (Next.js 15) |
 | Base de datos | MySQL (BD objetivo, ADR-001) accesible por nombre de host | El código usa PyMySQL; SQLite solo como respaldo en dev |
-| Cliente `mysql` | — | Necesario para aplicar `utils/migrations/*.sql` |
+| Cliente `mysql` | — | Útil para respaldar la base antes de migrar |
 | Redis | Opcional | La app arranca sin él; hoy no tiene uso funcional |
 | Reverse proxy | nginx con TLS en el mismo dominio para API y frontend | SELinux `httpd_can_network_connect` activo; firewalld con `http`/`https` |
 | Autenticación | Authelia y OpenLDAP existentes, accesibles por nombre de host | Authelia vía `auth_request` en nginx; LDAP solo lectura |

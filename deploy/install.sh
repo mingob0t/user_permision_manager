@@ -27,7 +27,7 @@
 #   5. Unidades systemd (backend, frontend y worker de aprovisionamiento)
 #   6. nginx como reverse proxy, con SELinux y firewalld
 #
-# No toca la base de datos: las migraciones de utils/migrations se aplican a mano.
+# No toca la base de datos: las migraciones (Alembic) se aplican aparte.
 
 set -Eeuo pipefail
 
@@ -375,7 +375,7 @@ Instalación terminada.
 
 Pendiente:
   1. Migraciones, si es una actualización (después reiniciar backend y worker):
-       cd ${PREFIX} && mysql -u USUARIO -p BASE < utils/migrations/00X_*.sql
+       cd ${PREFIX} && venv/bin/alembic upgrade head   (BD existente de NEXUS: antes, una vez, alembic stamp 0001)
   2. Certificados y server_name en /etc/nginx/conf.d/nexus.conf
   3. Comprobar:  curl -s localhost:5001/api/v1/auth/context
                  curl -s -o /dev/null -w '%{http_code}\\n' localhost:3000/login

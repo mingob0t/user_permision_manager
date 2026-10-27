@@ -1,7 +1,7 @@
 """Línea base: esquema actual completo (equivale a `db.create_all()` de hoy).
 
 - BD nueva: `alembic upgrade head` crea todas las tablas.
-- BD existente de NEXUS (creada con `create_all()` y `utils/migrations/001-004`):
+- BD existente de NEXUS (creada con `create_all()` y los SQL sueltos 001-004, retirados en FNC-028):
   no se aplica; se marca con `alembic stamp 0001` (docs/backend/README.md §7).
 
 Revision ID: 0001

@@ -214,13 +214,7 @@ No las aplica el instalador. Desde FNC-039 se usa Alembic: respaldo,
 (`sudo systemctl restart nexus-backend nexus-worker`). Una BD existente se
 marca una vez con `venv/bin/alembic stamp 0001` (ver `docs/backend/README.md` §7).
 
-Histórico (anterior a Alembic; ya incluido en la línea base `0001`):
-
-```bash
-mysql -u USUARIO -p BASE < utils/migrations/002_drop_drive.sql
-venv/bin/python utils/migrations/003_logo_to_db.py
-mysql -u USUARIO -p BASE < utils/migrations/004_drop_access_requests.sql
-```
+Los SQL sueltos de `utils/migrations/001-004` se retiraron en FNC-028: la línea base `0001` ya contiene su efecto. Si un portal heredado aún guarda el logo como ruta `/assets/...` en `system_config.portal_icon`, hay que volver a subirlo desde Ajustes.
 
 ## Correo (SMTP)
 
