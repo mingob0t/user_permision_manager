@@ -26,19 +26,19 @@ cliente ──HTTPS 443──> nginx ──(auth_request)──> Authelia (exist
 
 ## Sistema operativo y requisitos
 
-Rocky Linux 8 (familia RHEL 8). Requisitos mínimos en `docs/REQUERIMIENTOS.md` §7. `install.sh` no instala MySQL, Redis, Authelia ni OpenLDAP: se consideran servicios existentes.
+Rocky/RHEL 8 o 9 (familia RHEL; el destino previsto es el9). Requisitos mínimos en `docs/REQUERIMIENTOS.md` §7. `install.sh` no instala MySQL, Redis, Authelia ni OpenLDAP: se consideran servicios existentes.
 
 ## Preflight (`deploy/preflight.sh`)
 
 Evaluación previa que **no modifica nada**; termina con código 1 si hay algo bloqueante. Comprueba:
 
-1. Distribución (RHEL 8 compatible; RHEL 9 con aviso) y arquitectura.
+1. Distribución (familia RHEL 8 o 9) y arquitectura.
 2. Privilegios (root o sudo).
 3. Recursos: 2 GB de disco y 1 GB de RAM.
 4. Python ≥ 3.11 con `venv` (busca intérpretes ya instalados).
 5. Node `^22.13.0 || >=24.0.0` (el rango de `engines` de `frontend/package.json`; FNC-073) y npm, y disponibilidad del módulo `nodejs:22`.
 6. Cabeceras de compilación y salida a Internet (directa o por `PROXY_URL`, con credenciales enmascaradas).
-7. Conectividad real a la BD y a Redis leyendo `DB_HOST`/`DB_PORT`/`REDIS_HOST`/`REDIS_PORT` del `.env`, y que `SECRET_KEY` esté definida. Desde FNC-067 Redis es **bloqueante**: no responde, `REDIS_HOST` es una IP o `REDIS_PASS` está vacía → `FALTA` (el worker no arrancaría).
+7. Conectividad real a la BD y a Redis leyendo `DB_HOST`/`DB_PORT`/`REDIS_HOST`/`REDIS_PORT` del `.env`, y que `SECRET_KEY` esté definida; informa el servicio de BD local detectado (FNC-125). Desde FNC-067 Redis es **bloqueante**: no responde, `REDIS_HOST` es una IP o `REDIS_PASS` está vacía → `FALTA` (el worker no arrancaría).
 8. Puertos 5001 y 3000 libres.
 9. nginx (`nginx -t`, `/etc/nginx/conf.d`).
 10. SELinux (`httpd_can_network_connect`) y firewalld (`https`).
@@ -46,14 +46,14 @@ Evaluación previa que **no modifica nada**; termina con código 1 si hay algo b
 
 ## Instalación (`deploy/install.sh`)
 
-Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defecto `/opt/<nombre>`), `--logdir` (por defecto `/var/log/<nombre>`), `--title`, `--user`, `--create-user`, `--domain`, `--python`, `--proxy`, `--no-proxy`, `--skip-packages`.
+Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defecto `/opt/<nombre>`), `--logdir` (por defecto `/var/log/<nombre>`), `--title`, `--user`, `--create-user`, `--domain`, `--python`, `--proxy`, `--no-proxy`, `--db-service` (FNC-125), `--skip-packages`.
 
 1. Paquetes del sistema: Python 3.11 si no hay uno válido, Node 22 (AppStream o NodeSource) si el presente no cumple `^22.13.0 || >=24.0.0` (con `--skip-packages` solo lo comprueba), nginx y cabeceras de compilación.
 2. Cuenta de servicio: usa la indicada (o quien invoca sudo); solo la crea con `--create-user`.
-3. Copia del proyecto al prefijo; el `.env` queda legible solo por la cuenta de servicio.
+3. Copia del proyecto al prefijo sin tocar lo local (`.env`, `instance/`, `backups/`, `uploads/`, `storage/`, `logs/`); el `.env` solo se copia del origen si el prefijo no tiene uno, y queda legible solo por la cuenta de servicio (FNC-125).
 4. Backend: `venv` y `pip install -r requirements.txt`.
 5. Frontend: `npm ci`, `npm run build` y copia de estáticos a `.next/standalone`.
-6. Unidades systemd a partir de las plantillas: backend, frontend y worker (`reset-failed` del worker antes de `enable --now`).
+6. Unidades systemd a partir de las plantillas: backend, frontend y worker, con el servicio de BD local detectado (`mysqld`, `mariadb` o `mysql`) o el de `--db-service` en `After=`/`Wants=`; sin BD local, sin esa dependencia (FNC-125) (`reset-failed` del worker antes de `enable --now`).
 7. nginx en `/etc/nginx/conf.d/<nombre>.conf`, SELinux y firewalld.
 
 **No aplica migraciones**: se ejecuta `venv/bin/alembic upgrade head` a mano antes de reiniciar (ver `docs/backend/README.md` §7). Los SQL sueltos `utils/migrations/` se retiraron en FNC-028 (la línea base `0001` ya los incluye).
@@ -62,9 +62,9 @@ Idempotente; se repite para actualizar. Opciones: `--name`, `--prefix` (por defe
 
 | Unidad | Proceso | Escucha | Detalles |
 |---|---|---|---|
-| `<nombre>-backend` | `venv/bin/gunicorn run:app`, 4 workers, timeout 120 s | loopback:5001 | `EnvironmentFile=<prefijo>/.env`; logs `access.log` y `error.log` en el directorio de registros; `After=mysql.service`; endurecido (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges`; solo escribe en el directorio de registros). |
+| `<nombre>-backend` | `venv/bin/gunicorn run:app`, 4 workers, timeout 120 s | loopback:5001 | `EnvironmentFile=<prefijo>/.env`; logs `access.log` y `error.log` en el directorio de registros; `After=` el servicio de BD local (FNC-125); endurecido (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges`; solo escribe en el directorio de registros). |
 | `<nombre>-frontend` | `node server.js` en `frontend/.next/standalone` | loopback:3000 | `NODE_ENV=production`, `PORT=3000`, `HOSTNAME` en loopback; depende del backend; mismo endurecimiento. |
-| `<nombre>-worker` (FNC-067) | `venv/bin/flask --app run:app provisioning worker` (FNC-049) | no escucha | Misma cuenta y mismo `.env`; `After=` red, `mysql.service` y `redis.service`; `KillSignal=SIGTERM` (termina el intento en curso) y `TimeoutStopSec=630` (máximo de `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS` + 30 s); `Restart=on-failure` cada 30 s, máx. 10 en 15 min y luego `failed`; registros en journald; endurecido como el backend más `PrivateDevices`, kernel y cgroups protegidos, sin capacidades y solo `AF_UNIX`/`AF_INET`/`AF_INET6`. Sin `REDIS_PASS` o sin Redis sale con código 1. |
+| `<nombre>-worker` (FNC-067) | `venv/bin/flask --app run:app provisioning worker` (FNC-049) | no escucha | Misma cuenta y mismo `.env`; `After=` red, servicio de BD local (FNC-125) y `redis.service`; `KillSignal=SIGTERM` (termina el intento en curso) y `TimeoutStopSec=630` (máximo de `PROVISIONING_ATTEMPT_TIMEOUT_SECONDS` + 30 s); `Restart=on-failure` cada 30 s, máx. 10 en 15 min y luego `failed`; registros en journald; endurecido como el backend más `PrivateDevices`, kernel y cgroups protegidos, sin capacidades y solo `AF_UNIX`/`AF_INET`/`AF_INET6`. Sin `REDIS_PASS` o sin Redis sale con código 1. |
 
 ## Promoción de un cambio
 

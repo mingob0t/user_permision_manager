@@ -15,7 +15,7 @@ bajo el mismo dominio a propósito: así la cookie de sesión que emite Flask
 llega al frontend sin CORS, y Authelia sigue siendo la autoridad de
 autenticación.
 
-## Instalación automatizada (Rocky Linux 8)
+## Instalación automatizada (Rocky/RHEL 8 o 9)
 
 ```bash
 ./deploy/preflight.sh                              # evaluación, no modifica nada
@@ -30,6 +30,8 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 - Cabeceras de compilación (`gcc`, `openssl-devel`, `libffi-devel`,
   `openldap-devel`), que `cryptography` y `ldap3` necesitan si no hay rueda
   binaria para la plataforma
+- Servicio de BD local detectado (`mysqld`, `mariadb` o `mysql`), o ninguno
+  si la BD es remota
 - Conectividad real con la base de datos y con Redis, leyendo `.env`; Redis
   es **obligatorio** (lo exige el worker), `REDIS_HOST` debe ser un nombre de
   host y `REDIS_PASS` debe tener valor (no se imprime)
@@ -38,8 +40,23 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 - nginx, SELinux (`httpd_can_network_connect`) y firewalld
 
 `install.sh` acepta `--prefix` (por defecto `/opt/nexus`), `--user`,
-`--domain`, `--python`, `--proxy`, `--no-proxy`, `--create-user` y
+`--domain`, `--python`, `--proxy`, `--no-proxy`, `--db-service`, `--create-user` y
 `--skip-packages`. Es idempotente: repetirlo actualiza la instalación.
+
+### El `.env` vive en el prefijo
+
+- El instalador **nunca sobrescribe ni borra** `<prefijo>/.env` (FNC-125).
+- Si el prefijo no tiene `.env` y la carpeta clonada sí, se copia **una sola vez** (permisos 600).
+- La copia (`rsync --delete`) tampoco toca lo local del prefijo: `.env.*` (salvo `.env.example`), `instance/`, `backups/`, `uploads/`, `storage/` y `logs/`.
+- Prueba: `pytest tests/deploy/test_copia_proyecto_sh.py`.
+
+### Servicio de la base de datos
+
+- Backend y worker arrancan después del servicio de BD local: `@DB_SERVICE@` en las plantillas (FNC-125).
+- Detección, en este orden: `mysqld.service`, `mariadb.service`, `mysql.service` (los alias no cuentan).
+- Sin ninguno (BD remota): la dependencia se quita de `After=`/`Wants=`.
+- Forzarlo: `--db-service mariadb` (o `DB_SERVICE=mariadb`); se valida como nombre de unidad.
+- Prueba: `pytest tests/deploy/test_servicio_bd_sh.py`.
 
 ### Nombre del despliegue
 
@@ -120,7 +137,7 @@ export PROXY_URL='http://usuario:clave@proxy.empresa.com:3128'
 sudo -E ./deploy/install.sh --domain nexus.ejemplo.com
 ```
 
-### Notas propias de Rocky 8
+### Notas propias de Rocky/RHEL 8
 
 - **Python**: el proyecto funciona con 3.11 o superior, y el instalador
   reutiliza el intérprete que ya haya en el servidor para no acumular
@@ -133,6 +150,13 @@ sudo -E ./deploy/install.sh --domain nexus.ejemplo.com
   y responde 502 sin explicación clara. El script activa
   `httpd_can_network_connect`.
 - **firewalld** suele venir activo: el script permite `http` y `https`.
+
+### Notas propias de RHEL 9 (el9)
+
+- **Servicios**: MySQL es `mysqld.service`, MariaDB `mariadb.service` y Redis `redis.service`; el instalador detecta el de la BD.
+- **Python 3.12**: paquete `python3.12` (no es módulo); si `cryptography` no trae rueda para la plataforma, instalar `python3.12-devel`.
+- **Node 24** en `/usr/bin/node` cumple el rango; el instalador no instala otro.
+- **Redis 6.2**: la configuración está en `/etc/redis/redis.conf` o `/etc/redis.conf` según el paquete (`requirepass` y `bind` de loopback van ahí).
 
 ## Instalación manual
 
@@ -170,7 +194,7 @@ misma cuenta de servicio y el mismo `.env` que el backend.
 |---|---|
 | Requisitos | MySQL migrado, Redis con `requirepass` y `REDIS_PASS` en el `.env` (SEG-29); sin ellos sale con código 1 |
 | Redis | En el mismo servidor, escuchando **solo en loopback** y con `REDIS_HOST=localhost` (SEC-CFG-08) |
-| Orden de arranque | Después de la red, `mysql.service` y `redis.service` (si están en el mismo servidor) |
+| Orden de arranque | Después de la red, el servicio de BD local detectado (`mysqld`, `mariadb` o `mysql`; ninguno si es remota) y `redis.service` |
 | Reinicio | `Restart=on-failure` cada 30 s; tras 10 fallos en 15 min queda en `failed` |
 | Apagado | `SIGTERM` termina el intento en curso; `TimeoutStopSec=630` (600 s máx. de intento + 30 s de margen) y después `SIGKILL` |
 | Registros | journald: `journalctl -u <nombre>-worker -f` |
@@ -192,7 +216,7 @@ la BD y se retoman al volver a arrancarlo).
 
 ### Servicios y nginx
 
-En `deploy/` solo hay **plantillas**; `install.sh` las rellena y las instala. A mano, sustituir los marcadores `@...@` (por ejemplo `@APP_NAME@`, `@PREFIX@`) con los mismos valores que usaría `install.sh`:
+En `deploy/` solo hay **plantillas**; `install.sh` las rellena y las instala. A mano, sustituir los marcadores `@...@` (por ejemplo `@APP_NAME@`, `@PREFIX@`, `@DB_SERVICE@`) con los mismos valores que usaría `install.sh`; sin BD local, quitar `@DB_SERVICE@` de `After=`/`Wants=` (y la línea `Wants=` si queda vacía):
 
 | Plantilla | Destino |
 |---|---|

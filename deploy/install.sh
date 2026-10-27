@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 #
-# Instalación de Nexus en Rocky Linux 8.
+# Instalación de Nexus en Rocky/RHEL 8 o 9.
 #
 #   sudo ./deploy/install.sh [--name miapp] [--prefix /opt/miapp] [--user cuenta]
 #                            [--domain nexus.example.com] [--python /usr/bin/python3.11]
 #                            [--proxy http://proxy:3128] [--no-proxy localhost,.intranet.example]
+#                            [--db-service mariadb]
 #
 # --name define el nombre del despliegue: unidades NOMBRE-backend,
 # NOMBRE-frontend y NOMBRE-worker, prefijo /opt/NOMBRE, registros /var/log/NOMBRE y
@@ -15,6 +16,10 @@
 # --create-user el script la crea si no está.
 #
 # Usa el Python del sistema si es 3.11 o superior; solo instala uno si no hay.
+#
+# Las unidades arrancan después del servicio de la BD local, que se detecta
+# (mysqld, mariadb o mysql); --db-service lo fuerza. Sin BD local no dependen
+# de ninguno.
 #
 # Ejecutar antes ./deploy/preflight.sh: este script asume que la evaluación pasó.
 # Es idempotente: se puede repetir para actualizar una instalación existente.
@@ -56,6 +61,9 @@ NODE_MIN_MINOR=13              # menor mínima dentro de NODE_MAJOR
 NODE_NEXT_MAJOR=24             # primera mayor posterior que se acepta completa
 NODE_RANGO="^${NODE_MAJOR}.${NODE_MIN_MINOR}.0 || >=${NODE_NEXT_MAJOR}.0.0"
 SKIP_PKGS=0
+# Servicio systemd de la BD local para After=/Wants= (FNC-125). Vacío: se
+# detecta; --db-service o DB_SERVICE lo fuerzan.
+DB_SERVICE="${DB_SERVICE:-}"
 # Proxy de salida. Se toma de --proxy o del entorno; vacío = conexión directa.
 PROXY_URL="${PROXY_URL:-${https_proxy:-${HTTPS_PROXY:-${http_proxy:-${HTTP_PROXY:-}}}}}"
 NO_PROXY_LIST="${no_proxy:-${NO_PROXY:-localhost,127.0.0.1,::1}}"
@@ -72,8 +80,9 @@ while [[ $# -gt 0 ]]; do
         --proxy)  PROXY_URL="$2"; shift 2 ;;
         --create-user) CREATE_USER=1; shift ;;
         --no-proxy) NO_PROXY_LIST="$2"; shift 2 ;;
+        --db-service) DB_SERVICE="$2"; shift 2 ;;
         --skip-packages) SKIP_PKGS=1; shift ;;
-        -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,27p' "$0"; exit 0 ;;
         *) echo "Opción desconocida: $1" >&2; exit 2 ;;
     esac
 done
@@ -92,6 +101,15 @@ FRONTEND_UNIT="${APP_NAME}-frontend"
 WORKER_UNIT="${APP_NAME}-worker"
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# shellcheck source=deploy/servicio_bd.sh
+. "$SRC/deploy/servicio_bd.sh"
+# shellcheck source=deploy/copia_proyecto.sh
+. "$SRC/deploy/copia_proyecto.sh"
+if [[ -n "$DB_SERVICE" ]]; then
+    DB_SERVICE="$(servicio_bd_valido "$DB_SERVICE")" \
+        || { echo "ERROR: --db-service debe ser un nombre de unidad (letras, dígitos, ':', '_', '.', '@' o '-'), p. ej. mariadb" >&2; exit 2; }
+fi
 
 log()  { printf "\n==> %s\n" "$1"; }
 note() { printf "    %s\n" "$1"; }
@@ -183,7 +201,7 @@ else
         "$PY_BIN" -c 'import venv' 2>/dev/null || \
             die "$PY_BIN no tiene el módulo venv; instalar su paquete -devel"
     else
-        # Rocky 8 trae 3.6: hace falta un módulo de AppStream. Se prefiere 3.11
+        # Rocky/RHEL 8 trae 3.6: hace falta un módulo de AppStream. Se prefiere 3.11
         # por ser el mínimo que el proyecto necesita.
         note "no hay Python >= 3.${PY_MIN_MINOR}; instalando python311"
         dnf -y module reset python311 >/dev/null 2>&1 || true
@@ -200,7 +218,7 @@ else
             dnf -y module enable "nodejs:${NODE_MAJOR}"
             dnf -y install nodejs npm
         else
-            # AppStream de Rocky 8 puede no llegar a Node 22; NodeSource sí.
+            # AppStream de Rocky/RHEL 8 o 9 puede no llegar a Node 22; NodeSource sí.
             note "el módulo nodejs:${NODE_MAJOR} no está; usando NodeSource"
             # curl y el script de NodeSource ya ven el proxy por el entorno.
             curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
@@ -245,17 +263,10 @@ mkdir -p "$PREFIX" "$LOGDIR"
 if [[ "$(realpath "$SRC")" == "$(realpath "$PREFIX")" ]]; then
     note "el origen ya es $PREFIX; no se copia"
 else
-    # venv y node_modules no son portables: se recrean en el destino.
-    rsync -a --delete \
-        --exclude 'venv/' \
-        --exclude 'frontend/node_modules/' \
-        --exclude 'frontend/.next/' \
-        --exclude '__pycache__/' \
-        --exclude '*.pyc' \
-        --exclude '.git/' \
-        --exclude 'scratch/' \
-        "$SRC/" "$PREFIX/"
-    note "copiado (sin venv, node_modules, .next ni scratch)"
+    # Sin venv, node_modules, .next ni scratch, y sin tocar lo local del
+    # prefijo (.env, instance/, backups/, uploads/, storage/, logs/): FNC-125.
+    copiar_proyecto "$SRC" "$PREFIX"
+    note "copiado (sin venv, node_modules, .next ni scratch; .env y datos locales del prefijo intactos)"
 fi
 
 if [[ ! -f "$PREFIX/.env" ]]; then
@@ -322,8 +333,17 @@ render() {
         -e "s|@SVC_USER@|${SVC_USER}|g" \
         -e "s|@SVC_GROUP@|${SVC_GROUP}|g" \
         -e "s|@DOMAIN@|${DOMAIN:-_}|g" \
-        "$1"
+        "$1" | aplicar_servicio_bd "$DB_SERVICE"
 }
+
+if [[ -n "$DB_SERVICE" ]]; then
+    note "servicio de BD: $DB_SERVICE (indicado)"
+elif DB_SERVICE="$(detectar_servicio_bd)"; then
+    note "servicio de BD local: $DB_SERVICE (las unidades arrancan después)"
+else
+    DB_SERVICE=""
+    note "sin servicio de BD local (BD remota): las unidades no dependen de ella"
+fi
 
 render "$PREFIX/deploy/backend.service.tmpl"  > "/etc/systemd/system/${BACKEND_UNIT}.service"
 render "$PREFIX/deploy/frontend.service.tmpl" > "/etc/systemd/system/${FRONTEND_UNIT}.service"

@@ -9,6 +9,8 @@
 - Retirados `docs/business_rules.md` y `docs/ARCHITECTURE.md` (contradecían el sistema: prohibían `/api/v1` y SSH); README raíz reescrito para el gestor de accesos y `deploy/README.md` corregido (plantillas reales, sin IPs, `SMTP_*` en VARIABLES.md) (FNC-035, 2026-10-27).
 
 ### Corregido
+- Despliegue: `install.sh` ya no borra ni pisa el `.env` del prefijo al copiar con `rsync --delete` (antes terminaba con «.env no existe»); tampoco toca `.env.*`, `instance/`, `backups/`, `uploads/`, `storage/` ni `logs/` del prefijo, y el `.env` del origen se copia una sola vez si falta (FNC-125, 2026-10-27).
+- Despliegue: las unidades del backend y del worker arrancan después del servicio real de la BD local (`mysqld`, `mariadb` o `mysql`, detectado o con `--db-service`); antes fijaban `mysql.service`, que en RHEL 9 no existe. Sin BD local no dependen de ninguno; `preflight.sh` informa cuál detectó (FNC-125, 2026-10-27).
 - Despliegue: `preflight.sh` e `install.sh` exigen el mismo Node que `engines` de `frontend/package.json` (`^22.13.0 || >=24.0.0`, por Vitest 4 y jsdom 29); antes aceptaban Node 18 y el instalador no cambiaba un Node 18–21 presente (FNC-073, 2026-10-27).
 - Notificaciones: marcar una global como leída ya no la marca para todos los usuarios; la lectura se guarda por usuario en `notification_reads` (migración 0010) y la respuesta de la API mantiene su forma (FNC-031, 2026-10-27).
 

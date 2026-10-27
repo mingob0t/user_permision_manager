@@ -1,11 +1,14 @@
 # Worker de aprovisionamiento de @APP_TITLE@ (FNC-049, ADR-003: Redis + RQ).
 # Lo instala deploy/install.sh. No escucha en ningún puerto: lee la cola de la
 # BD y de Redis y escribe en OpenLDAP o en el conector de cada plataforma.
-# Compatible con systemd 239 (Rocky Linux 8): no usa directivas más nuevas.
+# Compatible con systemd 239 (Rocky/RHEL 8; el9 trae 252): no usa directivas
+# más nuevas.
+# El marcador DB_SERVICE es el servicio de la BD local (mysqld, mariadb o mysql) que detecta
+# install.sh; sin BD local, install.sh quita la dependencia (FNC-125).
 [Unit]
 Description=@APP_TITLE@ Worker de aprovisionamiento (RQ)
-After=network-online.target mysql.service redis.service
-Wants=network-online.target mysql.service redis.service
+After=network-online.target @DB_SERVICE@ redis.service
+Wants=network-online.target @DB_SERVICE@ redis.service
 # Reinicio con freno: hasta 10 arranques fallidos en 15 min; después la unidad
 # queda en `failed` (visible en `systemctl --failed`) en lugar de reintentar
 # sin fin con una configuración rota. Los trabajos no se pierden: la BD es la

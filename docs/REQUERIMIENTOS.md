@@ -91,8 +91,8 @@ Levantados del código y de `deploy/preflight.sh` en FNC-001.
 
 | Componente | Mínimo | Recomendado / notas |
 |---|---|---|
-| Sistema operativo (servidor) | Rocky Linux 8 o familia RHEL 8 (x86_64 o aarch64) | RHEL 9 funciona con avisos; el instalador asume `dnf` |
-| Python | 3.11 con módulo `venv` | 3.11 o 3.12; Rocky 8 trae 3.6, se instala `python311` de AppStream si no hay otro |
+| Sistema operativo (servidor) | Rocky/RHEL 8 o 9 (x86_64 o aarch64) | Destino previsto: el9; el instalador asume `dnf` |
+| Python | 3.11 con módulo `venv` | 3.11 o 3.12; Rocky/RHEL 8 trae 3.6, se instala `python311` de AppStream si no hay otro; en el9, `python3.12` |
 | Node.js / npm | 18.18 | 22 LTS (Next.js 15) |
 | Base de datos | MySQL (BD objetivo, ADR-001) accesible por nombre de host | El código usa PyMySQL; SQLite solo como respaldo en dev |
 | Cliente `mysql` | — | Útil para respaldar la base antes de migrar |
