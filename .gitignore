@@ -44,8 +44,9 @@ id_ed25519*
 backups/
 storage/
 uploads/
-# Logs de ejecución
-/logs/
+# Logs de ejecución (cualquier carpeta logs/); docs/logs/ es la bitácora versionada
+logs/
+!docs/logs/
 # Sistema operativo y editores
 Thumbs.db
 .idea/

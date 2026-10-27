@@ -4,7 +4,7 @@
 #
 #   sudo ./deploy/install.sh [--name miapp] [--prefix /opt/miapp] [--user cuenta]
 #                            [--domain nexus.example.com] [--python /usr/bin/python3.11]
-#                            [--proxy http://proxy:3128] [--no-proxy localhost,10.0.0.0/8]
+#                            [--proxy http://proxy:3128] [--no-proxy localhost,.intranet.example]
 #
 # --name define el nombre del despliegue: unidades NOMBRE-backend,
 # NOMBRE-frontend y NOMBRE-worker, prefijo /opt/NOMBRE, registros /var/log/NOMBRE y
