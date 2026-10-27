@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | tema |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
+| **Estatus** | Hecha |
 | **Responsable** | |
 | **Creada** | 2026-10-13 |
 | **Inicio** | |
@@ -46,3 +46,5 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+
+- 2026-10-27: cerrada sin código, cubierta por DIS-048 (decisión del orquestador, pendiente de validar en la prueba de concepto). Revisión con grep en `frontend/src`: el chip de área pinta el texto con `--color-body-text` (color libre solo en fondo y borde, ≥ 9,49:1 medido) y el ícono de plataforma elige texto claro u oscuro por luminancia (≥ 4,58:1 medido); `text_color` de plataforma y `bg_color`/`text_color` del portal ya no se pintan en ninguna vista. Validar el color al guardar deja de ser necesario para el contraste. Genera DIS-053 (el campo «Color de texto» quedó sin efecto en la interfaz).
