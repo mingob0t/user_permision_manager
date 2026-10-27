@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | disenador-web |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-26 |
