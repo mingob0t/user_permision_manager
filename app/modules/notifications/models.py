@@ -56,13 +56,14 @@ class InAppNotification(db.Model):
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
-    def to_dict(self):
+    def to_dict(self, leida=None):
+        """`leida` fija el estado para quien consulta (las globales se leen por usuario)."""
         return {
             "id": self.id,
             "type": self.type,
             "title": self.title,
             "message": self.message,
-            "is_read": self.is_read,
+            "is_read": self.is_read if leida is None else leida,
             "time": self.human_time(),
             "timestamp": self.created_at.isoformat()
         }
@@ -75,3 +76,23 @@ class InAppNotification(db.Model):
         if diff.seconds > 60: return f"Hace {diff.seconds // 60} m"
         return "Ahora"
 
+
+
+class NotificationRead(db.Model):
+    """Lectura de una notificación global por un usuario (FNC-031).
+
+    Las propias usan `InAppNotification.is_read`; las globales (`user_id`
+    nulo) se leen por usuario y por eso viven aquí.
+    """
+    __tablename__ = 'notification_reads'
+    __table_args__ = (db.UniqueConstraint(
+        'notification_id', 'user_id', name='uq_notification_reads_par'),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    notification_id = db.Column(
+        db.Integer, db.ForeignKey('in_app_notifications.id', ondelete='CASCADE'),
+        nullable=False, index=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'),
+        nullable=False, index=True)
+    read_at = db.Column(db.DateTime, default=datetime.now, nullable=False)

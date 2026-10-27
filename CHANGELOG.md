@@ -5,6 +5,9 @@
 
 ## [Sin publicar]
 
+### Corregido
+- Notificaciones: marcar una global como leída ya no la marca para todos los usuarios; la lectura se guarda por usuario en `notification_reads` (migración 0010) y la respuesta de la API mantiene su forma (FNC-031, 2026-10-27).
+
 ### Cambiado
 - Backend: `_trusted_proxy` pasa de `api/auth.py` a `app/utils/proxy_confiable.py` como `es_proxy_confiable`; la usan el SSO y la IP de auditoría, sin cambio de comportamiento (FNC-076, 2026-10-27).
 - CSS depurado: `components.css` y `global.css` pierden 142 clases sin uso (DataTables, KPI, monitoreo, tour, toast, select propio y modal duplicado), reglas por id sin elemento y `@keyframes` huérfanos (1892 líneas netas, CSS generado de 80 449 a 45 208 bytes); sin colores literales: se borró el estilo del deslizador (sin uso), `.nexus-checkbox` queda en una sola regla y su marca usa `--color-on-primary`. Pruebas contra clases sin uso y colores literales en los CSS (DIS-009, 2026-10-27).
