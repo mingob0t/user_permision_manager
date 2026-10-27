@@ -7,8 +7,9 @@
  * - Mismo patrón que `access/reject-dialog.tsx` (DIS-015): contador ligado con
  *   `aria-describedby`, error del campo con el foco y `aria-disabled` durante
  *   el envío para que el foco no caiga en `body`.
- * - Botón de confirmar primario, no `danger`: el blanco sobre `--color-error`
- *   falla AA (lo corrige DIS-004).
+ * - Botón de confirmar `danger` (DIS-043): revocar es destructivo y, desde
+ *   DIS-004, el texto sobre `--color-error-solid` pasa AA (4,83:1).
+ * - El efecto y la advertencia describen el diálogo (`describedBy`, DIS-031).
  */
 
 import { useState } from 'react';
@@ -26,6 +27,8 @@ const FORM_ID = 'revocacion-acceso';
 const MOTIVO_ID = 'revocacion-motivo';
 const PISTA_ID = 'revocacion-motivo-pista';
 const MOTIVO_ERROR_ID = 'revocacion-motivo-error';
+const EFECTO_ID = 'revocacion-efecto';
+const AVISO_ID = 'revocacion-aviso';
 
 /** Pista del motivo según su largo (recortado, como lo valida el servidor). */
 export function pistaMotivoRevocacion(largo: number): string {
@@ -77,12 +80,14 @@ export function RevokeAccessDialog({
     <Modal
       title="Revocar acceso"
       onClose={onClose}
+      describedBy={`${EFECTO_ID} ${AVISO_ID}`}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
           <Button
+            variant="danger"
             type="submit"
             form={FORM_ID}
             disabled={excede}
@@ -97,11 +102,11 @@ export function RevokeAccessDialog({
       }
     >
       <form id={FORM_ID} onSubmit={submit} noValidate aria-busy={sending} className="space-y-5">
-        <p className="text-sm text-body-text">
+        <p id={EFECTO_ID} className="text-sm text-body-text">
           Se retirará el acceso de {access.user.name} a {access.platform.name} (nivel{' '}
           {NIVELES[access.level]}, área {access.area.name}).
         </p>
-        <p className="text-sm text-label">
+        <p id={AVISO_ID} className="text-sm text-label">
           La revocación se aplica en la plataforma y no se puede deshacer: para recuperarlo hará
           falta una nueva solicitud.
         </p>

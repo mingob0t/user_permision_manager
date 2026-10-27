@@ -47,7 +47,7 @@ export function PlatformCatalog() {
           onChange={(event) => setTerm(event.target.value)}
           placeholder="Buscar plataforma…"
           aria-label="Buscar plataforma"
-          className="min-w-56 flex-1 rounded-lg border border-panel-border bg-panel-fill px-3 py-2 text-sm outline-none placeholder:text-label focus:border-primary"
+          className="min-w-56 flex-1 rounded-lg border border-panel-border bg-panel-fill px-3 py-2 text-sm outline-none placeholder:text-label focus:border-primary focus-visible:ring-2 focus-visible:ring-primary"
         />
         <select
           value={areaId ?? ''}
@@ -55,7 +55,7 @@ export function PlatformCatalog() {
             setAreaId(event.target.value ? Number(event.target.value) : null)
           }
           aria-label="Filtrar por área"
-          className="rounded-lg border border-panel-border bg-panel-fill px-3 py-2 text-sm outline-none focus:border-primary"
+          className="rounded-lg border border-panel-border bg-panel-fill px-3 py-2 text-sm outline-none focus:border-primary focus-visible:ring-2 focus-visible:ring-primary"
         >
           <option value="">Todas las áreas</option>
           {(areas.data ?? []).map((area) => (

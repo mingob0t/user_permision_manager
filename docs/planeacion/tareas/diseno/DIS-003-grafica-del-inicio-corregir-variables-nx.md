@@ -46,3 +46,4 @@ _Se completa al aprobar la tarea._
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-26 | Nota de auditor-accesibilidad (DIS-031/038): `dashboard.tsx:69` y `:87` usan `rgb(var(--nx-border))` (variable de `.nx-*`, no token de tema); queda en esta tarea, fuera del alcance de DIS-031 |

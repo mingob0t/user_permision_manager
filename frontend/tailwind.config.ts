@@ -49,6 +49,8 @@ export default {
         'surface-container': 'rgb(var(--color-surface-container-bg) / <alpha-value>)',
         'surface-container-border':
           'rgb(var(--color-surface-container-border) / <alpha-value>)',
+        // DIS-038: velo de diálogos y menú móvil; el token ya trae su opacidad.
+        overlay: 'rgb(var(--color-overlay))',
 
         // Buttons & Interaction
         'button-bg': 'rgb(var(--color-button-bg) / <alpha-value>)',
@@ -83,6 +85,9 @@ export default {
         warning: 'rgb(var(--color-warning) / <alpha-value>)',
         error: 'rgb(var(--color-error) / <alpha-value>)',
         info: 'rgb(var(--color-info) / <alpha-value>)',
+        // DIS-004: relleno del botón de peligro y su texto, por tema.
+        'error-solid': 'rgb(var(--color-error-solid) / <alpha-value>)',
+        'on-error': 'rgb(var(--color-on-error) / <alpha-value>)',
         // Estados como texto, por tema (DIS-002).
         'success-text': 'rgb(var(--color-success-text) / <alpha-value>)',
         'warning-text': 'rgb(var(--color-warning-text) / <alpha-value>)',
