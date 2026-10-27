@@ -58,3 +58,5 @@ _Se completa al aprobar la tarea._
 ## Nota (2026-10-13)
 - `load_dotenv()` busca `.env` subiendo carpetas: si el proyecto no tiene uno, carga el de la carpeta superior (es de otro proyecto). Cargar solo el `.env` de la raíz del proyecto.
 - Al implementar: en `tests/test_arranque.py:86,95,105,115` cambiar `pytest.raises(Exception)` por la excepción o mensaje específico; retirar `CLAVE_POR_DEFECTO` (`:15`) cuando se quite la clave por defecto (revisión de FNC-023).
+
+- 2026-10-27 (auditoría de FNC-029/119): ya existente, sin cambio: `app/modules/api/auth.py:120` y `:189` usan `request.host_url` si falta `BASE_URL` (inyectable con la cabecera `Host`); exigir `BASE_URL` lo cierra.

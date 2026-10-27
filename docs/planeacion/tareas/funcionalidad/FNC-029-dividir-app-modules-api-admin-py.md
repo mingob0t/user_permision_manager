@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | api |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | desarrollador |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
@@ -98,3 +98,5 @@ Salida de `impacto.py` (10 filas, ejecutada el 2026-10-27 antes del commit). Val
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-27 | Propuesta → En curso → En revisión: `admin.py` y `crud.py` divididos por dominio, `create_app` en funciones; `url_map` idéntico (68 reglas). Commit `[FNC-029]` local, sin push |
 | 2026-10-27 | Corrección tras auditor-seguridad: `settings/logo.py` perdió el `return value, None` final de `validar_logo` al moverlo (el corte de líneas se quedó una corta) y `PUT /settings` con logo válido daba 500. Regresión `test_settings_con_logo_valido_guarda_y_da_200` (primero falló, luego pasa). Revisadas las 22 funciones movidas contra `develop` con `ast` (conteo de `return` y tipo de la última sentencia): solo difieren en el `return` de error de `leer_cuerpo` (y los dos de `set_area_users`, por `is_id_list`); sin más líneas perdidas |
+
+- 2026-10-27: `auditor-seguridad` (modo cambio): Con observaciones. Decoradores de las 68 rutas idénticos (AST), `url_map` igual, orden de `create_app` igual, sin asignación masiva nueva, enlace de bienvenida sin redirección abierta. Única observación: regresión de `validar_logo` (500 al guardar logo), corregida con prueba de regresión en `837c4c8`; pytest 2394 passed, 15 xfailed. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).

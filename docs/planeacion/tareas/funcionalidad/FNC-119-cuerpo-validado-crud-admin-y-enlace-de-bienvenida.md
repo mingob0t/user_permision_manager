@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | api |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | desarrollador |
 | **Inicio** | 2026-10-27 |
 | **Estatus Git** | Commit local, sin push |
@@ -54,3 +54,5 @@ Todas: **decisión del orquestador (pendiente de validar en la prueba de concept
 |---|---|
 | 2026-10-27 | Creada como Propuesta (decisiones de FNC-030) |
 | 2026-10-27 | Propuesta → En curso → En revisión: `leer_cuerpo` en crud/admin, enlace de bienvenida a `/login`, 33 pruebas nuevas. Commit `[FNC-119]` local, sin push |
+
+- 2026-10-27: `auditor-seguridad` (modo cambio): Con observaciones. Decoradores de las 68 rutas idénticos (AST), `url_map` igual, orden de `create_app` igual, sin asignación masiva nueva, enlace de bienvenida sin redirección abierta. Única observación: regresión de `validar_logo` (500 al guardar logo), corregida con prueba de regresión en `837c4c8`; pytest 2394 passed, 15 xfailed. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
