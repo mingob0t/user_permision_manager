@@ -4,7 +4,9 @@ from flask import Blueprint, jsonify
 from flask_login import current_user, login_required
 
 from app import db
-from app.modules.api.helpers import error_response, leer_cuerpo
+from app.modules.api.helpers import (error_response, leer_cuerpo,
+                                     validation_error)
+from app.modules.users.temas import TEMAS_VALIDOS
 
 preferences_api_bp = Blueprint('api_preferences', __name__,
                                url_prefix='/api/v1')
@@ -17,6 +19,12 @@ def save_preferences():
     data, error = leer_cuerpo(None)
     if error is not None:
         return error
+    # Se valida antes de aplicar nada: un tema inválido no deja el resto a medias.
+    if 'theme' in data and not (isinstance(data['theme'], str)
+                                and data['theme'] in TEMAS_VALIDOS):
+        return validation_error({'theme': 'Elige un tema de la lista.'})
+    if 'theme' in data:
+        current_user.pref_theme = data['theme']
     if 'notifications' in data:
         current_user.pref_notifications = bool(data['notifications'])
     if 'email_notifications' in data:
@@ -37,4 +45,5 @@ def save_preferences():
         'email_notifications': current_user.pref_email_notifications,
         'refresh_interval': current_user.pref_refresh_interval,
         'tour_enabled': current_user.pref_tour_enabled,
+        'theme': current_user.pref_theme,
     }})

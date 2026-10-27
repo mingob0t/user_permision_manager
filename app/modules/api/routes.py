@@ -54,6 +54,7 @@ def me():
             'email_notifications': current_user.pref_email_notifications,
             'refresh_interval': current_user.pref_refresh_interval,
             'tour_enabled': current_user.pref_tour_enabled,
+            'theme': current_user.pref_theme,
         },
     })
 

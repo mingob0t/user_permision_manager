@@ -47,6 +47,9 @@ class User(db.Model, UserMixin):
     pref_email_notifications = db.Column(db.Boolean, default=True)
     pref_refresh_interval = db.Column(db.Integer, default=60)
     pref_tour_enabled = db.Column(db.Boolean, default=True)
+    # Tema de la interfaz (FNC-122); lista en `users/temas.py`.
+    pref_theme = db.Column(db.String(20), nullable=False, default='sistema',
+                           server_default='sistema')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
