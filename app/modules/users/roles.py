@@ -30,6 +30,9 @@ ORIGEN_LOCAL = 'local'
 
 MODULO_AUDITORIA = 'Usuarios'
 
+# Identificadores que ninguna cuenta nueva puede usar (la cuenta maestra).
+RESERVED_NAMES = ('admin',)
+
 
 def roles_asignables(actor=None):
     """Roles que `actor` puede asignar (vacío si no administra)."""

@@ -9,7 +9,8 @@ Contrato: `docs/contratos/areas-y-roles.md`; matriz: Anexo A de
   → 404 (SEC-AUTHZ-03/04).
 - Cada escritura audita en la misma transacción (SEC-AUD-06).
 
-Separado de `api/crud.py` para no hacer crecer ese archivo.
+`PUT /areas/<id>/users` (FNC-029, movido de `api/crud.py`) asigna los
+usuarios del área.
 """
 
 from flask import Blueprint, jsonify
@@ -17,14 +18,16 @@ from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
 from app import db
-from app.authz import any_admin_required, can_manage_area, is_area_admin
-from app.modules.api.helpers import (AREA_DUPLICADA, NO_ENCONTRADO,
-                                     error_response, leer_cuerpo,
-                                     validation_error)
+from app.authz import (any_admin_required, area_admin_required, can_manage_area,
+                       is_area_admin, scoped_users)
+from app.modules.api.helpers import (AREA_DUPLICADA, CUERPO_INVALIDO,
+                                     NO_ENCONTRADO, error_response, is_id_list,
+                                     leer_cuerpo, validation_error)
 from app.modules.areas import validacion
 from app.modules.areas.baja import conflicto_de_baja, desligar_auditoria
 from app.modules.audit.events import Evento
 from app.modules.audit.services import add_audit_log
+from app.modules.auth.models import User
 from app.modules.core.models import Area
 
 areas_api_bp = Blueprint('api_areas', __name__, url_prefix='/api/v1')
@@ -156,3 +159,33 @@ def delete_area(area_id):
     db.session.delete(area)
     db.session.commit()
     return jsonify({'status': 'success'})
+
+
+@areas_api_bp.route('/areas/<int:area_id>/users', methods=['PUT'])
+@login_required
+@area_admin_required('area_id')
+def set_area_users(area_id):
+    """Define qué usuarios pertenecen al área."""
+    area = Area.query.get_or_404(area_id)
+    datos, error = leer_cuerpo(None)
+    if error is not None:
+        return error
+    user_ids = datos.get('user_ids') or []
+    if not is_id_list(user_ids):
+        return error_response(*CUERPO_INVALIDO)
+
+    # Solo usuarios dentro del alcance de quien administra.
+    allowed = {u.id for u in scoped_users().all()}
+    rejected = [i for i in user_ids if i not in allowed]
+    if rejected:
+        return error_response('Hay usuarios fuera de tu alcance.', 403)
+
+    current = list(area.area_users or [])
+    # Conserva a quien esté fuera del alcance (p. ej. un superadmin).
+    keep = [u for u in current if u.id not in allowed]
+    area.area_users = keep + User.query.filter(User.id.in_(user_ids)).all()
+    db.session.commit()
+    add_audit_log(f"ACTUALIZAR USUARIOS DE ÁREA: {area.name}", module='Áreas',
+                  target=area.name, status='success')
+    return jsonify({'status': 'success',
+                    'user_ids': [u.id for u in area.area_users]})
