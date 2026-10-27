@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | notifications |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
@@ -69,3 +69,5 @@ Marcar una notificación global como leída la marca solo para quien la leyó, c
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-27 | Implementada: `notification_reads`, migración 0010, pruebas de lectura por usuario |
+
+- 2026-10-27: cierre del orquestador: lectura por usuario en `notification_reads` (migración 0010 con `downgrade`), misma forma de respuesta; pytest 2403 passed, 14 xfailed, código 0 (xfail de FNC-031 retirado). Sin auditor-seguridad: no toca autenticación ni permisos (cada usuario solo marca lo que ve). Pendiente: validar la migración en MySQL real (como FNC-039) y la pantalla Notificaciones en navegador. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
