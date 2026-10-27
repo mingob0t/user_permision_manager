@@ -165,7 +165,7 @@ function PlatformAdminContent() {
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <span
-                          className="grid h-7 w-7 shrink-0 place-items-center rounded text-[10px] font-semibold"
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded text-xs font-semibold"
                           style={{
                             background: platform.bg_color,
                             color: platform.text_color,
