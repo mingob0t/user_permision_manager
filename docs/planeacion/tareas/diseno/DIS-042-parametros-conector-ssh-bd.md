@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | configuracion-conectores |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-21 |
 
 ## Contexto
@@ -54,3 +54,5 @@
 ## Corrección de auditoría de accesibilidad (2026-10-27)
 - Grupo opcional descrito por su nota; obligatorios condicionales lo dicen en la pista; anuncios al cambiar de tipo y de campos visibles (`RegionDeAnuncios`); resumen de errores del cliente; `min-w-0` y `break-words` (sin tocar `FieldHint`, compartido); huella de 43 caracteres y sentencia sin `;`, comillas ni comentarios.
 - Impacto compartido adicional: ninguno (`connector-form.tsx` y `connector-param-fields.tsx` solo).
+
+- 2026-10-27: `auditor-seguridad` Aprobado (sin secretos en el formulario; el backend revalida, BD con parámetros enlazados, SSH con lista blanca y `shlex.quote`; errores con texto propio; JSON sin `eval`). `auditor-accesibilidad` Aprobado tras corregir grupo «Consultar», anuncio de cambio de tipo y resumen de errores (`45678b6`). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
