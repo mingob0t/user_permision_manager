@@ -112,7 +112,7 @@ function Frame({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-panel-border bg-panel-fill px-6 py-3">
+        <header className="flex items-center justify-between gap-2 sm:gap-4 border-b border-panel-border bg-panel-fill px-6 py-3">
           <div className="flex min-w-0 items-center gap-3">
             <MobileMenu>{(close) => <Nav onNavigate={close} />}</MobileMenu>
             <div className="min-w-0">
@@ -125,7 +125,7 @@ function Frame({ children }: { children: React.ReactNode }) {
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <ThemeSelector />
           <a
             href="/logout"

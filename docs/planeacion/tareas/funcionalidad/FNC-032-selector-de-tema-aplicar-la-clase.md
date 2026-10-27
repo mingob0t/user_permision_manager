@@ -59,6 +59,8 @@ Hacer alcanzables los 7 temas de `tokens.css`: aplicar su clase en `<html>`, per
 | `RootLayout` | función | `frontend/src/app/layout.tsx` | `tests/components/raiz-desplazable.test.tsx` | todas las páginas (agrega `<head>` con el script de tema); prueba en verde |
 | `AppShell` (cabecera) | componente | `frontend/src/components/app-shell.tsx` | todas las pantallas con marco | cabecera: ahora lleva el selector junto a "Salir"; validar en móvil |
 
+Corrección de auditoría: `styles/global.css` (regla `color-scheme` en `:root` y los temas; afecta a los controles nativos de todas las pantallas) y la cabecera de `AppShell` (clases responsive).
+
 Nuevos: `lib/tema.ts`, `components/theme-selector.tsx` (reutilizan `Select` de `form.tsx`, sin modificarlo).
 
 ## Verificación (en `frontend/`)
@@ -66,7 +68,7 @@ Nuevos: `lib/tema.ts`, `components/theme-selector.tsx` (reutilizan `Select` de `
 |---|---|
 | `npm run typecheck` | exit 0 |
 | `npm run lint` | exit 0, sin avisos |
-| `npm test` (vitest, incluye `tests/accesibilidad`) | exit 0, 44 archivos, 1544 pruebas, 0 fallas |
+| `npm test` (vitest, incluye `tests/accesibilidad`) | exit 0, 45 archivos, 1560 pruebas, 0 fallas (tras la corrección de auditoría) |
 | `npm run build` | exit 0 |
 
 No verificado: navegador real (destello al cargar, contraste visual del selector en cada tema); `auditor-accesibilidad` y `revisor` pendientes.
@@ -78,3 +80,4 @@ No verificado: navegador real (destello al cargar, contraste visual del selector
 | 2026-10-27 | Aprobada en modo autónomo; implementada la clase en `<html>` con persistencia local. En revisión |
 
 - 2026-10-27 (orquestador): no hay CSP configurada hoy; el script en línea de `<head>` necesitará hash o nonce si la fase 5 agrega `script-src` sin `unsafe-inline`.
+| 2026-10-27 | Auditoría de accesibilidad «Requiere cambios»: (1) cabecera desbordada a 320 px: selector `w-28 min-w-0 sm:w-40`, bloque derecho sin `shrink-0` (`min-w-0`), huecos `gap-2 sm:gap-4`; el nombre y el rol se truncan primero. (2) `color-scheme` por tema en `global.css` (`:root` = `light dark`; claros `light`; oscuros `dark`), no en `tokens.css` porque `css-sin-uso.test.ts` exige solo variables allí (DIS-047). Registrado en VARIABLES e HISTORIAL. Pruebas nuevas en `tests/lib/tema-diseno.test.ts`. Decisiones del orquestador, pendientes de validar en la prueba de concepto |

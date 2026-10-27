@@ -13,7 +13,7 @@ export function ThemeSelector() {
   useEffect(() => { setTema(restaurarTema()); }, []);
 
   return (
-    <div className="w-36 sm:w-48">
+    <div className="w-28 min-w-0 sm:w-40">
       <Select
         aria-label="Tema de la interfaz"
         value={tema}
