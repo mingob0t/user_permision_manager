@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | dashboard |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-21 |
 
 ## Contexto
@@ -41,3 +41,5 @@
 
 ## Bitácora
 - 2026-10-27: implementada; En revisión.
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado. Observaciones menores: el filtro se lee solo al montar (navegar dentro de la misma pantalla con otra consulta no lo actualiza) y el fallback de `Suspense` dice «Cargando…» genérico. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
