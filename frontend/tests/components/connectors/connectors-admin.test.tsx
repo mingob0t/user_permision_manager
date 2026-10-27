@@ -60,9 +60,16 @@ const CONTABILIDAD = plataforma({});
 const NOMINA = plataforma({ id: 14, name: 'Nómina', has_connector: false, active_grants: 0 });
 const WIKI = plataforma({ id: 5, name: 'Wiki', integration_type: 'ldap' });
 
+/** `timeout` no tiene editor: se conserva sin cambios. */
+const PARAMS_API = {
+  base_path: '/usuarios', timeout: 30, auth: { esquema: 'bearer' },
+  otorgar: { metodo: 'POST', ruta: '/usuarios', cuerpo: { email: '{correo}' } },
+  revocar: { metodo: 'DELETE', ruta: '/usuarios/{correo}', sin_cambios: [404, 410] },
+};
+
 const CONECTOR: Connector = {
   platform_id: 12, type: 'api', host: 'erp.ejemplo.local', port: 443,
-  params: { base_path: '/usuarios', timeout: 30 }, credential_ref: 'pokemon/contabilidad-api',
+  params: PARAMS_API, credential_ref: 'pokemon/contabilidad-api',
   credential_status: 'ok', active: true, updated_at: '2026-10-14T14:00:00Z',
 };
 
@@ -108,14 +115,16 @@ describe('reglas del formulario', () => {
   });
 
   it('arma el cuerpo del contrato: recorta, conserva parámetros sin editor y omite los vacíos', () => {
-    const form = { ...formularioDesde(CONECTOR), host: ' erp.ejemplo.local ', params: { base_path: '' } };
+    const base = formularioDesde(CONECTOR);
+    const form = { ...base, host: ' erp.ejemplo.local ', params: { ...base.params, base_path: '' } };
+    const { base_path: _omitido, ...sinBase } = PARAMS_API;
     expect(cuerpoConector(form, CONECTOR)).toEqual({
-      type: 'api', host: 'erp.ejemplo.local', port: 443, params: { timeout: 30 },
+      type: 'api', host: 'erp.ejemplo.local', port: 443, params: sinBase,
       credential_ref: 'pokemon/contabilidad-api', active: true,
     });
     // Cambiar de tipo descarta los parámetros del anterior.
     expect(parametrosConservados(CONECTOR, 'ssh')).toEqual({});
-    expect(cuerpoConector({ ...form, type: 'ssh' }, CONECTOR).params).toEqual({});
+    expect(cuerpoConector({ ...form, type: 'ssh', params: {} }, CONECTOR).params).toEqual({});
   });
 
   it('describe los errores por código y por campo sin el texto del servidor', () => {
@@ -123,7 +132,7 @@ describe('reglas del formulario', () => {
       code: 'validacion', fields: { host: 'x', 'params.password': 'y' },
     }));
     expect(v422).toEqual({
-      message: MENSAJE_REVISA, stale: false,
+      message: MENSAJE_REVISA, stale: false, paramFields: {},
       fields: { host: MENSAJES_CAMPO.host, params: MENSAJES_CAMPO.params },
     });
     expect(describeConnectorSaveError(new ApiError(409, 'x', { code: 'conector_concurrente' })))
@@ -199,7 +208,7 @@ describe('panel del conector', () => {
     fireEvent.click(within(panel).getByRole('button', { name: 'Guardar conector' }));
     await waitFor(() => expect(mocks.save).toHaveBeenCalledWith(12, {
       type: 'api', host: 'erp.ejemplo.local', port: 8443,
-      params: { timeout: 30, base_path: '/usuarios' },
+      params: PARAMS_API,
       credential_ref: 'pokemon/contabilidad-api', active: true,
     }));
     expect(await within(panel).findByText(AVISO_SIN_VERIFICAR)).toBeTruthy();
@@ -219,9 +228,9 @@ describe('panel del conector', () => {
     expect(within(panel).getByLabelText('Host *').getAttribute('aria-invalid')).toBe('true');
   });
 
-  it('422 solo en params: mensaje propio y foco en el fieldset de parámetros', async () => {
+  it('422 en una clave de params sin campo: mensaje propio y foco en el fieldset de parámetros', async () => {
     mocks.save.mockRejectedValue(new ApiError(422, 'srv', {
-      code: 'validacion', fields: { 'params.base_path': 'srv' },
+      code: 'validacion', fields: { 'params.password': 'srv' },
     }));
     const panel = await abrir();
     await within(panel).findByText('erp.ejemplo.local:443');
@@ -229,6 +238,21 @@ describe('panel del conector', () => {
     expect(await within(panel).findByText(MENSAJES_CAMPO.params)).toBeTruthy();
     await waitFor(() => expect(document.activeElement).toBe(
       within(panel).getByRole('group', { name: 'Parámetros del tipo' })));
+  });
+
+  it('422 en params.<ruta>: marca el campo con mensaje propio, lo asocia y le da el foco', async () => {
+    mocks.save.mockRejectedValue(new ApiError(422, 'srv', {
+      code: 'validacion', fields: { 'params.base_path': 'srv' },
+    }));
+    const panel = await abrir();
+    await within(panel).findByText('erp.ejemplo.local:443');
+    fireEvent.click(within(panel).getByRole('button', { name: 'Guardar conector' }));
+    const campo = within(panel).getByLabelText('Ruta base');
+    const aviso = await within(panel).findByText(/^Revisa «Ruta base»/);
+    expect(campo.getAttribute('aria-invalid')).toBe('true');
+    expect(campo.getAttribute('aria-describedby')).toContain(aviso.id);
+    expect(aviso.textContent).not.toContain('srv');
+    await waitFor(() => expect(document.activeElement).toBe(campo));
   });
 
   it('probar conexión muestra un texto propio y recarga el estado de la credencial', async () => {
