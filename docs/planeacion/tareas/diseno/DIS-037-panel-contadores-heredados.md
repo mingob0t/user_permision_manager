@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | dashboard |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-21 |
 | **Inicio** | 2026-10-27 |
 
