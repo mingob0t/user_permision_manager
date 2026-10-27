@@ -153,8 +153,8 @@ describe('Menú móvil', () => {
 
   it.each<[Rol, number]>([
     ['usuario', 7],
-    ['admin_area', 12],
-    ['administrador', 12],
+    ['admin_area', 13],
+    ['administrador', 13],
   ])('%s ve en el menú móvil las mismas entradas que en la barra lateral (%i)', async (rol, n) => {
     const boton = await montar(rol);
     const panel = abrir(boton);
