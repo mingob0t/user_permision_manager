@@ -1,48 +1,11 @@
 # shellcheck shell=bash
 #
-# Copia del proyecto al prefijo de instalación (FNC-125). La carga install.sh
-# con `.`; no se ejecuta sola.
+# .env de la carpeta de instalación sin seguir enlaces (FNC-125; en archivo
+# propio desde FNC-129, cuando se quitó la copia al prefijo). La carga
+# install.sh con `.`; no se ejecuta sola.
 #
-# Regla: el .env vive en el prefijo y el instalador nunca lo sobrescribe ni lo
-# borra. Solo si el prefijo no tiene uno y el origen sí, se copia una vez.
-
-# Lo que no viene del repo y puede existir en el prefijo: rsync --delete lo
-# borraría. Un patrón excluido queda también protegido del borrado. Anclados
-# a la raíz (/) para no excluir carpetas versionadas como docs/logs/.
-EXCLUIDOS_COPIA=(
-    # No portables: se recrean en el destino.
-    'venv/' 'frontend/node_modules/' 'frontend/.next/' '__pycache__/' '*.pyc'
-    '.git/' 'scratch/'
-    # Locales del prefijo (ver .gitignore): configuración con secretos, BD
-    # SQLite de Flask, respaldos, archivos subidos y registros.
-    '/.env' '/.env.*' '/instance/' '/backups/' '/uploads/' '/storage/' '/logs/'
-)
-
-# copiar_proyecto ORIGEN PREFIJO
-copiar_proyecto() {
-    local src="$1" prefix="$2" patron
-    local args=(-a --delete --include '/.env.example')
-    for patron in "${EXCLUIDOS_COPIA[@]}"; do
-        args+=(--exclude "$patron")
-    done
-    rsync "${args[@]}" "$src/" "$prefix/"
-
-    # Primer despliegue con el .env junto al código clonado: se copia una sola
-    # vez, solo legible por el dueño. Si el prefijo ya tiene uno, no se toca.
-    # Un .env de origen que es enlace no se copia (podría apuntar a cualquier
-    # archivo del sistema). `install` borra el destino antes de crearlo, así
-    # que un enlace puesto en el prefijo entretanto no se sigue.
-    if [[ ! -e "$prefix/.env" && ! -L "$prefix/.env" ]]; then
-        if [[ -L "$src/.env" ]]; then
-            printf 'ERROR: %s/.env es un enlace simbólico; no se copia\n' "$src" >&2
-            return 1
-        fi
-        if [[ -f "$src/.env" ]]; then
-            install -m 600 "$src/.env" "$prefix/.env"
-            printf '    .env copiado del origen (el prefijo no tenía uno)\n'
-        fi
-    fi
-}
+# Regla: el .env vive en la carpeta del código y el instalador nunca lo crea,
+# lo sobrescribe ni lo borra; si falta, se detiene.
 
 # asegurar_env_prefijo PREFIJO USUARIO GRUPO PYTHON
 # Deja <prefijo>/.env con dueño USUARIO:GRUPO y permisos 600, sin seguir
@@ -61,7 +24,7 @@ asegurar_env_prefijo() {
         return 1
     fi
     if [[ ! -e "$env" ]]; then
-        printf 'ERROR: %s no existe. Copiarlo y rellenar las credenciales antes de seguir.\n' "$env" >&2
+        printf 'ERROR: %s no existe. Crearlo desde .env.example (cp .env.example .env), rellenar las credenciales y volver a ejecutar.\n' "$env" >&2
         return 1
     fi
     if [[ ! -f "$env" ]]; then

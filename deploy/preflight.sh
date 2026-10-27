@@ -29,9 +29,14 @@ MIN_RAM_MB=1024                # `next build` es lo que más consume
 # igual que install.sh; se resuelven en la sección de puertos.
 API_PORT="${API_PORT:-}"
 WEB_PORT="${WEB_PORT:-}"
-# Nombre del despliegue: define las unidades systemd y las rutas que se
-# comprobarán. Debe coincidir con el --name que se pase al instalador.
-APP_NAME="${APP_NAME:-nexus}"
+# Carpeta del código: install.sh instala en sitio, sobre ella (FNC-129).
+RAIZ_CODIGO="$(realpath "$(dirname "${BASH_SOURCE[0]}")/..")"
+# Nombre del despliegue (nombre_despliegue.sh): define las unidades systemd y
+# las rutas que se comprobarán. Debe coincidir con el --name del instalador;
+# por defecto, el de la carpeta, como en install.sh.
+# shellcheck source=deploy/nombre_despliegue.sh
+. "$(dirname "${BASH_SOURCE[0]}")/nombre_despliegue.sh"
+APP_NAME="${APP_NAME:-$(nombre_por_defecto "$RAIZ_CODIGO")}"
 
 problems=0
 warnings=0
@@ -374,13 +379,13 @@ fi
 
 # --- 10a. Nombre del despliegue ----------------------------------------------
 head2 "Nombre del despliegue"
-if [[ "$APP_NAME" =~ ^[a-z][a-z0-9_-]{0,31}$ ]]; then
+if nombre_despliegue_valido "$APP_NAME"; then
     ok "APP_NAME=$APP_NAME"
 else
-    bad "APP_NAME='$APP_NAME' no es válido (minúsculas, dígitos, '-' o '_')"
+    bad "APP_NAME='$APP_NAME' no es válido (minúsculas, dígitos, '-' o '_'); indicar otro con APP_NAME=… y --name"
 fi
 printf "  unidades:  %s-backend, %s-frontend, %s-worker\n" "$APP_NAME" "$APP_NAME" "$APP_NAME"
-printf "  prefijo:   /opt/%s\n" "$APP_NAME"
+printf "  prefijo:   %s (en sitio)\n" "$RAIZ_CODIGO"
 printf "  registros: /var/log/%s\n" "$APP_NAME"
 printf "  nginx:     /etc/nginx/conf.d/%s.conf\n" "$APP_NAME"
 for u in "${APP_NAME}-backend" "${APP_NAME}-frontend" "${APP_NAME}-worker"; do

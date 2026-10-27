@@ -2,16 +2,25 @@
 #
 # Instalación de Nexus en Rocky/RHEL 8 o 9.
 #
-#   sudo ./deploy/install.sh [--name miapp] [--prefix /opt/miapp] [--user cuenta]
-#                            [--domain nexus.example.com] [--python /usr/bin/python3.11]
+#   sudo ./deploy/install.sh [--name miapp] [--user cuenta] [--force]
+#                            [--domain portal.example.com] [--python /usr/bin/python3.11]
 #                            [--proxy http://proxy:3128] [--no-proxy localhost,.intranet.example]
 #                            [--db-service mariadb]
 #                            [--web-port 3000] [--api-port 5001]
 #
+# Trabaja en sitio (FNC-129): el prefijo es la carpeta donde se clonó el
+# código (la que contiene deploy/); no se copia nada a otro lugar. Clonar el
+# repositorio donde se quiera instalar (p. ej. /opt/portal) y ejecutar ahí.
+#
 # --name define el nombre del despliegue: unidades NOMBRE-backend,
-# NOMBRE-frontend y NOMBRE-worker, prefijo /opt/NOMBRE, registros /var/log/NOMBRE y
-# /etc/nginx/conf.d/NOMBRE.conf. Se puede ajustar cada uno por separado con
-# --prefix y --logdir. --title cambia solo el texto descriptivo.
+# NOMBRE-frontend y NOMBRE-worker, registros /var/log/NOMBRE y
+# /etc/nginx/conf.d/NOMBRE.conf. Por defecto, el nombre de la carpeta del
+# código. --logdir cambia los registros y --title solo el texto descriptivo.
+#
+# --force (o --reinstall) limpia antes una instalación previa del mismo nombre
+# (unidades, .conf de nginx, venv, node_modules, .next y registros), tras
+# confirmar escribiendo el nombre en una terminal. Nunca toca el .env, el
+# código, la BD ni los datos locales. Ver deploy/reinstalar.sh.
 #
 # --user debe ser una cuenta existente (por defecto, quien invoca sudo); con
 # --create-user el script la crea si no está.
@@ -32,7 +41,7 @@
 # Qué hace, en orden:
 #   1. Paquetes del sistema (Python, Node, nginx, cabeceras de compilación)
 #   2. Comprobación del usuario de servicio (solo lo crea con --create-user)
-#   3. Copia del proyecto al prefijo y permisos
+#   3. .env de la carpeta (debe existir) y permisos
 #   4. venv del backend y build del frontend
 #   5. Unidades systemd (backend, frontend y worker de aprovisionamiento)
 #   6. nginx como reverse proxy, con SELinux y firewalld
@@ -41,12 +50,18 @@
 
 set -Eeuo pipefail
 
-# Nombre del despliegue. De él se derivan las unidades systemd, el prefijo, el
-# directorio de registros y el fichero de nginx, salvo que se indiquen aparte.
-APP_NAME="nexus"
+# Prefijo: la carpeta del código, donde está este script (FNC-129).
+PREFIX="$(realpath "$(dirname "${BASH_SOURCE[0]}")/..")"
+# Nombre del despliegue. De él se derivan las unidades systemd, el directorio
+# de registros y el fichero de nginx. Vacío: el nombre de la carpeta.
+APP_NAME=""
 APP_TITLE=""                   # por defecto, APP_NAME capitalizado
-PREFIX=""                      # por defecto, /opt/$APP_NAME
 LOGDIR=""                      # por defecto, /var/log/$APP_NAME
+# Limpiar antes una instalación previa del mismo nombre (--force, FNC-129).
+FORCE=0
+# Dónde se instalan las unidades systemd y la configuración de nginx.
+SYSTEMD_DIR="/etc/systemd/system"
+NGINX_CONF_DIR="/etc/nginx/conf.d"
 # Usuario con el que corren los servicios. Debe existir ya: el script no crea
 # cuentas. Por defecto, el que invoca sudo.
 SVC_USER="${SUDO_USER:-$(id -un)}"
@@ -82,7 +97,10 @@ while [[ $# -gt 0 ]]; do
         --name)   APP_NAME="$2"; shift 2 ;;
         --title)  APP_TITLE="$2"; shift 2 ;;
         --logdir) LOGDIR="$2"; shift 2 ;;
-        --prefix) PREFIX="$2"; shift 2 ;;
+        --prefix|--prefix=*)
+            echo "ERROR: --prefix ya no existe: el instalador trabaja sobre la carpeta del código; clona el repositorio donde quieras instalarlo." >&2
+            exit 2 ;;
+        --force|--reinstall) FORCE=1; shift ;;
         --user)   SVC_USER="$2"; shift 2 ;;
         --domain) DOMAIN="$2"; shift 2 ;;
         --python) PY_BIN="$2"; shift 2 ;;
@@ -93,17 +111,22 @@ while [[ $# -gt 0 ]]; do
         --web-port) WEB_PORT="$2"; shift 2 ;;
         --api-port) API_PORT="$2"; shift 2 ;;
         --skip-packages) SKIP_PKGS=1; shift ;;
-        -h|--help) sed -n '2,32p' "$0"; exit 0 ;;
+        -h|--help) sed -n '2,49p' "$0"; exit 0 ;;
         *) echo "Opción desconocida: $1" >&2; exit 2 ;;
     esac
 done
 
-# El nombre acaba en rutas, unidades systemd y nginx: se restringe a lo que es
-# válido en todos esos sitios.
-[[ "$APP_NAME" =~ ^[a-z][a-z0-9_-]{0,31}$ ]] \
+# shellcheck source=deploy/nombre_despliegue.sh
+. "$PREFIX/deploy/nombre_despliegue.sh"
+# El nombre acaba en rutas, unidades systemd y nginx (ver nombre_despliegue.sh).
+if [[ -z "$APP_NAME" ]]; then
+    APP_NAME="$(nombre_por_defecto "$PREFIX")"
+    nombre_despliegue_valido "$APP_NAME" \
+        || { echo "ERROR: el nombre de la carpeta '$APP_NAME' ($PREFIX) no sirve como nombre del despliegue (minúsculas, dígitos, '-' o '_', máx. 32); indicar uno con --name" >&2; exit 2; }
+fi
+nombre_despliegue_valido "$APP_NAME" \
     || { echo "ERROR: --name debe ser minúsculas, dígitos, '-' o '_' (máx. 32)" >&2; exit 2; }
 
-: "${PREFIX:=/opt/$APP_NAME}"
 : "${LOGDIR:=/var/log/$APP_NAME}"
 : "${APP_TITLE:=$(tr '[:lower:]' '[:upper:]' <<< "${APP_NAME:0:1}")${APP_NAME:1}}"
 BACKEND_UNIT="${APP_NAME}-backend"
@@ -111,14 +134,14 @@ FRONTEND_UNIT="${APP_NAME}-frontend"
 # Worker de aprovisionamiento (FNC-049, FNC-067): exige Redis con contraseña.
 WORKER_UNIT="${APP_NAME}-worker"
 
-SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
 # shellcheck source=deploy/servicio_bd.sh
-. "$SRC/deploy/servicio_bd.sh"
-# shellcheck source=deploy/copia_proyecto.sh
-. "$SRC/deploy/copia_proyecto.sh"
+. "$PREFIX/deploy/servicio_bd.sh"
+# shellcheck source=deploy/env_seguro.sh
+. "$PREFIX/deploy/env_seguro.sh"
 # shellcheck source=deploy/puertos.sh
-. "$SRC/deploy/puertos.sh"
+. "$PREFIX/deploy/puertos.sh"
+# shellcheck source=deploy/reinstalar.sh
+. "$PREFIX/deploy/reinstalar.sh"
 if [[ -n "$DB_SERVICE" ]]; then
     DB_SERVICE="$(servicio_bd_valido "$DB_SERVICE")" \
         || { echo "ERROR: --db-service debe ser un nombre de unidad (letras, dígitos, ':', '_', '.', '@' o '-'), p. ej. mariadb" >&2; exit 2; }
@@ -170,8 +193,16 @@ resolve_python() {
 }
 
 [[ $EUID -eq 0 ]] || die "hay que ejecutarlo como root (sudo)."
-[[ -f "$SRC/run.py" && -f "$SRC/frontend/package.json" ]] \
-    || die "no encuentro el proyecto en $SRC"
+[[ -f "$PREFIX/run.py" && -f "$PREFIX/frontend/package.json" ]] \
+    || die "no encuentro el proyecto en $PREFIX"
+
+# --- Limpieza previa (solo con --force) ---------------------------------------
+# Antes de modificar nada; sin --force no se pregunta ni se borra nada.
+if (( FORCE )); then
+    log "Limpieza de la instalación previa '$APP_NAME' (--force)"
+    reinstalar_limpio "$APP_NAME" "$PREFIX" "$LOGDIR" "$SYSTEMD_DIR" "$NGINX_CONF_DIR" \
+        || die "limpieza cancelada; no se ha modificado nada."
+fi
 
 # --- 0. Proxy de salida ------------------------------------------------------
 # Cada herramienta lo lee de un sitio distinto: dnf de su propio fichero, pip y
@@ -297,23 +328,16 @@ fi
 SVC_GROUP="$(id -gn "$SVC_USER")"
 note "los servicios correrán como $SVC_USER:$SVC_GROUP"
 
-# --- 3. Copia del proyecto ---------------------------------------------------
-log "Copiando el proyecto a $PREFIX"
-mkdir -p "$PREFIX" "$LOGDIR"
-
-if [[ "$(realpath "$SRC")" == "$(realpath "$PREFIX")" ]]; then
-    note "el origen ya es $PREFIX; no se copia"
-else
-    # Sin venv, node_modules, .next ni scratch, y sin tocar lo local del
-    # prefijo (.env, instance/, backups/, uploads/, storage/, logs/): FNC-125.
-    copiar_proyecto "$SRC" "$PREFIX" || die "no se pudo copiar el proyecto; ver el mensaje anterior."
-    note "copiado (sin venv, node_modules, .next ni scratch; .env y datos locales del prefijo intactos)"
-fi
+# --- 3. Carpeta del código y .env --------------------------------------------
+# En sitio (FNC-129): se usa el código ya clonado en $PREFIX; no se copia.
+log "Proyecto en $PREFIX (en sitio, sin copia)"
+mkdir -p "$LOGDIR"
 
 # Contiene credenciales de base de datos: solo el usuario del servicio. Nunca
-# a través de un enlace (FNC-125): ver asegurar_env_prefijo.
+# a través de un enlace (FNC-125): ver asegurar_env_prefijo. Si falta, se
+# detiene pidiendo crearlo desde .env.example.
 asegurar_env_prefijo "$PREFIX" "$SVC_USER" "$SVC_GROUP" "$PY_BIN" \
-    || die "el .env del prefijo no es seguro; ver el mensaje anterior."
+    || die "el .env de $PREFIX no es válido; ver el mensaje anterior."
 # Puertos (FNC-127): el .env solo se consulta para WEB_PORT y API_PORT, línea
 # a línea y sin cargarlo; asegurar_env_prefijo ya descartó un enlace.
 WEB_PORT="$(resolver_puerto "$WEB_PORT" "$PREFIX/.env" WEB_PORT "$WEB_PORT_POR_DEFECTO")" \
@@ -325,7 +349,7 @@ note "puertos de loopback: frontend ${WEB_PORT}, backend ${API_PORT}"
 # Vaultwarden y bind LDAP (FNC-068): mismas reglas que preflight; los valores
 # los pone una persona en el .env, nunca el instalador.
 # shellcheck source=deploy/secretos.sh
-. "$SRC/deploy/secretos.sh"
+. "$PREFIX/deploy/secretos.sh"
 if ! salida_vw="$(revisar_vaultwarden "$PREFIX/.env")"; then
     printf '%s\n' "$salida_vw" | sed 's/^/    /'
     die "Corregir las variables de Vaultwarden del .env (ver deploy/README.md)."
@@ -384,15 +408,15 @@ render() {
         "$1" | aplicar_servicio_bd "$DB_SERVICE" | aplicar_puertos "$WEB_PORT" "$API_PORT"
 }
 
-render "$PREFIX/deploy/backend.service.tmpl"  > "/etc/systemd/system/${BACKEND_UNIT}.service"
-render "$PREFIX/deploy/frontend.service.tmpl" > "/etc/systemd/system/${FRONTEND_UNIT}.service"
-render "$PREFIX/deploy/worker.service.tmpl"   > "/etc/systemd/system/${WORKER_UNIT}.service"
+render "$PREFIX/deploy/backend.service.tmpl"  > "${SYSTEMD_DIR}/${BACKEND_UNIT}.service"
+render "$PREFIX/deploy/frontend.service.tmpl" > "${SYSTEMD_DIR}/${FRONTEND_UNIT}.service"
+render "$PREFIX/deploy/worker.service.tmpl"   > "${SYSTEMD_DIR}/${WORKER_UNIT}.service"
 note "instaladas ${BACKEND_UNIT}.service, ${FRONTEND_UNIT}.service y ${WORKER_UNIT}.service"
 
 # Un marcador sin sustituir dejaría la unidad inservible.
-if grep -l "@[A-Z_]*@" "/etc/systemd/system/${BACKEND_UNIT}.service" \
-        "/etc/systemd/system/${FRONTEND_UNIT}.service" \
-        "/etc/systemd/system/${WORKER_UNIT}.service" 2>/dev/null; then
+if grep -l "@[A-Z_]*@" "${SYSTEMD_DIR}/${BACKEND_UNIT}.service" \
+        "${SYSTEMD_DIR}/${FRONTEND_UNIT}.service" \
+        "${SYSTEMD_DIR}/${WORKER_UNIT}.service" 2>/dev/null; then
     die "quedaron marcadores sin sustituir en las unidades"
 fi
 
@@ -410,7 +434,7 @@ done
 
 # --- 7. Reverse proxy --------------------------------------------------------
 log "nginx"
-conf="/etc/nginx/conf.d/${APP_NAME}.conf"
+conf="${NGINX_CONF_DIR}/${APP_NAME}.conf"
 render "$PREFIX/deploy/nginx.conf.tmpl" > "$conf"
 if [[ -n "$DOMAIN" ]]; then
     note "configuración escrita en $conf para $DOMAIN"
@@ -448,12 +472,12 @@ Instalación terminada.
   backend    ${PREFIX} (127.0.0.1:${API_PORT})
   frontend   ${PREFIX}/frontend (127.0.0.1:${WEB_PORT})
   worker     ${WORKER_UNIT} (no escucha; journalctl -u ${WORKER_UNIT} -f)
-  registros  /var/log/nexus, journalctl -u nexus-backend -f
+  registros  ${LOGDIR}, journalctl -u ${BACKEND_UNIT} -f
 
 Pendiente:
   1. Migraciones, si es una actualización (después reiniciar backend y worker):
        cd ${PREFIX} && venv/bin/alembic upgrade head   (BD existente de NEXUS: antes, una vez, alembic stamp 0001)
-  2. Certificados y server_name en /etc/nginx/conf.d/nexus.conf
+  2. Certificados y server_name en ${conf}
   3. Comprobar:  curl -s localhost:${API_PORT}/api/v1/auth/context
                  curl -s -o /dev/null -w '%{http_code}\\n' localhost:${WEB_PORT}/login
 

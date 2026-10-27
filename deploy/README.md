@@ -8,7 +8,7 @@ Dos servicios tras un reverse proxy y un worker en segundo plano:
 | `<nombre>-frontend` (Next.js) | loopback:3000 | La interfaz |
 | `<nombre>-worker` (`flask provisioning worker`, RQ) | no escucha | Otorgar y revocar accesos con reintentos (FNC-049, ADR-003) |
 
-`<nombre>` lo define `--name` (por defecto `nexus`).
+`<nombre>` lo define `--name`; por defecto, el nombre de la carpeta del código (FNC-129).
 
 Nginx enruta `/api/` al backend y el resto al frontend. Ambos van
 bajo el mismo dominio a propósito: así la cookie de sesión que emite Flask
@@ -17,10 +17,25 @@ autenticación.
 
 ## Instalación automatizada (Rocky/RHEL 8 o 9)
 
+- **En sitio** (FNC-129): se clona el repositorio donde se instalará, normalmente `/opt/<nombre>`, y el instalador se corre ahí.
+- El instalador solo instala dependencias, compila y configura servicios: usa el código de esa carpeta y **no copia nada** a otro lugar.
+- El nombre por defecto es el de la carpeta (`/opt/portal` → `portal`); `--name` lo cambia.
+- `--prefix` ya no existe: si se pasa, termina con código 2.
+- Antes de instalar, crear `.env` en la carpeta a partir de `.env.example` y rellenar las credenciales.
+- **Actualizar** = `git pull` en la carpeta + `sudo ./deploy/install.sh`.
+
 ```bash
+sudo git clone <url-del-repositorio> /opt/portal
+cd /opt/portal
 ./deploy/preflight.sh                              # evaluación, no modifica nada
-sudo ./deploy/install.sh --domain nexus.ejemplo.com
+sudo ./deploy/install.sh --domain portal.ejemplo.com
+
+# Actualizar
+git -C /opt/portal pull
+sudo /opt/portal/deploy/install.sh
 ```
+
+- Tras instalar, la carpeta es de la cuenta de servicio (`chown -R -h`): el `git pull` se hace con esa cuenta (por defecto, quien invocó sudo).
 
 `preflight.sh` termina con código 1 si encuentra algo bloqueante. Revisa:
 
@@ -39,22 +54,40 @@ sudo ./deploy/install.sh --domain nexus.ejemplo.com
 - Puertos del backend y del frontend libres (por defecto 5001 y 3000; ver «Puertos»)
 - nginx, SELinux (`httpd_can_network_connect`) y firewalld
 
-`install.sh` acepta `--prefix` (por defecto `/opt/nexus`), `--user`,
-`--domain`, `--python`, `--proxy`, `--no-proxy`, `--db-service`, `--web-port`,
-`--api-port`, `--create-user` y `--skip-packages`. Es idempotente: repetirlo actualiza la instalación.
+`install.sh` acepta `--name`, `--logdir`, `--title`, `--user`, `--domain`,
+`--python`, `--proxy`, `--no-proxy`, `--db-service`, `--web-port`,
+`--api-port`, `--create-user`, `--skip-packages` y `--force`/`--reinstall`. Es idempotente: repetirlo actualiza la instalación, sin preguntar nada.
 
-### El `.env` vive en el prefijo
+- Prueba: `pytest tests/deploy/test_instalar_en_sitio.py`.
 
-- El instalador **nunca sobrescribe ni borra** `<prefijo>/.env` (FNC-125).
-- Si el prefijo no tiene `.env` y la carpeta clonada sí, se copia **una sola vez** (permisos 600).
-- El `.env` debe ser un **archivo regular**: si es un enlace simbólico, un directorio o tiene otro enlace duro, el instalador se detiene. Dueño y permisos se aplican sobre el archivo ya abierto sin seguir enlaces (`O_NOFOLLOW` + `fchown`/`fchmod`), y `chown -R -h` no sigue enlaces del prefijo.
-- La copia (`rsync --delete`) tampoco toca lo local del prefijo: `.env.*` (salvo `.env.example`), `instance/`, `backups/`, `uploads/`, `storage/` y `logs/`.
-- Prueba: `pytest tests/deploy/test_copia_proyecto_sh.py`.
+### El `.env` vive en la carpeta del código
+
+- El instalador **nunca crea, sobrescribe ni borra** `<carpeta>/.env` (FNC-125, FNC-129).
+- Si no existe, se detiene pidiendo crearlo desde `.env.example`.
+- Debe ser un **archivo regular**: si es un enlace simbólico, un directorio o tiene otro enlace duro, el instalador se detiene.
+- Dueño y permisos (600) se aplican sobre el archivo ya abierto sin seguir enlaces (`O_NOFOLLOW` + `fchown`/`fchmod`); `chown -R -h` no sigue enlaces de la carpeta.
+- Prueba: `pytest tests/deploy/test_env_seguro_sh.py`.
+
+### Reinstalación limpia (`--force`)
+
+- **Cuándo:** una instalación previa del mismo nombre quedó a medias o mal (unidades rotas, `venv` o build corruptos).
+- `--reinstall` es un alias.
+- Antes de borrar, muestra la lista exacta y pide escribir el nombre de la instalación; si no coincide o no hay terminal, aborta sin tocar nada.
+- **Borra** (solo de `<nombre>`): unidades `<nombre>-backend`, `-frontend` y `-worker` (las detiene, deshabilita y hace `daemon-reload`), `/etc/nginx/conf.d/<nombre>.conf`, `venv/`, `frontend/node_modules/`, `frontend/.next/` y el directorio de registros.
+- **Nunca toca:** `.env`, código, `.git`, base de datos, Redis, cuenta de servicio, `instance/`, `backups/`, `uploads/` ni `storage/`.
+- Valida nombre y rutas antes de borrar; con `--force`, `--logdir` debe terminar en `/<nombre>`.
+- Después sigue la instalación normal.
+- Sin `--force` no se pregunta ni se borra nada.
+- Prueba: `pytest tests/deploy/test_reinstalar_sh.py`.
+
+```bash
+sudo ./deploy/install.sh --force
+```
 
 ### Puertos del backend y del frontend
 
 - `--web-port` (frontend Next.js, por defecto `3000`) y `--api-port` (backend Gunicorn, por defecto `5001`) (FNC-127).
-- Precedencia: opción > variable `WEB_PORT`/`API_PORT` > `<prefijo>/.env` > por defecto.
+- Precedencia: opción > variable `WEB_PORT`/`API_PORT` > `<carpeta>/.env` > por defecto.
 - Del `.env` solo se leen esas dos líneas (sin cargarlo ni imprimir nada más).
 - Enteros de 1024 a 65535 y distintos entre sí; si no, el instalador se detiene.
 - Siempre en loopback (`127.0.0.1`): solo cambia el número. nginx, las unidades y el `BACKEND_URL` del SSR usan el mismo valor.
@@ -88,17 +121,18 @@ sudo ./deploy/install.sh --name portal --domain portal.ejemplo.com
 | Qué | Valor |
 |---|---|
 | Unidades systemd | `portal-backend`, `portal-frontend`, `portal-worker` |
-| Prefijo | `/opt/portal` |
+| Carpeta del código (prefijo) | La clonada, p. ej. `/opt/portal` |
 | Registros | `/var/log/portal` |
 | Config de nginx | `/etc/nginx/conf.d/portal.conf` |
 | Upstreams de nginx | `portal_api`, `portal_web` |
 
-Cada uno se puede ajustar aparte con `--prefix` y `--logdir`; `--title` cambia
-solo el texto de `Description=`. El nombre admite minúsculas, dígitos, `-` y
+Los registros se ajustan aparte con `--logdir`; `--title` cambia
+solo el texto de `Description=`. Sin `--name`, el nombre es el de la carpeta;
+si no es válido, el instalador se detiene pidiendo `--name`. El nombre admite minúsculas, dígitos, `-` y
 `_`, hasta 32 caracteres: acaba en rutas, unidades systemd y nombres de
 upstream, y debe ser válido en los tres.
 
-Para que `preflight.sh` compruebe el mismo nombre:
+Para que `preflight.sh` compruebe otro nombre que el de la carpeta:
 
 ```bash
 APP_NAME=portal ./deploy/preflight.sh
@@ -117,7 +151,7 @@ Si la cuenta no existe, aborta indicando cómo proceder. Para que la cree —una
 cuenta de sistema sin shell ni directorio propio— hay que pedirlo:
 
 ```bash
-sudo ./deploy/install.sh --user nexus --create-user
+sudo ./deploy/install.sh --user portal --create-user
 ```
 
 Sobre una cuenta que ya existe, `--create-user` no la modifica. El grupo se
@@ -153,7 +187,7 @@ Si el proxy usa autenticación, conviene exportar `PROXY_URL` en lugar de pasar
 
 ```bash
 export PROXY_URL='http://usuario:clave@proxy.empresa.com:3128'
-sudo -E ./deploy/install.sh --domain nexus.ejemplo.com
+sudo -E ./deploy/install.sh --domain portal.ejemplo.com
 ```
 
 ### Notas propias de Rocky/RHEL 8
@@ -227,10 +261,10 @@ falta antes una tarea de backend. Una conexión en claro por la red expondría
 Tras agotar los reinicios:
 
 ```bash
-sudo systemctl reset-failed nexus-worker && sudo systemctl start nexus-worker
+sudo systemctl reset-failed <nombre>-worker && sudo systemctl start <nombre>-worker
 ```
 
-Reversión: `sudo systemctl disable --now nexus-worker` (los trabajos quedan en
+Reversión: `sudo systemctl disable --now <nombre>-worker` (los trabajos quedan en
 la BD y se retoman al volver a arrancarlo).
 
 ### Servicios y nginx
@@ -246,7 +280,7 @@ En `deploy/` solo hay **plantillas**; `install.sh` las rellena y las instala. A 
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now nexus-backend nexus-frontend nexus-worker
+sudo systemctl enable --now <nombre>-backend <nombre>-frontend <nombre>-worker
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
@@ -254,7 +288,7 @@ sudo nginx -t && sudo systemctl reload nginx
 
 No las aplica el instalador. Desde FNC-039 se usa Alembic: respaldo,
 `venv/bin/alembic upgrade head` y reinicio del backend y del worker
-(`sudo systemctl restart nexus-backend nexus-worker`). Una BD existente se
+(`sudo systemctl restart <nombre>-backend <nombre>-worker`). Una BD existente se
 marca una vez con `venv/bin/alembic stamp 0001` (ver `docs/backend/README.md` §7).
 
 Los SQL sueltos de `utils/migrations/001-004` se retiraron en FNC-028: la línea base `0001` ya contiene su efecto. Si un portal heredado aún guarda el logo como ruta `/assets/...` en `system_config.portal_icon`, hay que volver a subirlo desde Ajustes.
@@ -285,7 +319,7 @@ distinto del previsto.
 
 - `preflight.sh` e `install.sh` cargan `deploy/secretos.sh` (`revisar_vaultwarden`): fuera de `APP_ENV=development` comprueban que cada `VAULTWARDEN_*` obligatoria tenga valor (nunca lo imprimen), que `VAULTWARDEN_URL` sea `https://` con nombre de host y que el bind LDAP use **una** fuente (`LDAP_BIND_PASSWORD_REF` o `LDAP_BIND_PASSWORD`). Con un `FALTA`, `install.sh` se detiene.
 - Sin ninguna `VAULTWARDEN_*`: solo `AVISO` (los conectores fallan cerrado).
-- Las variables las pone una persona en `<prefijo>/.env` (600). Procedimiento completo, alta de ítems y rotación: [`docs/operacion/SECRETOS.md`](../docs/operacion/SECRETOS.md).
+- Las variables las pone una persona en `<carpeta>/.env` (600). Procedimiento completo, alta de ítems y rotación: [`docs/operacion/SECRETOS.md`](../docs/operacion/SECRETOS.md).
 - Prueba: `pytest tests/deploy/test_secretos_sh.py` (`.env` sintéticos).
 
 ## Seguridad

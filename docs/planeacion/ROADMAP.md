@@ -46,3 +46,4 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 - [x] FNC-124
 - [x] FNC-125 (despliegue en RHEL 9: servicio de BD real en las unidades; `.env` del prefijo intacto)
 - [x] FNC-127 (puertos de backend y frontend configurables en el instalador)
+- [ ] FNC-129 (instalador en sitio, nombre desde la carpeta y `--force`)
