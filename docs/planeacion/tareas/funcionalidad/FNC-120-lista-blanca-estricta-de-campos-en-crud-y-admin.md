@@ -5,7 +5,7 @@
 | **Carril** | Funcionalidad |
 | **Plataforma** | backend |
 | **Agente** | desarrollador |
-| **Fase** | 4 |
+| **Fase** | 5 |
 | **Módulo / Área** | api |
 | **Prioridad** | Baja |
 | **Estatus** | Propuesta |
@@ -28,3 +28,5 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-27 | Creada como Propuesta (decisión de FNC-119) |
+
+- 2026-10-27: movida a la fase 5 (decisión del orquestador, pendiente de validar en la prueba de concepto). Es endurecimiento de seguridad (SEC-AUTHZ-09) y puede romper formularios; el dueño pausó la fase 5 para dejar primero el sistema funcional. Sin cambio de alcance.

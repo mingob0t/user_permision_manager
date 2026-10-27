@@ -29,6 +29,7 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 
 ## Fase 4 — Estándares, modularidad y accesibilidad
 - [ ] FNC-027 a FNC-034, DIS-001 a DIS-012
+- [ ] FNC-120 (lista blanca estricta de campos; movida desde la fase 4 el 2026-10-27)
 - [ ] Propuestas de auditorías de fase 3: DIS-030, DIS-031, DIS-032, DIS-033, DIS-035, DIS-036, DIS-037, DIS-038, DIS-039, DIS-040, DIS-041, DIS-042
 
 ## Fase 5 — Seguridad final
