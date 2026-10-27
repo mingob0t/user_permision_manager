@@ -23,33 +23,22 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 
-def create_app(config_overrides=None):
-    """Crea la aplicación.
-
-    `config_overrides` (opcional) reemplaza claves de configuración antes de
-    iniciar las extensiones; lo usan las pruebas para apuntar a una BD
-    temporal. Sin él (producción, `run.py`), el comportamiento no cambia.
-    """
-    # Flask es solo API: no sirve frontend. `static_folder=None` desactiva la
-    # ruta /static, que ya no tiene contenido. Las plantillas se conservan
-    # únicamente para las páginas de error.
-    # Flask es solo API: ni plantillas ni estáticos.
-    app = Flask(__name__, template_folder=None, static_folder=None)
-
-    # Configuración de base de datos y seguridad
+def _configurar(app, config_overrides):
+    """Configuración de base de datos, sesión y seguridad; luego los
+    reemplazos (pruebas)."""
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'nexus-premium-secret-key')
     # La misma regla la usan las migraciones (migrations/env.py).
     from app.utils.uri_bd import construir_uri_bd
     app.config['SQLALCHEMY_DATABASE_URI'] = construir_uri_bd()
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
+
     # Configuración de Sesiones para evitar cierres inesperados
     from datetime import timedelta
     from flask import session
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
     app.config['SESSION_COOKIE_NAME'] = 'nexus_session'
     app.config['WTF_CSRF_TIME_LIMIT'] = None # Evita expiración de tokens por tiempo en dev
-    
+
     @app.before_request
     def make_session_permanent():
         session.permanent = True
@@ -63,6 +52,9 @@ def create_app(config_overrides=None):
     if config_overrides:
         app.config.update(config_overrides)
 
+
+def _validar_configuracion():
+    """Variables inválidas detienen el arranque."""
     # Con LDAP_URL definida, sin TLS o con configuración incompleta del
     # directorio la app no arranca (FNC-040, SEC-LDAP-02).
     from app.modules.directory.configuracion import validar_al_arrancar
@@ -83,8 +75,8 @@ def create_app(config_overrides=None):
     validar_secretos()
 
 
-
-    # Inicializar Extensiones
+def _iniciar_extensiones(app):
+    """Extensiones de Flask, inicio de sesión y Redis."""
     Compress(app)
     db.init_app(app)
     login_manager.init_app(app)
@@ -115,13 +107,19 @@ def create_app(config_overrides=None):
         except ValueError:
             return None
 
-    # Registro de Blueprints
+
+def _registrar_blueprints(app):
+    """Registra la API v1. Ya no participa del CSRF de Flask-WTF: usa la
+    cookie de sesión y no formularios."""
     from app.modules.api.routes import api_bp
-    from app.modules.api.crud import crud_bp
-    from app.modules.api.admin import admin_bp
     from app.modules.api.auth import auth_api_bp
     from app.modules.users.api import users_api_bp
+    from app.modules.users.preferencias_api import preferences_api_bp
+    from app.modules.users.higiene_api import hygiene_api_bp
     from app.modules.areas.api import areas_api_bp
+    from app.modules.settings.api import settings_api_bp
+    from app.modules.settings.respaldo_api import respaldo_api_bp
+    from app.modules.notifications.api import notifications_api_bp
     from app.modules.directory.api import directory_api_bp
     from app.modules.platforms.api import platforms_api_bp
     from app.modules.audit.api import audit_api_bp
@@ -132,22 +130,18 @@ def create_app(config_overrides=None):
     from app.modules.connectors.api import connectors_api_bp
     from app.modules.home.api import home_api_bp
 
-
-
-
-
-
-    
-    # La API v1 usa la cookie de sesión y no formularios, así que no
-    # participa del CSRF de Flask-WTF.
-    for bp in (api_bp, crud_bp, admin_bp, auth_api_bp, users_api_bp,
-               areas_api_bp, directory_api_bp, platforms_api_bp,
-               audit_api_bp, access_requests_api_bp, access_api_bp,
-               access_inventory_api_bp, provisioning_api_bp,
+    for bp in (api_bp, preferences_api_bp, hygiene_api_bp, settings_api_bp,
+               notifications_api_bp, respaldo_api_bp, auth_api_bp,
+               users_api_bp, areas_api_bp, directory_api_bp,
+               platforms_api_bp, audit_api_bp, access_requests_api_bp,
+               access_api_bp, access_inventory_api_bp, provisioning_api_bp,
                connectors_api_bp, home_api_bp):
         csrf.exempt(bp)
         app.register_blueprint(bp)
 
+
+def _registrar_cli_y_manejadores(app):
+    """Comando del worker y manejadores de eventos entre módulos."""
     # Worker de aprovisionamiento: `flask provisioning worker` (FNC-049).
     from app.modules.provisioning.cli import provisioning_cli
     app.cli.add_command(provisioning_cli)
@@ -159,21 +153,19 @@ def create_app(config_overrides=None):
     registrar_conectores(app)
 
 
-
-
+def _crear_tablas(app):
+    """Importa los modelos y crea las tablas y el usuario inicial."""
     # Sincronizar Modelos (Importar antes de crear tablas)
     from app.modules.settings.models import SystemConfig
     from app.modules.audit.models import AuditLog
     from app.modules.notifications.models import SMTPConfig, NotificationTemplate
     from app.modules.auth.models import AuthConfig, User
 
-
     # Crear tablas automáticamente dentro del contexto de la app
     with app.app_context():
         try:
             db.create_all()
             # Crear usuario inicial si no existe ninguno
-            from app.modules.auth.models import User
             if not User.query.first():
                 admin = User(email='admin', nombre='admin', role='administrador')
                 admin.set_password('admin123')
@@ -185,8 +177,9 @@ def create_app(config_overrides=None):
             print(f"❌ Error al sincronizar base de datos: {e}")
 
 
-    # Flask es API: los errores se responden en JSON. Las páginas de error de
-    # la interfaz las sirve el frontend.
+def _registrar_manejadores_de_error(app):
+    """Flask es API: los errores se responden en JSON. Las páginas de error
+    de la interfaz las sirve el frontend."""
     from flask_wtf.csrf import CSRFError
 
     @app.errorhandler(CSRFError)
@@ -209,15 +202,35 @@ def create_app(config_overrides=None):
         try:
             config = SystemConfig.query.first()
             return dict(
-                sys_config=config, 
+                sys_config=config,
                 portal_settings=config,
                 csp_nonce=lambda: ""
             )
         except Exception as e:
             return dict(
-                sys_config=None, 
+                sys_config=None,
                 portal_settings=None,
                 csp_nonce=lambda: ""
             )
 
+
+def create_app(config_overrides=None):
+    """Crea la aplicación.
+
+    `config_overrides` (opcional) reemplaza claves de configuración antes de
+    iniciar las extensiones; lo usan las pruebas para apuntar a una BD
+    temporal. Sin él (producción, `run.py`), el comportamiento no cambia.
+
+    Flask es solo API: ni plantillas ni estáticos. El orden de los pasos
+    importa: la configuración se valida antes de iniciar extensiones y las
+    tablas se crean después de registrar los manejadores de eventos.
+    """
+    app = Flask(__name__, template_folder=None, static_folder=None)
+    _configurar(app, config_overrides)
+    _validar_configuracion()
+    _iniciar_extensiones(app)
+    _registrar_blueprints(app)
+    _registrar_cli_y_manejadores(app)
+    _crear_tablas(app)
+    _registrar_manejadores_de_error(app)
     return app

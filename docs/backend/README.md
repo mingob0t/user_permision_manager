@@ -19,7 +19,7 @@
 
 ```text
 app/
-├── __init__.py        # create_app(): config, extensiones, blueprints, create_all
+├── __init__.py        # create_app(): orquesta funciones pequeñas (_configurar, _validar_configuracion, _iniciar_extensiones, _registrar_blueprints, _registrar_cli_y_manejadores, _crear_tablas, _registrar_manejadores_de_error; FNC-029)
 ├── authz.py           # Autorización centralizada: roles, alcance por área, decoradores
 ├── utils/
 │   ├── naming.py      # sanitize_display_name(): limpia nombres visibles (máx. 100)
@@ -28,10 +28,8 @@ app/
 └── modules/
     ├── api/           # API v1 que consume el frontend
     │   ├── routes.py  # Lectura: me, áreas, plataformas, favoritos, usuarios, stats
-    │   ├── crud.py    # Escritura: miembros de área, usuarios, preferencias, purga (la lógica de purga: users/services.py)
-    │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, respaldo; notificaciones in-app
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
-    │   └── helpers.py # error_response(), validation_error(), json_object(), json_payload(), leer_cuerpo(), campos_no_permitidos()/campos_prohibidos(), is_id_list() y errores del contrato (FNC-044, FNC-030, FNC-082)
+    │   └── helpers.py # (`crud.py` y `admin.py` se dividieron en los módulos de dominio, FNC-029) error_response(), validation_error(), json_object(), json_payload(), leer_cuerpo() (`permitidos=None`: solo exige objeto), campos_no_permitidos()/campos_prohibidos(), is_id_list() y errores del contrato (FNC-044, FNC-030, FNC-082)
     ├── auth/          # Modelos User/AuthConfig (obsoleto) y servicios de login
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform
@@ -42,10 +40,10 @@ app/
     ├── connectors/    # Conectores (FNC-050): base (interfaz), registry (tipos), models (platform_connectors), validacion, credenciales (fuente y caché), provider (proveedor `conector`), consultas, noop (solo dev/pruebas), configuracion (CONNECTOR_*); api y prueba (FNC-061)
     ├── platforms/     # api.py (escritura de plataformas), validacion.py, grupos.py (DN), tipos.py, estado.py (puntos de extensión; `tiene_conector` desde FNC-050) (FNC-046)
     ├── audit/         # Modelo AuditLog y add_audit_log(); api.py (consulta e historiales), queries.py (alcance y filtros), parametros.py (FNC-060)
-    ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py)
-    ├── settings/      # Modelo SystemConfig
-    ├── users/         # api.py (managed-areas, alta en directorio), directory_accounts.py (FNC-064), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
-    ├── areas/         # api.py, validacion.py, baja.py (FNC-045)
+    ├── notifications/ # Modelos SMTP/plantillas/in-app, servicios de correo y avisos del gestor (access_notifications.py); api.py (SMTP, plantillas, notificaciones in-app; FNC-029)
+    ├── settings/      # Modelo SystemConfig; api.py (`/settings`), logo.py (validación del logo), respaldo_api.py (`/backup`) (FNC-029)
+    ├── users/         # api.py (alta, edición y baja de cuentas, `/users/<id>/platforms` retirado, managed-areas, alta en directorio), preferencias_api.py (`/me/preferences`), higiene_api.py (`/users/inactive`, `/users/purge`) (FNC-029), directory_accounts.py (FNC-064), roles.py, areas_administradas.py, serializacion.py (FNC-044), correos.py (FNC-043); routes.py heredadas
+    ├── areas/         # api.py (alta, edición y baja; `PUT /areas/<id>/users`, FNC-029), validacion.py, baja.py (FNC-045)
     └── home/          # Inicio: services.py (resumen por rol) y api.py (`/home/summary`) (FNC-066)
 alembic.ini            # Configuración de Alembic (sin URL ni secretos)
 migrations/
@@ -146,7 +144,9 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 - CSRF provisional (H1): `POST /access/<id>/revoke` usa `api.csrf_provisional.escritura_del_portal` (no JSON → `415 tipo_no_soportado`; `Sec-Fetch-Site: cross-site` → `403 csrf_invalido`). El CSRF real sigue en FNC-008 (`xfail` en `tests/access/test_api.py`).
 - Concurrencia (H2): `services.revocar` toma el acceso con `UPDATE ... WHERE status = 'activo'`; la segunda revocación simultánea da `409 estado_invalido` sin sobrescribir `revoked_by` ni `revoke_reason`.
 
-### 4.3 Escritura — `app/modules/api/crud.py` (`/api/v1`)
+### 4.3 Escritura — `users/api.py`, `users/preferencias_api.py`, `users/higiene_api.py` y `areas/api.py` (`/api/v1`; antes `api/crud.py`, FNC-029)
+
+Todos leen el cuerpo con `leer_cuerpo` (FNC-119): un cuerpo que no es objeto → `400 cuerpo_invalido` (antes 500). Los campos que no lee el endpoint se siguen ignorando; `PUT /areas/<id>/users` además exige `user_ids` como lista de enteros.
 
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
@@ -246,7 +246,9 @@ Contrato `docs/contratos/plataformas-integracion.md`. Respuesta de `POST`/`PUT`:
 - Decisión: endpoint propio, `GET /stats` no cambia (contrato `inicio.md`: "`GET /stats` no cambia"; su forma la consume el panel actual).
 - Sin consultas propias: `access.consultas.de_usuario`, `access_requests.consultas.mias`, `approvals.bandeja` (mismo total que `/access-requests/inbox`), `access.inventario.visibles` (mismo alcance que `/access/inventory`) y `authz.scoped_areas`.
 
-### 4.4 Sistema y notificaciones — `app/modules/api/admin.py` (`/api/v1`)
+### 4.4 Sistema y notificaciones — `settings/api.py`, `notifications/api.py` y `settings/respaldo_api.py` (`/api/v1`; antes `api/admin.py`, FNC-029)
+
+También con `leer_cuerpo` (FNC-119): cuerpo no objeto → `400 cuerpo_invalido`.
 
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
@@ -485,7 +487,7 @@ venv/bin/python run.py        # API en el puerto 5001
   - `tests/directory/conftest.py`: `directorio` / `crear_directorio(**LDAP_*)` usan `ldap3` `MOCK_SYNC` con el cliente centralizado; `tests/directory/test_tls.py` abre TLS real solo hacia `localhost`.
   - `tests/peticiones_auth.py`: `iniciar_sesion_api`, `usuario_en_sesion`, `hay_auditoria` (con `target=` para el correo).
   - Auditoría (FNC-047): `tests/audit/` (registro ampliado, inmutabilidad y regresión de SEG-25).
-  - Servicios (FNC-023): `test_notificaciones.py`, `test_auditoria_crud.py`, `test_respaldo.py`, `test_secretos_en_respuestas.py`, `test_rutas_retiradas.py` (FNC-027), `test_csrf.py`, `test_arranque.py`; 13 `xfail` con su tarea (lista en la ficha).
+  - Servicios (FNC-023): `test_notificaciones.py`, `test_auditoria_crud.py`, `test_respaldo.py`, `test_secretos_en_respuestas.py`, `test_rutas_retiradas.py` (FNC-027), `test_csrf.py`, `test_arranque.py`, `test_cuerpo_validado.py` (FNC-119); 13 `xfail` con su tarea (lista en la ficha).
   - `tests/smtp_falso.py`: `instalar_smtp(monkeypatch)` simula `smtplib` (mensajes enviados, conexiones, logins, fallo con `.error`).
   - `test_arranque.py` llama `create_app()` sin overrides; `instance/` va a un directorio temporal.
   - SSO en pruebas: el cliente llega desde loopback (de confianza por defecto); otro origen se simula con `TRUSTED_PROXIES` y `REMOTE_ADDR` ficticios.
@@ -549,7 +551,7 @@ La línea base `0001` ya contiene su efecto (verificado con `tests/test_linea_ba
 |---|---|---|
 | 1 | Usuario administrador inicial creado en cada BD vacía con credenciales por defecto conocidas e impresas en consola. | `app/__init__.py` |
 | 2 | `SECRET_KEY` tiene valor por defecto en código si falta la variable. | `app/__init__.py` |
-| 3 | ~~Contraseña por defecto fija cuando el alta de usuario no la incluye.~~ Resuelta en FNC-077 (nace sin clave local). | `api/crud.py` `create_user` |
+| 3 | ~~Contraseña por defecto fija cuando el alta de usuario no la incluye.~~ Resuelta en FNC-077 (nace sin clave local). | `users/api.py` `create_user` |
 | 4 | ~~IP literal como valor por defecto de `BASE_URL` en el correo de bienvenida LDAP~~ Resuelta en FNC-042 (vacío = enlace relativo). | `auth/services.py` |
 | 5 | CSRF exento en todos los blueprints; la API depende solo de la cookie de sesión (SameSite por defecto del navegador). | `app/__init__.py` |
 | 6 | Contraseña de SMTP guardada en claro en BD (la de LDAP se vació y quedó obsoleta en FNC-043). | `smtp_config` |
@@ -559,9 +561,9 @@ La línea base `0001` ya contiene su efecto (verificado con `tests/test_linea_ba
 | 10 | `DB_ENGINE` distinto de `mysql` cae a SQLite (no hay rama PostgreSQL aunque `psycopg2-binary` está en dependencias). | `app/__init__.py` |
 | 11 | Dependencias sin versión fijada (`cryptography`, `ldap3`, `Flask-Mail`, `pandas`, `redis`, `gunicorn`, etc.); algunas sin uso aparente (`Flask-Mail`, `pexpect`, `openpyxl`, `xlrd`, `pandas`, `psycopg2-binary`). | `requirements.txt` |
 | 12 | Redis conectado pero sin uso. | `app/utils/redis_client.py` |
-| 13 | ~~`user_platforms` se edita sin efecto~~ Resuelta en FNC-065: endpoints en `410` y tabla obsoleta (P4: sus filas se descartan, sin migrar); borrado de la tabla en FNC-107. | `api/crud.py`, `platforms/api.py` |
-| 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `api/admin.py` |
+| 13 | ~~`user_platforms` se edita sin efecto~~ Resuelta en FNC-065: endpoints en `410` y tabla obsoleta (P4: sus filas se descartan, sin migrar); borrado de la tabla en FNC-107. | `users/api.py`, `platforms/api.py` |
+| 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `notifications/api.py` |
 | 15 | Control de migraciones resuelto con Alembic (FNC-039). Pruebas del backend completas: suite base (FNC-019), protección por rol (FNC-020), alcance por área (FNC-021), autenticación (FNC-022) y servicios, respaldo, heredadas, CSRF y arranque (FNC-023). | — |
-| 16 | ~~`purge_inactive_users` de `auth/services.py` duplicaba la purga de la API~~ Resuelta en FNC-030: la heredada se borró y la única vive en `users/services.py`. | `users/services.py`, `api/crud.py` |
+| 16 | ~~`purge_inactive_users` de `auth/services.py` duplicaba la purga de la API~~ Resuelta en FNC-030: la heredada se borró y la única vive en `users/services.py`. | `users/services.py`, `users/higiene_api.py` |
 | 17 | ~~`utils/seed_users.py` usa roles que el código ya no reconoce~~ Resuelta en FNC-028: script borrado. | — |
-| 18 | Mensajes de error que devuelven el texto de la excepción al cliente (LDAP, SMTP, respaldo). | `api/admin.py` |
+| 18 | Mensajes de error que devuelven el texto de la excepción al cliente (LDAP, SMTP, respaldo). | `notifications/api.py`, `settings/respaldo_api.py` |
