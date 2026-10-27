@@ -21,7 +21,7 @@ Type=simple
 User=@SVC_USER@
 Group=@SVC_GROUP@
 WorkingDirectory=@PREFIX@
-# El mismo .env que el backend (600, solo la cuenta de servicio). Sin
+# El mismo .env que el backend (root:<grupo de servicio> 640, FNC-129). Sin
 # REDIS_PASS o sin Redis el worker sale con código 1 y un mensaje claro.
 EnvironmentFile=@PREFIX@/.env
 # --app explícito: no depende de que FLASK_APP esté en el .env.

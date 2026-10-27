@@ -85,7 +85,7 @@ def test_env_ausente_aborta_pidiendo_crearlo(tmp_path):
     assert not (prefix / '.env').exists()
 
 
-def test_env_regular_queda_600(tmp_path):
+def test_env_regular_queda_640(tmp_path):
     prefix = tmp_path / 'opt'
     prefix.mkdir()
     env = prefix / '.env'
@@ -93,18 +93,22 @@ def test_env_regular_queda_600(tmp_path):
     env.chmod(0o644)
     r = _asegurar(prefix)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert stat.S_IMODE(env.stat().st_mode) == 0o600
+    # FNC-129 (SEG-1): root:<grupo de servicio> 640; el grupo lo lee.
+    assert stat.S_IMODE(env.stat().st_mode) == 0o640
     assert env.read_text() == ENV_PREFIJO
 
 
 def test_install_no_sigue_enlaces():
     texto = INSTALL.read_text()
     assert '. "$PREFIX/deploy/env_seguro.sh"' in texto
-    assert 'asegurar_env_prefijo "$PREFIX"' in texto
+    # Dueño root y grupo de servicio (SEG-1): la cuenta no puede reescribirlo.
+    assert 'asegurar_env_prefijo "$PREFIX" root "$SVC_GROUP"' in texto
     assert 'chmod 600 "$PREFIX/.env"' not in texto
+    # Desde SEG-1 el chown de datos y registros vive en propiedad.sh.
+    texto += (DEPLOY / 'propiedad.sh').read_text()
     lineas = [l.strip() for l in texto.splitlines()
               if l.strip().startswith('chown ')]
-    assert lineas, 'sin chown en install.sh'
+    assert lineas, 'sin chown en install.sh ni propiedad.sh'
     for linea in lineas:
         if ' -R' in linea:
             assert ' -h' in linea or '--no-dereference' in linea, linea

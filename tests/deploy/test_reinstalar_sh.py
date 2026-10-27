@@ -55,6 +55,7 @@ def raiz(tmp_path):
     sc.write_text(f'#!/usr/bin/env bash\necho "$*" >> "{registro}"\n')
     sc.chmod(0o755)
     return {'tmp': tmp_path, 'prefix': prefix, 'logdir': logdir,
+            'logbase': tmp_path / 'var' / 'log',
             'systemd': systemd, 'nginx': nginx, 'bin': binfalso,
             'registro': registro}
 
@@ -65,7 +66,7 @@ def _limpiar(r, stdin=None, nombre=NOMBRE, prefix=None, logdir=None):
         ['bash', '-c', f'set -Eeuo pipefail; . "{SCRIPT}"; '
          'reinstalar_limpio "$@"', '_', nombre,
          str(prefix or r['prefix']), str(logdir or r['logdir']),
-         str(r['systemd']), str(r['nginx'])],
+         str(r['systemd']), str(r['nginx']), str(r['logbase'])],
         stdin=stdin, capture_output=True, text=True, timeout=15, env=env)
 
 
@@ -157,7 +158,8 @@ def test_enlace_en_el_prefijo_no_se_sigue(raiz):
 
 @pytest.mark.parametrize('caso', ['nombre_vacio', 'nombre_invalido',
                                   'prefijo_raiz', 'prefijo_vacio',
-                                  'logdir_raiz', 'logdir_otro_nombre'])
+                                  'logdir_raiz', 'logdir_otro_nombre',
+                                  'logdir_fuera_de_var_log'])
 def test_rutas_inesperadas_abortan_sin_borrar(raiz, caso):
     kw = {
         'nombre_vacio': {'nombre': ''},
@@ -166,13 +168,58 @@ def test_rutas_inesperadas_abortan_sin_borrar(raiz, caso):
         'prefijo_vacio': {'prefix': raiz['tmp'] / 'vacio'},
         'logdir_raiz': {'logdir': '/'},
         'logdir_otro_nombre': {'logdir': raiz['tmp'] / 'var' / 'log'},
+        # SEG-3: termina en /<nombre> pero no está bajo la base de registros.
+        'logdir_fuera_de_var_log': {'logdir': raiz['tmp'] / 'srv' / NOMBRE},
     }[caso]
     if caso == 'prefijo_vacio':
         (raiz['tmp'] / 'vacio').mkdir()
+    if caso == 'logdir_fuera_de_var_log':
+        (raiz['tmp'] / 'srv' / NOMBRE).mkdir(parents=True)
     res = _con_tty(raiz, kw.get('nombre', NOMBRE), **kw)
     assert res.returncode != 0
     _nada_borrado(raiz)
     _intactos(raiz)
+
+
+def test_logdir_en_subcarpeta_de_var_log_se_acepta(raiz):
+    import shutil
+    nuevo = raiz['logbase'] / 'apps' / NOMBRE
+    nuevo.parent.mkdir(parents=True)
+    shutil.move(str(raiz['logdir']), str(nuevo))
+    res = _con_tty(raiz, NOMBRE, logdir=nuevo)
+    assert res.returncode == 0, res.stdout + res.stderr
+    assert not nuevo.exists()
+
+
+def test_revalida_antes_de_borrar(raiz):
+    # SEG-2: entre la validación y el rm, frontend/ pasa a ser un enlace a
+    # algo de fuera (el systemctl falso lo cambia en daemon-reload). El
+    # contenido de fuera no se borra.
+    fuera = raiz['tmp'] / 'fuera'
+    (fuera / 'node_modules').mkdir(parents=True)
+    (fuera / 'node_modules' / 'sensible').write_text('no-tocar\n')
+    (fuera / '.next').mkdir()
+    (fuera / '.next' / 'sensible').write_text('no-tocar\n')
+    frontend = raiz['prefix'] / 'frontend'
+    sc = raiz['bin'] / 'systemctl'
+    sc.write_text(
+        '#!/usr/bin/env bash\n'
+        f'echo "$*" >> "{raiz["registro"]}"\n'
+        'if [[ "$1" == daemon-reload ]]; then\n'
+        f'  mv "{frontend}" "{raiz["tmp"]}/frontend.movido"\n'
+        f'  ln -s "{fuera}" "{frontend}"\n'
+        'fi\n')
+    res = _con_tty(raiz, NOMBRE)
+    assert (fuera / 'node_modules' / 'sensible').read_text() == 'no-tocar\n'
+    assert (fuera / '.next' / 'sensible').read_text() == 'no-tocar\n'
+    assert res.returncode != 0
+    assert 'enlace' in res.stderr
+
+
+def test_install_pasa_la_base_de_registros():
+    texto = INSTALL.read_text()
+    assert 'LOGDIR_BASE="/var/log"' in texto
+    assert '"$NGINX_CONF_DIR" "$LOGDIR_BASE"' in texto
 
 
 # --- integración con install.sh ----------------------------------------------

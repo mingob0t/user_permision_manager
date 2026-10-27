@@ -35,6 +35,18 @@
 - `SYSTEMD_DIR` y `NGINX_CONF_DIR` como constantes con nombre (antes literales; mismo valor).
 - Tras instalar, la carpeta es de la cuenta de servicio: `git pull` con esa cuenta (documentado). Relación con FNC-126 (prefijo de root), sin cambio aquí.
 
+## Corrección de auditor-seguridad (Bloqueante en `6c0d70d`)
+Decisión del orquestador; adelanta parte de FNC-126.
+| Hallazgo | Corrección |
+|---|---|
+| SEG-1 (Alta) `chown -R` del prefijo: la cuenta de servicio editaba `install.sh`/plantillas y el siguiente `sudo install.sh` corría su código como root | Sin `chown` del prefijo; `codigo_protegido` (inline en `install.sh`, antes de cargar ningún `deploy/*.sh`) exige código y carpetas superiores de root sin escritura de grupo/otros, con mensaje `chown -R root:root` + `chmod -R go-w`; `umask 022`; `venv`/`npm ci`/`build` como root; `entregar_datos_a_servicio` (`deploy/propiedad.sh`) solo para `DATOS_SERVICIO` existentes y logdir; `.env` `root:<grupo>` 640 |
+| SEG-2 (Baja) carrera entre validar `frontend` y el `rm` | `_borrar_validado`: revalida antes de cada `rm` (carpeta sin enlaces), `rm -rf --one-file-system` |
+| SEG-3 (Baja) logdir arbitrario con `--force` | Debe estar bajo `LOGDIR_BASE` (`/var/log`) y terminar en `/<nombre>` |
+
+- Next: las unidades ya tenían `ProtectSystem=strict` sin `ReadWritePaths` en el prefijo, así que en ejecución nunca escribió en `.next`; sin cambio.
+- `.env` 640: `EnvironmentFile=` lo lee systemd (root); `load_dotenv()` de `app/__init__.py` lo lee como la cuenta, por el grupo.
+- Clon del dueño (`sudo git clone` en `/opt/portal`): simulado con `git clone --no-local` y `umask 022` → la comprobación pasa (0 rutas con escritura de grupo/otros). Un clon local con enlaces duros puede heredar 664 en `.git/objects/info/packs`: el mensaje indica la corrección.
+
 ## Cambios
 | Archivo | Cambio |
 |---|---|
@@ -42,7 +54,10 @@
 | `deploy/preflight.sh` | `APP_NAME` por defecto desde la carpeta; prefijo mostrado = carpeta |
 | `deploy/nombre_despliegue.sh` (nuevo) | `nombre_despliegue_valido`, `nombre_por_defecto` |
 | `deploy/env_seguro.sh` (nuevo) | `asegurar_env_prefijo` movida de `copia_proyecto.sh`; mensaje de `.env` ausente pide `.env.example` |
-| `deploy/reinstalar.sh` (nuevo) | `reinstalar_limpio` (validación, lista, confirmación TTY, limpieza) |
+| `deploy/reinstalar.sh` (nuevo) | `reinstalar_limpio` (validación, lista, confirmación TTY, limpieza); revalidación antes de cada `rm`; logdir bajo `LOGDIR_BASE` |
+| `deploy/propiedad.sh` (nuevo, SEG-1) | `entregar_datos_a_servicio` |
+| `deploy/worker.service.tmpl` | Comentario del `.env` (640) |
+| `tests/deploy/test_propiedad_codigo.py` (nuevo, SEG-1) | Código de root, sin `chown` del prefijo, artefactos de root, datos y logdir de la cuenta |
 | `deploy/copia_proyecto.sh` | Retirado |
 | `tests/deploy/test_instalar_en_sitio.py` (nuevo) | Nombre, `--prefix`, sin copia, preflight |
 | `tests/deploy/test_env_seguro_sh.py` (nuevo) | Pruebas de enlace movidas + `.env` ausente pide `.env.example` |
@@ -61,13 +76,18 @@
 | `bash deploy/install.sh --force </dev/null` (sin root) | se detiene en root; salida 1 |
 | `bash deploy/preflight.sh` (sección nombre) | `APP_NAME=pokemon-wt-d023`, prefijo = carpeta |
 | `impacto.py` | ninguno detectado |
+| Corrección SEG-1..3: pruebas nuevas antes de corregir | 21 failed, 135 passed; salida 1 |
+| Corrección SEG-1..3: `pytest tests/deploy` | 156 passed; salida 0 |
+| Corrección SEG-1..3: `bash -n` de `deploy/*.sh` y `preflight_inyeccion.sh` | 0 en los 10 |
 
-**No verificado:** instalación real como root en RHEL (paquetes, systemd, nginx), `--force` sobre un servidor real; `shellcheck` no está instalado.
+**No verificado:** instalación real como root en RHEL (paquetes, systemd, nginx, `npm ci` como root, servicios leyendo el `.env` 640 por el grupo), `--force` sobre un servidor real, y `codigo_protegido` con uid 0 real (probado con el uid de la prueba); `shellcheck` no está instalado.
 
 ## Impacto en elementos compartidos
 **Impacto en elementos compartidos:** ninguno detectado (comparado contra `develop`; 14 archivos cambiados).
+- Tras la corrección SEG-1..3, `impacto.py` lista `_limpiar`, `_nombre`, `raiz`, `test_nombre_valido` y `test_nombre_invalido`: son funciones locales de las pruebas de `tests/deploy/` que coinciden **solo por nombre** con otras del proyecto; no se importan ni se comparten (falso positivo, nada que validar).
 - Afecta el flujo de instalación de staging y producción (`install.sh`, `preflight.sh`). Quien instalaba con `--prefix` debe clonar en la carpeta destino.
 - `tests/deploy/test_puertos_sh.py` ejecuta `install.sh` desde la carpeta del repo: si esa carpeta tiene un nombre inválido (mayúsculas, espacios), las pruebas que esperan pasar la validación saldrían con 2.
 
 ## Bitácora
 - 2026-10-27: creada y aprobada por el dueño (urgente). Implementada en sitio + `--force` (ampliación del dueño el mismo día). Pendiente: `revisor` y `auditor-seguridad` (toca borrado de rutas y permisos del `.env`).
+- 2026-10-27: `auditor-seguridad` Bloqueante en `6c0d70d` (SEG-1 Alta, SEG-2 y SEG-3 Bajas); corregidos en esta rama. Pendiente: nueva pasada de `auditor-seguridad`.

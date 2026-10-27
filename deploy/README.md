@@ -22,7 +22,7 @@ autenticación.
 - El nombre por defecto es el de la carpeta (`/opt/portal` → `portal`); `--name` lo cambia.
 - `--prefix` ya no existe: si se pasa, termina con código 2.
 - Antes de instalar, crear `.env` en la carpeta a partir de `.env.example` y rellenar las credenciales.
-- **Actualizar** = `git pull` en la carpeta + `sudo ./deploy/install.sh`.
+- **Actualizar** = `sudo git -C /opt/<nombre> pull` + `sudo ./deploy/install.sh` (no hace falta `safe.directory`: el código es de root).
 
 ```bash
 sudo git clone <url-del-repositorio> /opt/portal
@@ -31,11 +31,21 @@ cd /opt/portal
 sudo ./deploy/install.sh --domain portal.ejemplo.com
 
 # Actualizar
-git -C /opt/portal pull
+sudo git -C /opt/portal pull
 sudo /opt/portal/deploy/install.sh
 ```
 
-- Tras instalar, la carpeta es de la cuenta de servicio (`chown -R -h`): el `git pull` se hace con esa cuenta (por defecto, quien invocó sudo).
+### Propiedad de la carpeta (FNC-129, SEG-1)
+
+- El código es de **root** y sin escritura de grupo ni de otros: `deploy/`, `.git/`, `app/`, `frontend/`, `requirements.txt`, etc.
+- `venv/`, `frontend/node_modules/` y `frontend/.next/` los crea root (`umask 022`); los servicios solo los leen.
+- La cuenta de servicio solo es dueña de lo que escribe: `instance/`, `uploads/`, `storage/`, `backups/` (si existen) y el directorio de registros.
+- `.env`: `root:<grupo de servicio>`, 640.
+- Antes de cargar nada, `install.sh` se niega a seguir si el código o una carpeta superior no son de root o tienen escritura de grupo u otros, y dice cómo corregirlo (`sudo chown -R root:root <carpeta> && sudo chmod -R go-w <carpeta>`).
+- Un `sudo git clone` normal ya cumple.
+- Motivo: si la cuenta de servicio pudiera editar el código, el siguiente `sudo install.sh` ejecutaría su código como root.
+- Next en ejecución no escribe en `.next` (`ProtectSystem=strict` ya lo impedía).
+- Prueba: `pytest tests/deploy/test_propiedad_codigo.py`.
 
 `preflight.sh` termina con código 1 si encuentra algo bloqueante. Revisa:
 
@@ -65,7 +75,8 @@ sudo /opt/portal/deploy/install.sh
 - El instalador **nunca crea, sobrescribe ni borra** `<carpeta>/.env` (FNC-125, FNC-129).
 - Si no existe, se detiene pidiendo crearlo desde `.env.example`.
 - Debe ser un **archivo regular**: si es un enlace simbólico, un directorio o tiene otro enlace duro, el instalador se detiene.
-- Dueño y permisos (600) se aplican sobre el archivo ya abierto sin seguir enlaces (`O_NOFOLLOW` + `fchown`/`fchmod`); `chown -R -h` no sigue enlaces de la carpeta.
+- Queda `root:<grupo de servicio>` con 640: backend y worker lo leen por el grupo (`EnvironmentFile=` lo lee systemd como root; `load_dotenv` de la app, por el grupo).
+- Dueño y permisos se aplican sobre el archivo ya abierto sin seguir enlaces (`O_NOFOLLOW` + `fchown`/`fchmod`).
 - Prueba: `pytest tests/deploy/test_env_seguro_sh.py`.
 
 ### Reinstalación limpia (`--force`)
@@ -75,7 +86,8 @@ sudo /opt/portal/deploy/install.sh
 - Antes de borrar, muestra la lista exacta y pide escribir el nombre de la instalación; si no coincide o no hay terminal, aborta sin tocar nada.
 - **Borra** (solo de `<nombre>`): unidades `<nombre>-backend`, `-frontend` y `-worker` (las detiene, deshabilita y hace `daemon-reload`), `/etc/nginx/conf.d/<nombre>.conf`, `venv/`, `frontend/node_modules/`, `frontend/.next/` y el directorio de registros.
 - **Nunca toca:** `.env`, código, `.git`, base de datos, Redis, cuenta de servicio, `instance/`, `backups/`, `uploads/` ni `storage/`.
-- Valida nombre y rutas antes de borrar; con `--force`, `--logdir` debe terminar en `/<nombre>`.
+- Valida nombre y rutas antes de borrar, y otra vez justo antes de cada `rm` (una carpeta que pasa por un enlace detiene la limpieza).
+- Con `--force`, `--logdir` debe estar bajo `/var/log/` y terminar en `/<nombre>`.
 - Después sigue la instalación normal.
 - Sin `--force` no se pregunta ni se borra nada.
 - Prueba: `pytest tests/deploy/test_reinstalar_sh.py`.
@@ -319,7 +331,7 @@ distinto del previsto.
 
 - `preflight.sh` e `install.sh` cargan `deploy/secretos.sh` (`revisar_vaultwarden`): fuera de `APP_ENV=development` comprueban que cada `VAULTWARDEN_*` obligatoria tenga valor (nunca lo imprimen), que `VAULTWARDEN_URL` sea `https://` con nombre de host y que el bind LDAP use **una** fuente (`LDAP_BIND_PASSWORD_REF` o `LDAP_BIND_PASSWORD`). Con un `FALTA`, `install.sh` se detiene.
 - Sin ninguna `VAULTWARDEN_*`: solo `AVISO` (los conectores fallan cerrado).
-- Las variables las pone una persona en `<carpeta>/.env` (600). Procedimiento completo, alta de ítems y rotación: [`docs/operacion/SECRETOS.md`](../docs/operacion/SECRETOS.md).
+- Las variables las pone una persona en `<carpeta>/.env` (640, `root:<grupo de servicio>`). Procedimiento completo, alta de ítems y rotación: [`docs/operacion/SECRETOS.md`](../docs/operacion/SECRETOS.md).
 - Prueba: `pytest tests/deploy/test_secretos_sh.py` (`.env` sintéticos).
 
 ## Seguridad

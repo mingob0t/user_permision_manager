@@ -12,7 +12,10 @@
 #   - el directorio de registros
 # Nunca toca el .env, el código, .git, la BD, Redis, la cuenta de servicio ni
 # los datos locales (instance/, backups/, uploads/, storage/). Cada ruta se
-# valida antes de borrar: nada vacío, relativo, con '..' ni '/'.
+# valida antes de borrar: nada vacío, relativo, con '..' ni '/'; y justo antes
+# de cada rm se revalida que su carpeta no pase por un enlace (SEG-2).
+# El directorio de registros debe estar bajo LOGDIR_BASE y terminar en
+# /<nombre> (SEG-3).
 
 # shellcheck source=deploy/nombre_despliegue.sh
 . "$(dirname "${BASH_SOURCE[0]}")/nombre_despliegue.sh"
@@ -34,9 +37,26 @@ _sin_enlaces() {
     [[ "$(realpath -- "$1" 2>/dev/null)" == "$1" ]]
 }
 
-# reinstalar_limpio NOMBRE PREFIJO LOGDIR SYSTEMD_DIR NGINX_DIR
+# _borrar_validado RUTA [-r]: revalida justo antes de borrar (SEG-2). La
+# carpeta que contiene RUTA no puede pasar por un enlace; rm no sigue enlaces
+# y no cruza a otro sistema de archivos.
+_borrar_validado() {
+    local ruta="$1" padre="${1%/*}"
+    if ! _ruta_segura "$ruta" || ! _sin_enlaces "$padre"; then
+        _reinst_error "'$padre' cambió o pasa por un enlace; se detiene sin borrar '$ruta'"
+        return 1
+    fi
+    if [[ "${2:-}" == -r ]]; then
+        rm -rf --one-file-system -- "$ruta"
+    else
+        rm -f -- "$ruta"
+    fi
+}
+
+# reinstalar_limpio NOMBRE PREFIJO LOGDIR SYSTEMD_DIR NGINX_DIR LOGDIR_BASE
 reinstalar_limpio() {
     local nombre="$1" prefijo="$2" logdir="$3" systemd_dir="$4" nginx_dir="$5"
+    local logdir_base="$6"
     local u rel ruta respuesta
     local unidades=() archivos=() directorios=()
 
@@ -46,8 +66,10 @@ reinstalar_limpio() {
     _ruta_segura "$prefijo" && [[ -d "$prefijo" ]] && _sin_enlaces "$prefijo" \
         && [[ -f "$prefijo/run.py" ]] \
         || { _reinst_error "el prefijo '$prefijo' no es la carpeta del código"; return 1; }
-    _ruta_segura "$logdir" && [[ "${logdir##*/}" == "$nombre" ]] \
-        || { _reinst_error "con --force, el directorio de registros debe terminar en /$nombre (es '$logdir')"; return 1; }
+    _ruta_segura "$logdir_base" && _sin_enlaces "$logdir_base" \
+        || { _reinst_error "base de registros inesperada: '$logdir_base'"; return 1; }
+    _ruta_segura "$logdir" && [[ "$logdir" == "$logdir_base/"* && "${logdir##*/}" == "$nombre" ]] \
+        || { _reinst_error "con --force, el directorio de registros debe estar bajo $logdir_base/ y terminar en /$nombre (es '$logdir')"; return 1; }
     [[ "$logdir" != "$prefijo" && "$prefijo/" != "$logdir/"* && "$logdir/" != "$prefijo/"* ]] \
         || { _reinst_error "el directorio de registros '$logdir' se cruza con el prefijo"; return 1; }
     if [[ -e "$logdir" || -L "$logdir" ]]; then
@@ -103,11 +125,15 @@ reinstalar_limpio() {
     done
     # rm sin -r para archivos; -- y rutas ya validadas. Un enlace se quita a
     # sí mismo, nunca su destino (rm no sigue enlaces).
-    if (( ${#archivos[@]} )); then rm -f -- "${archivos[@]}"; fi
+    for ruta in "${archivos[@]}"; do
+        _borrar_validado "$ruta" || return 1
+    done
     systemctl daemon-reload
     for u in "${unidades[@]}"; do
         systemctl reset-failed "${u}.service" >/dev/null 2>&1 || true
     done
-    if (( ${#directorios[@]} )); then rm -rf -- "${directorios[@]}"; fi
+    for ruta in "${directorios[@]}"; do
+        _borrar_validado "$ruta" -r || return 1
+    done
     printf '    instalación anterior de "%s" limpiada\n' "$nombre"
 }

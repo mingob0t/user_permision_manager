@@ -5,10 +5,12 @@
 # install.sh con `.`; no se ejecuta sola.
 #
 # Regla: el .env vive en la carpeta del código y el instalador nunca lo crea,
-# lo sobrescribe ni lo borra; si falta, se detiene.
+# lo sobrescribe ni lo borra; si falta, se detiene. Queda root:<grupo de
+# servicio> 640 (FNC-129, SEG-1): los servicios lo leen por el grupo y la
+# cuenta de servicio no puede reescribirlo.
 
 # asegurar_env_prefijo PREFIJO USUARIO GRUPO PYTHON
-# Deja <prefijo>/.env con dueño USUARIO:GRUPO y permisos 600, sin seguir
+# Deja <prefijo>/.env con dueño USUARIO:GRUPO y permisos 640, sin seguir
 # enlaces. El prefijo es de la cuenta de servicio, que podría cambiar el .env
 # por un enlace a /etc/shadow: un chown/chmod de root lo seguiría.
 # - Comprobación previa con mensaje claro: enlace, no regular o ausente.
@@ -50,7 +52,7 @@ try:
     if st.st_nlink != 1:
         sys.exit(f'ERROR: {ruta} tiene otro enlace duro; debe ser un archivo propio')
     os.fchown(fd, uid, gid)
-    os.fchmod(fd, 0o600)
+    os.fchmod(fd, 0o640)
 finally:
     os.close(fd)
 PYEOF

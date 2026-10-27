@@ -49,14 +49,23 @@
 # No toca la base de datos: las migraciones (Alembic) se aplican aparte.
 
 set -Eeuo pipefail
+# Lo que crea el instalador (venv, node_modules, .next) queda sin escritura de
+# grupo ni de otros (FNC-129, SEG-1).
+umask 022
 
-# Prefijo: la carpeta del código, donde está este script (FNC-129).
+# Prefijo: la carpeta del código, donde está este script (FNC-129). Es de
+# root: la cuenta de servicio solo es dueña de sus datos y registros.
 PREFIX="$(realpath "$(dirname "${BASH_SOURCE[0]}")/..")"
 # Nombre del despliegue. De él se derivan las unidades systemd, el directorio
 # de registros y el fichero de nginx. Vacío: el nombre de la carpeta.
 APP_NAME=""
 APP_TITLE=""                   # por defecto, APP_NAME capitalizado
-LOGDIR=""                      # por defecto, /var/log/$APP_NAME
+LOGDIR=""                      # por defecto, $LOGDIR_BASE/$APP_NAME
+# Base de los registros; con --force, el logdir debe estar debajo (SEG-3).
+LOGDIR_BASE="/var/log"
+# Directorios de datos del prefijo que escribe la cuenta de servicio: se le
+# entregan si existen y no se exigen de root (FNC-129, SEG-1).
+DATOS_SERVICIO=(instance uploads storage backups)
 # Limpiar antes una instalación previa del mismo nombre (--force, FNC-129).
 FORCE=0
 # Dónde se instalan las unidades systemd y la configuración de nginx.
@@ -116,6 +125,49 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# --- Código de root (FNC-129, SEG-1) -------------------------------------------
+# Antes de cargar ningún deploy/*.sh: si la cuenta de servicio pudiera editar
+# el código (este script, deploy/, plantillas, requirements, frontend, venv),
+# el siguiente `sudo install.sh` ejecutaría su código como root.
+# codigo_protegido PREFIJO UID: 0 si el prefijo y todo lo que contiene (salvo
+# .env y DATOS_SERVICIO) es de UID y sin escritura de grupo ni de otros, y sus
+# carpetas superiores son de root o de UID y sin esa escritura (salvo con
+# sticky bit). Si no, imprime la primera ruta que falla y devuelve 1.
+codigo_protegido() {
+    local prefijo="$1" uid="$2" ruta d malo dueno modo
+    local poda=(-path "$prefijo/.env")
+    for d in "${DATOS_SERVICIO[@]}"; do poda+=(-o -path "$prefijo/$d"); done
+    if ! malo="$(find "$prefijo" -xdev \( "${poda[@]}" \) -prune -o \
+            \( ! -uid "$uid" -o \( ! -type l -perm /022 \) \) -print -quit)"; then
+        printf '%s (no se pudo revisar)\n' "$prefijo"
+        return 1
+    fi
+    if [[ -n "$malo" ]]; then printf '%s\n' "$malo"; return 1; fi
+    ruta="$prefijo"
+    while [[ "$ruta" != / ]]; do
+        ruta="$(dirname -- "$ruta")"
+        read -r dueno modo < <(stat -c '%u %a' -- "$ruta")
+        modo=$((8#$modo))
+        if [[ "$dueno" != 0 && "$dueno" != "$uid" ]] \
+                || (( (modo & 8#022) && !(modo & 8#1000) )); then
+            printf '%s\n' "$ruta"
+            return 1
+        fi
+    done
+}
+if (( EUID == 0 )) && ! malo="$(codigo_protegido "$PREFIX" 0)"; then
+    cat >&2 <<FIN_ERR
+ERROR: el código de $PREFIX debe ser de root y sin escritura para el grupo ni
+para otros: la cuenta de servicio no puede poder cambiar lo que root ejecuta.
+Falla en: $malo
+Corregir (el instalador vuelve a entregar a la cuenta de servicio su .env,
+sus datos y sus registros):
+  sudo chown -R root:root $PREFIX && sudo chmod -R go-w $PREFIX
+Si falla una carpeta superior, dejarla de root sin escritura de grupo ni otros.
+FIN_ERR
+    exit 1
+fi
+
 # shellcheck source=deploy/nombre_despliegue.sh
 . "$PREFIX/deploy/nombre_despliegue.sh"
 # El nombre acaba en rutas, unidades systemd y nginx (ver nombre_despliegue.sh).
@@ -127,7 +179,7 @@ fi
 nombre_despliegue_valido "$APP_NAME" \
     || { echo "ERROR: --name debe ser minúsculas, dígitos, '-' o '_' (máx. 32)" >&2; exit 2; }
 
-: "${LOGDIR:=/var/log/$APP_NAME}"
+: "${LOGDIR:=$LOGDIR_BASE/$APP_NAME}"
 : "${APP_TITLE:=$(tr '[:lower:]' '[:upper:]' <<< "${APP_NAME:0:1}")${APP_NAME:1}}"
 BACKEND_UNIT="${APP_NAME}-backend"
 FRONTEND_UNIT="${APP_NAME}-frontend"
@@ -142,6 +194,8 @@ WORKER_UNIT="${APP_NAME}-worker"
 . "$PREFIX/deploy/puertos.sh"
 # shellcheck source=deploy/reinstalar.sh
 . "$PREFIX/deploy/reinstalar.sh"
+# shellcheck source=deploy/propiedad.sh
+. "$PREFIX/deploy/propiedad.sh"
 if [[ -n "$DB_SERVICE" ]]; then
     DB_SERVICE="$(servicio_bd_valido "$DB_SERVICE")" \
         || { echo "ERROR: --db-service debe ser un nombre de unidad (letras, dígitos, ':', '_', '.', '@' o '-'), p. ej. mariadb" >&2; exit 2; }
@@ -200,7 +254,7 @@ resolve_python() {
 # Antes de modificar nada; sin --force no se pregunta ni se borra nada.
 if (( FORCE )); then
     log "Limpieza de la instalación previa '$APP_NAME' (--force)"
-    reinstalar_limpio "$APP_NAME" "$PREFIX" "$LOGDIR" "$SYSTEMD_DIR" "$NGINX_CONF_DIR" \
+    reinstalar_limpio "$APP_NAME" "$PREFIX" "$LOGDIR" "$SYSTEMD_DIR" "$NGINX_CONF_DIR" "$LOGDIR_BASE" \
         || die "limpieza cancelada; no se ha modificado nada."
 fi
 
@@ -331,12 +385,12 @@ note "los servicios correrán como $SVC_USER:$SVC_GROUP"
 # --- 3. Carpeta del código y .env --------------------------------------------
 # En sitio (FNC-129): se usa el código ya clonado en $PREFIX; no se copia.
 log "Proyecto en $PREFIX (en sitio, sin copia)"
-mkdir -p "$LOGDIR"
 
-# Contiene credenciales de base de datos: solo el usuario del servicio. Nunca
-# a través de un enlace (FNC-125): ver asegurar_env_prefijo. Si falta, se
-# detiene pidiendo crearlo desde .env.example.
-asegurar_env_prefijo "$PREFIX" "$SVC_USER" "$SVC_GROUP" "$PY_BIN" \
+# Contiene credenciales de base de datos: root:<grupo de servicio> 640; los
+# servicios lo leen por el grupo y la cuenta no puede reescribirlo (SEG-1).
+# Nunca a través de un enlace (FNC-125): ver asegurar_env_prefijo. Si falta,
+# se detiene pidiendo crearlo desde .env.example.
+asegurar_env_prefijo "$PREFIX" root "$SVC_GROUP" "$PY_BIN" \
     || die "el .env de $PREFIX no es válido; ver el mensaje anterior."
 # Puertos (FNC-127): el .env solo se consulta para WEB_PORT y API_PORT, línea
 # a línea y sin cargarlo; asegurar_env_prefijo ya descartó un enlace.
@@ -355,18 +409,22 @@ if ! salida_vw="$(revisar_vaultwarden "$PREFIX/.env")"; then
     die "Corregir las variables de Vaultwarden del .env (ver deploy/README.md)."
 fi
 printf '%s\n' "$salida_vw" | sed 's/^/    /'
-# -h: cambia el enlace, no su destino (FNC-125). Sin -L: no entra en enlaces.
-chown -R -h "$SVC_USER:$SVC_GROUP" "$PREFIX" "$LOGDIR"
+# El código sigue de root (SEG-1): la cuenta solo recibe sus datos y registros.
+entregar_datos_a_servicio "$PREFIX" "$LOGDIR" "$SVC_USER" "$SVC_GROUP" "${DATOS_SERVICIO[@]}" \
+    || die "no se pudieron entregar los datos a $SVC_USER; ver el mensaje anterior."
+note "código de root; datos y registros de $SVC_USER"
 
 # --- 4. Backend --------------------------------------------------------------
+# venv, node_modules y .next los crea y posee root (SEG-1); los servicios
+# solo los leen (ProtectSystem=strict ya les impide escribir en el prefijo).
 log "Backend (venv y dependencias)"
-sudo -u "$SVC_USER" "$PY_BIN" -m venv "$PREFIX/venv"
-# sudo -u no hereda el entorno, así que el proxy se pasa a pip explícitamente.
+"$PY_BIN" -m venv "$PREFIX/venv"
+# El proxy se pasa a pip explícitamente, además del entorno.
 PIP_PROXY_ARG=()
 [[ -n "$PROXY_URL" ]] && PIP_PROXY_ARG=(--proxy "$PROXY_URL")
-sudo -u "$SVC_USER" "$PREFIX/venv/bin/pip" install --quiet "${PIP_PROXY_ARG[@]}" \
+"$PREFIX/venv/bin/pip" install --quiet "${PIP_PROXY_ARG[@]}" \
     --upgrade pip wheel
-sudo -u "$SVC_USER" "$PREFIX/venv/bin/pip" install --quiet "${PIP_PROXY_ARG[@]}" \
+"$PREFIX/venv/bin/pip" install --quiet "${PIP_PROXY_ARG[@]}" \
     -r "$PREFIX/requirements.txt" \
     || die "fallo instalando dependencias de Python"
 note "venv listo en $PREFIX/venv"
@@ -374,22 +432,22 @@ note "venv listo en $PREFIX/venv"
 # --- 5. Frontend -------------------------------------------------------------
 log "Frontend (dependencias y build)"
 pushd "$PREFIX/frontend" >/dev/null
-# npm tampoco hereda el entorno con sudo -u: se le pasa por línea de órdenes.
+# A npm también se le pasa el proxy por línea de órdenes.
 NPM_PROXY_ARG=()
 if [[ -n "$PROXY_URL" ]]; then
     NPM_PROXY_ARG=(--proxy "$PROXY_URL" --https-proxy "$PROXY_URL"
                    --noproxy "$NO_PROXY_LIST")
     note "npm usará el proxy"
 fi
-sudo -u "$SVC_USER" npm ci --no-audit --no-fund "${NPM_PROXY_ARG[@]}" \
+npm ci --no-audit --no-fund "${NPM_PROXY_ARG[@]}" \
     || die "fallo en npm ci"
-sudo -u "$SVC_USER" npm run build \
+npm run build \
     || die "fallo en 'next build' (si es por memoria, añadir swap)"
 
 # El build standalone no copia los estáticos ni public/: hay que ponerlos donde
 # server.js los espera, o la página carga sin CSS ni imágenes.
-sudo -u "$SVC_USER" cp -r .next/static .next/standalone/.next/static
-[[ -d public ]] && sudo -u "$SVC_USER" cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
+[[ -d public ]] && cp -r public .next/standalone/public
 popd >/dev/null
 note "build en $PREFIX/frontend/.next/standalone"
 
@@ -473,6 +531,8 @@ Instalación terminada.
   frontend   ${PREFIX}/frontend (127.0.0.1:${WEB_PORT})
   worker     ${WORKER_UNIT} (no escucha; journalctl -u ${WORKER_UNIT} -f)
   registros  ${LOGDIR}, journalctl -u ${BACKEND_UNIT} -f
+
+Actualizar más adelante:  sudo git -C ${PREFIX} pull && sudo ${PREFIX}/deploy/install.sh
 
 Pendiente:
   1. Migraciones, si es una actualización (después reiniciar backend y worker):
