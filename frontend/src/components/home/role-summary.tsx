@@ -6,7 +6,8 @@
  * - Usuario (`propio`): mis solicitudes y mis accesos.
  * - Admin de área (`areas`): pendientes y resumen de sus áreas, más lo propio.
  * - Superadmin (`global`): pendientes y resumen global.
- * - Cada contador es un enlace (`StatTile` dentro de `Link`) a su pantalla.
+ * - Cada contador es un enlace (`StatTile` dentro de `Link`) a su pantalla con el
+ *   filtro del contador en la URL (`?status=…`, `?tab=accesos`; DIS-036).
  * - Refresco con `usePolling` y el intervalo de la preferencia del usuario.
  */
 
@@ -17,6 +18,7 @@ import type { HomeSummary } from '@/lib/access/types';
 import { usePolling } from '@/lib/use-polling';
 import { RUTA_AUDITORIA } from '../audit/audit-routes';
 import { formatearFecha } from '../access/fecha';
+import { rutaConFiltro } from '../access/filtro-url';
 import { listLoadError } from '../access/request-errors';
 import { Button } from '../form';
 import { useSession } from '../session-provider';
@@ -69,8 +71,8 @@ export function gruposDelResumen(resumen: HomeSummary): GrupoResumen[] {
       id: 'pendientes',
       titulo: 'Pendientes',
       contadores: [
-        { etiqueta: 'Por aprobar', valor: resumen.pending_approvals ?? 0, ruta: RUTAS_INICIO.aprobaciones, destino: 'Aprobaciones' },
-        { etiqueta: 'Accesos con falla', valor: resumen.failed_access ?? 0, ruta: RUTAS_INICIO.inventario, destino: 'Inventario' },
+        { etiqueta: 'Por aprobar', valor: resumen.pending_approvals ?? 0, ruta: rutaConFiltro(RUTAS_INICIO.aprobaciones, { status: 'pendiente' }), destino: 'Aprobaciones' },
+        { etiqueta: 'Accesos con falla', valor: resumen.failed_access ?? 0, ruta: rutaConFiltro(RUTAS_INICIO.inventario, { status: 'fallido' }), destino: 'Inventario' },
       ],
     });
   }
@@ -81,7 +83,7 @@ export function gruposDelResumen(resumen: HomeSummary): GrupoResumen[] {
       contadores: [
         { etiqueta: 'Áreas', valor: resumen.totals.areas, ruta: RUTAS_INICIO.areas, destino: 'Áreas' },
         { etiqueta: 'Plataformas', valor: resumen.totals.platforms, ruta: RUTAS_INICIO.plataformas, destino: 'Administrar plataformas' },
-        { etiqueta: 'Accesos activos', valor: resumen.totals.active_access, ruta: RUTAS_INICIO.inventario, destino: 'Inventario' },
+        { etiqueta: 'Accesos activos', valor: resumen.totals.active_access, ruta: rutaConFiltro(RUTAS_INICIO.inventario, { status: 'activo' }), destino: 'Inventario' },
       ],
     });
   }
@@ -90,9 +92,9 @@ export function gruposDelResumen(resumen: HomeSummary): GrupoResumen[] {
       id: 'mis-solicitudes',
       titulo: 'Mis solicitudes',
       contadores: [
-        { etiqueta: 'Pendientes', valor: resumen.my_requests.pendiente, ruta: RUTAS_INICIO.solicitudes, destino: 'Mis solicitudes' },
-        { etiqueta: 'Aprobadas', valor: resumen.my_requests.aprobada, ruta: RUTAS_INICIO.solicitudes, destino: 'Mis solicitudes' },
-        { etiqueta: 'Rechazadas', valor: resumen.my_requests.rechazada, ruta: RUTAS_INICIO.solicitudes, destino: 'Mis solicitudes' },
+        { etiqueta: 'Pendientes', valor: resumen.my_requests.pendiente, ruta: rutaConFiltro(RUTAS_INICIO.solicitudes, { status: 'pendiente' }), destino: 'Mis solicitudes' },
+        { etiqueta: 'Aprobadas', valor: resumen.my_requests.aprobada, ruta: rutaConFiltro(RUTAS_INICIO.solicitudes, { status: 'aprobada' }), destino: 'Mis solicitudes' },
+        { etiqueta: 'Rechazadas', valor: resumen.my_requests.rechazada, ruta: rutaConFiltro(RUTAS_INICIO.solicitudes, { status: 'rechazada' }), destino: 'Mis solicitudes' },
       ],
     });
   }
@@ -101,9 +103,9 @@ export function gruposDelResumen(resumen: HomeSummary): GrupoResumen[] {
       id: 'mis-accesos',
       titulo: 'Mis accesos',
       contadores: [
-        { etiqueta: 'Con acceso', valor: resumen.my_access.activo, ruta: RUTAS_INICIO.solicitudes, destino: 'Mis accesos' },
-        { etiqueta: 'En proceso', valor: resumen.my_access.en_proceso, ruta: RUTAS_INICIO.solicitudes, destino: 'Mis accesos' },
-        { etiqueta: 'Fallidos', valor: resumen.my_access.fallido, ruta: RUTAS_INICIO.solicitudes, destino: 'Mis accesos' },
+        { etiqueta: 'Con acceso', valor: resumen.my_access.activo, ruta: rutaConFiltro(RUTAS_INICIO.solicitudes, { tab: 'accesos', status: 'activo' }), destino: 'Mis accesos' },
+        { etiqueta: 'En proceso', valor: resumen.my_access.en_proceso, ruta: rutaConFiltro(RUTAS_INICIO.solicitudes, { tab: 'accesos', status: 'en_proceso' }), destino: 'Mis accesos' },
+        { etiqueta: 'Fallidos', valor: resumen.my_access.fallido, ruta: rutaConFiltro(RUTAS_INICIO.solicitudes, { tab: 'accesos', status: 'fallido' }), destino: 'Mis accesos' },
       ],
     });
   }
