@@ -35,3 +35,5 @@ def validar_logo(value):
         base64.b64decode(encoded, validate=True)
     except Exception:
         return None, 'El contenido no es base64 válido.'
+
+    return value, None

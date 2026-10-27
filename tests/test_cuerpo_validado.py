@@ -81,3 +81,15 @@ def test_enlace_de_bienvenida_apunta_a_login(app, client, monkeypatch):
     correo, nombre, base_url, enlace = avisos[0]
     assert base_url == 'https://portal.pruebas.local'
     assert enlace == 'https://portal.pruebas.local/login'
+
+
+def test_settings_con_logo_valido_guarda_y_da_200(cliente_admin):
+    """Regresión de FNC-029: `validar_logo` perdió su `return` y daba 500."""
+    logo = ('data:image/png;base64,'
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+
+    respuesta = cliente_admin.put(f'{A}/settings', json={
+        'portal_identity_type': 'image', 'portal_icon': logo})
+
+    assert respuesta.status_code == 200, respuesta.get_data(as_text=True)
+    assert cliente_admin.get(f'{A}/settings').get_json()['portal_icon'] == logo
