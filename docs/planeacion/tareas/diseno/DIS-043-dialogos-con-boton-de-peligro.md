@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Aprobada** | 2026-10-26 (modo autónomo; dentro de DIS-031/DIS-038) |
 | **Rama** | `dis/DIS-031-038-modal` (desde `develop`, d642e1f) |
 | **Creada** | 2026-10-26 |
