@@ -41,7 +41,7 @@ Ambos servicios van bajo el mismo dominio tras nginx. BD: MySQL (SQLite local si
 
 ## Desarrollo local
 
-Requisitos: Python 3.11 o superior; Node 18.18 o superior (se recomienda 22 LTS); Redis local con `requirepass` solo para el worker.
+Requisitos: Python 3.11 o superior; Node 22 (22.13 o posterior) o Node 24 en adelante; Node 23 no sirve (FNC-073); Redis local con `requirepass` solo para el worker.
 
 ```bash
 cp .env.example .env                 # completar; .env nunca se versiona

@@ -16,7 +16,13 @@ set -uo pipefail
 # intérprete ya instalado y solo se instala uno si no hay ninguno válido.
 PY_MIN_MINOR=11
 PY_BIN=""                      # se resuelve más abajo
-NODE_MAJOR="22"                # Next.js 15 requiere Node >= 18.18; se usa 22 LTS
+NODE_MAJOR="22"                # Node LTS que se instala
+# Mínimo de Node: el mismo rango que "engines" de frontend/package.json
+# (^22.13.0 || >=24.0.0). Lo fijan vitest 4 y jsdom 29; Next 15 pide menos.
+# Node 23 (impar, sin LTS) queda fuera porque vitest no lo admite.
+NODE_MIN_MINOR=13              # menor mínima dentro de NODE_MAJOR
+NODE_NEXT_MAJOR=24             # primera mayor posterior que se acepta completa
+NODE_RANGO="^${NODE_MAJOR}.${NODE_MIN_MINOR}.0 || >=${NODE_NEXT_MAJOR}.0.0"
 MIN_DISK_MB=2048               # node_modules + venv + build
 MIN_RAM_MB=1024                # `next build` es lo que más consume
 API_PORT="${API_PORT:-5001}"
@@ -42,6 +48,15 @@ fi
 ok()   { printf "  %sOK%s    %s\n" "$c_ok" "$c_off" "$1"; }
 warn() { printf "  %sAVISO%s %s\n" "$c_warn" "$c_off" "$1"; warnings=$((warnings+1)); }
 bad()  { printf "  %sFALTA%s %s\n" "$c_bad" "$c_off" "$1"; problems=$((problems+1)); }
+
+# ¿La versión de Node ($1, salida de `node --version`) cumple NODE_RANGO?
+node_cumple_minimo() {
+    local v=${1#v} mayor menor
+    mayor=${v%%.*}; v=${v#*.}; menor=${v%%.*}
+    [[ "$mayor" =~ ^[0-9]+$ && "$menor" =~ ^[0-9]+$ ]] || return 1
+    (( 10#$mayor == NODE_MAJOR && 10#$menor >= NODE_MIN_MINOR )) \
+        || (( 10#$mayor >= NODE_NEXT_MAJOR ))
+}
 head2(){ printf "\n%s%s%s\n" "$c_bold" "$1" "$c_off"; }
 
 # --- 1. Sistema operativo ----------------------------------------------------
@@ -128,12 +143,10 @@ head2 "Node.js"
 
 if command -v node >/dev/null 2>&1; then
     node_v=$(node --version)
-    node_major=$(echo "$node_v" | sed 's/^v//;s/\..*//')
-    if (( node_major >= 18 )); then
-        ok "Node ${node_v} (Next.js 15 requiere >= 18.18)"
-        (( node_major < NODE_MAJOR )) && warn "se recomienda Node ${NODE_MAJOR} LTS"
+    if node_cumple_minimo "$node_v"; then
+        ok "Node ${node_v} (el proyecto pide ${NODE_RANGO})"
     else
-        bad "Node ${node_v} es demasiado antiguo para Next.js 15 (mínimo 18.18)"
+        bad "Node ${node_v} no cumple el mínimo del proyecto (${NODE_RANGO}); instalar Node ${NODE_MAJOR} LTS"
     fi
     command -v npm >/dev/null 2>&1 && ok "npm $(npm --version)" || bad "npm no está instalado"
 else

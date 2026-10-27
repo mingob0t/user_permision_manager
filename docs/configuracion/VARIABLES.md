@@ -133,6 +133,10 @@ La versión inicial de este registro (estructura genérica) listaba `APP_ENV`, `
 |---|---|---|---|---|---|---|
 | `PERMANENT_SESSION_LIFETIME` | Duración de la sesión | 7 | días | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `SESSION_COOKIE_NAME` | Nombre de la cookie | `nexus_session` | — | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
+| `NODE_MAJOR` | Node LTS que instala `install.sh` | `22` | versión mayor | `deploy/preflight.sh`, `deploy/install.sh` | FNC-001, 2026-10-13 | Vigente |
+| `NODE_MIN_MINOR` | Menor mínima dentro de `NODE_MAJOR` | `13` | versión menor | `deploy/preflight.sh`, `deploy/install.sh` | FNC-073, 2026-10-27 | Vigente |
+| `NODE_NEXT_MAJOR` | Primera mayor posterior aceptada completa (excluye el 23) | `24` | versión mayor | `deploy/preflight.sh`, `deploy/install.sh` | FNC-073, 2026-10-27 | Vigente |
+| `engines.node` | Rango de Node del frontend; los tres valores de arriba deben dar el mismo | `^22.13.0 \|\| >=24.0.0` | rango semver | `frontend/package.json` (y su lock) | FNC-073, 2026-10-27 | Vigente |
 | `WTF_CSRF_TIME_LIMIT` | Caducidad del token CSRF | sin límite | — | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `pool_recycle` | Reciclado de conexiones de BD | 3600 | s | `app/__init__.py` | FNC-001, 2026-10-13 | Vigente |
 | `SQLITE_URI_POR_DEFECTO` | BD SQLite cuando `DB_ENGINE` no es `mysql` (en `instance/`) | `sqlite:///nexus.db` | — | `app/utils/uri_bd.py` | FNC-001, 2026-10-13; constante con nombre FNC-039 | Vigente |

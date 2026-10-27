@@ -41,5 +41,5 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 
 ## Fase 6 — Documentación y operación (en curso desde 2026-10-27)
 - [x] FNC-035
-- [ ] FNC-073
+- [x] FNC-073
 - [ ] FNC-124
