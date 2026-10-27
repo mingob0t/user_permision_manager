@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | api |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |

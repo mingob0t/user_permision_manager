@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | api |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-19 |
 | **Inicio** | 2026-10-27 |
 | **Estatus Git** | commit local, sin push |
