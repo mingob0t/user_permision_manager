@@ -127,7 +127,7 @@
 | DIS-036 | Inicio: enlaces que abren la pantalla con el filtro del contador | web | 4 | dashboard | Baja | Propuesta | 2026-10-21 | | | — | Origen: DIS-024 |
 | DIS-037 | Panel: retirar o reubicar los contadores heredados que duplican el resumen por rol | web | 4 | dashboard | Baja | Propuesta | 2026-10-21 | | | — | Origen: DIS-024; relacionada con DIS-003 |
 | DIS-038 | Menú móvil y `Modal`: token de velo y bloqueo de desplazamiento sin `el.style` | web | 4 | componentes | Baja | Propuesta | 2026-10-21 | | | — | Origen: DIS-025; relacionada con DIS-031 |
-| DIS-039 | `Checkbox`: borde de la casilla sin marcar con contraste 3:1 | web | 4 | componentes | Media | Propuesta | 2026-10-21 | | | — | Origen: DIS-019; compartido `.nexus-checkbox` |
+| DIS-039 | `Checkbox`: borde de la casilla sin marcar con contraste 3:1 | web | 4 | componentes | Media | Hecha | 2026-10-21 | 2026-10-26 | 2026-10-26 | Resuelta en DIS-006 (`dis/DIS-004-005-006-contraste`, commit local, sin push) | Origen: DIS-019; compartido `.nexus-checkbox`; resuelta en DIS-006 |
 | DIS-043 | Diálogos destructivos con el botón de peligro | web | 4 | componentes | Baja | Propuesta | 2026-10-26 | | | — | Origen: DIS-004 |
 | DIS-040 | Prueba intermitente en `areas-list.test.tsx` (409 `rol_no_admin`) | web | 4 | areas | Baja | Propuesta | 2026-10-21 | | | — | Origen: DIS-019 |
 | DIS-041 | Bitácora de ejecuciones para el admin de área | web | 4 | configuracion-conectores | Media | Propuesta | 2026-10-21 | | | — | Origen: DIS-022 |

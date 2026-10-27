@@ -633,7 +633,7 @@ html.theme-rose-light {
 
   --color-input-bg: 255 255 255;
   --color-input-text: #1c1917;
-  --color-input-border: 223 113 137;    /* DIS-006: Rose-200 hacia Rose-700 lo mínimo para 3:1 */
+  --color-input-border: 219 102 128;    /* DIS-006: Rose-200 hacia Rose-700 lo mínimo para 3:1 sobre panel y fondo */
   --color-input-focus: var(--color-primary);
   --color-label-text: 87 83 78;
 

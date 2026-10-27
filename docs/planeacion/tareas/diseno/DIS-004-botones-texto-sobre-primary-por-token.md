@@ -95,6 +95,18 @@ Falsos positivos: `body` (variable local de `platform-card.tsx`) y `--color-body
 ## Tareas propuestas
 - Propuesta DIS-043: los diálogos que usan primario en vez de `danger` por la falla anterior (`reject-dialog`, `revoke-access-dialog`, `admin-role-dialog`) y sus comentarios desactualizados.
 
+## Correcciones de auditor-accesibilidad (2026-10-26)
+Veredicto: aprobado, los pares cumplen y no hay regresiones. Hallazgos corregidos en la misma rama:
+| Hallazgo | Corrección | Tarea |
+|---|---|---|
+| H1 | Notificación leída: sin opacidad en la `Card`; `opacity-85` solo en título, hora y mensaje (≥ 5,18:1). El chip de tono vuelve a su contraste (con la tarjeta al 85 % bajaba a 3,5–4,4:1). Pares `chip-notificacion-{success,error,warning,primary}` | DIS-005 |
+| H2 | `.nexus-checkbox:hover`: borde `rgb(var(--color-primary))` (antes `/ 0.5`: 1,9–2,2:1); par `checkbox-hover/panel` (3,45–6,91) | DIS-006 |
+| H3 | `.nexus-btn-secondary:hover`: borde `rgb(var(--color-primary))` (antes `/ 0.4`); pares `btn-secondary-hover-borde/panel` y `/body-bg` | DIS-004 |
+| H4 | Los divisores y bordes quedan más marcados en todas las pantallas (`--color-panel-border` a 3:1). **El dueño debe validarlo** en la prueba de concepto | DIS-006 |
+| H6 | `--color-input-border` de rose `223 113 137` → `219 102 128` (2,79 → 3,07:1 sobre `--color-body-bg`; 3,37 sobre panel); par `input-border/body-bg` | DIS-006 |
+
+Verificación tras las correcciones (en `frontend/`): `npm run typecheck` 0; `npm run lint` 0; `npx eslint tests vitest.config.ts` 0; `npx vitest run` 0 (29 archivos, 1135 pasan, 0 `it.fails`); `npm run build` 0. Fallas conocidas: 0. Sin verificación visual en navegador.
+
 ## Criterios de aceptación
 - [ ] Hallazgos de origen corregidos y verificados
 - [ ] Prueba de regresión que primero falla (si corrige un defecto)
@@ -112,3 +124,4 @@ Falsos positivos: `body` (variable local de `platform-card.tsx`) y `--color-body
 | 2026-10-19 | DIS-002 (revisión): botón `danger` (`form.tsx:84`, `!bg-error`) texto blanco sobre `#ef4444` = 3.76:1 (falla previa, sin cambio en DIS-002). Proponer `--color-error-solid` + `--color-on-error`, como DIS-001 hizo con `primary-solid`/`on-primary` |
 | 2026-10-20 | Parte del botón primario resuelta en DIS-015 (auditor-accesibilidad): `.nexus-btn-primary` (`components.css`) usa `--color-primary-solid` y `--color-on-primary` (antes `--color-primary` con blanco: obsidian 2,56, rose 3,67, emerald 3,77, violet 4,23); par `nexus-btn-primary` en la prueba de contraste, pasa en los 7 temas. Sigue pendiente: el par `button-text/button-bg` (tokens `--color-button-*`, sin uso en clases ni componentes; falla conocida en emerald, rose y violet), el botón `danger` (3,76:1) y advertencia/hover del secundario |
 | 2026-10-26 | En revisión: implementada junto con DIS-004/005/006 en modo autónomo; fallas conocidas 25 → 0; typecheck, lint, vitest y build en 0; sin verificación visual en navegador; pendientes revisor y auditor-accesibilidad |
+| 2026-10-26 | auditor-accesibilidad: aprobado; corregidos H1, H2, H3 y H6 y anotado H4 (ver «Correcciones de auditor-accesibilidad»). Sigue En revisión |

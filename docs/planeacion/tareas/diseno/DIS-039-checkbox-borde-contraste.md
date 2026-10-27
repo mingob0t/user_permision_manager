@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-21 |
 
 ## Contexto
@@ -34,3 +34,4 @@
 | 2026-10-21 | Creada como Propuesta desde DIS-019 |
 | 2026-10-21 | Valor medido real (1,42–2,02:1) y fondo correcto (`--color-panel-fill`) según auditor-accesibilidad |
 | 2026-10-26 | DIS-006 sube `--color-panel-border` a 3:1 contra panel y fondo en los 7 temas (par `panel-border/panel`: 3,06–3,39) y agrega `.nexus-checkbox:focus-visible`. Se propone cerrar esta tarea como resuelta por DIS-006 tras la validación del dueño |
+| 2026-10-26 | Hecha: resuelta en DIS-006 (borde sin marcar 3,06–3,39:1 con `panel-border/panel`, hover con `primary` sólido y `:focus-visible`), confirmado por auditor-accesibilidad |

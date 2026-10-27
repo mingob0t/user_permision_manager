@@ -71,6 +71,8 @@ Bordes de campo y de panel a 3:1 (WCAG 1.4.11) en los 7 temas, y foco visible en
 | `.nexus-checkbox` | Borde más marcado; anillo de foco con teclado | Casillas de `Checkbox` y `area-checklist` (alta en directorio, elevación a admin) |
 | `.nexus-btn-secondary` | Borde más marcado | Todos los botones secundarios |
 | `global.css` (líneas 108, 380, 386, 499) y modales (`job-detail-modal`, `audit-detail-modal`, `request-form-modal`) | Bordes más marcados | Pantallas que los usan |
+| Divisores y bordes en general (H4) | Más marcados en todas las pantallas: **pendiente de validar por el dueño** | Todas |
+| `.nexus-checkbox:hover`, `.nexus-btn-secondary:hover` | Borde `primary` sólido al pasar el ratón | Casillas y botones secundarios |
 | `--color-input-border` | Ninguno visible (sin consumidores) | — |
 
 ## Verificación (2026-10-26, rama `dis/DIS-004-005-006-contraste`, en `frontend/`)
@@ -102,6 +104,18 @@ Falsos positivos: `body` (variable local de `platform-card.tsx`) y `--color-body
 | `body` | función/componente | `frontend/src/components/platform-card.tsx` | `app/modules/api/admin.py`, `app/modules/connectors/http_transporte.py`, `app/modules/notifications/models.py`, `app/modules/notifications/services.py`, `frontend/src/app/layout.tsx`, `frontend/src/components/access/approvals-inbox.tsx`, `frontend/src/components/access/approve-dialog.tsx`, `frontend/src/components/access/inventory-table.tsx` (+40) | app/modules, frontend/src, frontend/tests, migrations/versions, tests, tests/notifications | ☐ |
 | `nexus-checkbox` | clase CSS | `frontend/src/styles/components.css` | `frontend/src/components/users/area-checklist.tsx` | frontend/src | ☐ |
 
+## Correcciones de auditor-accesibilidad (2026-10-26)
+Veredicto: aprobado, los pares cumplen y no hay regresiones. Hallazgos corregidos en la misma rama:
+| Hallazgo | Corrección | Tarea |
+|---|---|---|
+| H1 | Notificación leída: sin opacidad en la `Card`; `opacity-85` solo en título, hora y mensaje (≥ 5,18:1). El chip de tono vuelve a su contraste (con la tarjeta al 85 % bajaba a 3,5–4,4:1). Pares `chip-notificacion-{success,error,warning,primary}` | DIS-005 |
+| H2 | `.nexus-checkbox:hover`: borde `rgb(var(--color-primary))` (antes `/ 0.5`: 1,9–2,2:1); par `checkbox-hover/panel` (3,45–6,91) | DIS-006 |
+| H3 | `.nexus-btn-secondary:hover`: borde `rgb(var(--color-primary))` (antes `/ 0.4`); pares `btn-secondary-hover-borde/panel` y `/body-bg` | DIS-004 |
+| H4 | Los divisores y bordes quedan más marcados en todas las pantallas (`--color-panel-border` a 3:1). **El dueño debe validarlo** en la prueba de concepto | DIS-006 |
+| H6 | `--color-input-border` de rose `223 113 137` → `219 102 128` (2,79 → 3,07:1 sobre `--color-body-bg`; 3,37 sobre panel); par `input-border/body-bg` | DIS-006 |
+
+Verificación tras las correcciones (en `frontend/`): `npm run typecheck` 0; `npm run lint` 0; `npx eslint tests vitest.config.ts` 0; `npx vitest run` 0 (29 archivos, 1135 pasan, 0 `it.fails`); `npm run build` 0. Fallas conocidas: 0. Sin verificación visual en navegador.
+
 ## Criterios de aceptación
 - [ ] Hallazgos de origen corregidos y verificados
 - [ ] Prueba de regresión que primero falla (si corrige un defecto)
@@ -118,3 +132,4 @@ Falsos positivos: `body` (variable local de `platform-card.tsx`) y `--color-body
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-26 | En curso: tokens de borde a 3:1 y foco visible (decisiones en la ficha). Junto con DIS-004 y DIS-005, la lista de fallas conocidas pasa de 25 a 0 |
 | 2026-10-26 | En revisión: implementada junto con DIS-004/005/006 en modo autónomo; fallas conocidas 25 → 0; typecheck, lint, vitest y build en 0; sin verificación visual en navegador; pendientes revisor y auditor-accesibilidad |
+| 2026-10-26 | auditor-accesibilidad: aprobado; corregidos H1, H2, H3 y H6 y anotado H4 (ver «Correcciones de auditor-accesibilidad»). Sigue En revisión |
