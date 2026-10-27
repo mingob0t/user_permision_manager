@@ -22,7 +22,7 @@ import { useAsync } from '@/lib/use-async';
 import { formatearFecha } from '../access/fecha';
 import { Dato } from '../audit/audit-detail-modal';
 import { Button } from '../form';
-import { Badge, Card, ErrorNote, Spinner } from '../ui';
+import { Badge, Card, ErrorNote, Spinner, SuccessNote } from '../ui';
 import { ESTADOS_CREDENCIAL, TIPOS_CONECTOR, esTipoConocido } from './connector-catalog';
 import { ConnectorDeleteDialog } from './connector-delete-dialog';
 import {
@@ -156,7 +156,7 @@ export function ConnectorPanel({
         <div role="status">
           {aviso?.tono === 'exito' ? (
             <Card>
-              <p className="text-sm font-bold text-success-text">{aviso.texto}</p>
+              <SuccessNote>{aviso.texto}</SuccessNote>
             </Card>
           ) : null}
         </div>

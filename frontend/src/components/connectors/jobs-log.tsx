@@ -21,7 +21,7 @@ import { listLoadError } from '../access/request-errors';
 import { useOpcionesAlcance } from '../access/scope-filters';
 import { Button } from '../form';
 import { useSession } from '../session-provider';
-import { Card, EmptyNote, ErrorNote, Spinner } from '../ui';
+import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
 import { hayTransitorios } from './job-catalog';
 import { JobDetailModal } from './job-detail-modal';
 import { JobRetryDialog } from './job-retry-dialog';
@@ -148,7 +148,7 @@ export function JobsLog() {
         {aviso ? (
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-bold text-success-text">{aviso}</p>
+              <SuccessNote>{aviso}</SuccessNote>
               <Button variant="secondary" onClick={cerrarAviso}>Cerrar aviso</Button>
             </div>
           </Card>

@@ -54,9 +54,9 @@ const IDS = [...new Set([...selectores.matchAll(/#([a-zA-Z_][\w-]*)/g)].map((m) 
 const ANIMACIONES = [...css.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]);
 const VARIABLES_NX = [...new Set([...css.matchAll(/(--nx-[\w-]+)\s*:/g)].map((m) => m[1]))].sort();
 
-/** Tonos que acepta `Badge` (unión del prop `tone` en ui.tsx). */
+/** Tonos que acepta `Badge` (tipo `Tone` en ui.tsx, DIS-010). */
 const TONOS_BADGE = [
-  ...(/tone\?:\s*([^;}\n]+)/.exec(readFileSync(join(RAIZ_SRC, 'components/ui.tsx'), 'utf8'))?.[1] ?? '').matchAll(/'([\w-]+)'/g),
+  ...(/export type Tone\s*=\s*([^;]+);/.exec(readFileSync(join(RAIZ_SRC, 'components/ui.tsx'), 'utf8'))?.[1] ?? '').matchAll(/'([\w-]+)'/g),
 ].map((m) => m[1]);
 /** Clases armadas al ejecutar que se aceptan: prefijo → sufijos válidos. */
 const PREFIJOS_DINAMICOS: Record<string, string[]> = { 'nx-badge-': TONOS_BADGE };
