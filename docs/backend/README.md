@@ -28,10 +28,10 @@ app/
 └── modules/
     ├── api/           # API v1 que consume el frontend
     │   ├── routes.py  # Lectura: me, áreas, plataformas, favoritos, usuarios, stats
-    │   ├── crud.py    # Escritura: miembros de área, usuarios, preferencias, purga
+    │   ├── crud.py    # Escritura: miembros de área, usuarios, preferencias, purga (la lógica de purga: users/services.py)
     │   ├── admin.py   # Sistema (superadmin): portal, SMTP, plantillas, respaldo; notificaciones in-app
     │   ├── auth.py    # /api/v1/auth: contexto, SSO Authelia, login, logout
-    │   └── helpers.py # error_response(), validation_error(), json_object(), is_id_list() y errores del contrato (FNC-044)
+    │   └── helpers.py # error_response(), validation_error(), json_object(), json_payload(), leer_cuerpo(), campos_no_permitidos()/campos_prohibidos(), is_id_list() y errores del contrato (FNC-044, FNC-030, FNC-082)
     ├── auth/          # Modelos User/AuthConfig (obsoleto) y servicios de login
     ├── directory/     # OpenLDAP: configuración LDAP_*, cliente, escritura, api.py (/auth-config, /directory/search; FNC-043); único que importa ldap3
     ├── core/          # Modelos Area/Platform
@@ -420,7 +420,7 @@ Los siete blueprints heredados de NEXUS (`auth`, `core`, `audit`, `settings`, `n
 | `notificar_aprovisionamiento_fallido(usuario, plataforma, nivel, operacion)` | `aprovisionamiento_fallido` | Admins del área y superadmins con `pref_email_notifications` (P10, 2026-10-15) |
 
 - Plantillas: migración `0003` (HTML, español, editables en Ajustes → Plantillas); variables en `CLAVES_POR_PLANTILLA`; enlace `{url}` = `BASE_URL`.
-- Plantilla usada por el código: `usuario_creado` (alta por LDAP o SSO, si `NOTIFY_USER_CREATED` no es `false`). Variables: `nombre`, `usuario`, `base_url`, `url`.
+- Plantilla usada por el código: `usuario_creado` (alta por LDAP o SSO, si `NOTIFY_USER_CREATED` no es `false`), enviada por `avisar_usuario_creado` de `notifications/services.py` (FNC-030). Variables: `nombre`, `usuario`, `base_url`, `url`.
 - `add_in_app_notification()` existe en servicios.
 
 ### Auditoría
@@ -562,6 +562,6 @@ La línea base `0001` ya contiene su efecto (verificado con `tests/test_linea_ba
 | 13 | ~~`user_platforms` se edita sin efecto~~ Resuelta en FNC-065: endpoints en `410` y tabla obsoleta (P4: sus filas se descartan, sin migrar); borrado de la tabla en FNC-107. | `api/crud.py`, `platforms/api.py` |
 | 14 | `POST /notifications/read` marca como leídas las notificaciones globales para todos los usuarios. | `api/admin.py` |
 | 15 | Control de migraciones resuelto con Alembic (FNC-039). Pruebas del backend completas: suite base (FNC-019), protección por rol (FNC-020), alcance por área (FNC-021), autenticación (FNC-022) y servicios, respaldo, heredadas, CSRF y arranque (FNC-023). | — |
-| 16 | `purge_inactive_users` de `auth/services.py` devuelve un mensaje de error de LDAP no relacionado; la API usa su propia implementación en `crud.py` (duplicado). | `auth/services.py`, `api/crud.py` |
+| 16 | ~~`purge_inactive_users` de `auth/services.py` duplicaba la purga de la API~~ Resuelta en FNC-030: la heredada se borró y la única vive en `users/services.py`. | `users/services.py`, `api/crud.py` |
 | 17 | ~~`utils/seed_users.py` usa roles que el código ya no reconoce~~ Resuelta en FNC-028: script borrado. | — |
 | 18 | Mensajes de error que devuelven el texto de la excepción al cliente (LDAP, SMTP, respaldo). | `api/admin.py` |

@@ -18,8 +18,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import login_required
 
 from app.authz import admin_required
-from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     error_response, json_object)
+from app.modules.api.helpers import error_response, leer_cuerpo
 from app.modules.audit.services import add_audit_log
 from app.modules.directory.configuracion import (ErrorConfiguracionDirectorio,
                                                  directorio_activo)
@@ -48,16 +47,6 @@ ACCION_PRUEBA = 'PRUEBA LDAP'
 MODULO_AUDITORIA = 'Seguridad'
 
 
-def _cuerpo_vacio():
-    """`None` si el cuerpo es un objeto vacío; si no, la respuesta de error."""
-    datos = json_object()
-    if datos is None:
-        return error_response(*CUERPO_INVALIDO)
-    if datos:
-        return error_response(*CAMPO_NO_PERMITIDO)
-    return None
-
-
 @directory_api_bp.route('/auth-config')
 @login_required
 @admin_required
@@ -70,7 +59,7 @@ def get_auth_config():
 @admin_required
 def save_auth_config():
     """Sin campos editables: la configuración y la credencial van en el entorno."""
-    error = _cuerpo_vacio()
+    _, error = leer_cuerpo()
     if error:
         return error
     return jsonify({'status': 'success', 'config': configuracion_publica()})
@@ -81,7 +70,7 @@ def save_auth_config():
 @admin_required
 def test_auth_config():
     """Bind de la cuenta de servicio con la configuración efectiva."""
-    error = _cuerpo_vacio()
+    _, error = leer_cuerpo()
     if error:
         return error
     if not directorio_activo():

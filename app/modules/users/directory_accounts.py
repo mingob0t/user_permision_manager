@@ -108,11 +108,6 @@ class AltaDirectorio:
     area_ids: tuple
 
 
-def campos_no_permitidos(datos):
-    """Campos del cuerpo fuera de la lista blanca, ordenados."""
-    return sorted(set(datos) - CAMPOS_PERMITIDOS)
-
-
 def _texto(datos, campo, errores):
     """Valor sin espacios de un campo de texto obligatorio, o `None`."""
     valor = datos.get(campo)

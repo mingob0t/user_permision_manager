@@ -13,26 +13,21 @@ from app.authz import (admin_required, any_admin_required, area_admin_required,
                        can_manage_user, scoped_areas, scoped_users)
 from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, NO_ENCONTRADO,
                                      OPERACION_PROPIA, REEMPLAZO_ASIGNACION,
-                                     ROL_RESERVADO, endpoint_retirado,
-                                     error_response)
+                                     ROL_RESERVADO, campos_prohibidos,
+                                     endpoint_retirado, error_response,
+                                     json_payload)
 from app.modules.audit.services import add_audit_log
 from app.modules.auth.acceso_local import (contrasena_local_permitida,
                                            origen_de_alta)
 from app.modules.auth.models import User
 from app.modules.core.models import Area
-from app.modules.users.roles import (cambiar_rol, campos_no_permitidos,
+from app.modules.users.roles import (CAMPOS_NO_PERMITIDOS, cambiar_rol,
                                      es_el_mismo_rol, rol_asignable)
+from app.modules.users.services import (PURGE_MIN_DAYS, purgar_inactivos,
+                                        usuarios_inactivos)
 from app.utils.naming import sanitize_display_name
 
 crud_bp = Blueprint('api_crud', __name__, url_prefix='/api/v1')
-
-
-def _payload():
-    return request.get_json(silent=True) or {}
-
-
-def _error(message, status=400, code=None):
-    return error_response(message, status, code)
 
 
 # --------------------------------------------------------------------------- #
@@ -47,13 +42,13 @@ def _error(message, status=400, code=None):
 def set_area_users(area_id):
     """Define qué usuarios pertenecen al área."""
     area = Area.query.get_or_404(area_id)
-    user_ids = _payload().get('user_ids') or []
+    user_ids = json_payload().get('user_ids') or []
 
     # Solo usuarios dentro del alcance de quien administra.
     allowed = {u.id for u in scoped_users().all()}
     rejected = [i for i in user_ids if i not in allowed]
     if rejected:
-        return _error('Hay usuarios fuera de tu alcance.', 403)
+        return error_response('Hay usuarios fuera de tu alcance.', 403)
 
     current = list(area.area_users or [])
     # Conserva a quien esté fuera del alcance (p. ej. un superadmin).
@@ -82,25 +77,26 @@ RESERVED_NAMES = ('admin',)
 @login_required
 @any_admin_required
 def create_user():
-    data = _payload()
+    data = json_payload()
     email = (data.get('email') or '').strip().lower()
     if not email:
-        return _error('El correo es obligatorio.')
+        return error_response('El correo es obligatorio.')
     if email in RESERVED_NAMES:
-        return _error('Ese identificador está reservado por el sistema.', 403)
+        return error_response(
+            'Ese identificador está reservado por el sistema.', 403)
     if User.query.filter(db.func.lower(User.email) == email).first():
-        return _error('El correo ya está registrado.', 409)
-    if campos_no_permitidos(data):
-        return _error(*CAMPO_NO_PERMITIDO)
+        return error_response('El correo ya está registrado.', 409)
+    if campos_prohibidos(data, CAMPOS_NO_PERMITIDOS):
+        return error_response(*CAMPO_NO_PERMITIDO)
     # Sin contraseña local: la cuenta nace sin clave (FNC-077, SEG-02); solo
     # se acepta en desarrollo con LOGIN_LOCAL_TODAS_LAS_CUENTAS.
     if data.get('password') and not contrasena_local_permitida():
-        return _error(*CAMPO_NO_PERMITIDO)
+        return error_response(*CAMPO_NO_PERMITIDO)
 
     # Solo el superadmin crea admins de área; nadie crea superadmins (RF-04).
     role = data.get('role') or 'usuario'
     if not rol_asignable(role):
-        return _error(*ROL_RESERVADO)
+        return error_response(*ROL_RESERVADO)
 
     # Solo áreas dentro del alcance de quien crea.
     allowed = {a.id for a in scoped_areas().all()}
@@ -134,27 +130,27 @@ def update_user(user_id):
     target = User.query.get_or_404(user_id)
     # Fuera de alcance (otra área, otro admin o el superadmin): 404 (SEC-AUTHZ-04).
     if not can_manage_user(target):
-        return _error(*NO_ENCONTRADO)
+        return error_response(*NO_ENCONTRADO)
 
-    data = _payload()
-    if campos_no_permitidos(data):
-        return _error(*CAMPO_NO_PERMITIDO)
+    data = json_payload()
+    if campos_prohibidos(data, CAMPOS_NO_PERMITIDOS):
+        return error_response(*CAMPO_NO_PERMITIDO)
 
     # Enviar el rol que ya tiene no es una asignación: se ignora.
     new_role = data.get('role')
     change_role = 'role' in data and not es_el_mismo_rol(target, new_role)
     if change_role:
         if target.id == current_user.id:
-            return _error(*OPERACION_PROPIA)
+            return error_response(*OPERACION_PROPIA)
         if not rol_asignable(new_role):
-            return _error(*ROL_RESERVADO)
+            return error_response(*ROL_RESERVADO)
 
     # Contraseña: solo la cuenta de emergencia (superadmin local) o, en
     # desarrollo con LOGIN_LOCAL_TODAS_LAS_CUENTAS, una cuenta local del
     # alcance (can_manage_user). Nunca del directorio o del SSO (SEG-05, P8,
     # FNC-077).
     if data.get('password') and not contrasena_local_permitida(target):
-        return _error(*CAMPO_NO_PERMITIDO)
+        return error_response(*CAMPO_NO_PERMITIDO)
 
     if change_role:
         cambiar_rol(target, new_role)
@@ -177,11 +173,11 @@ def update_user(user_id):
 def delete_user(user_id):
     target = User.query.get_or_404(user_id)
     if not can_manage_user(target):
-        return _error(*NO_ENCONTRADO)
+        return error_response(*NO_ENCONTRADO)
     if target.id == current_user.id:
-        return _error('No puedes eliminar tu propia cuenta.', 409)
+        return error_response('No puedes eliminar tu propia cuenta.', 409)
     if target.email in RESERVED_NAMES:
-        return _error('La cuenta maestra no se puede eliminar.', 403)
+        return error_response('La cuenta maestra no se puede eliminar.', 403)
 
     email = target.email
     db.session.delete(target)
@@ -208,7 +204,7 @@ def set_user_platforms(user_id):
 @login_required
 def save_preferences():
     """Cada usuario edita solo sus propias preferencias."""
-    data = _payload()
+    data = json_payload()
     if 'notifications' in data:
         current_user.pref_notifications = bool(data['notifications'])
     if 'email_notifications' in data:
@@ -221,7 +217,7 @@ def save_preferences():
             interval = int(data['refresh_interval'])
             current_user.pref_refresh_interval = max(15, min(interval, 3600))
         except (TypeError, ValueError):
-            return _error('Intervalo no válido.')
+            return error_response('Intervalo no válido.')
 
     db.session.commit()
     return jsonify({'status': 'success', 'preferences': {
@@ -236,36 +232,13 @@ def save_preferences():
 # Higiene de cuentas
 # --------------------------------------------------------------------------- #
 
-PURGE_MIN_DAYS = 7
-
-
-def _inactive_users(days):
-    """Cuentas candidatas a purga por inactividad.
-
-    Incluye las que nunca han iniciado sesión y son más antiguas que el
-    umbral: la versión anterior las dejaba fuera, porque comparar
-    `last_login_at < cutoff` descarta los nulos, y eran justo las más claras.
-    Nunca se purga a un superadmin.
-    """
-    from datetime import datetime, timedelta
-
-    cutoff = datetime.now() - timedelta(days=days)
-    return User.query.filter(
-        db.func.lower(db.func.coalesce(User.role, '')) != 'administrador',
-        db.or_(
-            User.last_login_at < cutoff,
-            db.and_(User.last_login_at.is_(None), User.created_at < cutoff),
-        ),
-    )
-
-
 @crud_bp.route('/users/inactive')
 @login_required
 @admin_required
 def list_inactive_users():
     """Vista previa de la purga: qué cuentas se eliminarían."""
     days = max(request.args.get('days', 30, type=int), PURGE_MIN_DAYS)
-    users = _inactive_users(days).order_by(User.email).all()
+    users = usuarios_inactivos(days).order_by(User.email).all()
     return jsonify({
         'days': days,
         'count': len(users),
@@ -284,23 +257,14 @@ def list_inactive_users():
 @admin_required
 def purge_inactive_users():
     """Elimina las cuentas sin actividad en el periodo indicado."""
-    days = _payload().get('days', 30)
+    days = json_payload().get('days', 30)
     try:
         days = int(days)
     except (TypeError, ValueError):
-        return _error('Número de días no válido.')
+        return error_response('Número de días no válido.')
     if days < PURGE_MIN_DAYS:
         # Un umbral bajo borraría cuentas recién creadas.
-        return _error(f'El periodo mínimo es de {PURGE_MIN_DAYS} días.')
+        return error_response(f'El periodo mínimo es de {PURGE_MIN_DAYS} días.')
 
-    users = _inactive_users(days).all()
-    purged = [u.email for u in users]
-    for user in users:
-        db.session.delete(user)
-    db.session.commit()
-
-    if purged:
-        add_audit_log(f'PURGAR CUENTAS INACTIVAS ({len(purged)})',
-                      module='Usuarios', status='warning',
-                      detail=f"Inactividad > {days} días: {', '.join(purged[:20])}")
+    purged = purgar_inactivos(days)
     return jsonify({'status': 'success', 'count': len(purged), 'purged': purged})

@@ -36,9 +36,8 @@ from sqlalchemy.exc import IntegrityError
 from app import db
 from app.authz import admin_required
 from app.modules.api.csrf_provisional import escritura_del_portal
-from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     NO_ENCONTRADO, error_response,
-                                     json_object, validation_error)
+from app.modules.api.helpers import (NO_ENCONTRADO, error_response,
+                                     leer_cuerpo, validation_error)
 from app.modules.audit.events import Evento
 from app.modules.audit.services import add_audit_log
 from app.modules.connectors.credenciales import limpiar_cache
@@ -87,16 +86,6 @@ def _estado(configuracion):
 
 def _respuesta(configuracion):
     return jsonify({'status': 'success', 'connector': configuracion.to_dict()})
-
-
-def _cuerpo_vacio():
-    """Error si el cuerpo no es `{}` (las acciones sin datos); si no, None."""
-    datos = json_object()
-    if datos is None:
-        return error_response(*CUERPO_INVALIDO)
-    if datos:
-        return error_response(*CAMPO_NO_PERMITIDO)
-    return None
 
 
 def _configuracion_existente(platform_id):
@@ -150,11 +139,9 @@ def put_connector(platform_id):
     plataforma = _plataforma(platform_id)
     if plataforma is None:
         return error_response(*NO_ENCONTRADO)
-    datos = json_object()
-    if datos is None:
-        return error_response(*CUERPO_INVALIDO)
-    if set(datos) - CAMPOS_PERMITIDOS:
-        return error_response(*CAMPO_NO_PERMITIDO)
+    datos, error = leer_cuerpo(CAMPOS_PERMITIDOS)
+    if error is not None:
+        return error
     if plataforma.integration_type != TIPO_CONECTOR:
         return error_response(*PLATAFORMA_SIN_CONECTOR)
     limpio, errores = validar_configuracion(
@@ -190,7 +177,7 @@ def delete_connector(platform_id):
     plataforma, configuracion, error = _configuracion_existente(platform_id)
     if error is not None:
         return error
-    error = _cuerpo_vacio()
+    _, error = leer_cuerpo()
     if error is not None:
         return error
     if accesos_vigentes(plataforma) > 0:
@@ -214,7 +201,7 @@ def test_connector(platform_id):
     plataforma, configuracion, error = _configuracion_existente(platform_id)
     if error is not None:
         return error
-    error = _cuerpo_vacio()
+    _, error = leer_cuerpo()
     if error is not None:
         return error
     exito, motivo = probar_conexion(configuracion, current_user.id)
