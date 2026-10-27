@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
@@ -78,3 +78,5 @@ Dividir `settings-panel.tsx`, `users-list.tsx` y `platform-admin.tsx` en archivo
 ## Propuestas (sin ID: se abrirán en el tablero al validar)
 - Mensajes por código en vez de `err.message` en `user-form`, `directory-picker`, `purge-panel` y borrado (hallazgo DIS-019, Baja); cambia textos y pide `auditor-seguridad`.
 - Listas de tarjetas de usuarios y áreas sobre un componente común (`DataTable` o `ResponsiveList`).
+
+- 2026-10-27: actualizada con develop; typecheck, lint, vitest (1596) y build en 0 (verificado por el orquestador). `auditor-accesibilidad` Aprobado sin hallazgos (pestañas, etiquetas, ids, foco y estados conservados). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
