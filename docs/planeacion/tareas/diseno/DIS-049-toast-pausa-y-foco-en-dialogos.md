@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `dis/DIS-049-toast-pausa-y-foco` |
 | **Creada** | 2026-10-27 |
 
@@ -46,3 +46,5 @@
 - Escape con el foco en el aviso (bajo): ese foco cuenta como `libre` al desmontar la trampa; el foco vuelve al disparador. Prueba incluida.
 - Toque (dudoso): `onPointerEnter`/`onPointerLeave` y pausa solo con `pointerType === 'mouse'`. Prueba con `touch`. Sigue pendiente de probar en un dispositivo táctil real.
 - Verificación: tsc 0, lint 0, vitest 0 (1518), build 0.
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado tras corregir 2 hallazgos de foco y el de pausa táctil (`41d3045`). Mejora opcional pendiente: crear el `MutationObserver` solo cuando el foco entra a una región `data-fuera-de-trampa` (hoy cada trampa activa vigila `body` aunque no haya aviso; sin efecto de conducta). Pausa táctil sin probar en dispositivo real. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
