@@ -54,3 +54,5 @@ _Se completa al aprobar la tarea._
 | 2026-10-20 | Marcada como requisito antes de staging o prod (auditorías de FNC-056 y FNC-058) |
 
 - 2026-10-21 (auditoría de seguridad DIS-019): `POST /users/directory`, `PUT /users/<id>` y `PUT /users/<id>/managed-areas` sin `escritura_del_portal`; cubrir con el CSRF definitivo.
+
+- 2026-10-27 (auditoría de FNC-122): `PUT /me/preferences` tiene `@login_required` pero nunca tuvo `@escritura_del_portal`; riesgo bajo mientras no haya CORS (PUT/JSON exige preflight). Incluirlo al aplicar el CSRF real a la API v1.

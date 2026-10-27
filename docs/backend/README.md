@@ -74,7 +74,7 @@ Las tablas las crean las migraciones de Alembic (§7); `db.create_all()` sigue a
 
 | Tabla | Modelo | Campos clave |
 |---|---|---|
-| `users` | `auth.models.User` | `id`, `email` (único; también guarda identificadores sin `@`, p. ej. el admin inicial), `nombre`, `password_hash` (nulo en LDAP), `role`, `auth_source` (`local` / `ldap` / `sso`), `is_active`, `created_at`, `last_login_at`, preferencias `pref_notifications`, `pref_email_notifications`, `pref_refresh_interval` (15–3600 s), `pref_tour_enabled` |
+| `users` | `auth.models.User` | `id`, `email` (único; también guarda identificadores sin `@`, p. ej. el admin inicial), `nombre`, `password_hash` (nulo en LDAP), `role`, `auth_source` (`local` / `ldap` / `sso`), `is_active`, `created_at`, `last_login_at`, preferencias `pref_notifications`, `pref_email_notifications`, `pref_refresh_interval` (15–3600 s), `pref_tour_enabled`, `pref_theme` (`sistema` por defecto; FNC-122) |
 | `areas` | `core.models.Area` | `id`, `name` (único), `description`, `icon`, `color` (hex), `status` (`Activo` / otro) |
 | `platforms` | `core.models.Platform` | `id`, `name`, `description` (obligatoria), `area_id` (FK obligatoria), `direct_link`, `icon`, `logo_url`, `bg_color`, `text_color`, `status`, `visits`, `created_at`; FNC-046 (0005): `integration_type` (`ldap`/`conector`), `ldap_group_user_dn`, `ldap_group_admin_dn` (512), `groups_status` (`ok`/`no_existe`/`sin_verificar`) |
 | `user_areas` | tabla de relación | `user_id`, `area_id`: pertenencia de un usuario a un área |
@@ -109,7 +109,7 @@ Todos devuelven JSON. Errores con forma `{"status": "error", "message": "..."}`.
 
 | Método y ruta | Protección | Qué hace |
 |---|---|---|
-| `GET /me` | Sesión | Identidad, áreas, áreas administradas, permisos (`is_admin`, `is_area_admin`, `can_manage_areas`, `can_manage_system`) y preferencias. |
+| `GET /me` | Sesión | Identidad, áreas, áreas administradas, permisos (`is_admin`, `is_area_admin`, `can_manage_areas`, `can_manage_system`) y preferencias (incluye `preferences.theme`). |
 | `GET /areas` | Sesión (filtrado por `scoped_areas`) | Áreas visibles con número de plataformas y usuarios. |
 | `GET /areas/<id>` | `area_admin_required` | Detalle de un área administrable. |
 | `GET /platforms?area_id=&q=` | Sesión (`scoped_platforms`) | Mis plataformas (accesos `activo`, FNC-063) con marca de favorito. |
@@ -156,7 +156,7 @@ Todos leen el cuerpo con `leer_cuerpo` (FNC-119): un cuerpo que no es objeto →
 | `PUT /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Edita usuario. Mismas reglas de rol y campos; el rol actual reenviado se ignora; el propio → `403 operacion_propia`. Degradar borra las áreas administradas y audita `rol_cambiado`. Contraseña: solo la de la cuenta de emergencia (superadmin local); otra cuenta → `400 campo_no_permitido`, salvo en desarrollo con `LOGIN_LOCAL_TODAS_LAS_CUENTAS` (cuentas `local` del alcance) (FNC-077). |
 | `DELETE /users/<id>` | `any_admin_required` + `can_manage_user` (fuera de alcance → `404`) | Borra usuario; no permite borrarse a sí mismo ni la cuenta maestra `admin`. |
 | `PUT /users/<id>/platforms` | `any_admin_required` | **Retirado** (FNC-065): `410 endpoint_retirado`, `use: POST /access-requests`; no escribe. Usuario → `403`, sin sesión → `401`. |
-| `PUT /me/preferences` | Sesión | Guarda preferencias propias. |
+| `PUT /me/preferences` | Sesión | Guarda preferencias propias. `theme` debe ser uno de `users/temas.py` (`TEMAS_VALIDOS`, los ids de `frontend/src/lib/tema.ts`); otro valor → `422 validacion` con `fields.theme` y no se guarda nada (FNC-122). |
 | `GET /users/inactive?days=` | `admin_required` | Usuarios sin acceso en N días (mínimo `PURGE_MIN_DAYS` = 7), excluye superadmins. |
 | `POST /users/purge` | `admin_required` | Elimina esos usuarios y audita. |
 
