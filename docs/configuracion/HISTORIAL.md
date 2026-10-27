@@ -4,6 +4,7 @@
 
 | Fecha | Variable | Entorno | Antes | Después | Motivo | Tarea / ADR | Autor |
 |---|---|---|---|---|---|---|---|
+| 2026-10-27 | `--color-texto-sobre-fondo-oscuro`, `--color-texto-sobre-fondo-claro` | todos los temas | — | alta (`255 255 255` y `0 0 0` en los 7 temas) | El texto libre (`text_color`) de las plataformas no garantiza contraste AA; el cliente elige claro u oscuro según la luminancia del fondo y el color sale de estos tokens, sin colores literales en TS. Decisión del orquestador, pendiente de validar en la prueba de concepto | DIS-048 | agente disenador-web |
 | 2026-10-26 | `NGINX_CONF_PATH` | todos | ruta del nginx que editaba `utils/toggle_authelia.py` | baja (se quitó de `.env.example`; el valor en un `.env` existente se ignora) | El único lector, `utils/toggle_authelia.py`, se retiró (script heredado que editaba nginx y `.env` a mano; nginx sale de `deploy/nginx.conf.tmpl`). Decisión del orquestador, pendiente de validar en la prueba de concepto | FNC-028 | agente desarrollador |
 | 2026-10-26 | `FRONTEND_URL` | todos | destino de las redirecciones de las rutas heredadas y del login sin sesión | baja (se quitó de `.env.example`; el valor en un `.env` existente se ignora) | Se retiraron los blueprints heredados que la leían y el `unauthorized_handler` pasó a responder siempre 401 JSON (auditoría de seguridad de FNC-027) | FNC-027 | desarrollador |
 | 2026-10-13 | (todas las de VARIABLES.md) | todos | — | alta | Estructura inicial del proyecto | FNC-001 | — |

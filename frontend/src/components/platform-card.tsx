@@ -2,12 +2,12 @@
 
 /** Tarjeta de plataforma: abre el enlace y permite marcar favorito. */
 
-import { useState } from 'react';
 import { api } from '@/lib/api';
+import { atributoTexto, variablesChipPlataforma } from '@/lib/color-legible';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Platform } from '@/lib/types';
 import { variablesCss } from '@/lib/variables-css';
-import { useToast } from './toast';
+import { FavoriteButton } from './favorite-button';
 import { Badge } from './ui';
 
 export function PlatformCard({
@@ -17,32 +17,6 @@ export function PlatformCard({
   platform: Platform;
   onFavoriteChange?: (id: number, isFavorite: boolean) => void;
 }) {
-  const [favorite, setFavorite] = useState(platform.is_favorite);
-  const [busy, setBusy] = useState(false);
-  const { avisar } = useToast();
-
-  async function toggleFavorite(event: React.MouseEvent) {
-    // La tarjeta entera es un enlace: no navegar al pulsar la estrella.
-    event.preventDefault();
-    event.stopPropagation();
-    if (busy) return;
-
-    setBusy(true);
-    const previous = favorite;
-    setFavorite(!previous); // respuesta inmediata, se revierte si falla
-    try {
-      const result = await api.toggleFavorite(platform.id);
-      setFavorite(result.is_favorite);
-      onFavoriteChange?.(platform.id, result.is_favorite);
-    } catch {
-      setFavorite(previous);
-      // DIS-010 (H-17): antes el fallo era silencioso.
-      avisar('error', 'No se pudo actualizar el favorito. Inténtalo de nuevo.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   /** Cuenta la visita sin bloquear la apertura del enlace. */
   function registerVisit() {
     void api.registerVisit(platform.id).catch(() => undefined);
@@ -57,25 +31,19 @@ export function PlatformCard({
       <div className="flex items-start justify-between gap-3">
         <span
           className="nx-chip-solid grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-semibold"
-          style={variablesCss({ '--chip-bg': platform.bg_color, '--chip-fg': platform.text_color })}
+          data-texto={atributoTexto(platform.bg_color)}
+          style={variablesCss(variablesChipPlataforma(platform.bg_color))}
           aria-hidden
         >
           {platform.name.slice(0, 2).toUpperCase()}
         </span>
 
-        {/* DIS-008: estrella de 48 px con foco visible. */}
-        <button
-          type="button"
-          onClick={toggleFavorite}
-          disabled={busy}
-          aria-pressed={favorite}
-          aria-label={favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-          className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded text-lg leading-none outline-none transition-colors hover:bg-surface-container focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
-        >
-          <span className={favorite ? 'text-warning-text' : 'text-label'}>
-            {favorite ? '★' : '☆'}
-          </span>
-        </button>
+        <FavoriteButton
+          platformId={platform.id}
+          name={platform.name}
+          initial={platform.is_favorite}
+          onChange={onFavoriteChange}
+        />
       </div>
 
       <div className="mt-3 min-w-0">
