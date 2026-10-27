@@ -8,7 +8,7 @@
 | **Fase** | 6 |
 | **Módulo / Área** | deploy |
 | **Prioridad** | Alta (urgente) |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `fnc/FNC-127-puerto-web-configurable` |
 | **Creada** | 2026-10-27 |
 
@@ -71,3 +71,5 @@ Configuración de despliegue (compartida por definición): afecta a staging y pr
 
 ## Bitácora
 - 2026-10-27: creada y aprobada (dueño, urgente). Implementada; ajuste del `.env` incorporado. En revisión.
+
+- 2026-10-27: `auditor-seguridad` Aprobado sin hallazgos (lectura del `.env` sin `source` ni enlaces, valores validados antes de usar, sin inyección en sed/systemd/nginx, bind en loopback, `BACKEND_URL` sin SSRF). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Pendiente: instalación real en el servidor del dueño (Grafana en 3000, `WEB_PORT=3100`).
