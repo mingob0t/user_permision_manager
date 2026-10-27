@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Panel: la gráfica "Plataformas por área" usa solo tokens de tema (ejes, rejilla, tooltip y barras, leídos con `getComputedStyle` y actualizados al cambiar de tema), con una tabla accesible de los mismos datos; el color por área se reemplaza por el de marca; "Áreas" y "Plataformas" dejan de repetirse en "Actividad del portal" a quien ya los ve en el resumen por rol (DIS-003, DIS-037, 2026-10-27).
 - Áreas táctiles de 48 px con foco visible: acciones de fila de Usuarios, Áreas y Administrar plataformas, chips de áreas y plataformas, estrella de favorito, entradas de la barra lateral (también en tableta), "Salir", casillas, buscador y filtro del catálogo, entradas de archivo y de color, y enlaces de las páginas de error y de cierre de sesión; una prueba impide controles nuevos de menos de 44 px (DIS-008, 2026-10-27).
 - Texto mínimo de 12 px: insignias, botones, cabeceras de tabla, contador del tour, marca de las casillas, ejes de las gráficas del Inicio e iniciales de Administrar plataformas pasan de 9–11 px a 12 px (token `--text-xs`); se retira el token `--text-2xs` (10 px) y una prueba impide volver a bajar de 12 px (DIS-007, DIS-032, 2026-10-26).
 
