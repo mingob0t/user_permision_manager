@@ -184,7 +184,7 @@ describe('Administradores del área (superadmin)', () => {
 
     expect(await screen.findByText(
       'El usuario no es administrador de área. Se muestran los datos actuales.')).toBeTruthy();
-    expect(api.users).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(api.users).toHaveBeenCalledTimes(2));
   });
 });
 
