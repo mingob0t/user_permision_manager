@@ -28,18 +28,9 @@ from app.modules.auth.models import User
 from app.modules.auth.services import (MENSAJE_CREDENCIALES, avisar_bloqueo,
                                        motivo_de_bloqueo, normalizar_correo)
 from app.modules.notifications.services import avisar_usuario_creado
+from app.utils.proxy_confiable import es_proxy_confiable
 
 auth_api_bp = Blueprint('api_auth', __name__, url_prefix='/api/v1/auth')
-
-
-def _trusted_proxy():
-    """True si la petición viene de un proxy autorizado a inyectar Remote-*.
-
-    Por defecto solo loopback, que es donde escucha Nginx en este despliegue.
-    """
-    allowed = {p.strip() for p in os.getenv(
-        'TRUSTED_PROXIES', '127.0.0.1,::1').split(',') if p.strip()}
-    return request.remote_addr in allowed
 
 
 def _sso_enabled():
@@ -60,7 +51,7 @@ def context():
     El frontend lo consulta antes de pintar el formulario.
     """
     sso_user = None
-    if _sso_enabled() and _trusted_proxy():
+    if _sso_enabled() and es_proxy_confiable():
         header = os.getenv('AUTHELIA_HEADER_USER', 'Remote-Email')
         sso_user = request.headers.get(header)
 
@@ -79,7 +70,7 @@ def sso_login():
         return jsonify({'status': 'error', 'message': 'SSO no habilitado.'}), 400
 
     # Una cabecera Remote-* solo vale si la puso el proxy, no el cliente.
-    if not _trusted_proxy():
+    if not es_proxy_confiable():
         add_audit_log('SSO RECHAZADO', status='warning',
                       detail=f'Cabeceras Remote-* desde origen no confiable: '
                              f'{request.remote_addr}')

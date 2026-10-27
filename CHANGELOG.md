@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Backend: `_trusted_proxy` pasa de `api/auth.py` a `app/utils/proxy_confiable.py` como `es_proxy_confiable`; la usan el SSO y la IP de auditoría, sin cambio de comportamiento (FNC-076, 2026-10-27).
 - CSS depurado: `components.css` y `global.css` pierden 142 clases sin uso (DataTables, KPI, monitoreo, tour, toast, select propio y modal duplicado), reglas por id sin elemento y `@keyframes` huérfanos (1892 líneas netas, CSS generado de 80 449 a 45 208 bytes); sin colores literales: se borró el estilo del deslizador (sin uso), `.nexus-checkbox` queda en una sola regla y su marca usa `--color-on-primary`. Pruebas contra clases sin uso y colores literales en los CSS (DIS-009, 2026-10-27).
 - Sin estilos inline: el color de plataformas y áreas llega como variable CSS (`variablesCss`, `.nx-chip-solid`, `.nx-chip-tint`) y los botones de las páginas de error usan `text-on-primary`; una prueba impide estilos en línea nuevos (DIS-012, 2026-10-27).
 - Panel: la gráfica "Plataformas por área" usa solo tokens de tema (ejes, rejilla, tooltip y barras, leídos con `getComputedStyle` y actualizados al cambiar de tema), con una tabla accesible de los mismos datos; el color por área se reemplaza por el de marca; "Áreas" y "Plataformas" dejan de repetirse en "Actividad del portal" a quien ya los ve en el resumen por rol (DIS-003, DIS-037, 2026-10-27).
