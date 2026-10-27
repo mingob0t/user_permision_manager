@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Agregado
+- Desarrollo local: `flask --app run:app demo cargar` crea datos demo (2 áreas, 3 plataformas LDAP, 1 admin de área, 2 usuarios locales y 1 solicitud pendiente) solo con `APP_ENV=development`; idempotente, con contraseña por prompt, `--password-desde-stdin` o aleatoria impresa una vez (FNC-131, 2026-10-27).
 - Despliegue: `install.sh --force` (alias `--reinstall`) limpia una instalación previa del mismo nombre (unidades, `.conf` de nginx, `venv`, `node_modules`, `.next` y registros) tras mostrar la lista y confirmar escribiendo el nombre en una terminal; nunca toca `.env`, código, BD ni datos locales (FNC-129, 2026-10-27).
 - Despliegue: `install.sh --web-port`/`--api-port` (también `WEB_PORT`/`API_PORT` por entorno o en `<prefijo>/.env`; por defecto 3000 y 5001, 1024-65535, distintos) para servidores con el 3000 ocupado (p. ej. Grafana); nginx, unidades y `preflight.sh` usan el mismo valor (FNC-127, 2026-10-27).
 

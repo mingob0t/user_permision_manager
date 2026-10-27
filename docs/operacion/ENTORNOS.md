@@ -96,6 +96,11 @@ Qué variables cambian por entorno. El valor de cada una está en `docs/configur
 - Pantalla de login → acceso local → `admin` y su contraseña. Sin variables extra.
 - Para entrar con **otras cuentas locales** (PoC): en el `.env` local `APP_ENV=development` y `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true`, y reiniciar el backend. Así también se aceptan contraseñas en el alta y la edición de usuarios.
 - Cualquier otro valor de `APP_ENV` (o vacío) ignora la bandera: en staging y producción solo entra la cuenta de emergencia.
+- **Datos demo** (FNC-131): `.env` con `APP_ENV=development`, `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true` y `DB_ENGINE` vacío (SQLite) → `alembic upgrade head` → `flask --app run:app demo cargar` → `python run.py` → `npm run dev`.
+  - El comando solo corre con `APP_ENV=development` (si no, sale con 1 sin escribir) y es idempotente.
+  - Crea 2 áreas, 3 plataformas LDAP, 1 `admin_area`, 2 usuarios (`auth_source=local`) y 1 solicitud pendiente; imprime la tabla usuario / rol / área.
+  - Contraseña: prompt con confirmación, `--password-desde-stdin`, o generada e impresa **una sola vez** si no hay terminal. Ninguna va en el código.
+  - Sin OpenLDAP el otorgamiento falla y se ve como fallido en «Ejecuciones»; es lo esperado en local.
 - Las cuentas creadas sin contraseña (ya no reciben `nexus123`) no entran por login local: se les fija una con la bandera activa.
 
 ## ACL de OpenLDAP para la cuenta de servicio (FNC-041, SEC-LDAP-03)

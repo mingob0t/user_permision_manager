@@ -145,6 +145,9 @@ def _registrar_cli_y_manejadores(app):
     # Worker de aprovisionamiento: `flask provisioning worker` (FNC-049).
     from app.modules.provisioning.cli import provisioning_cli
     app.cli.add_command(provisioning_cli)
+    # Datos demo para validar en local: `flask demo cargar` (FNC-131).
+    from app.modules.demo.cli import demo_cli
+    app.cli.add_command(demo_cli)
     # El resultado de cada trabajo actualiza el acceso otorgado (FNC-054).
     from app.modules.access.manejadores import registrar as registrar_accesos
     registrar_accesos()

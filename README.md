@@ -53,6 +53,12 @@ venv/bin/python run.py               # terminal 1: API en localhost:5001
 venv/bin/flask --app run:app provisioning worker   # terminal 3: worker (opcional)
 ```
 
+- **Validar en local** (sin Authelia ni Vaultwarden), con cuentas demo (FNC-131):
+  - `.env` con `APP_ENV=development`, `LOGIN_LOCAL_TODAS_LAS_CUENTAS=true` y `DB_ENGINE` vacío (SQLite);
+  - `venv/bin/alembic upgrade head`;
+  - `venv/bin/flask --app run:app demo cargar`: crea 2 áreas, 3 plataformas, 1 admin de área, 2 usuarios y 1 solicitud pendiente, y muestra la tabla de cuentas. Contraseña: la pide con confirmación, `--password-desde-stdin` o, sin terminal, la genera y la imprime una vez;
+  - `venv/bin/python run.py` y `(cd frontend && npm run dev)`; entrar por «acceso local» con el correo de la tabla (el superadmin sigue siendo `admin`).
+  - Sin OpenLDAP, otorgar acceso falla y se ve como fallido en «Ejecuciones» (esperado en local).
 - `run.py` arranca en modo debug: solo en tu equipo (corrección en FNC-009).
 - Variables y su significado: [VARIABLES.md](docs/configuracion/VARIABLES.md).
 - Entrar sin Authelia: [ENTORNOS.md](docs/operacion/ENTORNOS.md) § «Entrar en local sin Authelia».
