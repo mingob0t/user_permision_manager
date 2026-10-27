@@ -25,6 +25,7 @@
 - Backend: un solo `error_response/`json_payload` (se borran `_payload` y `_error` de `crud.py` y `admin.py`), lista blanca de campos y lectura del cuerpo comunes (`campos_no_permitidos`, `campos_prohibidos`, `leer_cuerpo`) usadas por áreas, plataformas, usuarios, solicitudes, accesos, conectores, directorio y reintentos, aviso de usuario creado único (`avisar_usuario_creado`) y purga de inactivos en `users/services.py`; se borra la purga heredada de `auth/services.py`. Sin cambio en códigos HTTP, `code` ni `fields` (FNC-030, FNC-082, 2026-10-27).
 
 ### Agregado
+- Backend: el tema de la interfaz se guarda en la cuenta (`users.pref_theme`, migración 0011): `GET /me` devuelve `preferences.theme` y `PUT /me/preferences` acepta `theme` (sistema, claro, oscuro, esmeralda, obsidiana, rosa, violeta); otro valor responde `422 validacion`. El frontend lo usará en FNC-123 (FNC-122, 2026-10-27).
 - Backend: `GET /api/v1/settings` sin configuración guardada entrega los valores por defecto del portal (`valores_por_defecto.py`: nombre, tipo de identidad, colores de fondo y de texto; mismos valores que el modelo), nunca `null` (FNC-121, 2026-10-27).
 - Administrar plataformas: cada fila enlaza a su historial en Auditoría (DIS-035, 2026-10-27).
 - Prueba de que la línea base `0001` incluye el efecto de los SQL heredados 001-004 (FNC-028, 2026-10-26).
