@@ -234,6 +234,7 @@ Definidos en `frontend/src/styles/tokens.css` (tema claro en `:root, html.light`
 | Token | Rol | Valor tema claro | Valor tema oscuro | Archivo | Alta (tarea, fecha) | Estado |
 |---|---|---|---|---|---|---|
 | `--color-primary-text` | Texto de marca (enlaces, menú activo, pestaña de Ajustes) | `29 78 216`; emerald `4 120 87`; rose `190 18 60` | `96 165 250` (SO y `html.dark`); obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente |
+| `color-scheme` (propiedad de tema) | Controles nativos (lista del `select`, barras) acordes al tema | `light dark` (base: sigue al sistema); `light` (`html.light`, emerald, rose) | `dark` (`html.dark`, obsidian, violet) | `global.css` (no `tokens.css`, que solo tiene variables, DIS-047) | FNC-032, 2026-10-27 | Vigente |
 | `--color-brand-text` | Texto en color brand | `67 56 202`; emerald `4 120 87`; rose `190 18 60` | `129 140 248`; obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
 | `--color-accent-text` | Texto en color accent | `124 58 237`; emerald `15 118 110`; rose `190 18 60` | `167 139 250`; obsidian `250 204 21`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
 | `--color-accent-sky-text` | Texto en color sky | `14 116 144`; emerald `15 118 110`; rose `190 18 60` | `6 182 212`; obsidian `161 161 170`; violet `167 139 250` | `tokens.css` | DIS-001, 2026-10-19 | Vigente (sin consumidor aún) |
