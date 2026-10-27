@@ -26,3 +26,5 @@
 | Fecha | Nota |
 |---|---|
 | 2026-10-21 | Creada como Propuesta desde DIS-019 |
+
+- 2026-10-27 (auditoría de DIS-033): también falló 1 de 4 corridas completas una prueba de `tests/components/users` (`api.users` esperado 2 veces); pasa sola (72/72). Revisar junto con esta.

@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | solicitudes |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-20 |
 
 ## Contexto
@@ -41,3 +41,5 @@
 
 ## Bitácora
 - 2026-10-27: implementada; En revisión.
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado (foco estable, sin anuncios de más, insignias sin regresión). Genera DIS-050 (anunciar cambios de estado). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
