@@ -10,7 +10,7 @@ export default function Page() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-semibold">Ejecuciones</h1>
-            <p className="mt-1 text-sm text-label">Bitácora de ejecuciones de aprovisionamiento de tus áreas.</p>
+            <p className="mt-1 text-sm text-label">Bitácora de ejecuciones de aprovisionamiento en tu alcance.</p>
           </div>
           <JobsLog />
         </div>

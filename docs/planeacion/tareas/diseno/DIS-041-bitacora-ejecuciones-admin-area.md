@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | configuracion-conectores |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-21 |
 
 ## Contexto
@@ -38,3 +38,5 @@
 - En `frontend/`: typecheck 0, lint 0, vitest 0 (1568 pruebas, accesibilidad incluida 0 fallas), build 0
 - Prueba nueva `tests/components/connectors/jobs-page.test.tsx`: por rol y estados carga, vacío y error
 - No verificado en navegador (temas y móvil); revisor y auditor-accesibilidad pendientes
+
+- 2026-10-27: `auditor-accesibilidad` Aprobado. Observación aplicada por el orquestador: la descripción de `/admin/jobs` dice «en tu alcance» (el superadmin ve todas). Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto). Sin verificar en navegador.
