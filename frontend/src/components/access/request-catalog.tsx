@@ -14,44 +14,16 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { requestsApi } from '@/lib/access/requests';
 import type { AccessRequest, CatalogItem } from '@/lib/access/types';
-import type { Platform } from '@/lib/types';
-import { useAsync } from '@/lib/use-async';
-import { FILTRO_BUSQUEDA, FILTRO_SELECTOR, FilterBar } from '../filter-bar';
-import { Button, Select, TextInput } from '../form';
 import { useSession } from '../session-provider';
-import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
 import { NIVELES } from './access-status-badge';
-import { unirCatalogo } from './catalog-union';
-import { RequestCatalogCard, puedeSolicitar } from './request-catalog-card';
-import { describeCatalogError } from './request-errors';
+import { BUSCADOR_ID, CatalogFilters, filtrarCatalogo } from './catalog-filters';
+import { CatalogGrid } from './catalog-grid';
+import { CatalogNotice } from './catalog-notice';
 import { RequestFormModal } from './request-form-modal';
+import { useCatalogoSolicitable, type MisPlataformas } from './use-catalogo-solicitable';
 
-const BUSCADOR_ID = 'catalogo-buscar';
-
-/** Cambios locales tras solicitar, por plataforma. */
-type Solicitadas = Record<number, number>;
-
-function aplicarSolicitadas(items: CatalogItem[], solicitadas: Solicitadas): CatalogItem[] {
-  return items.map((item) => {
-    const id = solicitadas[item.platform.id];
-    return id === undefined ? item : { ...item, pending_request_id: id, can_request: false };
-  });
-}
-
-function coincide(item: CatalogItem, needle: string): boolean {
-  return item.platform.name.toLowerCase().includes(needle)
-    || (item.platform.description ?? '').toLowerCase().includes(needle);
-}
-
-/** Estado de la carga de `GET /platforms` (lo resuelve quien monta la vista). */
-export interface MisPlataformas {
-  data: Platform[] | null;
-  loading: boolean;
-  error: string | null;
-  reload: () => void;
-}
+export type { MisPlataformas };
 
 export function RequestCatalog({ mias }: { mias?: MisPlataformas } = {}) {
   const { session } = useSession();
@@ -63,46 +35,20 @@ export function RequestCatalog({ mias }: { mias?: MisPlataformas } = {}) {
 
   const [areaId, setAreaId] = useState<number | null>(null);
   const [term, setTerm] = useState('');
-  const [solicitadas, setSolicitadas] = useState<Solicitadas>({});
   const [abierta, setAbierta] = useState<CatalogItem | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const disparador = useRef<HTMLElement | null>(null);
   const avisoRef = useRef<HTMLDivElement>(null);
 
-  const catalogo = useAsync(
-    () => requestsApi.catalog().catch((err: unknown) => {
-      throw new Error(describeCatalogError(err));
-    }),
-    [],
-  );
-
-  const unido = useMemo(
-    () => unirCatalogo(catalogo.data ?? [], mias?.data ?? []),
-    [catalogo.data, mias?.data],
-  );
-  const items = useMemo(
-    () => aplicarSolicitadas(unido.items, solicitadas),
-    [unido.items, solicitadas],
-  );
-
-  const areas = useMemo(() => {
-    const vistas = new Map<number, string>();
-    for (const item of items) vistas.set(item.area.id, item.area.name);
-    return [...vistas].map(([id, name]) => ({ id, name }));
-  }, [items]);
-
-  const shown = useMemo(() => {
-    const needle = term.trim().toLowerCase();
-    return items.filter((item) =>
-      (areaId === null || item.area.id === areaId) && (!needle || coincide(item, needle)));
-  }, [items, areaId, term]);
+  const { catalogo, items, areas, mias: abribles, marcarSolicitada } = useCatalogoSolicitable(mias);
+  const shown = useMemo(() => filtrarCatalogo(items, areaId, term), [items, areaId, term]);
 
   function motivo(item: CatalogItem): string {
     if (item.pending_request_id !== null) return 'Espera la decisión del administrador del área.';
     if (esSuperadmin) return 'Como superadmin ya tienes acceso a todas las plataformas.';
     if (administradas.has(item.area.id)) return 'Administras esta área: tienes acceso automático.';
     if (item.my_level === 'admin') return 'Ya tienes el nivel más alto.';
-    if (unido.mias.has(item.platform.id)) return '';
+    if (abribles.has(item.platform.id)) return '';
     return 'No disponible para solicitar.';
   }
 
@@ -120,7 +66,7 @@ export function RequestCatalog({ mias }: { mias?: MisPlataformas } = {}) {
 
   function creada(request: AccessRequest) {
     if (!abierta) return;
-    setSolicitadas((prev) => ({ ...prev, [abierta.platform.id]: request.id }));
+    marcarSolicitada(abierta.platform.id, request.id);
     setAviso(`Solicitud enviada: ${abierta.platform.name}, nivel ${NIVELES[request.level]}. Queda pendiente de aprobación.`);
     setAbierta(null);
     // El botón de la tarjeta desaparece: el foco va al aviso.
@@ -148,79 +94,25 @@ export function RequestCatalog({ mias }: { mias?: MisPlataformas } = {}) {
         </p>
       </div>
 
-      <div role="status" ref={avisoRef} tabIndex={-1} className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        {aviso ? (
-          <Card>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <SuccessNote>{aviso}</SuccessNote>
-              <Button variant="secondary" onClick={cerrarAviso}>Cerrar aviso</Button>
-            </div>
-          </Card>
-        ) : null}
-      </div>
+      <CatalogNotice aviso={aviso} onClose={cerrarAviso} regionRef={avisoRef} />
 
-      <FilterBar label="Filtros del catálogo">
-        <TextInput
-          id={BUSCADOR_ID}
-          type="search"
-          value={term}
-          onChange={(event) => setTerm(event.target.value)}
-          placeholder="Buscar plataforma…"
-          aria-label="Buscar en el catálogo"
-          className={FILTRO_BUSQUEDA}
-        />
-        <Select
-          value={areaId ?? ''}
-          onChange={(event) => setAreaId(event.target.value ? Number(event.target.value) : null)}
-          aria-label="Filtrar el catálogo por área"
-          className={FILTRO_SELECTOR}
-        >
-          <option value="">Todas las áreas</option>
-          {areas.map((area) => (
-            <option key={area.id} value={area.id}>{area.name}</option>
-          ))}
-        </Select>
-      </FilterBar>
+      <CatalogFilters
+        term={term}
+        onTermChange={setTerm}
+        areaId={areaId}
+        onAreaChange={setAreaId}
+        areas={areas}
+      />
 
-      {(catalogo.loading && !catalogo.data) || (mias?.loading && !catalogo.error)
-        ? <Spinner label="Cargando catálogo…" /> : null}
-
-      {mias?.error && !mias.loading ? (
-        <div className="space-y-3">
-          <ErrorNote message="No se pudieron cargar los enlaces y favoritos de tus plataformas." />
-          <Button variant="secondary" onClick={mias.reload}>Reintentar enlaces</Button>
-        </div>
-      ) : null}
-
-      {catalogo.error ? (
-        <div className="space-y-3">
-          <ErrorNote message={catalogo.error} />
-          <Button variant="secondary" onClick={catalogo.reload}>Reintentar</Button>
-        </div>
-      ) : null}
-
-      {/* Sin permiso para el catálogo pero con plataformas propias: se muestran solas. */}
-      {!mias?.loading && (catalogo.data || (catalogo.error && mias?.data?.length)) ? (
-        shown.length === 0 ? (
-          <EmptyNote
-            message={filtrando
-              ? 'Ninguna plataforma coincide con el filtro.'
-              : 'No hay plataformas en el catálogo de tus áreas.'}
-          />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {shown.map((item) => (
-              <RequestCatalogCard
-                key={item.platform.id}
-                item={item}
-                mine={unido.mias.get(item.platform.id)}
-                reason={puedeSolicitar(item) ? '' : motivo(item)}
-                onRequest={abrir}
-              />
-            ))}
-          </div>
-        )
-      ) : null}
+      <CatalogGrid
+        catalogo={catalogo}
+        mias={mias}
+        shown={shown}
+        filtrando={filtrando}
+        mine={abribles}
+        motivo={motivo}
+        onRequest={abrir}
+      />
 
       {abierta ? (
         <RequestFormModal item={abierta} onClose={cerrar} onCreated={creada} />
