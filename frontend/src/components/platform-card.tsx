@@ -1,6 +1,12 @@
 'use client';
 
-/** Tarjeta de plataforma: abre el enlace y permite marcar favorito. */
+/**
+ * Tarjeta de plataforma: abre el enlace y permite marcar favorito.
+ *
+ * DIS-051: sin interactivos anidados. La tarjeta es un contenedor; el enlace principal es el
+ * nombre y su pseudo-elemento cubre toda la tarjeta (sigue siendo clicable entera); la
+ * estrella es hermana del enlace y queda por encima (`z-10`).
+ */
 
 import { api } from '@/lib/api';
 import { atributoTexto, variablesChipPlataforma } from '@/lib/color-legible';
@@ -26,8 +32,16 @@ export function PlatformCard({
   const link = enlaceSeguro(platform.direct_link);
   const disabled = !link;
 
-  const body = (
-    <>
+  const shell =
+    'relative flex flex-col rounded-xl border border-panel-border bg-panel-fill p-4 transition-colors';
+  // Pseudo-elemento que extiende el área clicable del enlace a toda la tarjeta.
+  const nombreEnlace =
+    'outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-primary';
+
+  // DIS-005: sin opacidad; la insignia "Sin enlace" ya indica el estado (con `opacity-70` el texto
+  // bajaba a 3,6:1 y la insignia de advertencia a 2,8:1).
+  return (
+    <div className={`${shell} ${disabled ? '' : 'hover:border-primary/60'}`}>
       <div className="flex items-start justify-between gap-3">
         <span
           className="nx-chip-solid grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-semibold"
@@ -38,16 +52,32 @@ export function PlatformCard({
           {platform.name.slice(0, 2).toUpperCase()}
         </span>
 
-        <FavoriteButton
-          platformId={platform.id}
-          name={platform.name}
-          initial={platform.is_favorite}
-          onChange={onFavoriteChange}
-        />
+        <span className="relative z-10">
+          <FavoriteButton
+            platformId={platform.id}
+            name={platform.name}
+            initial={platform.is_favorite}
+            onChange={onFavoriteChange}
+          />
+        </span>
       </div>
 
       <div className="mt-3 min-w-0">
-        <p className="truncate font-medium">{platform.name}</p>
+        <p className="truncate font-medium">
+          {link ? (
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={registerVisit}
+              className={nombreEnlace}
+            >
+              {platform.name}
+            </a>
+          ) : (
+            platform.name
+          )}
+        </p>
         <p className="mt-0.5 line-clamp-2 text-sm text-label">
           {platform.description}
         </p>
@@ -67,27 +97,6 @@ export function PlatformCard({
         ) : null}
         {disabled ? <Badge>Sin enlace</Badge> : null}
       </div>
-    </>
-  );
-
-  const shell =
-    'flex flex-col rounded-xl border border-panel-border bg-panel-fill p-4 transition-colors';
-
-  // DIS-005: sin opacidad; la insignia "Sin enlace" ya indica el estado (con `opacity-70` el texto
-  // bajaba a 3,6:1 y la insignia de advertencia a 2,8:1).
-  if (disabled) {
-    return <div className={shell}>{body}</div>;
-  }
-
-  return (
-    <a
-      href={link ?? undefined}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={registerVisit}
-      className={`${shell} hover:border-primary/60`}
-    >
-      {body}
-    </a>
+    </div>
   );
 }
