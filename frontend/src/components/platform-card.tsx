@@ -40,6 +40,7 @@ export function PlatformCard({
 
         <FavoriteButton
           platformId={platform.id}
+          name={platform.name}
           initial={platform.is_favorite}
           onChange={onFavoriteChange}
         />

@@ -91,10 +91,10 @@ describe('vista única', () => {
   it('usuario: la plataforma con acceso trae Abrir y favorito; la sin acceso solo solicitar', async () => {
     render(<PlatformsView />);
     const conta = await screen.findByRole('article', { name: 'Contabilidad' });
-    const abrir = within(conta).getByRole('link', { name: 'Abrir Contabilidad' });
+    const abrir = within(conta).getByRole('link', { name: 'Abrir Contabilidad (se abre en una pestaña nueva)' });
     expect(abrir.getAttribute('href')).toBe('https://contabilidad.ejemplo.local/');
     expect(abrir.getAttribute('rel')).toBe('noopener noreferrer');
-    expect(within(conta).getByRole('button', { name: 'Quitar de favoritos' }).getAttribute('aria-pressed')).toBe('true');
+    expect(within(conta).getByRole('button', { name: 'Favorito: Contabilidad' }).getAttribute('aria-pressed')).toBe('true');
     expect(within(conta).getByRole('button', { name: 'Solicitar acceso a Contabilidad' })).toBeTruthy();
 
     const nomina = tarjeta('Nómina');
@@ -107,12 +107,29 @@ describe('vista única', () => {
   it('abrir cuenta la visita; el favorito se alterna sin abrir el enlace', async () => {
     render(<PlatformsView />);
     const conta = await screen.findByRole('article', { name: 'Contabilidad' });
-    fireEvent.click(within(conta).getByRole('link', { name: 'Abrir Contabilidad' }));
+    fireEvent.click(within(conta).getByRole('link', { name: 'Abrir Contabilidad (se abre en una pestaña nueva)' }));
     expect(api.registerVisit).toHaveBeenCalledWith(12);
 
-    fireEvent.click(within(conta).getByRole('button', { name: 'Quitar de favoritos' }));
+    const estrella = within(conta).getByRole('button', { name: 'Favorito: Contabilidad' });
+    fireEvent.click(estrella);
     await waitFor(() => expect(api.toggleFavorite).toHaveBeenCalledWith(12));
-    expect(await within(conta).findByRole('button', { name: 'Añadir a favoritos' })).toBeTruthy();
+    // El nombre es fijo: solo cambia `aria-pressed`.
+    await waitFor(() => expect(estrella.getAttribute('aria-pressed')).toBe('false'));
+    expect(within(conta).getByRole('button', { name: 'Favorito: Contabilidad' })).toBe(estrella);
+  });
+
+  it('favorito: durante la petición usa aria-disabled, conserva el foco y no repite la llamada', async () => {
+    vi.mocked(api.toggleFavorite).mockReturnValue(new Promise(() => undefined));
+    render(<PlatformsView />);
+    const conta = await screen.findByRole('article', { name: 'Contabilidad' });
+    const estrella = within(conta).getByRole('button', { name: 'Favorito: Contabilidad' });
+    estrella.focus();
+    fireEvent.click(estrella);
+    await waitFor(() => expect(estrella.getAttribute('aria-disabled')).toBe('true'));
+    expect(estrella.hasAttribute('disabled')).toBe(false);
+    expect(document.activeElement).toBe(estrella);
+    fireEvent.click(estrella);
+    expect(api.toggleFavorite).toHaveBeenCalledTimes(1);
   });
 
   it('enlace no https o ausente: sin enlace, con el aviso en texto', async () => {
@@ -129,7 +146,7 @@ describe('vista única', () => {
     vi.mocked(api.platforms).mockResolvedValue([plataforma(99, 'Intranet', { area_id: 8, area_name: 'RH' })]);
     render(<PlatformsView />);
     const intranet = await screen.findByRole('article', { name: 'Intranet' });
-    expect(within(intranet).getByRole('link', { name: 'Abrir Intranet' })).toBeTruthy();
+    expect(within(intranet).getByRole('link', { name: 'Abrir Intranet (se abre en una pestaña nueva)' })).toBeTruthy();
     expect(within(intranet).getByText('Con acceso')).toBeTruthy();
     expect(within(intranet).queryByRole('button', { name: /Solicitar/ })).toBeNull();
     expect(within(intranet).queryByText('No disponible para solicitar.')).toBeNull();
@@ -164,7 +181,7 @@ describe('por rol', () => {
     vi.mocked(requestsApi.catalog).mockResolvedValue([{ ...CONTA, can_request: false, my_level: null, my_access_status: null }]);
     render(<PlatformsView />);
     const conta = await screen.findByRole('article', { name: 'Contabilidad' });
-    expect(within(conta).getByRole('link', { name: 'Abrir Contabilidad' })).toBeTruthy();
+    expect(within(conta).getByRole('link', { name: 'Abrir Contabilidad (se abre en una pestaña nueva)' })).toBeTruthy();
     expect(within(conta).getByText('Administras esta área: tienes acceso automático.')).toBeTruthy();
     expect(within(conta).getByText('Con acceso')).toBeTruthy();
     expect(within(conta).queryByText('Sin acceso')).toBeNull();
@@ -178,9 +195,27 @@ describe('por rol', () => {
     render(<PlatformsView />);
     const nomina = await screen.findByRole('article', { name: 'Nómina' });
     expect(screen.getByText(/Como superadmin solo puedes consultarlas/)).toBeTruthy();
-    expect(within(nomina).getByRole('link', { name: 'Abrir Nómina' })).toBeTruthy();
+    expect(within(nomina).getByRole('link', { name: 'Abrir Nómina (se abre en una pestaña nueva)' })).toBeTruthy();
     expect(within(nomina).getByText('Como superadmin ya tienes acceso a todas las plataformas.')).toBeTruthy();
     expect(within(nomina).queryByRole('button', { name: /Solicitar/ })).toBeNull();
+  });
+});
+
+describe('Abrir solo con acceso efectivo activo', () => {
+  it.each(['en_proceso', 'fallido', 'revocando', 'fallo_revocacion'] as const)(
+    '%s: solo la insignia del estado, sin Abrir', async (estado) => {
+      vi.mocked(requestsApi.catalog).mockResolvedValue([{ ...CONTA, my_access_status: estado }]);
+      render(<PlatformsView />);
+      const conta = await screen.findByRole('article', { name: 'Contabilidad' });
+      expect(within(conta).queryByRole('link')).toBeNull();
+      expect(within(conta).queryByText('Sin enlace')).toBeNull();
+      expect(within(conta).getByText(/Acceso|Revocando|Fallo/)).toBeTruthy();
+    });
+
+  it('activo: sí hay Abrir', async () => {
+    render(<PlatformsView />);
+    const conta = await screen.findByRole('article', { name: 'Contabilidad' });
+    expect(within(conta).getByRole('link')).toBeTruthy();
   });
 });
 
@@ -209,7 +244,7 @@ describe('estados', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar enlaces' }));
     await screen.findByRole('article', { name: 'Contabilidad' });
-    expect(within(tarjeta('Contabilidad')).getByRole('link', { name: 'Abrir Contabilidad' })).toBeTruthy();
+    expect(within(tarjeta('Contabilidad')).getByRole('link', { name: 'Abrir Contabilidad (se abre en una pestaña nueva)' })).toBeTruthy();
     expect(screen.queryByRole('alert')).toBeNull();
     expect(api.platforms).toHaveBeenCalledTimes(2);
   });

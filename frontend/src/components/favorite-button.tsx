@@ -11,10 +11,13 @@ import { useToast } from './toast';
 
 export function FavoriteButton({
   platformId,
+  name,
   initial,
   onChange,
 }: {
   platformId: number;
+  /** Nombre de la plataforma: el nombre accesible es fijo y el estado va en `aria-pressed`. */
+  name: string;
   initial: boolean;
   onChange?: (id: number, isFavorite: boolean) => void;
 }) {
@@ -48,10 +51,10 @@ export function FavoriteButton({
     <button
       type="button"
       onClick={toggle}
-      disabled={busy}
+      aria-disabled={busy}
       aria-pressed={favorite}
-      aria-label={favorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-      className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded text-lg leading-none outline-none transition-colors hover:bg-surface-container focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
+      aria-label={`Favorito: ${name}`}
+      className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded text-lg leading-none outline-none transition-colors hover:bg-surface-container focus-visible:ring-2 focus-visible:ring-primary aria-disabled:opacity-50"
     >
       <span className={favorite ? 'text-warning-text' : 'text-label'}>
         {favorite ? '★' : '☆'}

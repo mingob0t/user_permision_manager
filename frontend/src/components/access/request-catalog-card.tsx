@@ -44,7 +44,9 @@ export function RequestCatalogCard({
   // Acceso automático (admin de área, superadmin): el catálogo no trae estado pero la abre.
   const estado = mine && (!item.my_access_status || item.my_access_status === 'revocado')
     ? 'activo' : item.my_access_status;
-  const enlace = mine ? enlaceSeguro(mine.direct_link) : null;
+  // "Abrir" solo con el acceso efectivo `activo`; con otro estado va solo la insignia.
+  const abrible = Boolean(mine) && estado === 'activo';
+  const enlace = mine && abrible ? enlaceSeguro(mine.direct_link) : null;
 
   return (
     <article
@@ -64,7 +66,7 @@ export function RequestCatalogCard({
         </div>
         {mine ? (
           <span className="ml-auto">
-            <FavoriteButton platformId={platform.id} initial={mine.is_favorite} />
+            <FavoriteButton platformId={platform.id} name={platform.name} initial={mine.is_favorite} />
           </span>
         ) : null}
       </div>
@@ -77,7 +79,7 @@ export function RequestCatalogCard({
         <AccessStatusBadge status={estado} level={item.my_level} />
         {pendiente ? <Badge tone="warning">Solicitud pendiente</Badge> : null}
         {mine && mine.status !== 'Activo' ? <Badge tone="warning">{mine.status}</Badge> : null}
-        {mine && !enlace ? <Badge>Sin enlace</Badge> : null}
+        {abrible && !enlace ? <Badge>Sin enlace</Badge> : null}
       </div>
 
       <div className="mt-auto space-y-2 pt-4">
@@ -86,7 +88,7 @@ export function RequestCatalogCard({
             href={enlace}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`Abrir ${platform.name}`}
+            aria-label={`Abrir ${platform.name} (se abre en una pestaña nueva)`}
             onClick={() => { void api.registerVisit(platform.id).catch(() => undefined); }}
             className="nexus-btn nexus-btn-primary w-full"
           >
