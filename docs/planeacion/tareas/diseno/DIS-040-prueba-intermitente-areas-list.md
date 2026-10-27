@@ -8,7 +8,7 @@
 | **Fase** | 4 |
 | **Módulo / Área** | areas (pruebas) |
 | **Prioridad** | Baja |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Creada** | 2026-10-21 |
 
 ## Contexto
@@ -43,3 +43,5 @@
 
 - 2026-10-27 (auditoría de DIS-033): también falló 1 de 4 corridas completas una prueba de `tests/components/users` (`api.users` esperado 2 veces); pasa sola (72/72). Revisar junto con esta.
 | 2026-10-27 | Aprobada en modo autónomo; 3 pruebas con `waitFor`; En revisión |
+
+- 2026-10-27: revisado por el orquestador (solo pruebas, 3 líneas con `waitFor`, misma aserción; 12 corridas seguidas en verde). Sin auditoría de accesibilidad: no hay cambio de interfaz. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
