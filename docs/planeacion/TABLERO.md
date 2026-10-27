@@ -28,7 +28,7 @@
 | FNC-024 | Línea base web: instalar dependencias, configurar ESLint y ejecutar typecheck y lint | web | 2 | pruebas | Alta | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (fd2a22d) | Build roto por 1 error de lint: decisión pendiente |
 | FNC-025 | Runner de pruebas del frontend (Vitest) con prueba automática de contraste y tokens | web | 2 | pruebas | Media | Hecha | 2026-10-13 | 2026-10-13 | 2026-10-13 | Merge local a develop (85e220c) | Depende de FNC-024; fallas de contraste a DIS-001 a DIS-006 |
 | FNC-026 | CI que ejecute pytest, typecheck, lint y los controles del pre-commit | infra | 2 | ci | Media | Propuesta | 2026-10-13 | | | — | Depende de FNC-019 y FNC-024; requiere repositorio remoto |
-| FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | Propuesta | 2026-10-13 | | | — | Antes de FNC-020 |
+| FNC-027 | Retirar los blueprints heredados (44 rutas) y app/decorators.py | backend | 4 | global | Alta | Hecha | 2026-10-13 | 2026-10-26 | | `fnc/FNC-027-retirar-blueprints-heredados` (commit local, sin push) | Origen: H-01. Propone FNC-118 |
 | FNC-028 | Limpiar scratch/ y utils/ (PSX5K) y adoptar Alembic con las migraciones 001-004 | backend | 4 | bd | Media | Propuesta | 2026-10-13 | | | — |  |
 | FNC-029 | Dividir app/modules/api/admin.py, crud.py y create_app | backend | 4 | api | Media | Propuesta | 2026-10-13 | | | — | Después de FNC-020 |
 | FNC-030 | Unificar helpers duplicados del backend (usuario creado, purga, _payload/_error, auditoría) | backend | 4 | api | Media | Propuesta | 2026-10-13 | | | — |  |
@@ -143,3 +143,4 @@
 | FNC-115 | Conectores: mover `_valores_seguros` y `_con_control` a un módulo común | backend | 5 | conectores | Baja | Propuesta | 2026-10-21 | | | — | Origen: FNC-053 |
 | FNC-116 | Conector `bd`: probar contra MySQL y PostgreSQL reales con TLS | backend | 5 | conectores | Media | Propuesta | 2026-10-21 | | | — | Origen: FNC-053; depende de P9 |
 | FNC-117 | Cierre de la fase 3: plan completo y propuestas de auditoría reasignadas a fases 4 y 5 | infra | 3 | planeacion | Media | Hecha | 2026-10-26 | 2026-10-26 | | `fnc/FNC-117-cierre-fase-3` | Orquestador (modo autónomo) |
+| FNC-118 | Web: retirar el `rewrite` de `/auth/:path*` en `next.config.ts` (el backend ya no tiene `/auth`) | web | 4 | frontend | Baja | Propuesta | 2026-10-26 | | | — | Origen: FNC-027 |

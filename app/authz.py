@@ -22,7 +22,7 @@ funciones `scoped_*` de este módulo.
 
 from functools import wraps
 
-from flask import abort, flash, jsonify, redirect, request, url_for
+from flask import abort, jsonify
 from flask_login import current_user
 
 ROLE_ADMIN = 'administrador'
@@ -233,26 +233,9 @@ def can_manage_user(target, user=None):
 # Decoradores
 # --------------------------------------------------------------------------- #
 
-def _wants_json():
-    """True si quien llama espera JSON en lugar de una redirección HTML.
-
-    Sin esto, un `fetch()` a una ruta protegida recibe un 302 hacia el dashboard
-    y el JS falla al parsear HTML como JSON.
-    """
-    if request.is_json or '/api/' in request.path or request.path.endswith('-api'):
-        return True
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return True
-    accept = request.accept_mimetypes
-    return accept['application/json'] >= accept['text/html']
-
-
 def _deny(message='Acceso restringido. Se requieren permisos de administrador.'):
-    """Respuesta de acceso denegado en el formato que espera quien llama."""
-    if _wants_json():
-        return jsonify({'status': 'error', 'message': message}), 403
-    flash(message, 'warning')
-    return redirect(url_for('core.index'))
+    """Acceso denegado: 403 JSON (toda ruta protegida es de `/api/v1`)."""
+    return jsonify({'status': 'error', 'message': message}), 403
 
 
 def admin_required(f):

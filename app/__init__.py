@@ -89,28 +89,14 @@ def create_app(config_overrides=None):
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
-    # La pantalla de acceso vive en el frontend; sin esto, Flask redirigiría a
-    # su ruta heredada y el navegador daría un salto de más.
-    login_manager.login_view = 'auth.login'
     login_manager.login_message = "Por favor, inicie sesión para acceder."
     login_manager.login_message_category = "info"
 
     @login_manager.unauthorized_handler
     def unauthorized():
-        """Sin sesión: JSON para las llamadas de API, redirección para el resto."""
-        from flask import redirect, request as req
-        wants_json = (
-            req.is_json
-            or '/api/' in req.path
-            or req.headers.get('X-Requested-With') == 'XMLHttpRequest'
-            or req.accept_mimetypes['application/json']
-            >= req.accept_mimetypes['text/html']
-        )
-        if wants_json:
-            return jsonify({'status': 'error',
-                            'message': 'Sesión no válida.'}), 401
-        target = (os.getenv('FRONTEND_URL', '') or '') + '/login'
-        return redirect(target)
+        """Sin sesión: 401 JSON (toda ruta protegida es de `/api/v1`)."""
+        return jsonify({'status': 'error',
+                        'message': 'Sesión no válida.'}), 401
 
     # Configuración de Redis
     from app.utils.redis_client import registry as redis_registry
@@ -130,13 +116,6 @@ def create_app(config_overrides=None):
             return None
 
     # Registro de Blueprints
-    from app.modules.core.routes import core_bp
-    from app.modules.settings.routes import settings_bp
-    from app.modules.audit.routes import audit_bp
-    from app.modules.notifications.routes import notifications_bp
-    from app.modules.auth.routes import auth_bp
-    from app.modules.users.routes import users_bp
-    from app.modules.areas.routes import areas_bp
     from app.modules.api.routes import api_bp
     from app.modules.api.crud import crud_bp
     from app.modules.api.admin import admin_bp
@@ -159,13 +138,6 @@ def create_app(config_overrides=None):
 
 
     
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(core_bp)
-    app.register_blueprint(audit_bp)
-    app.register_blueprint(settings_bp)
-    app.register_blueprint(notifications_bp)
-    app.register_blueprint(users_bp)
-    app.register_blueprint(areas_bp)
     # La API v1 usa la cookie de sesión y no formularios, así que no
     # participa del CSRF de Flask-WTF.
     for bp in (api_bp, crud_bp, admin_bp, auth_api_bp, users_api_bp,
@@ -186,12 +158,6 @@ def create_app(config_overrides=None):
     from app.modules.connectors import registrar as registrar_conectores
     registrar_conectores(app)
 
-    # Los blueprints heredados ya no procesan datos: solo redirigen o devuelven
-    # 410. Sin exentarlos, el CSRF los intercepta antes y responde un 400 en
-    # HTML, ocultando la indicación del endpoint que los reemplaza.
-    for bp in (auth_bp, users_bp, areas_bp, audit_bp, notifications_bp,
-               settings_bp, core_bp):
-        csrf.exempt(bp)
 
 
 

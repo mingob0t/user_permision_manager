@@ -28,14 +28,6 @@ HOST_SMTP_FICTICIO = 'smtp.pruebas.invalid'
 HOST_LDAP_FICTICIO = 'ldap.pruebas.invalid'
 CORREO_SSO_FICTICIO = 'sso@pruebas.local'
 
-# Blueprints heredados: sus 44 rutas responden 410 o redirigen al frontend.
-# Se cubren en FNC-023 (y se retiran en FNC-027); aquí solo se excluyen.
-BLUEPRINTS_HEREDADOS = frozenset({
-    'auth', 'core', 'audit', 'settings', 'notifications', 'users_module',
-    'areas_module',
-})
-
-
 # --------------------------------------------------------------------------- #
 # Códigos esperados por rol
 # --------------------------------------------------------------------------- #

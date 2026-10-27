@@ -10,7 +10,7 @@ Dos servicios tras un reverse proxy y un worker en segundo plano:
 
 `<nombre>` lo define `--name` (por defecto `nexus`).
 
-Nginx enruta `/api/` y `/auth/` al backend y el resto al frontend. Ambos van
+Nginx enruta `/api/` al backend y el resto al frontend. Ambos van
 bajo el mismo dominio a propósito: así la cookie de sesión que emite Flask
 llega al frontend sin CORS, y Authelia sigue siendo la autoridad de
 autenticación.
@@ -275,6 +275,5 @@ entrar como administrador.
 - El backend no sirve ningún archivo estático. El logo del portal se guarda
   como data URI en la base de datos, así que no hace falta volumen persistente
   más allá de la BD.
-- `FRONTEND_URL` indica al backend dónde redirigir las rutas heredadas. Tras
-  Nginx puede quedar vacío (mismo dominio); en desarrollo, apuntar al puerto de
-  Next.js.
+- `FRONTEND_URL` se retiró (FNC-027): el backend ya no redirige a ninguna
+  pantalla; sin sesión responde `401` JSON y el frontend lleva al login.
