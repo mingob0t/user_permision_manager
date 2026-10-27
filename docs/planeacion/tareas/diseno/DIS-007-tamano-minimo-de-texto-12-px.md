@@ -51,6 +51,13 @@ _Se completa al aprobar la tarea._
 - Prueba nueva `frontend/tests/accesibilidad/texto-minimo.test.ts`: tokens `--text-*`, `font-size` de todo CSS de `src/` (px, rem, `var(--text-*)`), `text-[…]` y `fontSize` en TS/TSX.
 - Docs: `VARIABLES.md` (`--text-xs`, baja de `--text-2xs`), `HISTORIAL.md` (2 filas), `docs/frontend/README.md` §6, `CHANGELOG.md`, bitácora del día.
 
+## Correcciones tras auditor-accesibilidad (2026-10-27)
+- auditor-accesibilidad aprobó DIS-007 y DIS-032 sin bloqueantes.
+- `flex-wrap` contra desbordes en 320–360 px: `platform-card.tsx` l.82 (chip de área, estado, "Sin enlace"), `notifications-list.tsx` l.59 ("Marcar todas como leídas" + "Vaciar"), pie de `Modal` en `form.tsx` l.173 (compartido: todos los diálogos) y `areas-list.tsx` l.101 (insignias de área).
+- `texto-minimo.test.ts` endurecida: mide `text-[calc(…)]`, `text-[length:…]` y `text-[var(…)]` (falla si no es de la escala); atajo `font:` en CSS; `[font-size:…]`; `font-size=` de SVG; `@apply text-[…]`; `font-size:` en cadenas o plantillas (`style`); `fontSize` con cadena. Quita comentarios antes de buscar (sin falsos positivos en la misma declaración). 33 ejemplos propios del detector.
+- **Pendiente de revisar en pantalla:** los ticks de la gráfica del Inicio a 12 px (`dashboard.tsx`) pueden pedir más margen en el eje; no se vio en la app real.
+- Verificación (en `frontend/`): `npm run typecheck` 0, `npm run lint` 0, `npx vitest run` 0 (35 archivos, 1251), `npx next build` 0. Desbordes no comprobados en navegador.
+
 ## Decisiones (decisión del orquestador, pendiente de validar en la prueba de concepto)
 - Se usa el token existente `var(--text-xs)` (12 px) en CSS y `text-xs` en Tailwind; sin escala nueva.
 - Se da de baja `--text-2xs` (10 px, sin usos) para que la escala no permita bajar de 12 px.
@@ -99,3 +106,4 @@ Salida de `python3 ~/.claude/agentes/herramientas/impacto.py` (contra `develop`)
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-26 | En curso → En revisión (modo autónomo), junto con DIS-032. Texto mínimo 12 px con `--text-xs`, baja de `--text-2xs`, prueba que primero falló. Verificación en la ficha; app real no levantada |
+| 2026-10-27 | auditor-accesibilidad aprobó sin bloqueantes; `flex-wrap` en 4 contenedores, prueba endurecida, CSS muerto anotado en DIS-009, ticks de la gráfica pendientes de revisar en pantalla |

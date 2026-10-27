@@ -170,7 +170,7 @@ export function Modal({
         </div>
         <div ref={cuerpo} className="space-y-5 px-6 py-5">{children}</div>
         {footer ? (
-          <div className="flex justify-end gap-3 border-t border-panel-border px-6 py-4">
+          <div className="flex flex-wrap justify-end gap-3 border-t border-panel-border px-6 py-4">
             {footer}
           </div>
         ) : null}
