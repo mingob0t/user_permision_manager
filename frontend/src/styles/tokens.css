@@ -220,7 +220,7 @@ table.dataTable tbody tr {
      ESCALA TIPOGRÁFICA — Sistema armónico 8pt
      Basado en proporción 1.25 (Major Third)
   ───────────────────────────────────────────── */
-  --text-2xs:  10px;   /* badges, superscripts — usar con font-weight ≥ 700 */
+  /* DIS-007: se retiró --text-2xs (10 px, sin usos); el mínimo es --text-xs. */
   --text-xs:   12px;   /* labels de tabla, meta info */
   --text-sm:   13px;   /* body small, nav items */
   --text-base: 15px;   /* body normal */

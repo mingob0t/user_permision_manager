@@ -98,7 +98,7 @@ function AreasScreen() {
                     >
                       {area.name.slice(0, 2).toUpperCase()}
                     </span>
-                    <div className="flex gap-1.5">
+                    <div className="flex flex-wrap gap-1.5">
                       {area.status !== 'Activo' ? (
                         <Badge tone="warning">{area.status}</Badge>
                       ) : null}

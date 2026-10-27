@@ -43,7 +43,14 @@ _Se completa al aprobar la tarea._
 ## Impacto cruzado
 - Depende de → —
 
+## CSS sin uso detectado en DIS-007
+- `.stacked-bar-label` (`components.css`): sin llamadores en `frontend/src`.
+- `.nx-tour-counter` (`components.css`): sin llamadores.
+- Reglas `table.dataTable …` y `.tab-panel-content table …` (cabeceras y filas tipo DataTables): sin llamadores.
+- DIS-007 les subió el texto a `var(--text-xs)` solo para que la prueba `texto-minimo.test.ts` cubra todo `src/`; se pueden borrar aquí.
+
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
+| 2026-10-27 | DIS-007 anota CSS muerto: `.stacked-bar-label`, `.nx-tour-counter`, `table.dataTable` / `.tab-panel-content` |

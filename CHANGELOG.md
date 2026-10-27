@@ -5,6 +5,9 @@
 
 ## [Sin publicar]
 
+### Cambiado
+- Texto mínimo de 12 px: insignias, botones, cabeceras de tabla, contador del tour, marca de las casillas, ejes de las gráficas del Inicio e iniciales de Administrar plataformas pasan de 9–11 px a 12 px (token `--text-xs`); se retira el token `--text-2xs` (10 px) y una prueba impide volver a bajar de 12 px (DIS-007, DIS-032, 2026-10-26).
+
 ### Seguridad
 - Next.js: el rewrite de `/api` hacia Flask existe solo con `NODE_ENV=development` (`next build`/`next start` no generan ninguno), se retira el rewrite de `/auth` y `BACKEND_URL` se rechaza si es una IP; cierra la vía de Next hacia Flask con cabeceras `Remote-*` del cliente (FNC-005, FNC-118, 2026-10-26).
 

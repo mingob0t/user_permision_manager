@@ -71,7 +71,7 @@ function Estadisticas({ stats }: { stats: Stats }) {
                   />
                   <XAxis
                     dataKey="area"
-                    tick={{ fontSize: 11, fill: 'rgb(var(--nx-muted))' }}
+                    tick={{ fontSize: 12, fill: 'rgb(var(--nx-muted))' }}
                     interval={0}
                     angle={-20}
                     textAnchor="end"
@@ -79,7 +79,7 @@ function Estadisticas({ stats }: { stats: Stats }) {
                   />
                   <YAxis
                     allowDecimals={false}
-                    tick={{ fontSize: 11, fill: 'rgb(var(--nx-muted))' }}
+                    tick={{ fontSize: 12, fill: 'rgb(var(--nx-muted))' }}
                   />
                   <Tooltip
                     contentStyle={{
