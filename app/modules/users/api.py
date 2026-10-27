@@ -17,15 +17,14 @@ from flask_login import login_required
 from app import db
 from app.authz import (ROLE_AREA_ADMIN, admin_required, any_admin_required,
                        normalized_role)
-from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     NO_ENCONTRADO, ROL_NO_ADMIN,
-                                     error_response, json_object,
-                                     validation_error)
+from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, NO_ENCONTRADO,
+                                     ROL_NO_ADMIN, error_response, json_object,
+                                     leer_cuerpo, validation_error)
 from app.modules.auth.models import User
 from app.modules.users.areas_administradas import (CAMPO_AREAS,
                                                    asignar_areas_administradas,
                                                    validar_area_ids)
-from app.modules.users.directory_accounts import (campos_no_permitidos,
+from app.modules.users.directory_accounts import (CAMPOS_PERMITIDOS,
                                                   crear_cuenta_directorio,
                                                   validar_alta)
 from app.modules.users.serializacion import usuario_gestionado
@@ -64,11 +63,9 @@ def set_managed_areas(user_id):
 @any_admin_required
 def create_directory_account():
     """Crea la cuenta en OpenLDAP (sin contraseña) y en el portal."""
-    datos = json_object()
-    if datos is None:
-        return error_response(*CUERPO_INVALIDO)
-    if campos_no_permitidos(datos):
-        return error_response(*CAMPO_NO_PERMITIDO)
+    datos, error = leer_cuerpo(CAMPOS_PERMITIDOS)
+    if error is not None:
+        return error
     alta, error, campos = validar_alta(datos)
     if error:
         return error_response(*error)

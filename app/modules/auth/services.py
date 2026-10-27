@@ -5,7 +5,7 @@ from app.authz import ROLE_USER
 from app.modules.directory.configuracion import (ErrorConfiguracionDirectorio,
                                                  directorio_activo)
 from app.modules.directory.ldap_client import ClienteDirectorio, ErrorDirectorio
-from app.modules.notifications.services import send_notification_by_slug
+from app.modules.notifications.services import avisar_usuario_creado
 
 logger = logging.getLogger(__name__)
 
@@ -128,54 +128,7 @@ def _sincronizar_cuenta(persona):
         add_audit_log("usuario creado", status="success", target=correo,
                       target_user_id=cuenta.id,
                       detail="Alta por login de directorio con rol usuario")
-        _avisar_alta(correo, nombre)
+        base_url = os.getenv('BASE_URL', '').rstrip('/')
+        avisar_usuario_creado(correo, nombre, base_url,
+                              f"{base_url}/auth/login")
     return {"status": "success", "user": cuenta}
-
-
-def _avisar_alta(correo, nombre):
-    """Correo de bienvenida; un fallo al notificar no impide el acceso."""
-    if os.getenv('NOTIFY_USER_CREATED', 'true').lower() != 'true':
-        return
-    base_url = os.getenv('BASE_URL', '').rstrip('/')
-    try:
-        send_notification_by_slug('usuario_creado', correo, context={
-            'nombre': nombre,
-            'usuario': correo,
-            'base_url': base_url,
-            'url': f"{base_url}/auth/login"
-        })
-    except Exception:
-        logger.exception('Login de directorio: fallo al enviar la bienvenida')
-
-
-def purge_inactive_users(days=30):
-    """
-    RUTINA DE HIGIENE: Elimina usuarios que no han iniciado sesión en X días.
-    """
-    from app.modules.auth.models import User
-    from app.modules.audit.services import add_audit_log
-    from app import db
-    from datetime import datetime, timedelta
-
-    cutoff = datetime.now() - timedelta(days=days)
-    
-    try:
-        # No purgar administradores nunca por seguridad
-        inactive_users = User.query.filter(
-            User.last_login_at < cutoff,
-            User.role != 'administrador'
-        ).all()
-        
-        count = len(inactive_users)
-        purged_names = [user.email for user in inactive_users]
-        
-        for user in inactive_users:
-            email = user.email
-            db.session.delete(user)
-            add_audit_log("usuario purgado", status="warning", detail=f"Inactividad > {days} días: Usuario {email} eliminado automáticamente")
-            
-        db.session.commit()
-        return {"status": "success", "purged_count": count, "purged_names": purged_names}
-    except Exception as e:
-        db.session.rollback()
-        return {"status": "error", "message": "Error al conectar con LDAP."}

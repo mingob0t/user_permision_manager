@@ -32,9 +32,8 @@ from app.modules.access.models import PlatformAccessGrant
 from app.modules.access.serializacion import accesos_publicos
 from app.modules.access.tipos import ESTADOS, ESTADOS_VIGENTES
 from app.modules.api.csrf_provisional import escritura_del_portal
-from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     NO_ENCONTRADO, error_response,
-                                     json_object)
+from app.modules.api.helpers import (NO_ENCONTRADO, error_response,
+                                     leer_cuerpo)
 from app.modules.audit.parametros import ParametroInvalido, leer_paginacion
 from app.modules.auth.models import User
 
@@ -95,11 +94,9 @@ def user_access(user_id):
 
 
 def _motivo():
-    datos = json_object()
-    if datos is None:
-        return None, error_response(*CUERPO_INVALIDO)
-    if set(datos) - CAMPOS_REVOCAR:
-        return None, error_response(*CAMPO_NO_PERMITIDO)
+    datos, error = leer_cuerpo(CAMPOS_REVOCAR)
+    if error is not None:
+        return None, error
     return datos.get('reason'), None
 
 

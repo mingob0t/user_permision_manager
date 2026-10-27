@@ -18,9 +18,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.authz import any_admin_required, can_manage_area, is_area_admin
-from app.modules.api.helpers import (AREA_DUPLICADA, CAMPO_NO_PERMITIDO,
-                                     CUERPO_INVALIDO, NO_ENCONTRADO,
-                                     error_response, json_object,
+from app.modules.api.helpers import (AREA_DUPLICADA, NO_ENCONTRADO,
+                                     error_response, leer_cuerpo,
                                      validation_error)
 from app.modules.areas import validacion
 from app.modules.areas.baja import conflicto_de_baja, desligar_auditoria
@@ -35,11 +34,9 @@ MODULO_AUDITORIA = 'Áreas'
 
 def _entrada(es_alta, area=None):
     """(valores, None) con la entrada válida, o (None, respuesta de error)."""
-    datos = json_object()
-    if datos is None:
-        return None, error_response(*CUERPO_INVALIDO)
-    if validacion.campos_no_permitidos(datos):
-        return None, error_response(*CAMPO_NO_PERMITIDO)
+    datos, error = leer_cuerpo(validacion.CAMPOS_PERMITIDOS)
+    if error is not None:
+        return None, error
     if area is not None:
         # Reenviar el valor que ya tiene no es un cambio: el formulario manda
         # todos los campos y un área heredada puede no cumplir el formato.

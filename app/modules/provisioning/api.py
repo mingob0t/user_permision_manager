@@ -22,9 +22,8 @@ from flask_login import current_user, login_required
 from app import db
 from app.authz import admin_required, any_admin_required
 from app.modules.api.csrf_provisional import escritura_del_portal
-from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     NO_ENCONTRADO, error_response,
-                                     json_object)
+from app.modules.api.helpers import (NO_ENCONTRADO, error_response,
+                                     leer_cuerpo)
 from app.modules.audit.parametros import (ParametroInvalido, leer_entero,
                                           leer_filtros, leer_paginacion)
 from app.modules.provisioning import consultas, reintento
@@ -98,11 +97,9 @@ def get_job(job_id):
 @admin_required
 @escritura_del_portal
 def retry_job(job_id):
-    datos = json_object()
-    if datos is None:
-        return error_response(*CUERPO_INVALIDO)
-    if datos:
-        return error_response(*CAMPO_NO_PERMITIDO)
+    _, error = leer_cuerpo()
+    if error is not None:
+        return error
     trabajo = db.session.get(ProvisioningJob, job_id)
     if trabajo is None:
         return error_response(*NO_ENCONTRADO)

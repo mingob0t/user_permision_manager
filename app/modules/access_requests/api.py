@@ -31,8 +31,7 @@ from app.modules.access_requests.models import PlatformAccessRequest
 from app.modules.access_requests.services import crear
 from app.modules.access_requests.tipos import ESTADO_PENDIENTE, ESTADOS
 from app.modules.api.csrf_provisional import escritura_del_portal
-from app.modules.api.helpers import (CAMPO_NO_PERMITIDO, CUERPO_INVALIDO,
-                                     error_response, json_object)
+from app.modules.api.helpers import (error_response, leer_cuerpo)
 from app.modules.audit.parametros import (ParametroInvalido, leer_filtros,
                                           leer_paginacion)
 from app.modules.notifications.access_notifications import (
@@ -84,11 +83,9 @@ def catalog():
 @login_required
 @escritura_del_portal
 def create_request():
-    datos = json_object()
-    if datos is None:
-        return error_response(*CUERPO_INVALIDO)
-    if set(datos) - CAMPOS_PERMITIDOS:
-        return error_response(*CAMPO_NO_PERMITIDO)
+    datos, error = leer_cuerpo(CAMPOS_PERMITIDOS)
+    if error is not None:
+        return error
 
     try:
         solicitud = crear(current_user, datos.get('platform_id'),
@@ -202,11 +199,9 @@ def _solicitud_a_decidir(solicitud_id, campos):
         approvals.validar_decisor(current_user, solicitud)
     except ErrorDeAcceso as error:
         return None, None, error_response(*error.respuesta)
-    datos = json_object()
-    if datos is None:
-        return None, None, error_response(*CUERPO_INVALIDO)
-    if set(datos) - campos:
-        return None, None, error_response(*CAMPO_NO_PERMITIDO)
+    datos, error = leer_cuerpo(campos)
+    if error is not None:
+        return None, None, error
     return solicitud, datos, None
 
 

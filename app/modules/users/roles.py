@@ -45,11 +45,6 @@ def rol_asignable(rol, actor=None):
     return isinstance(rol, str) and rol in roles_asignables(actor)
 
 
-def campos_no_permitidos(datos):
-    """Campos del cuerpo que el endpoint no acepta, ordenados."""
-    return sorted(CAMPOS_NO_PERMITIDOS & set(datos))
-
-
 def es_el_mismo_rol(cuenta, rol):
     """True si `rol` no cambia el rol actual: no es una asignación."""
     return isinstance(rol, str) and rol.lower() == normalized_role(cuenta)
