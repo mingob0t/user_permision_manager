@@ -15,13 +15,14 @@ import type { Platform, PlatformWarning } from '@/lib/types';
 import { variablesCss } from '@/lib/variables-css';
 import { ACCION_FILA, ACCION_FILA_PELIGRO } from './acciones-fila';
 import { rutaHistorialPlataforma } from './audit/audit-routes';
+import { DataTable, type DataColumn } from './data-table';
 import { Button, ConfirmDialog } from './form';
 import { PlatformForm } from './platforms/platform-form';
 import { describeDeleteError } from './platforms/platform-save-errors';
 import { PlatformSaveNotice, type SaveNotice } from './platforms/platform-save-notice';
 import { RequireRole } from './require-role';
 import { useSession } from './session-provider';
-import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
+import { Badge, Card, EmptyNote, ErrorNote } from './ui';
 
 export function PlatformAdmin() {
   return (
@@ -71,6 +72,90 @@ function PlatformAdminContent() {
   const isSuperadmin = Boolean(session?.permissions.is_admin);
   const canManage =
     session?.permissions.is_admin || session?.permissions.is_area_admin;
+
+  // DIS-010: columnas de la tabla común (`DataTable`).
+  const columnas: DataColumn<Platform>[] = [
+    {
+      key: 'plataforma',
+      header: 'Plataforma',
+      cell: (platform) => (
+        <div className="flex items-center gap-2">
+          <span
+            className="nx-chip-solid grid h-7 w-7 shrink-0 place-items-center rounded text-xs font-semibold"
+            style={variablesCss({ '--chip-bg': platform.bg_color, '--chip-fg': platform.text_color })}
+            aria-hidden
+          >
+            {platform.name.slice(0, 2).toUpperCase()}
+          </span>
+          <span className="truncate font-medium">{platform.name}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'area',
+      header: 'Área',
+      cellClassName: 'px-4 py-2.5 text-label',
+      cell: (platform) => platform.area_name ?? '—',
+    },
+    {
+      key: 'enlace',
+      header: 'Enlace',
+      cellClassName: 'max-w-xs px-4 py-2.5',
+      cell: (platform) =>
+        enlaceSeguro(platform.direct_link) ? (
+          <span className="block truncate text-label" title={platform.direct_link ?? undefined}>
+            {platform.direct_link}
+          </span>
+        ) : (
+          <Badge tone="warning">Sin enlace</Badge>
+        ),
+    },
+    {
+      key: 'estado',
+      header: 'Estado',
+      cell: (platform) => (
+        <Badge tone={platform.status === 'Activo' ? 'success' : 'warning'}>{platform.status}</Badge>
+      ),
+    },
+    {
+      key: 'acciones',
+      header: 'Acciones',
+      headerSrOnly: true,
+      cellClassName: 'whitespace-nowrap px-4 py-1 text-right',
+      cell: (platform) => (
+        // DIS-035: historial en Auditoría y acciones de 48 px (DIS-008), en una línea.
+        <div className="flex justify-end gap-1">
+          <Link
+            href={rutaHistorialPlataforma(platform.id)}
+            aria-label={`Historial de ${platform.name} en Auditoría`}
+            className={ACCION_FILA}
+          >
+            Historial
+          </Link>
+          {canManage ? (
+            <>
+              <button
+                type="button"
+                onClick={(e) => open(e, () => setEditing(platform))}
+                aria-label={`Editar ${platform.name}`}
+                className={ACCION_FILA}
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                onClick={(e) => open(e, () => setRemoving(platform))}
+                aria-label={`Eliminar ${platform.name}`}
+                className={ACCION_FILA_PELIGRO}
+              >
+                Eliminar
+              </button>
+            </>
+          ) : null}
+        </div>
+      ),
+    },
+  ];
 
   async function remove() {
     if (!removing) return;
@@ -146,103 +231,15 @@ function PlatformAdminContent() {
         </Card>
       ) : null}
 
-      {platforms.loading || areas.loading ? <Spinner /> : null}
-      {platforms.error ? <ErrorNote message={platforms.error} /> : null}
-
-      {!platforms.loading && !platforms.error ? (
-        (platforms.data ?? []).length === 0 ? (
-          <EmptyNote message="No hay plataformas en tu alcance." />
-        ) : (
-          <Card className="p-0">
-            {/* Región desplazable con nombre y foco visible para quien usa teclado (DIS-008). */}
-            <div
-              role="region"
-              aria-label="Plataformas"
-              tabIndex={0}
-              className="overflow-x-auto rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-            <table className="w-full min-w-[44rem] text-sm">
-              <thead className="border-b border-panel-border text-left text-xs uppercase tracking-wide text-label">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Plataforma</th>
-                  <th className="px-4 py-3 font-medium">Área</th>
-                  <th className="px-4 py-3 font-medium">Enlace</th>
-                  <th className="px-4 py-3 font-medium">Estado</th>
-                  <th className="px-4 py-3"><span className="sr-only">Acciones</span></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-panel-border">
-                {(platforms.data ?? []).map((platform) => (
-                  <tr key={platform.id}>
-                    <td className="px-4 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="nx-chip-solid grid h-7 w-7 shrink-0 place-items-center rounded text-xs font-semibold"
-                          style={variablesCss({ '--chip-bg': platform.bg_color, '--chip-fg': platform.text_color })}
-                          aria-hidden
-                        >
-                          {platform.name.slice(0, 2).toUpperCase()}
-                        </span>
-                        <span className="truncate font-medium">{platform.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2.5 text-label">
-                      {platform.area_name ?? '—'}
-                    </td>
-                    <td className="max-w-xs px-4 py-2.5">
-                      {enlaceSeguro(platform.direct_link) ? (
-                        <span className="block truncate text-label" title={platform.direct_link ?? undefined}>
-                          {platform.direct_link}
-                        </span>
-                      ) : (
-                        <Badge tone="warning">Sin enlace</Badge>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <Badge tone={platform.status === 'Activo' ? 'success' : 'warning'}>
-                        {platform.status}
-                      </Badge>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-1 text-right">
-                      {/* DIS-035: historial en Auditoría y acciones de 48 px (DIS-008), en una línea. */}
-                      <div className="flex justify-end gap-1">
-                        <Link
-                          href={rutaHistorialPlataforma(platform.id)}
-                          aria-label={`Historial de ${platform.name} en Auditoría`}
-                          className={ACCION_FILA}
-                        >
-                          Historial
-                        </Link>
-                        {canManage ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={(e) => open(e, () => setEditing(platform))}
-                              aria-label={`Editar ${platform.name}`}
-                              className={ACCION_FILA}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => open(e, () => setRemoving(platform))}
-                              aria-label={`Eliminar ${platform.name}`}
-                              className={ACCION_FILA_PELIGRO}
-                            >
-                              Eliminar
-                            </button>
-                          </>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-          </Card>
-        )
-      ) : null}
+      <DataTable
+        label="Plataformas"
+        columns={columnas}
+        rows={platforms.data ?? []}
+        rowKey={(platform) => platform.id}
+        loading={platforms.loading || areas.loading}
+        error={platforms.error}
+        emptyMessage="No hay plataformas en tu alcance."
+      />
 
       {creating ? (
         <PlatformForm

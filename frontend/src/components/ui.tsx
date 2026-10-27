@@ -93,13 +93,24 @@ export function EmptyNote({ message }: { message: string }) {
   );
 }
 
+/**
+ * Tonos de estado (DIS-010): los de las insignias `.nx-badge-<tono>`, por token.
+ * `ErrorNote` y `SuccessNote` usan los de peligro y éxito; nada de colores de Tailwind.
+ */
+export type Tone = 'primary' | 'success' | 'error' | 'warning' | 'violet' | 'sky' | 'slate' | 'cyan';
+
+/** Mensaje de éxito en línea (texto `success-text`, AA en los dos temas; DIS-002, DIS-010). */
+export function SuccessNote({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm font-bold text-success-text">{children}</p>;
+}
+
 /** Insignia. Usa las clases .nx-badge del portal. */
 export function Badge({
   children,
   tone = 'slate',
 }: {
   children: React.ReactNode;
-  tone?: 'primary' | 'success' | 'error' | 'warning' | 'violet' | 'sky' | 'slate' | 'cyan';
+  tone?: Tone;
 }) {
   return <span className={`nx-badge nx-badge-${tone}`}>{children}</span>;
 }

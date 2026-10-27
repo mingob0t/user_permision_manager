@@ -11,7 +11,7 @@ import type {
 import { ACCION_FILA, ACCION_FILA_PELIGRO } from './acciones-fila';
 import { Button, Checkbox, ConfirmDialog, Field, Modal, TextInput } from './form';
 import { useSession } from './session-provider';
-import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
+import { Badge, Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from './ui';
 import { UserAccessPanel } from './users/user-access-panel';
 import { DirectoryAccountForm } from './users/directory-account-form';
 import { AdminAreasDialog, RemoveAdminDialog } from './users/admin-role-dialog';
@@ -513,7 +513,7 @@ export function UsersList() {
         {aviso ? (
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-bold text-success-text">{aviso}</p>
+              <SuccessNote>{aviso}</SuccessNote>
               <Button variant="secondary" onClick={() => setAviso(null)}>Cerrar aviso</Button>
             </div>
           </Card>

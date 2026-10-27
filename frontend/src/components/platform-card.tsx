@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Platform } from '@/lib/types';
 import { variablesCss } from '@/lib/variables-css';
+import { useToast } from './toast';
 import { Badge } from './ui';
 
 export function PlatformCard({
@@ -18,6 +19,7 @@ export function PlatformCard({
 }) {
   const [favorite, setFavorite] = useState(platform.is_favorite);
   const [busy, setBusy] = useState(false);
+  const { avisar } = useToast();
 
   async function toggleFavorite(event: React.MouseEvent) {
     // La tarjeta entera es un enlace: no navegar al pulsar la estrella.
@@ -34,6 +36,8 @@ export function PlatformCard({
       onFavoriteChange?.(platform.id, result.is_favorite);
     } catch {
       setFavorite(previous);
+      // DIS-010 (H-17): antes el fallo era silencioso.
+      avisar('error', 'No se pudo actualizar el favorito. Inténtalo de nuevo.');
     } finally {
       setBusy(false);
     }

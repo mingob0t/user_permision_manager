@@ -38,7 +38,7 @@ function confirmar(nombre: RegExp) {
   return screen.getByRole('button', { name: nombre });
 }
 
-const PELIGRO = 'bg-error-solid';
+const PELIGRO = 'nexus-btn-danger'; // DIS-010: antes el override `bg-error-solid`
 
 describe('describedBy y botón de confirmar', () => {
   it('Aprobar: describe el efecto y el área; botón primario', () => {

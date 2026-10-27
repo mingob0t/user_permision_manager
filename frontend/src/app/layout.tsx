@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ToastProvider } from '@/components/toast';
 import { RAIZ_APP_ID } from '@/lib/raiz-app';
 // El orden importa: primero los tokens del portal, que definen las variables;
 // después sus clases; y al final las utilidades de Tailwind, que las consumen.
@@ -24,7 +25,7 @@ export default function RootLayout({
             (páginas sin `AppShell`) o el `<main>` de `AppShell`. Los diálogos se
             pintan fuera, en un portal, y la raíz se marca `inert` mientras están abiertos. */}
         <div id={RAIZ_APP_ID} data-desplazable="" className="h-dvh overflow-y-auto">
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </div>
       </body>
     </html>
