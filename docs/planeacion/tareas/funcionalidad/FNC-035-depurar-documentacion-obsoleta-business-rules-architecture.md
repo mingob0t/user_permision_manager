@@ -15,7 +15,7 @@
 | **Finalizada** | |
 | **Estatus Git** | Commit local, sin push |
 | **Rama** | `fnc/FNC-035-depurar-documentacion` |
-| **Commits / PR** | |
+| **Commits / PR** | f0685a9 (roadmap), 74017cb |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -63,7 +63,7 @@ Todas: decisión del orquestador (pendiente de validar en la prueba de concepto)
 | Script de enlaces relativos `](…)` en los 5 Markdown tocados | 0 rotos |
 | `grep` de IPv4 en `README.md` y `deploy/README.md` | 0 |
 | `validar_proyecto.py` | 1 error y 3 avisos, todos previos (en `develop`: 1 error y 2 avisos; el aviso extra «no hay carpeta logs/» es del worktree): `.gitignore` sin `logs/`, `NODE_ENV`/`TZ` fuera de `.env.example`, IP en `deploy/install.sh` |
-| Pre-commit del proyecto (al hacer commit) | Ver bitácora |
+| Pre-commit del proyecto (al hacer commit) | 1er intento rechazado: la ficha citaba una IP; corregida, 2º intento aceptado (74017cb) |
 
 No verificado: los comandos del README no se ejecutaron de punta a punta (se tomaron de `docs/backend/README.md` §6, `docs/frontend/README.md` §7 y `package.json`).
 
