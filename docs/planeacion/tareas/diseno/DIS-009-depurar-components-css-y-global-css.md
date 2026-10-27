@@ -8,12 +8,12 @@
 | **Fase** | 4 |
 | **Módulo / Área** | estilos |
 | **Prioridad** | Alta |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | disenador-web |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
 | **Finalizada** | |
-| **Estatus Git** | Commit local, sin push |
+| **Estatus Git** | Merge a develop y push a github |
 | **Rama** | `dis/DIS-009-012-limpieza-css` (junto con DIS-012) |
 | **Commits / PR** | |
 | **Requiere migración BD** | Por definir |
@@ -129,3 +129,5 @@ Lectura (decisión del orquestador, pendiente de validar en la prueba de concept
 | 2026-10-27 | DIS-007 anota CSS muerto: `.stacked-bar-label`, `.nx-tour-counter`, `table.dataTable` / `.tab-panel-content` |
 | 2026-10-27 | En curso → En revisión: CSS depurado (−1892 líneas netas), 2 tokens nuevos, pruebas `css-sin-uso` y `colores-literales` para CSS; propuesta DIS-047 |
 | 2026-10-27 | Ajustes tras auditoría: deslizador y sus tokens borrados, `.nexus-checkbox` unificado, pruebas más estrictas; propuesta DIS-048 |
+
+- 2026-10-27: auditoría de accesibilidad (`auditor-accesibilidad`): sin regresiones, estilos computados idénticos en 6 temas; hallazgos B, C y D corregidos en `f36ef0d`, A registrado como DIS-048. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).

@@ -8,12 +8,12 @@
 | **Fase** | 4 |
 | **Módulo / Área** | estilos |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Responsable** | disenador-web |
 | **Creada** | 2026-10-13 |
 | **Inicio** | 2026-10-27 |
 | **Finalizada** | |
-| **Estatus Git** | Commit local, sin push |
+| **Estatus Git** | Merge a develop y push a github |
 | **Rama** | `dis/DIS-009-012-limpieza-css` (junto con DIS-009) |
 | **Commits / PR** | |
 | **Requiere migración BD** | Por definir |
@@ -88,3 +88,5 @@ Lectura (decisión del orquestador, pendiente de validar en la prueba de concept
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-27 | En curso → En revisión: 4 estilos inline a variables `--*`, 2 `text-white` a token, `variablesCss`, prueba `sin-estilos-inline`, excepciones 3 → 1 |
+
+- 2026-10-27: auditoría de accesibilidad (`auditor-accesibilidad`): sin regresiones, estilos computados idénticos en 6 temas; hallazgos B, C y D corregidos en `f36ef0d`, A registrado como DIS-048. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
