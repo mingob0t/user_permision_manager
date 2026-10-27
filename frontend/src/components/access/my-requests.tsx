@@ -5,7 +5,8 @@
  * nivel, fechas, motivo de rechazo y estado del acceso tras aprobarse.
  *
  * - Paginada en el servidor; el filtro por estado vuelve a la página 1.
- * - Refresco con `usePolling` y el intervalo de la preferencia del usuario.
+ * - Refresco con `usePolling` y el intervalo de la preferencia del usuario, solo
+ *   con una solicitud `pendiente` o un acceso transitorio en la página (DIS-033).
  * - Tabla en escritorio y lista en móvil con el mismo marcado (`dl` por fila).
  */
 
@@ -21,7 +22,7 @@ import { formatearFecha } from './fecha';
 import { ListPager } from './list-pager';
 import { listLoadError } from './request-errors';
 import { ETIQUETA_CELDA, ResponsiveList, ResponsiveRow } from './responsive-list';
-import { ESTADOS_SOLICITUD, RequestStatusBadge } from './request-status-badge';
+import { ESTADOS_SOLICITUD, RequestStatusBadge, hayTransitoriosEnSolicitudes } from './request-status-badge';
 
 const NOMBRE_LISTA = 'tus solicitudes';
 
@@ -88,11 +89,18 @@ export function MyRequests() {
   const [status, setStatus] = useState<RequestStatus | ''>('');
   const [page, setPage] = useState(1);
 
+  const [transitorios, setTransitorios] = useState(true);
+
   const lista = usePolling(
-    () => requestsApi.mine({ status: status || undefined, page }).catch((err: unknown) => {
-      throw listLoadError(err, NOMBRE_LISTA);
-    }),
-    { intervalSeconds: session?.preferences.refresh_interval, deps: [status, page] },
+    () => requestsApi.mine({ status: status || undefined, page })
+      .then((r) => {
+        setTransitorios(hayTransitoriosEnSolicitudes(r.items));
+        return r;
+      })
+      .catch((err: unknown) => {
+        throw listLoadError(err, NOMBRE_LISTA);
+      }),
+    { intervalSeconds: session?.preferences.refresh_interval, deps: [status, page], activo: transitorios },
   );
 
   const data = lista.data;

@@ -6,7 +6,8 @@
  * claro.
  *
  * - Por defecto `vigente` (contrato `accesos.md`); el filtro vuelve a la página 1.
- * - Refresco con `usePolling` y el intervalo de la preferencia del usuario.
+ * - Refresco con `usePolling` y el intervalo de la preferencia del usuario, solo
+ *   con accesos `en_proceso` o `revocando` en la página (DIS-033).
  * - Tabla en escritorio y lista en móvil con el mismo marcado (`dl` por fila).
  */
 
@@ -17,7 +18,7 @@ import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
 import { useSession } from '../session-provider';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
-import { AccessStatusBadge, NIVELES } from './access-status-badge';
+import { AccessStatusBadge, NIVELES, hayAccesosTransitorios } from './access-status-badge';
 import { formatearFecha } from './fecha';
 import { ListPager } from './list-pager';
 import { listLoadError } from './request-errors';
@@ -93,11 +94,18 @@ export function MyAccess() {
   const [status, setStatus] = useState<Filtro>(FILTRO_POR_DEFECTO);
   const [page, setPage] = useState(1);
 
+  const [transitorios, setTransitorios] = useState(true);
+
   const lista = usePolling(
-    () => grantsApi.mine({ status, page }).catch((err: unknown) => {
-      throw listLoadError(err, NOMBRE_LISTA);
-    }),
-    { intervalSeconds: session?.preferences.refresh_interval, deps: [status, page] },
+    () => grantsApi.mine({ status, page })
+      .then((r) => {
+        setTransitorios(hayAccesosTransitorios(r.items));
+        return r;
+      })
+      .catch((err: unknown) => {
+        throw listLoadError(err, NOMBRE_LISTA);
+      }),
+    { intervalSeconds: session?.preferences.refresh_interval, deps: [status, page], activo: transitorios },
   );
 
   const data = lista.data;
