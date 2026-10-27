@@ -1,4 +1,4 @@
-# FNC-120 — Preferencias: guardar el tema en la cuenta del usuario
+# FNC-122 — Preferencias: guardar el tema en la cuenta del usuario
 
 | Campo | Valor |
 |---|---|
@@ -27,3 +27,5 @@ FNC-032 guarda el tema en `localStorage` (por navegador). `PUT /me/preferences` 
 | Fecha | Nota |
 |---|---|
 | 2026-10-27 | Creada como Propuesta desde FNC-032 |
+
+- 2026-10-27: renumerada de FNC-120 a FNC-122 por colisión de ID (FNC-120 ya es la lista blanca estricta, de FNC-119).

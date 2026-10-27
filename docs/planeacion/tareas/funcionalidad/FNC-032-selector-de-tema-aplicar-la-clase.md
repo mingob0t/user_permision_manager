@@ -16,7 +16,7 @@
 | **Estatus Git** | — |
 | **Rama** | `fnc/FNC-032-selector-de-tema` |
 | **Commits / PR** | |
-| **Requiere migración BD** | No (ver FNC-120) |
+| **Requiere migración BD** | No (ver FNC-122) |
 | **Requiere auditor-seguridad** | No |
 
 ## Contexto
@@ -33,7 +33,7 @@ Hacer alcanzables los 7 temas de `tokens.css`: aplicar su clase en `<html>`, per
 
 ## Alcance
 - **Incluye:** `lib/tema.ts` (temas, aplicar, persistir, restaurar, script anti-destello), `ThemeSelector` en la cabecera de `AppShell`, script en `<head>` de `app/layout.tsx`, pruebas.
-- **No incluye:** guardar el tema en la cuenta (la API de preferencias no tiene el campo; backend, FNC-120); cambios en `settings-panel` (DIS-011 lo divide); rediseño visual.
+- **No incluye:** guardar el tema en la cuenta (la API de preferencias no tiene el campo; backend, FNC-122); cambios en `settings-panel` (DIS-011 lo divide); rediseño visual.
 
 ## Decisiones (del orquestador, pendientes de validar en la prueba de concepto)
 - Persistencia en `localStorage` (`nexus-tema`) por navegador: no toca el backend.
@@ -50,7 +50,7 @@ Hacer alcanzables los 7 temas de `tokens.css`: aplicar su clase en `<html>`, per
 
 ## Impacto cruzado
 - Depende de → —
-- Genera → FNC-120 (backend, Propuesta): tema en la cuenta del usuario
+- Genera → FNC-122 (backend, Propuesta): tema en la cuenta del usuario
 - Relacionada con → DIS-011 (división de `settings-panel`)
 
 ## Impacto en elementos compartidos
@@ -76,3 +76,5 @@ No verificado: navegador real (destello al cargar, contraste visual del selector
 |---|---|
 | 2026-10-13 | Creada como Propuesta desde el diagnóstico inicial |
 | 2026-10-27 | Aprobada en modo autónomo; implementada la clase en `<html>` con persistencia local. En revisión |
+
+- 2026-10-27 (orquestador): no hay CSP configurada hoy; el script en línea de `<head>` necesitará hash o nonce si la fase 5 agrega `script-src` sin `unsafe-inline`.
