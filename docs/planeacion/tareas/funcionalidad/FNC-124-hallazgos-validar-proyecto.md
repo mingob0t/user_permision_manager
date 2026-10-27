@@ -8,7 +8,7 @@
 | **Fase** | 6 |
 | **Módulo / Área** | operacion |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Rama** | `fnc/FNC-124-hallazgos-validar-proyecto` |
 | **Creada** | 2026-10-27 |
 
@@ -64,3 +64,5 @@ Salida de `~/.claude/agentes/herramientas/validar_proyecto.py` durante FNC-035 (
 
 ## Bitácora
 - 2026-10-27 — devops: implementación y verificación; En revisión.
+
+- 2026-10-27: revisado por el orquestador; desviaciones justificadas (`logs/` + `!docs/logs/` porque el validador busca el texto exacto; loopback en `no_proxy` se conserva porque `localhost` no equivale para curl/npm/pip). `validar_proyecto.py`: 0 errores. Observación: `scripts/secretos/cargar_secretos.sh` pide a Vaultwarden un ítem por cada variable de `.env.example`, ahora también `TZ` y `NODE_ENV`, que no son secretos; revisar al usar el script en staging. Hecha (decisión del orquestador, pendiente de validar en la prueba de concepto).
