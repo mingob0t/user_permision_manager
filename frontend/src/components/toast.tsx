@@ -11,6 +11,11 @@
  * - Éxito e info se cierran solos tras `TOAST_MS`; el error se queda hasta que
  *   se cierra (no se pierde un fallo por tardar en leerlo). Todos tienen botón
  *   "Cerrar aviso" de 48 px.
+ * - DIS-049: el temporizador se pausa mientras el cursor o el foco están sobre
+ *   el aviso y vuelve a correr completo al salir (WCAG 2.2.1).
+ * - DIS-049: con un diálogo abierto, la región de avisos entra en el ciclo de
+ *   Tab de la trampa de foco (`data-fuera-de-trampa`), así "Cerrar aviso" se
+ *   alcanza con el teclado.
  * - Se pinta en un portal en `document.body`, fuera de la raíz de la app, que
  *   queda `inert` bajo un diálogo (DIS-038), así que el aviso sigue legible.
  * - Solo tokens: `bg-panel-fill`, `border-<tono>` y texto `*-text` (pares ya
@@ -46,9 +51,29 @@ const CLASE_TONO: Record<ToastTone, string> = {
   info: 'border-panel-border text-body-text',
 };
 
-function Tarjeta({ aviso, onCerrar }: { aviso: Aviso; onCerrar: (id: number) => void }) {
+type PropsTarjeta = {
+  aviso: Aviso;
+  onCerrar: (id: number) => void;
+  onPausa: (id: number) => void;
+  onReanudar: (id: number) => void;
+};
+
+function Tarjeta({ aviso, onCerrar, onPausa, onReanudar }: PropsTarjeta) {
+  const encima = useRef({ cursor: false, foco: false });
+  const actualizar = (parte: Partial<typeof encima.current>) => {
+    encima.current = { ...encima.current, ...parte };
+    if (aviso.tono === 'error') return; // persistente: no hay temporizador que pausar
+    if (encima.current.cursor || encima.current.foco) onPausa(aviso.id);
+    else onReanudar(aviso.id);
+  };
   return (
     <div
+      onMouseEnter={() => actualizar({ cursor: true })}
+      onMouseLeave={() => actualizar({ cursor: false })}
+      onFocus={() => actualizar({ foco: true })}
+      onBlur={(evento) => {
+        if (!evento.currentTarget.contains(evento.relatedTarget)) actualizar({ foco: false });
+      }}
       className={`pointer-events-auto flex items-center gap-2 rounded-xl border bg-panel-fill py-1 pl-4 pr-1 shadow-lg ${CLASE_TONO[aviso.tono]}`}
     >
       <p className="flex-1 text-sm font-bold">{aviso.texto}</p>
@@ -96,6 +121,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [cerrar],
   );
 
+  const pausar = useCallback((id: number) => {
+    const temporizador = temporizadores.current.get(id);
+    if (temporizador) clearTimeout(temporizador);
+    temporizadores.current.delete(id);
+  }, []);
+
+  const reanudar = useCallback(
+    (id: number) => {
+      if (temporizadores.current.has(id)) return;
+      temporizadores.current.set(id, setTimeout(() => cerrar(id), TOAST_MS));
+    },
+    [cerrar],
+  );
+
   const api = useMemo(() => ({ avisar, cerrar }), [avisar, cerrar]);
 
   return (
@@ -103,16 +142,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       {montado
         ? createPortal(
-            <div className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col items-end gap-2 sm:left-auto sm:w-96">
+            <div data-fuera-de-trampa className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col items-end gap-2 sm:left-auto sm:w-96">
               <div role="status" className="flex w-full flex-col gap-2">
                 {avisos
                   .filter((aviso) => aviso.tono !== 'error')
-                  .map((aviso) => <Tarjeta key={aviso.id} aviso={aviso} onCerrar={cerrar} />)}
+                  .map((aviso) => <Tarjeta key={aviso.id} aviso={aviso} onCerrar={cerrar} onPausa={pausar} onReanudar={reanudar} />)}
               </div>
               <div role="alert" className="flex w-full flex-col gap-2">
                 {avisos
                   .filter((aviso) => aviso.tono === 'error')
-                  .map((aviso) => <Tarjeta key={aviso.id} aviso={aviso} onCerrar={cerrar} />)}
+                  .map((aviso) => <Tarjeta key={aviso.id} aviso={aviso} onCerrar={cerrar} onPausa={pausar} onReanudar={reanudar} />)}
               </div>
             </div>,
             document.body,

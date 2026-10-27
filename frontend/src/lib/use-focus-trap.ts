@@ -75,6 +75,17 @@ function destinoAlterno(): HTMLElement[] {
   ].filter((el): el is HTMLElement => el !== null);
 }
 
+/**
+ * DIS-049: regiones fuera del contenedor que forman parte del ciclo de Tab de
+ * la trampa (los avisos del toast, en un portal aparte). Se marcan con este
+ * atributo.
+ */
+export const REGION_FUERA_DE_TRAMPA = '[data-fuera-de-trampa]';
+
+function extras(): HTMLElement[] {
+  return Array.from(document.querySelectorAll<HTMLElement>(REGION_FUERA_DE_TRAMPA)).flatMap(enfocables);
+}
+
 // Trampas activas, la última encima.
 const pila: symbol[] = [];
 
@@ -126,14 +137,26 @@ export function useFocusTrap(
         return;
       }
       if (event.key !== 'Tab') return;
-      const items = enfocables(contenedor);
+      const propios = enfocables(contenedor);
+      const regiones = extras();
+      const items = [...propios, ...regiones];
       if (items.length === 0) {
         event.preventDefault();
         contenedor.focus();
         return;
       }
       const activoAhora = document.activeElement;
-      const fuera = !contenedor.contains(activoAhora) || activoAhora === contenedor;
+      const fuera =
+        activoAhora === contenedor ||
+        (!contenedor.contains(activoAhora) && !items.includes(activoAhora as HTMLElement));
+      const indice = items.indexOf(activoAhora as HTMLElement);
+      // Con regiones externas el orden del DOM no coincide con el del ciclo: se recorre a mano.
+      if (regiones.length > 0 && indice >= 0 && !fuera) {
+        event.preventDefault();
+        const paso = event.shiftKey ? -1 : 1;
+        enfocarPrimero([items[(indice + paso + items.length) % items.length]]);
+        return;
+      }
       if (event.shiftKey && (activoAhora === items[0] || fuera)) {
         event.preventDefault();
         enfocarPrimero([...items].reverse());
