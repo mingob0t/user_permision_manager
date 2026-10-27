@@ -12,6 +12,11 @@ const ICONS: Record<string, string> = {
   success: '✓', error: '✕', warning: '!', info: 'i',
 };
 
+/** FNC-034: texto accesible del tipo; el glifo es decorativo y el color no basta. */
+const TIPOS: Record<string, string> = {
+  success: 'Éxito', error: 'Error', warning: 'Advertencia', info: 'Información',
+};
+
 const TONES: Record<string, string> = {
   success: 'bg-success/15 text-success-text',
   error: 'bg-error/15 text-error-text',
@@ -93,7 +98,10 @@ export function NotificationsList() {
                   {/* DIS-005: leída = solo el texto atenuado (`opacity-85`, ≥ 5,18:1); el chip conserva su contraste. */}
                   <div className={`min-w-0 flex-1 ${item.is_read ? 'opacity-85' : ''}`}>
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <p className="font-medium">{item.title}</p>
+                      <p className="font-medium">
+                        <span className="sr-only">{TIPOS[item.type] ?? TIPOS.info}: </span>
+                        {item.title}
+                      </p>
                       <span className="text-xs text-label">{item.time}</span>
                     </div>
                     <p className="mt-0.5 text-sm text-label">{item.message}</p>
