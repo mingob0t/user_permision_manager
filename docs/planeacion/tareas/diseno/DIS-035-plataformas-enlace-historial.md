@@ -8,7 +8,7 @@
 | **Fase** | 3 |
 | **Módulo / Área** | plataformas |
 | **Prioridad** | Media |
-| **Estatus** | En revisión |
+| **Estatus** | Hecha |
 | **Aprobada** | 2026-10-27 (modo autónomo del orquestador) |
 | **Inicio** | 2026-10-27 |
 | **Rama** | `dis/DIS-008-035-areas-tactiles` (junto con DIS-008) |
