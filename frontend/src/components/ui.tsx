@@ -62,35 +62,34 @@ export function StatTile({
   );
 }
 
-export function Spinner({ label = 'Cargando…' }: { label?: string }) {
+export function Spinner({
+  label = 'Cargando…',
+  size = 'md',
+  className = '',
+}: {
+  label?: string;
+  size?: 'sm' | 'md';
+  className?: string;
+}) {
+  const containerClasses =
+    size === 'sm' ? 'flex items-center gap-2 text-label' : 'flex items-center gap-3 p-6 text-label';
   return (
-    <div className="flex items-center gap-3 p-6 text-label" role="status">
+    <div className={`${containerClasses} ${className}`} role="status">
       <span
-        className="h-4 w-4 animate-spin rounded-full border-2 border-panel-border border-t-primary"
-        aria-hidden
+        className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-panel-border border-t-primary"
+        aria-hidden="true"
       />
       <span className="text-sm font-bold">{label}</span>
     </div>
   );
 }
 
-export function ErrorNote({ message }: { message: string }) {
-  return (
-    <div
-      role="alert"
-      className="rounded-xl border border-error/30 bg-error/10 p-4 text-sm font-bold text-error-text"
-    >
-      {message}
-    </div>
-  );
-}
+export { Note, ErrorNote, EmptyNote } from './note';
+export type { NoteProps, NoteTone } from './note';
 
-export function EmptyNote({ message }: { message: string }) {
-  return (
-    <Card className="text-center">
-      <p className="text-sm font-bold text-label/85">{message}</p>
-    </Card>
-  );
+/** Mensaje de éxito en línea (texto `success-text`, AA en los dos temas; DIS-002, DIS-010). */
+export function SuccessNote({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm font-bold text-success-text">{children}</p>;
 }
 
 /**
@@ -98,11 +97,6 @@ export function EmptyNote({ message }: { message: string }) {
  * `ErrorNote` y `SuccessNote` usan los de peligro y éxito; nada de colores de Tailwind.
  */
 export type Tone = 'primary' | 'success' | 'error' | 'warning' | 'violet' | 'sky' | 'slate' | 'cyan';
-
-/** Mensaje de éxito en línea (texto `success-text`, AA en los dos temas; DIS-002, DIS-010). */
-export function SuccessNote({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm font-bold text-success-text">{children}</p>;
-}
 
 /** Insignia. Usa las clases .nx-badge del portal. */
 export function Badge({

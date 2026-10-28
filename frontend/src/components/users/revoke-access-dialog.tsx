@@ -123,9 +123,7 @@ export function RevokeAccessDialog({
             />
           </Field>
           <FieldHint id={PISTA_ID}>{pistaMotivoRevocacion(texto.length)}</FieldHint>
-          <div role="alert">
-            <FieldErrorNote id={MOTIVO_ERROR_ID} message={errorMotivo} />
-          </div>
+          <FieldErrorNote id={MOTIVO_ERROR_ID} message={errorMotivo} />
         </div>
 
         <p className="text-sm text-label">La persona verá este motivo en Mis accesos.</p>

@@ -152,9 +152,7 @@ export function ConnectorForm({
           />
         </Field>
         <FieldHint id={pistaId}>{pista}</FieldHint>
-        <div role="alert">
-          <FieldErrorNote id={errorId} message={fields[campo]} />
-        </div>
+        <FieldErrorNote id={errorId} message={fields[campo]} />
       </div>
     );
   }
@@ -191,9 +189,7 @@ export function ConnectorForm({
               ? 'Cambiaste el tipo: se descartan los parámetros del tipo anterior.'
               : 'Cómo se conecta el portal con la plataforma.'}
           </FieldHint>
-          <div role="alert">
-            <FieldErrorNote id={tipoError} message={fields.type} />
-          </div>
+          <FieldErrorNote id={tipoError} message={fields.type} />
         </div>
         {campoTexto('port', 'Puerto', `Número entre ${PUERTO_MIN} y ${PUERTO_MAX}.`, {
           inputMode: 'numeric', pattern: '[0-9]*',
@@ -233,9 +229,7 @@ export function ConnectorForm({
             Se conservan sin cambios: {conservados.join(', ')}.
           </p>
         ) : null}
-        <div role="alert">
-          <FieldErrorNote id={PARAMS_ERROR_ID} message={fields.params} />
-        </div>
+        <FieldErrorNote id={PARAMS_ERROR_ID} message={fields.params} />
       </fieldset>
 
       <Checkbox

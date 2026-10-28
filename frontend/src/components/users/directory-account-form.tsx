@@ -119,9 +119,7 @@ export function DirectoryAccountForm({
           />
         </Field>
         <FieldHint id={pistaId}>{pista}</FieldHint>
-        <div role="alert">
-          <FieldErrorNote id={errorId} message={fields[campo]} />
-        </div>
+        <FieldErrorNote id={errorId} message={fields[campo]} />
       </div>
     );
   }

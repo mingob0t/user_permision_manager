@@ -75,9 +75,7 @@ export function AreaChecklist({
         </ul>
       ) : null}
       {hint ? <FieldHint id={hintId}>{hint}</FieldHint> : null}
-      <div role="alert">
-        <FieldErrorNote id={errorId} message={error} />
-      </div>
+      <FieldErrorNote id={errorId} message={error} />
     </fieldset>
   );
 }

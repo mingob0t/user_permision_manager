@@ -28,7 +28,7 @@ import { createPortal } from 'react-dom';
 /** Milisegundos que permanecen los avisos de éxito e info. */
 export const TOAST_MS = 6000;
 
-export type ToastTone = 'success' | 'error' | 'info';
+export type ToastTone = 'success' | 'error' | 'warning' | 'info';
 
 type Aviso = { id: number; tono: ToastTone; texto: string };
 
@@ -48,6 +48,7 @@ export function useToast(): ToastApi {
 const CLASE_TONO: Record<ToastTone, string> = {
   success: 'border-success/40 text-success-text',
   error: 'border-error/40 text-error-text',
+  warning: 'border-warning/40 text-warning-text',
   info: 'border-panel-border text-body-text',
 };
 
