@@ -360,3 +360,9 @@ select::-ms-expand {
     cursor: default;
 }
 
+/* Estado ocupado accesible (DIS-062) */
+[aria-busy="true"] {
+    cursor: wait !important;
+}
+
+

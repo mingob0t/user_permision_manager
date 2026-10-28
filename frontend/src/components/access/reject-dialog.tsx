@@ -123,9 +123,7 @@ export function RejectDialog({
             />
           </Field>
           <FieldHint id={PISTA_ID}>{pistaMotivo(texto.length)}</FieldHint>
-          <div role="alert">
-            <FieldErrorNote id={MOTIVO_ERROR_ID} message={errorMotivo} />
-          </div>
+          <FieldErrorNote id={MOTIVO_ERROR_ID} message={errorMotivo} />
         </div>
 
         <p className="text-sm text-label">El solicitante verá este motivo.</p>

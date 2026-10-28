@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import type { DirectoryUser } from '@/lib/types';
 import { Button, Modal, TextInput } from '../form';
-import { Badge, ErrorNote } from '../ui';
+import { Badge, EmptyNote, ErrorNote } from '../ui';
 
 export function DirectoryPicker({
   onPick,
@@ -57,7 +57,7 @@ export function DirectoryPicker({
 
       {results !== null ? (
         results.length === 0 ? (
-          <p className="text-sm text-label">Sin resultados.</p>
+          <EmptyNote message="Sin resultados." />
         ) : (
           <ul className="max-h-72 divide-y divide-panel-border overflow-y-auto">
             {results.map((found) => (

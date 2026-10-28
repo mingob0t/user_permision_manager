@@ -82,9 +82,7 @@ function ParamField({
         {campo.pista}
         {condicional ? ' Obligatorio si completas este grupo.' : ''}
       </span>
-      <div role="alert">
-        <FieldErrorNote id={errorId} message={error} />
-      </div>
+      <FieldErrorNote id={errorId} message={error} />
     </div>
   );
 }

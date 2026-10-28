@@ -145,9 +145,7 @@ export function RequestFormModal({
           <FieldHint id={CONTADOR_ID}>
             {`${texto.length}/${JUSTIFICACION_MAX} caracteres`}
           </FieldHint>
-          <div role="alert">
-            <FieldErrorNote id={JUSTIFICACION_ERROR_ID} message={errorJustificacion} />
-          </div>
+          <FieldErrorNote id={JUSTIFICACION_ERROR_ID} message={errorJustificacion} />
         </div>
 
         {error ? <ErrorNote message={error} /> : null}
