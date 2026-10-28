@@ -18,8 +18,7 @@ A = '/api/v1'
 
 def test_lista_de_temas_coincide_con_la_del_frontend():
     assert TEMA_POR_DEFECTO == 'sistema'
-    assert set(TEMAS_VALIDOS) == {'sistema', 'claro', 'oscuro', 'esmeralda',
-                                  'obsidiana', 'rosa', 'violeta'}
+    assert set(TEMAS_VALIDOS) == {'sistema', 'claro', 'oscuro'}
 
 
 def test_usuario_nuevo_lee_el_tema_por_defecto(cliente_usuario):
@@ -41,7 +40,11 @@ def test_guardar_y_leer_el_tema(cliente_de_rol, tema):
     assert db.session.get(User, usuario.id).pref_theme == tema
 
 
-@pytest.mark.parametrize('invalido', ['neon', '', 'DARK', 5, None, ['dark']])
+TEMAS_RETIRADOS = ['esmeralda', 'obsidiana', 'rosa', 'violeta']
+
+
+@pytest.mark.parametrize('invalido', ['neon', '', 'DARK', 5, None, ['dark'],
+                                      *TEMAS_RETIRADOS])
 def test_tema_desconocido_da_422_y_no_cambia_nada(cliente_de_rol, invalido):
     cliente, usuario = cliente_de_rol(ROLE_USER)
     cliente.put(f'{A}/me/preferences', json={'theme': 'oscuro'})
@@ -54,6 +57,15 @@ def test_tema_desconocido_da_422_y_no_cambia_nada(cliente_de_rol, invalido):
     assert 'theme' in cuerpo['fields']
     db.session.expire_all()
     assert db.session.get(User, usuario.id).pref_theme == 'oscuro'
+
+
+def test_get_me_nunca_devuelve_un_tema_retirado(cliente_de_rol):
+    cliente, usuario = cliente_de_rol(ROLE_USER)
+    for retirado in TEMAS_RETIRADOS:
+        assert cliente.put(f'{A}/me/preferences',
+                           json={'theme': retirado}).status_code == 422
+        assert cliente.get(
+            f'{A}/me').get_json()['preferences']['theme'] in TEMAS_VALIDOS
 
 
 def test_tema_invalido_no_aplica_otras_preferencias_del_mismo_cuerpo(
@@ -73,18 +85,18 @@ def test_un_usuario_no_cambia_el_tema_de_otro(cliente_de_rol):
     _, usuario_b = cliente_de_rol(ROLE_USER)
 
     cliente_a.put(f'{A}/me/preferences',
-                  json={'theme': 'violeta', 'user_id': usuario_b.id})
+                  json={'theme': 'oscuro', 'user_id': usuario_b.id})
 
     db.session.expire_all()
-    assert db.session.get(User, usuario_a.id).pref_theme == 'violeta'
+    assert db.session.get(User, usuario_a.id).pref_theme == 'oscuro'
     assert db.session.get(User, usuario_b.id).pref_theme == 'sistema'
 
 
 def test_preferencias_sin_tema_no_lo_tocan(cliente_de_rol):
     cliente, usuario = cliente_de_rol(ROLE_USER)
-    cliente.put(f'{A}/me/preferences', json={'theme': 'rosa'})
+    cliente.put(f'{A}/me/preferences', json={'theme': 'oscuro'})
 
     cliente.put(f'{A}/me/preferences', json={'tour_enabled': False})
 
     db.session.expire_all()
-    assert db.session.get(User, usuario.id).pref_theme == 'rosa'
+    assert db.session.get(User, usuario.id).pref_theme == 'oscuro'
