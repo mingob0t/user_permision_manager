@@ -58,3 +58,17 @@ Para cada estado (`exito`, `aviso`, `peligro`, `info`, `neutro`):
 1. **Prohibido el uso de primitivos en TSX o CSS**: Ningún archivo `.tsx`, `global.css` o `components.css` debe invocar `--p-*`. La prueba `tokens-completitud.test.ts` valida esto automáticamente.
 2. **Prohibido `dark:` en TSX**: Los componentes no conocen el tema; el cambio de color ocurre por variables CSS asignadas al tema activo.
 3. **Prohibidos colores arbitrarios o literales**: No usar `text-blue-500`, `bg-[#2563eb]` o estilos inline `style={{...}}`.
+
+## 5. Matriz de Estados e Interacción (DIS-056)
+
+| Estado / Rol | Token CSS | Utilidad Tailwind / CSS | Propósito |
+|---|---|---|---|
+| **Foco visible** | `--foco-anillo`, `--foco-ancho`, `--foco-separacion` | `.foco-visible`, `ring-foco-anillo` | Anillo accesible de 2px con 2px de separación, contraste ≥ 3:1 |
+| **Hover** | `--hover-capa` | — | Capa sutil de oscurecimiento (claro) o aclarado (oscuro) |
+| **Presionado** | `--presionado-capa` | — | Capa táctil feedback visual inmediato |
+| **Seleccionado** | `--seleccionado-fondo`, `--seleccionado-borde` | `border-seleccionado-borde` | Indicación clara de pestañas o filas activas |
+| **Deshabilitado** | `--deshabilitado-fondo`, `--deshabilitado-texto`, `--deshabilitado-borde` | `.estado-deshabilitado` | Sin opacidad artificial (`opacity-40`); contraste y legibilidad definidos por token |
+| **Inválido** | `--invalido-borde` | `.estado-invalido`, `border-invalido-borde` | Borde rojo accesible (≥ 3:1) ante `aria-invalid="true"` |
+| **Solo lectura** | `--solo-lectura-fondo` | `.solo-lectura` | Fondo diferenciado para campos `[readonly]` |
+| **Movimiento** | `--duracion-corta`, `--duracion-media`, `--curva` | `duration-corta`, `duration-media`, `ease-curva` | Transiciones normalizadas (150ms/250ms); 0ms en `prefers-reduced-motion` |
+

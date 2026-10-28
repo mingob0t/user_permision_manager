@@ -62,6 +62,15 @@ export default {
         'neutro-borde': 'rgb(var(--color-neutro-borde) / <alpha-value>)',
         'neutro-texto': 'rgb(var(--color-neutro-texto) / <alpha-value>)',
 
+        // DIS-056 — Tokens de interacción y estado
+        'foco-anillo': 'rgb(var(--foco-anillo) / <alpha-value>)',
+        'deshabilitado-fondo': 'rgb(var(--deshabilitado-fondo) / <alpha-value>)',
+        'deshabilitado-texto': 'rgb(var(--deshabilitado-texto) / <alpha-value>)',
+        'deshabilitado-borde': 'rgb(var(--deshabilitado-borde) / <alpha-value>)',
+        'invalido-borde': 'rgb(var(--invalido-borde) / <alpha-value>)',
+        'solo-lectura-fondo': 'rgb(var(--solo-lectura-fondo) / <alpha-value>)',
+        'seleccionado-borde': 'rgb(var(--seleccionado-borde) / <alpha-value>)',
+
         // Main Palette (Alias transitorios)
         primary: 'rgb(var(--color-primary) / <alpha-value>)',
         secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
@@ -148,6 +157,13 @@ export default {
       borderRadius: {
         base: 'var(--radius-base)',
         panel: 'var(--radius-panel)',
+      },
+      transitionDuration: {
+        corta: 'var(--duracion-corta)',
+        media: 'var(--duracion-media)',
+      },
+      transitionTimingFunction: {
+        curva: 'var(--curva)',
       },
       fontFamily: {
         // base.html carga Inter desde Google Fonts.

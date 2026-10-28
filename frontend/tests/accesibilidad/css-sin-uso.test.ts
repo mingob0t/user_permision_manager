@@ -27,7 +27,12 @@ const CSS_REVISADOS = ['components.css', 'global.css'].map((n) => join(RAIZ_SRC,
 const CONFIG_TAILWIND = resolve(import.meta.dirname, '../../tailwind.config.ts');
 
 /** Clases que se mantienen sin llamador en `src/`: nombre → motivo. */
-const CLASES_SIN_LLAMADOR: Record<string, string> = {};
+const CLASES_SIN_LLAMADOR: Record<string, string> = {
+  'foco-visible': 'DIS-056: anillo unico de foco accesible para adopcion en C1-C5',
+  'estado-deshabilitado': 'DIS-056: estado deshabilitado unificado para adopcion en C1-C5',
+  'estado-invalido': 'DIS-056: estado invalido unificado para adopcion en C1-C5',
+  'solo-lectura': 'DIS-056: estado solo lectura unificado para adopcion en C1-C5',
+};
 
 function archivos(carpeta: string): string[] {
   return readdirSync(carpeta, { withFileTypes: true }).flatMap((entrada) => {

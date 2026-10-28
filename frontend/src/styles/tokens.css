@@ -232,6 +232,23 @@
   --radius-base: 10px;
   --radius-panel: 14px;
 
+  /* Interacción y Estados (DIS-056) */
+  --foco-anillo: 37 99 235;
+  --foco-ancho: 2px;
+  --foco-separacion: 2px;
+  --hover-capa: 0 0 0 / 0.05;
+  --presionado-capa: 0 0 0 / 0.1;
+  --seleccionado-fondo: 37 99 235 / 0.12;
+  --seleccionado-borde: 37 99 235;
+  --deshabilitado-fondo: 226 232 240;
+  --deshabilitado-texto: 148 163 184;
+  --deshabilitado-borde: 203 213 225;
+  --invalido-borde: 220 38 38;
+  --solo-lectura-fondo: 241 245 249;
+  --duracion-corta: 150ms;
+  --duracion-media: 250ms;
+  --curva: cubic-bezier(0.4, 0, 0.2, 1);
+
   /* ─────────────────────────────────────────────
      ESCALA TIPOGRÁFICA — Sistema armónico 8pt
   ───────────────────────────────────────────── */
@@ -367,6 +384,23 @@
 
     --color-texto-sobre-fondo-oscuro: 255 255 255;
     --color-texto-sobre-fondo-claro: 0 0 0;
+
+    /* Interacción y Estados (DIS-056) */
+    --foco-anillo: 96 165 250;
+    --foco-ancho: 2px;
+    --foco-separacion: 2px;
+    --hover-capa: 255 255 255 / 0.06;
+    --presionado-capa: 255 255 255 / 0.12;
+    --seleccionado-fondo: 37 99 235 / 0.25;
+    --seleccionado-borde: 96 165 250;
+    --deshabilitado-fondo: 30 41 59;
+    --deshabilitado-texto: 100 116 139;
+    --deshabilitado-borde: 51 65 85;
+    --invalido-borde: 252 165 165;
+    --solo-lectura-fondo: 15 23 42;
+    --duracion-corta: 150ms;
+    --duracion-media: 250ms;
+    --curva: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -487,4 +521,28 @@ html.dark {
 
   --color-texto-sobre-fondo-oscuro: 255 255 255;
   --color-texto-sobre-fondo-claro: 0 0 0;
+
+  /* Interacción y Estados (DIS-056) */
+  --foco-anillo: 96 165 250;
+  --foco-ancho: 2px;
+  --foco-separacion: 2px;
+  --hover-capa: 255 255 255 / 0.06;
+  --presionado-capa: 255 255 255 / 0.12;
+  --seleccionado-fondo: 37 99 235 / 0.25;
+  --seleccionado-borde: 96 165 250;
+  --deshabilitado-fondo: 30 41 59;
+  --deshabilitado-texto: 100 116 139;
+  --deshabilitado-borde: 51 65 85;
+  --invalido-borde: 252 165 165;
+  --solo-lectura-fondo: 15 23 42;
+  --duracion-corta: 150ms;
+  --duracion-media: 250ms;
+  --curva: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root, html.dark {
+    --duracion-corta: 0ms;
+    --duracion-media: 0ms;
+  }
 }
