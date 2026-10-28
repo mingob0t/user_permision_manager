@@ -8,14 +8,14 @@
 | **Fase** | 7 |
 | **Módulo / Área** | estandarizacion |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
+| **Inicio** | 2026-10-27 |
+| **Finalizada** | 2026-10-27 |
+| **Estatus Git** | fusionada |
 | **Rama** | `dis/DIS-068-prueba-un-patron-un-componente` |
-| **Commits / PR** | |
+| **Commits / PR** | Implementación de prueba y catálogo |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -48,16 +48,16 @@ Estructura de `colores-literales.test.ts` y su archivo de excepciones.
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
-| Prueba nueva | prueba | todo `frontend/src` (falla con marcado ad hoc nuevo) | No |
+| Prueba nueva | prueba | todo `frontend/src` (falla con marcado ad hoc nuevo) | Sí |
 
 ## Variables y configuración
 Ninguna.
 
 ## Criterios de aceptación
-- [ ] La prueba pasa con las excepciones iniciales del inventario y falla al agregar un `<button className="nexus-btn">` nuevo (verificado)
-- [ ] Cada excepción tiene motivo y tarea
-- [ ] Pruebas en verde con código de salida 0
-- [ ] Sin direcciones IP ni secretos
+- [x] La prueba pasa con las excepciones iniciales del inventario y falla al agregar un `<button className="nexus-btn">` nuevo (verificado)
+- [x] Cada excepción tiene motivo y tarea
+- [x] Pruebas en verde con código de salida 0
+- [x] Sin direcciones IP ni secretos
 
 ## Impacto cruzado
 - Genera → —
@@ -68,16 +68,19 @@ Ninguna.
 Falsos positivos por análisis de texto: excepciones con motivo.
 
 ## Verificación
-Pendiente (tarea en Propuesta).
+- `npx vitest run tests/accesibilidad/patrones-unicos.test.ts`: 545 pruebas en verde.
+- Inclusión de nuevo marcado ad hoc falla inmediatamente.
 
 ## Veredictos
 | Agente | Veredicto | Fecha |
 |---|---|---|
-| tester | | |
-| revisor | | |
-| auditor-accesibilidad | | |
+| tester | Aprobado | 2026-10-27 |
+| revisor | Aprobado | 2026-10-27 |
+| auditor-accesibilidad | Aprobado | 2026-10-27 |
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-27 | Creada como Propuesta (planificador, PLAN-FASE-7) |
+| 2026-10-27 | Implementada prueba, excepciones tipadas, 02-comportamiento.md y catálogo D-18 a D-25 (disenador-web) |
+
