@@ -12,7 +12,7 @@
 import { useState } from 'react';
 import { requestsApi } from '@/lib/access/requests';
 import type { AccessLevel, AccessRequest, CatalogItem } from '@/lib/access/types';
-import { Button, Field, Modal, TextArea } from '../form';
+import { Button, Field, Modal, Radio, TextArea } from '../form';
 import { FieldErrorNote, FieldHint, describedBy } from '../platforms/field-notes';
 import { ErrorNote } from '../ui';
 import { NIVELES } from './access-status-badge';
@@ -114,13 +114,12 @@ export function RequestFormModal({
                 key={nivel}
                 className="flex cursor-pointer items-start gap-3 rounded-xl border border-panel-border p-3 has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary"
               >
-                <input
-                  type="radio"
+                <Radio
                   name="nivel"
                   value={nivel}
                   checked={level === nivel}
                   onChange={() => setLevel(nivel)}
-                  className="mt-0.5 accent-primary"
+                  className="mt-0.5"
                 />
                 <span className="min-w-0">
                   <span className="block text-sm font-bold text-body-text">{NIVELES[nivel]}</span>

@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
-import { Button, Field, TextInput } from '../form';
+import { Button, Field, FileInput, TextInput } from '../form';
 import { Card, ErrorNote, Spinner, SuccessNote } from '../ui';
 
 export function PortalTab() {
@@ -101,14 +101,12 @@ export function PortalTab() {
               className="h-10 w-10 rounded border border-panel-border object-contain"
             />
           ) : null}
-          <input
-            type="file"
+          <FileInput
             accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) pickLogo(file);
             }}
-            className="min-h-12 text-sm text-label"
           />
           {value.portal_identity_type === 'image' ? (
             <Button
