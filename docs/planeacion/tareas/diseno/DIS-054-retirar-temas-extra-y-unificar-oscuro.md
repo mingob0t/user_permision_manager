@@ -8,14 +8,14 @@
 | **Fase** | 7 |
 | **Módulo / Área** | tema |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
-| **Rama** | `dis/DIS-054-retirar-temas-extra-y-unificar-oscuro` |
-| **Commits / PR** | |
+| **Inicio** | 2026-10-27 |
+| **Finalizada** | 2026-10-27 |
+| **Estatus Git** | Merge a develop |
+| **Rama** | `dis/DIS-054-dos-temas` |
+| **Commits / PR** | `6f2b10d` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
