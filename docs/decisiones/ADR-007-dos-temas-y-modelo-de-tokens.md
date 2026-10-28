@@ -1,6 +1,6 @@
 # ADR-007 — Dos temas y modelo de tokens
 
-- **Estatus:** Propuesta · **Fecha:** 2026-10-27 · **Plan:** [PLAN-FASE-7](../planeacion/PLAN-FASE-7-diseno-visual.md) · **Tareas:** DIS-054, DIS-055, FNC-132
+- **Estatus:** Aprobada · **Fecha:** 2026-10-27 · **Plan:** [PLAN-FASE-7](../planeacion/PLAN-FASE-7-diseno-visual.md) · **Tareas:** DIS-054, DIS-055, FNC-132
 
 ## Contexto
 - 7 contextos de tema en `tokens.css`; el dueño pide solo claro y oscuro.
@@ -30,4 +30,4 @@
 - 1A, 2A, 3A.
 
 ## Decisión del dueño
-- Pendiente.
+- Aprobada (2026-10-27): se adoptan 1A, 2A y 3A. Solo claro y oscuro, «Según el sistema» por defecto con prueba de igualdad en `@media`, y semánticos con alias temporales.

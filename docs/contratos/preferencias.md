@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1 (2026-10-27) — **Propuesta**, pendiente de aprobación del dueño |
+| Versión | 1 (2026-10-27) — Aprobado por el dueño |
 | Proveedor | backend (FNC-122; cambio en FNC-132) |
 | Consumidores | web (FNC-123; cambio en DIS-054) |
 | Solicitudes | — (origen: PLAN-FASE-7) |

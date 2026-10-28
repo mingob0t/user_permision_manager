@@ -53,7 +53,7 @@ Plan: FNC-037. Requiere: fases 1 y 2, ADR-002 a ADR-006 y preguntas P1 a P14 (fi
 ## Fase 7 — Diseño visual
 Plan: [PLAN-FASE-7-diseno-visual.md](PLAN-FASE-7-diseno-visual.md). Requiere: ADR-007, contrato `preferencias.md` e insumos del dueño (plan §6). Secuencia: tokens → componentes → plantillas → pantallas.
 
-1. [ ] A — Dos temas: DIS-054 Retirar temas extra · FNC-132 `TEMAS_VALIDOS` y migración 0012
+1. [x] A — Dos temas: DIS-054 Retirar temas extra · FNC-132 `TEMAS_VALIDOS` y migración 0012
 2. [ ] B — Tokens: DIS-055 Capas · DIS-056 Interacción · DIS-057 Escalas · DIS-072 Simetría · DIS-068 Prueba «un patrón, un componente» · DIS-053 (si se aprueba)
 3. [ ] C — Componentes: DIS-058 Botones · DIS-060 Pestañas · DIS-059 Campos · DIS-062 Avisos · DIS-061 Superficies · DIS-071 Tablas · DIS-069 Filtros · DIS-063 Marco · DIS-073 Sin saltos · DIS-074 `AlertDialog`
 4. [ ] P — Plantillas y diálogos: DIS-070 `PageHeader` y plantillas · DIS-075 Migrar confirmar y avisos
