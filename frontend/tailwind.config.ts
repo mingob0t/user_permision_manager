@@ -15,7 +15,54 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Main Palette
+        // DIS-055 — Semánticos por rol funcional (ADR-007)
+        fondo: 'rgb(var(--color-fondo) / <alpha-value>)',
+        superficie: 'rgb(var(--color-superficie) / <alpha-value>)',
+        'superficie-elevada': 'rgb(var(--color-superficie-elevada) / <alpha-value>)',
+        'superficie-hundida': 'rgb(var(--color-superficie-hundida) / <alpha-value>)',
+        velo: 'rgb(var(--color-velo))',
+
+        texto: 'rgb(var(--color-texto) / <alpha-value>)',
+        'texto-secundario': 'rgb(var(--color-texto-secundario) / <alpha-value>)',
+        'texto-tenue': 'rgb(var(--color-texto-tenue) / <alpha-value>)',
+        'texto-sobre-accion': 'rgb(var(--color-texto-sobre-accion) / <alpha-value>)',
+        'texto-sobre-peligro': 'rgb(var(--color-texto-sobre-peligro) / <alpha-value>)',
+        'texto-enlace': 'rgb(var(--color-texto-enlace) / <alpha-value>)',
+
+        borde: 'rgb(var(--color-borde) / <alpha-value>)',
+        'borde-sutil': 'rgb(var(--color-borde-sutil) / <alpha-value>)',
+        'borde-fuerte': 'rgb(var(--color-borde-fuerte) / <alpha-value>)',
+
+        accion: 'rgb(var(--color-accion) / <alpha-value>)',
+        'accion-hover': 'rgb(var(--color-accion-hover) / <alpha-value>)',
+        'accion-presionada': 'rgb(var(--color-accion-presionada) / <alpha-value>)',
+        'accion-tenue': 'rgb(var(--color-accion-tenue) / <alpha-value>)',
+        'accion-texto': 'rgb(var(--color-accion-texto) / <alpha-value>)',
+
+        exito: 'rgb(var(--color-exito-relleno) / <alpha-value>)',
+        'exito-tenue': 'rgb(var(--color-exito-tenue) / <alpha-value>)',
+        'exito-borde': 'rgb(var(--color-exito-borde) / <alpha-value>)',
+        'exito-texto': 'rgb(var(--color-exito-texto) / <alpha-value>)',
+
+        aviso: 'rgb(var(--color-aviso-relleno) / <alpha-value>)',
+        'aviso-tenue': 'rgb(var(--color-aviso-tenue) / <alpha-value>)',
+        'aviso-borde': 'rgb(var(--color-aviso-borde) / <alpha-value>)',
+        'aviso-texto': 'rgb(var(--color-aviso-texto) / <alpha-value>)',
+
+        peligro: 'rgb(var(--color-peligro-relleno) / <alpha-value>)',
+        'peligro-tenue': 'rgb(var(--color-peligro-tenue) / <alpha-value>)',
+        'peligro-borde': 'rgb(var(--color-peligro-borde) / <alpha-value>)',
+        'peligro-texto': 'rgb(var(--color-peligro-texto) / <alpha-value>)',
+
+        'info-tenue': 'rgb(var(--color-info-tenue) / <alpha-value>)',
+        'info-borde': 'rgb(var(--color-info-borde) / <alpha-value>)',
+
+        neutro: 'rgb(var(--color-neutro-relleno) / <alpha-value>)',
+        'neutro-tenue': 'rgb(var(--color-neutro-tenue) / <alpha-value>)',
+        'neutro-borde': 'rgb(var(--color-neutro-borde) / <alpha-value>)',
+        'neutro-texto': 'rgb(var(--color-neutro-texto) / <alpha-value>)',
+
+        // Main Palette (Alias transitorios)
         primary: 'rgb(var(--color-primary) / <alpha-value>)',
         secondary: 'rgb(var(--color-secondary) / <alpha-value>)',
         accent: 'rgb(var(--color-accent) / <alpha-value>)',

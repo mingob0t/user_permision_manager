@@ -79,8 +79,20 @@ export const PARES: ParContraste[] = [
   texto('accent-text/panel', '--color-accent-text', '--color-panel-fill'),
   texto('accent-sky-text/panel', '--color-accent-sky-text', '--color-panel-fill'),
   texto('brand-text/panel', '--color-brand-text', '--color-panel-fill'),
-  texto('ntf-text-subject/ntf-card', '--color-ntf-text-subject', '--color-ntf-card-bg', '--color-ntf-panel-bg'),
-  texto('status-active/panel', '--color-status-active', '--color-panel-fill'),
+  // DIS-055: pares semánticos directos (superficie, texto, acción, estado y borde)
+  texto('semantico-texto/fondo', '--color-texto', '--color-fondo'),
+  texto('semantico-texto/superficie', '--color-texto', '--color-superficie'),
+  texto('semantico-texto-secundario/superficie', '--color-texto-secundario', '--color-superficie'),
+  texto('semantico-texto-tenue/superficie', '--color-texto-tenue', '--color-superficie'),
+  texto('semantico-texto-sobre-accion/accion', '--color-texto-sobre-accion', '--color-accion'),
+  texto('semantico-texto-sobre-peligro/peligro', '--color-texto-sobre-peligro', '--color-peligro-relleno'),
+  texto('semantico-texto-enlace/superficie', '--color-texto-enlace', '--color-superficie'),
+  texto('semantico-exito-texto/superficie', '--color-exito-texto', '--color-superficie'),
+  texto('semantico-aviso-texto/superficie', '--color-aviso-texto', '--color-superficie'),
+  texto('semantico-peligro-texto/superficie', '--color-peligro-texto', '--color-superficie'),
+  texto('semantico-info-texto/superficie', '--color-info-texto', '--color-superficie'),
+  { id: 'semantico-borde/superficie', texto: '--color-borde', fondo: '--color-superficie', minimo: MIN_NO_TEXTO },
+  { id: 'semantico-accion/superficie', texto: '--color-accion', fondo: '--color-superficie', minimo: MIN_NO_TEXTO },
   ...TONOS_BADGE.map((tono) =>
     texto(`badge-${tono}`, `--badge-${tono}-text`, `--badge-${tono}-bg`, '--color-panel-fill')),
   // DIS-014: insignias de estado de solicitud (`RequestStatusBadge`) sobre `Card`.
