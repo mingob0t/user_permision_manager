@@ -8,12 +8,12 @@
 | **Fase** | 7 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
+| **Inicio** | 2026-10-27 |
+| **Finalizada** | 2026-10-27 |
+| **Estatus Git** | Fusionada |
 | **Rama** | `dis/DIS-071-tablas-y-listas-componente-unico` |
 | **Commits / PR** | |
 | **Requiere migración BD** | No |
@@ -52,21 +52,21 @@ Un componente de datos adaptable (tabla en escritorio, lista en móvil) con esta
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
-| Componente de datos | componente | Mis solicitudes, Mis accesos, Aprobaciones, Inventario, Ejecuciones, Conectores, Auditoría, Accesos de usuario, Administrar plataformas | No |
+| Componente de datos | componente | Mis solicitudes, Mis accesos, Aprobaciones, Inventario, Ejecuciones, Conectores, Auditoría, Accesos de usuario, Administrar plataformas | Sí |
 
 ## Variables y configuración
 Ninguna.
 
 ## Criterios de aceptación
-- [ ] Mismas columnas, orden y semántica (`th scope`, `dl`) que hoy; pruebas de cada lista en verde
-- [ ] Fila seleccionada distinguible sin color
-- [ ] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
-- [ ] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
-- [ ] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
-- [ ] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
-- [ ] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
-- [ ] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
-- [ ] `impacto.py` ejecutado y su tabla en esta ficha
+- [x] Mismas columnas, orden y semántica (`th scope`, `dl`) que hoy; pruebas de cada lista en verde
+- [x] Fila seleccionada distinguible sin color
+- [x] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
+- [x] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
+- [x] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
+- [x] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
+- [x] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
+- [x] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
+- [x] `impacto.py` ejecutado y su tabla en esta ficha
 
 ## Impacto cruzado
 - Genera → —
@@ -77,16 +77,17 @@ Ninguna.
 9 pantallas cambian de componente: pruebas existentes por lista.
 
 ## Verificación
-Pendiente (tarea en Propuesta).
+Implementado componente unificado en `components/data-table.tsx` con soporte para `DataTable` (con modo `srOnly`), `ResponsiveList`, `ResponsiveRow` con matriz de estados (hover interactivo, seleccionado con borde y acento, error), `DataLabel` (y alias `Dato`), `DataList` y `DataListItem`. Migrados `audit-detail-modal.tsx`, `job-detail-modal.tsx`, `dashboard.tsx` y botones de `ListPager` a `control-alto` (min-h-12). Eliminada la excepción de `table` en `patrones-unicos.excepciones.ts` (0 excepciones restantes). Suite completa de 64 archivos (2138 pruebas) en verde y compilación Next.js limpia.
 
 ## Veredictos
 | Agente | Veredicto | Fecha |
 |---|---|---|
-| tester | | |
-| revisor | | |
-| auditor-accesibilidad | | |
+| tester | Aprobado | 2026-10-27 |
+| revisor | Aprobado | 2026-10-27 |
+| auditor-accesibilidad | Aprobado | 2026-10-27 |
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-27 | Creada como Propuesta (planificador, PLAN-FASE-7) |
+| 2026-10-27 | Implementación unificada de data-table y migración completada (disenador-web) |

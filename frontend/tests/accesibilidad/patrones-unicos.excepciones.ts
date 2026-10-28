@@ -20,14 +20,8 @@ export interface ExcepcionPatron {
 }
 
 export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
-  // Tablas fuera de data-table.tsx
+  // Tablas fuera de data-table.tsx: 0 excepciones (todas migradas en DIS-071)
   'components/dashboard.tsx': [
-    {
-      patron: 'table',
-      cantidad: 1,
-      tarea: 'DIS-071',
-      motivo: 'Tabla accesible oculta (sr-only) para datos de gráfica; será migrada a DataTable en DIS-071',
-    },
     {
       patron: 'h1',
       cantidad: 1,

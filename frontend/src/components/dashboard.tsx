@@ -18,6 +18,7 @@ import { useTokenColors } from '@/lib/use-token-colors';
 import { RoleSummary } from './home/role-summary';
 import { useSession } from './session-provider';
 import { Card, ErrorNote, Spinner, StatTile } from './ui';
+import { DataTable } from './data-table';
 
 export function Dashboard() {
   const { session } = useSession();
@@ -120,24 +121,18 @@ function Estadisticas({ stats, resumenFallo }: { stats: Stats; resumenFallo: boo
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              {/* Alternativa textual de la gráfica: los mismos datos (DIS-003). */}
-              <table className="sr-only">
-                <caption>Plataformas por área</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Área</th>
-                    <th scope="col">Plataformas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {byArea.map((row) => (
-                    <tr key={row.area}>
-                      <th scope="row">{row.area}</th>
-                      <td>{row.count}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* Alternativa textual de la gráfica: los mismos datos (DIS-003, DIS-071). */}
+              <DataTable
+                srOnly
+                label="Plataformas por área"
+                columns={[
+                  { key: 'area', header: 'Área', cell: (row) => row.area },
+                  { key: 'count', header: 'Plataformas', cell: (row) => row.count },
+                ]}
+                rows={byArea}
+                rowKey={(row) => row.area}
+                emptyMessage="No hay plataformas por área."
+              />
             </>
           )}
         </Card>
