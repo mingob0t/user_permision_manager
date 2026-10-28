@@ -2,7 +2,7 @@
 /**
  * DIS-038: el velo (`--color-overlay`, con su opacidad) detrás de `Modal` y del menú
  * móvil. No es texto: lo que se exige es que el panel se distinga del velo (no
- * textual, 3:1 WCAG 1.4.11) por su relleno o por su borde, en los 7 temas y con el
+ * textual, 3:1 WCAG 1.4.11) por su relleno o por su borde, en los 3 contextos de tokens y con el
  * velo compuesto tanto sobre el fondo de página como sobre un `Card`.
  *
  * - `Modal`: relleno `--color-panel-fill` y borde de 2 px `--color-panel-border` (`.nx-modal-glass`).

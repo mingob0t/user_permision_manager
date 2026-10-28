@@ -32,10 +32,9 @@ describe('cálculo WCAG', () => {
 });
 
 describe('bloque de SO oscuro', () => {
-  it('no aplica a los temas con nombre (DIS-001)', () => {
-    // `:root:not(.light)` (0,2,0) gana a `html.theme-*` (0,1,1): sin la exclusión,
-    // un tema claro con el SO en oscuro recibía insignias y títulos oscuros.
-    expect(CONTEXTOS['so-oscuro']).toContain(':not([class*="theme-"])');
+  it('solo existen 3 contextos: claro, oscuro del sistema y html.dark (DIS-054)', () => {
+    expect(Object.keys(CONTEXTOS)).toEqual(['claro', 'so-oscuro', 'html.dark']);
+    expect(CONTEXTOS['so-oscuro']).toBe(':root:not(.light)');
   });
 });
 

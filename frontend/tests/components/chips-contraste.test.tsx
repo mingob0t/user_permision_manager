@@ -33,9 +33,9 @@ describe('chips de color libre', () => {
     expect(CSS).toMatch(/\.nx-chip-solid\[data-texto='sobre-claro'\]\s*\{[^}]*--color-texto-sobre-fondo-claro/);
   });
 
-  it('los tokens de texto sobre fondo libre existen en los 7 temas', () => {
-    expect(TOKENS.match(/--color-texto-sobre-fondo-oscuro:/g)).toHaveLength(7);
-    expect(TOKENS.match(/--color-texto-sobre-fondo-claro:/g)).toHaveLength(7);
+  it('los tokens de texto sobre fondo libre existen en los 3 contextos de tokens', () => {
+    expect(TOKENS.match(/--color-texto-sobre-fondo-oscuro:/g)).toHaveLength(3);
+    expect(TOKENS.match(/--color-texto-sobre-fondo-claro:/g)).toHaveLength(3);
   });
 
   it('PlatformCard: el chip de área no lleva color de texto en línea; el ícono, sin fondo válido, cae al tema', () => {

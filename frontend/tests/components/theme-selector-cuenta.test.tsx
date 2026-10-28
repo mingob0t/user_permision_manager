@@ -30,32 +30,40 @@ afterEach(cleanup);
 describe('ThemeSelector con la cuenta', () => {
   it('al elegir aplica, guarda en localStorage y envía el tema a la API', async () => {
     montar();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Tema de la interfaz' }), { target: { value: 'rosa' } });
-    expect(raiz().classList.contains('theme-rose-light')).toBe(true);
-    expect(window.localStorage.getItem(CLAVE_TEMA)).toBe('rosa');
-    await waitFor(() => expect(guardar).toHaveBeenCalledWith({ theme: 'rosa' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Tema de la interfaz' }), { target: { value: 'claro' } });
+    expect(raiz().classList.contains('light')).toBe(true);
+    expect(window.localStorage.getItem(CLAVE_TEMA)).toBe('claro');
+    await waitFor(() => expect(guardar).toHaveBeenCalledWith({ theme: 'claro' }));
   });
 
   it('si el guardado falla avisa y no revierte la vista', async () => {
     guardar.mockRejectedValue(new Error('500'));
     montar();
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'violeta' } });
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'oscuro' } });
     await waitFor(() => expect(screen.getByRole('alert').textContent)
       .toContain('No se pudo guardar el tema en tu cuenta'));
-    expect(screen.getByRole('combobox')).toHaveProperty('value', 'violeta');
-    expect(raiz().classList.contains('theme-violet-dark')).toBe(true);
-    expect(window.localStorage.getItem(CLAVE_TEMA)).toBe('violeta');
+    expect(screen.getByRole('combobox')).toHaveProperty('value', 'oscuro');
+    expect(raiz().classList.contains('dark')).toBe(true);
+    expect(window.localStorage.getItem(CLAVE_TEMA)).toBe('oscuro');
   });
 
   it('el tema de la cuenta manda sobre el del navegador al cargar', async () => {
     window.localStorage.setItem(CLAVE_TEMA, 'claro');
+    estado.session = conTema('oscuro');
+    montar();
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveProperty('value', 'oscuro'));
+    expect(raiz().classList.contains('dark')).toBe(true);
+    expect(raiz().classList.contains('light')).toBe(false);
+    expect(window.localStorage.getItem(CLAVE_TEMA)).toBe('oscuro');
+    expect(guardar).not.toHaveBeenCalled();
+  });
+
+  it('un tema retirado de la cuenta (antes de migrar) se traduce a su equivalente', async () => {
     estado.session = conTema('obsidiana');
     montar();
-    await waitFor(() => expect(screen.getByRole('combobox')).toHaveProperty('value', 'obsidiana'));
-    expect(raiz().classList.contains('theme-obsidian-dark')).toBe(true);
-    expect(raiz().classList.contains('light')).toBe(false);
-    expect(window.localStorage.getItem(CLAVE_TEMA)).toBe('obsidiana');
-    expect(guardar).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveProperty('value', 'oscuro'));
+    expect(raiz().className).toBe('dark');
+    expect(window.localStorage.getItem(CLAVE_TEMA)).toBe('oscuro');
   });
 
   it('un valor inválido de la API cae a «sistema» sin usarse como clase', async () => {
@@ -77,6 +85,15 @@ describe('ThemeSelector con la cuenta', () => {
 });
 
 describe('aplicarTemaDeCuenta', () => {
+  it('esmeralda y rosa pasan a claro; obsidiana y violeta, a oscuro', () => {
+    for (const [v, id, clase] of [['esmeralda', 'claro', 'light'], ['rosa', 'claro', 'light'],
+      ['obsidiana', 'oscuro', 'dark'], ['violeta', 'oscuro', 'dark']]) {
+      raiz().className = '';
+      expect(aplicarTemaDeCuenta(v), v).toBe(id);
+      expect(raiz().className, v).toBe(clase);
+    }
+  });
+
   it('valores no válidos o de otro tipo caen a «sistema»', () => {
     for (const v of ['', 'light', 'theme-rose-light', 5, {}, ['dark']]) {
       raiz().className = 'dark';
