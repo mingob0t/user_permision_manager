@@ -188,4 +188,9 @@ export const PARES: ParContraste[] = [
   // (`--color-panel-border`) son no textuales, 3:1 sobre `Card`; el tooltip se compone sobre el panel.
   { id: 'grafica-serie/panel', texto: '--color-primary', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
   { id: 'grafica-rejilla/panel', texto: '--color-panel-border', fondo: '--color-panel-fill', minimo: MIN_NO_TEXTO },
+  // DIS-056: anillo de foco y borde inválido ≥ 3:1 sobre superficie y superficie hundida (no textuales).
+  { id: 'foco-anillo/superficie', texto: '--foco-anillo', fondo: '--color-superficie', minimo: MIN_NO_TEXTO },
+  { id: 'foco-anillo/superficie-hundida', texto: '--foco-anillo', fondo: '--color-superficie-hundida', minimo: MIN_NO_TEXTO },
+  { id: 'invalido-borde/superficie', texto: '--invalido-borde', fondo: '--color-superficie', minimo: MIN_NO_TEXTO },
+  { id: 'invalido-borde/superficie-hundida', texto: '--invalido-borde', fondo: '--color-superficie-hundida', minimo: MIN_NO_TEXTO },
 ];

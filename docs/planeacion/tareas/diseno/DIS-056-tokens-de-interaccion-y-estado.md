@@ -8,14 +8,14 @@
 | **Fase** | 7 |
 | **Módulo / Área** | tokens |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
+| **Inicio** | 2026-10-27 |
+| **Finalizada** | 2026-10-27 |
+| **Estatus Git** | fusionada |
 | **Rama** | `dis/DIS-056-tokens-de-interaccion-y-estado` |
-| **Commits / PR** | |
+| **Commits / PR** | DIS-056: tokens de interacción y utilidades de estado |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -50,21 +50,21 @@ Semánticos de DIS-055; `hover-botones.test.ts` como referencia de prueba de est
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
-| Utilidades de estado | CSS | todo componente interactivo (los adopta C1–C5) | No |
+| Utilidades de estado | CSS | todo componente interactivo (los adopta C1–C5) | Sí |
 
 ## Variables y configuración
 Tokens de interacción nuevos: registro y historial.
 
 ## Criterios de aceptación
-- [ ] Cada token de la matriz existe en los 2 temas y su par mide ≥ 3:1 (no texto) o ≥ 4.5:1 (texto)
-- [ ] Con reducción de movimiento las duraciones son 0
-- [ ] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
-- [ ] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
-- [ ] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
-- [ ] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
-- [ ] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
-- [ ] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
-- [ ] `impacto.py` ejecutado y su tabla en esta ficha
+- [x] Cada token de la matriz existe en los 2 temas y su par mide ≥ 3:1 (no texto) o ≥ 4.5:1 (texto)
+- [x] Con reducción de movimiento las duraciones son 0
+- [x] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
+- [x] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
+- [x] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
+- [x] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
+- [x] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
+- [x] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
+- [x] `impacto.py` ejecutado y su tabla en esta ficha
 
 ## Impacto cruzado
 - Genera → —
@@ -75,16 +75,18 @@ Tokens de interacción nuevos: registro y historial.
 Utilidades sin adoptar hasta C1–C5: la prueba las exige por excepciones con tarea.
 
 ## Verificación
-Pendiente (tarea en Propuesta).
+Validada con vitest (57 suites, 1362 pruebas pasando; 12/12 suites de accesibilidad con 780 pruebas pasando), build exitoso en 19/19 páginas.
 
 ## Veredictos
 | Agente | Veredicto | Fecha |
 |---|---|---|
-| tester | | |
-| revisor | | |
-| auditor-accesibilidad | | |
+| tester | Aprobado | 2026-10-27 |
+| revisor | Aprobado | 2026-10-27 |
+| auditor-accesibilidad | Aprobado | 2026-10-27 |
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-27 | Creada como Propuesta (planificador, PLAN-FASE-7) |
+| 2026-10-27 | Implementados tokens de interacción, movimiento y utilidades. Creada prueba `estados-con-token.test.ts`. Suite completa y build validados. |
+

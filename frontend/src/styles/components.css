@@ -238,3 +238,44 @@ select::-ms-expand {
     border: 1px solid color-mix(in srgb, var(--chip-color) 45%, transparent);
     color: var(--color-body-text);
 }
+
+/* ==========================================================================
+   ESTADOS E INTERACCIÓN UNIFICADOS (DIS-056)
+   ========================================================================== */
+
+/* Anillo de foco accesible único */
+.foco-visible:focus-visible,
+:focus-visible.foco-visible {
+    outline: var(--foco-ancho) solid rgb(var(--foco-anillo));
+    outline-offset: var(--foco-separacion);
+}
+
+/* Estado deshabilitado unificado */
+.estado-deshabilitado,
+:disabled.estado-deshabilitado,
+[aria-disabled="true"].estado-deshabilitado {
+    background-color: rgb(var(--deshabilitado-fondo)) !important;
+    color: rgb(var(--deshabilitado-texto)) !important;
+    border-color: rgb(var(--deshabilitado-borde)) !important;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+/* Estado inválido unificado */
+.estado-invalido,
+[aria-invalid="true"].estado-invalido {
+    border-color: rgb(var(--invalido-borde)) !important;
+}
+
+.estado-invalido:focus-visible,
+[aria-invalid="true"].estado-invalido:focus-visible {
+    outline-color: rgb(var(--invalido-borde)) !important;
+}
+
+/* Estado solo lectura unificado */
+.solo-lectura,
+[readonly].solo-lectura {
+    background-color: rgb(var(--solo-lectura-fondo)) !important;
+    cursor: default;
+}
+
