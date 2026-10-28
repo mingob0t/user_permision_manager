@@ -14,7 +14,7 @@ import { requestsApi } from '@/lib/access/requests';
 import type { AccessLevel, AccessRequest, CatalogItem } from '@/lib/access/types';
 import { Button, Field, Modal, Radio, TextArea } from '../form';
 import { FieldErrorNote, FieldHint, describedBy } from '../platforms/field-notes';
-import { ErrorNote } from '../ui';
+import { Card, ErrorNote } from '../ui';
 import { NIVELES } from './access-status-badge';
 import {
   JUSTIFICACION_MAX, MENSAJE_JUSTIFICACION_LARGA, MENSAJES_SOLICITUD, describeRequestError,
@@ -110,9 +110,11 @@ export function RequestFormModal({
           </legend>
           <div className="grid gap-3 sm:grid-cols-2">
             {niveles.map((nivel) => (
-              <label
+              <Card
+                as="label"
+                variant="selectable"
                 key={nivel}
-                className="flex cursor-pointer items-start gap-3 rounded-xl border border-panel-border p-3 has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary"
+                className="flex items-start gap-3 p-3"
               >
                 <Radio
                   name="nivel"
@@ -125,7 +127,7 @@ export function RequestFormModal({
                   <span className="block text-sm font-bold text-body-text">{NIVELES[nivel]}</span>
                   <span className="block text-xs text-label">{DESCRIPCION_NIVEL[nivel]}</span>
                 </span>
-              </label>
+              </Card>
             ))}
           </div>
           <FieldErrorNote id={NIVEL_ERROR_ID} message={fields.level} />

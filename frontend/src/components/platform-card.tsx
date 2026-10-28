@@ -14,7 +14,7 @@ import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Platform } from '@/lib/types';
 import { variablesCss } from '@/lib/variables-css';
 import { FavoriteButton } from './favorite-button';
-import { Badge } from './ui';
+import { Badge, Card } from './ui';
 
 export function PlatformCard({
   platform,
@@ -32,8 +32,6 @@ export function PlatformCard({
   const link = enlaceSeguro(platform.direct_link);
   const disabled = !link;
 
-  const shell =
-    'relative flex flex-col rounded-xl border border-panel-border bg-panel-fill p-4 transition-colors';
   // Pseudo-elemento que extiende el área clicable del enlace a toda la tarjeta.
   const nombreEnlace =
     'outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-primary';
@@ -41,7 +39,7 @@ export function PlatformCard({
   // DIS-005: sin opacidad; la insignia "Sin enlace" ya indica el estado (con `opacity-70` el texto
   // bajaba a 3,6:1 y la insignia de advertencia a 2,8:1).
   return (
-    <div className={`${shell} ${disabled ? '' : 'hover:border-primary/60'}`}>
+    <Card variant={disabled ? 'default' : 'link'} className="relative flex flex-col p-4">
       <div className="flex items-start justify-between gap-3">
         <span
           className="nx-chip-solid grid h-10 w-10 shrink-0 place-items-center rounded-lg text-sm font-semibold"
@@ -97,6 +95,6 @@ export function PlatformCard({
         ) : null}
         {disabled ? <Badge>Sin enlace</Badge> : null}
       </div>
-    </div>
+    </Card>
   );
 }

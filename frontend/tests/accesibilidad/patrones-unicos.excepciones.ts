@@ -67,15 +67,6 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
       motivo: 'Encabezado h1 de vista; migrar a PageHeader en DIS-070',
     },
   ],
-  // Diálogos manuales fuera de Modal / Drawer / AlertDialog
-  'components/mobile-menu.tsx': [
-    {
-      patron: 'dialog',
-      cantidad: 1,
-      tarea: 'DIS-063',
-      motivo: 'Menú móvil con role="dialog"; migrar a Drawer en DIS-061/DIS-063',
-    },
-  ],
   // h1 restantes en componentes y pantallas
   'components/login-form.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-063', motivo: 'Título en login; migrar a PageHeader en DIS-063/DIS-070' },

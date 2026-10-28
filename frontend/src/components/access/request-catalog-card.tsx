@@ -17,7 +17,7 @@ import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Platform } from '@/lib/types';
 import { FavoriteButton } from '../favorite-button';
 import { Button, ButtonLink } from '../form';
-import { Badge } from '../ui';
+import { Badge, Card } from '../ui';
 import { AccessStatusBadge } from './access-status-badge';
 
 export function puedeSolicitar(item: CatalogItem): boolean {
@@ -49,9 +49,10 @@ export function RequestCatalogCard({
   const enlace = mine && abrible ? enlaceSeguro(mine.direct_link) : null;
 
   return (
-    <article
+    <Card
+      as="article"
       aria-labelledby={tituloId}
-      className="flex flex-col rounded-xl border border-panel-border bg-panel-fill p-4"
+      className="flex flex-col p-4"
     >
       <div className="flex items-start gap-3">
         <span
@@ -109,6 +110,6 @@ export function RequestCatalogCard({
           <p className="text-xs text-label">{reason}</p>
         ) : null}
       </div>
-    </article>
+    </Card>
   );
 }
