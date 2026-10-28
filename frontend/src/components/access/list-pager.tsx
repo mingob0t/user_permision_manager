@@ -29,13 +29,23 @@ export function ListPager({
 
   return (
     <nav aria-label={label} className="flex flex-wrap items-center justify-between gap-3">
-      <Button variant="secondary" disabled={page <= 1} onClick={() => onChange(page - 1)}>
+      <Button
+        variant="secondary"
+        disabled={page <= 1}
+        onClick={() => onChange(page - 1)}
+        className="min-h-12 min-w-12 px-4"
+      >
         Anterior
       </Button>
       <p className="text-sm text-label">Página {page} de {paginas} · {total} en total</p>
       {/* Solo la página: un refresco que cambie el total no se anuncia. */}
       <span className="sr-only" aria-live="polite">Página {page}</span>
-      <Button variant="secondary" disabled={page >= paginas} onClick={() => onChange(page + 1)}>
+      <Button
+        variant="secondary"
+        disabled={page >= paginas}
+        onClick={() => onChange(page + 1)}
+        className="min-h-12 min-w-12 px-4"
+      >
         Siguiente
       </Button>
     </nav>

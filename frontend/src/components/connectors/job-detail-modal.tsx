@@ -16,7 +16,7 @@ import { provisioningApi } from '@/lib/access/provisioning';
 import type { Job } from '@/lib/access/types';
 import { usePolling } from '@/lib/use-polling';
 import { formatearFecha } from '../access/fecha';
-import { Dato } from '../audit/audit-detail-modal';
+import { DataList, DataListItem, Dato } from '../data-table';
 import { Modal } from '../form';
 import { useSession } from '../session-provider';
 import { Badge, EmptyNote, ErrorNote, Spinner } from '../ui';
@@ -64,11 +64,11 @@ export function JobDetailModal({ job, onClose }: { job: Job; onClose: () => void
           intentos.length === 0 ? (
             <EmptyNote message="Todavía no hay intentos." />
           ) : (
-            <ul className="divide-y divide-panel-border rounded-xl border border-panel-border">
+            <DataList>
               {intentos.map((intento) => {
                 const resultado = RESULTADOS_INTENTO[intento.result];
                 return (
-                  <li key={intento.n} className="space-y-1 p-3">
+                  <DataListItem key={intento.n}>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-body-text">Intento {intento.n}</span>
                       <Badge tone={resultado.tono}>{resultado.texto}</Badge>
@@ -79,10 +79,10 @@ export function JobDetailModal({ job, onClose }: { job: Job; onClose: () => void
                     {intento.error ? (
                       <p className="break-words text-sm text-body-text">Error: {intento.error}</p>
                     ) : null}
-                  </li>
+                  </DataListItem>
                 );
               })}
-            </ul>
+            </DataList>
           )
         ) : null}
       </section>

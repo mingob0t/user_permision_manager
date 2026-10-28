@@ -10,6 +10,7 @@
  */
 
 import type { AuditEntryV1 } from '@/lib/access/types';
+import { DataLabel, DataList, DataListItem } from '../data-table';
 import { formatearFecha } from '../access/fecha';
 import { Modal } from '../form';
 import { Badge } from '../ui';
@@ -21,12 +22,7 @@ export const TITULO_DETALLE = 'Detalle del registro';
 
 /** Dato de un detalle (`dt`/`dd`); reutilizado en DIS-022. */
 export function Dato({ etiqueta, valor }: { etiqueta: string; valor: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-xs font-medium uppercase tracking-wide text-label">{etiqueta}</dt>
-      <dd className="break-words text-sm text-body-text">{valor}</dd>
-    </div>
-  );
+  return <DataLabel label={etiqueta}>{valor}</DataLabel>;
 }
 
 export function AuditDetailModal({ entry, onClose }: { entry: AuditEntryV1; onClose: () => void }) {
@@ -58,28 +54,22 @@ export function AuditDetailModal({ entry, onClose }: { entry: AuditEntryV1; onCl
           <h3 id="auditoria-detalle-cambios" className="text-sm font-semibold text-body-text">
             {conAntes ? 'Antes y después' : 'Valores registrados'}
           </h3>
-          <ul className="divide-y divide-panel-border rounded-xl border border-panel-border">
+          <DataList>
             {campos.map((c) => (
-              <li key={c.campo} className="space-y-1 p-3">
+              <DataListItem key={c.campo}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="break-all text-sm font-semibold text-body-text">{c.campo}</span>
                   {conAntes && c.cambio ? <Badge tone="primary">Cambió</Badge> : null}
                 </div>
                 <dl className="grid gap-1 sm:grid-cols-2 sm:gap-3">
                   {conAntes ? (
-                    <div className="min-w-0">
-                      <dt className="text-xs text-label">Antes</dt>
-                      <dd className="break-words text-sm text-body-text">{c.antes}</dd>
-                    </div>
+                    <DataLabel label="Antes">{c.antes}</DataLabel>
                   ) : null}
-                  <div className="min-w-0">
-                    <dt className="text-xs text-label">{conAntes ? 'Después' : 'Valor'}</dt>
-                    <dd className="break-words text-sm text-body-text">{c.despues}</dd>
-                  </div>
+                  <DataLabel label={conAntes ? 'Después' : 'Valor'}>{c.despues}</DataLabel>
                 </dl>
-              </li>
+              </DataListItem>
             ))}
-          </ul>
+          </DataList>
         </section>
       ) : null}
     </Modal>
