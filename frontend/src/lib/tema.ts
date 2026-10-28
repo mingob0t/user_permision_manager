@@ -2,7 +2,7 @@
  * Tema de la interfaz (FNC-032): lista de temas, aplicación de su clase en
  * `<html>`, persistencia por dispositivo y script que la restaura antes de
  * pintar. Los valores salen de `styles/tokens.css`: sin clase rige la
- * preferencia de color del sistema; `light`, `dark` y `theme-*` los fuerzan.
+ * preferencia de color del sistema; `light` y `dark` la fuerzan (DIS-054: solo 2 temas).
  */
 
 export interface Tema {
@@ -16,13 +16,28 @@ export const TEMAS: readonly Tema[] = [
   { id: 'sistema', etiqueta: 'Según el sistema', clase: null },
   { id: 'claro', etiqueta: 'Claro', clase: 'light' },
   { id: 'oscuro', etiqueta: 'Oscuro', clase: 'dark' },
-  { id: 'esmeralda', etiqueta: 'Esmeralda (claro)', clase: 'theme-emerald-light' },
-  { id: 'obsidiana', etiqueta: 'Obsidiana (oscuro)', clase: 'theme-obsidian-dark' },
-  { id: 'rosa', etiqueta: 'Rosa (claro)', clase: 'theme-rose-light' },
-  { id: 'violeta', etiqueta: 'Violeta (oscuro)', clase: 'theme-violet-dark' },
 ];
 
 export const TEMA_POR_DEFECTO = 'sistema';
+
+/**
+ * Temas retirados (DIS-054, ADR-007) y el que los reemplaza. Un valor viejo puede
+ * llegar de `localStorage` o de la cuenta antes de que el backend (FNC-132) migre.
+ * Cualquier otro valor desconocido cae a «sistema».
+ */
+export const TEMAS_RETIRADOS: Readonly<Record<string, string>> = {
+  esmeralda: 'claro',
+  rosa: 'claro',
+  obsidiana: 'oscuro',
+  violeta: 'oscuro',
+};
+
+/** Id vigente de un valor externo: válido tal cual, retirado traducido, o el de por defecto. */
+export function normalizarTema(valor: unknown): string {
+  if (typeof valor !== 'string') return TEMA_POR_DEFECTO;
+  if (esTemaValido(valor)) return valor;
+  return Object.hasOwn(TEMAS_RETIRADOS, valor) ? TEMAS_RETIRADOS[valor] : TEMA_POR_DEFECTO;
+}
 
 /** Llave en `localStorage` (preferencia por navegador; no es un secreto). */
 export const CLAVE_TEMA = 'nexus-tema';
@@ -37,7 +52,7 @@ export function esTemaValido(id: unknown): id is string {
 export function leerTema(): string {
   try {
     const guardado = window.localStorage.getItem(CLAVE_TEMA);
-    return esTemaValido(guardado) ? guardado : TEMA_POR_DEFECTO;
+    return guardado === null ? TEMA_POR_DEFECTO : normalizarTema(guardado);
   } catch {
     return TEMA_POR_DEFECTO;
   }
@@ -65,12 +80,12 @@ export function elegirTema(id: string): void {
 /**
  * Tema que viene de la cuenta (`preferences.theme` de `/me`, FNC-123). Es un dato
  * externo: pasa por `esTemaValido` y `aplicarTema`, nunca se usa como clase directa;
- * un valor desconocido cae a «sistema». Ausente (`undefined`/`null`) = conserva el
+ * un tema retirado se traduce a su equivalente y un valor desconocido cae a «sistema». Ausente (`undefined`/`null`) = conserva el
  * del navegador. Devuelve el id aplicado, o `null` si no hubo nada que aplicar.
  */
 export function aplicarTemaDeCuenta(valor: unknown): string | null {
   if (valor === undefined || valor === null) return null;
-  const id = esTemaValido(valor) ? valor : TEMA_POR_DEFECTO;
+  const id = normalizarTema(valor);
   elegirTema(id);
   return id;
 }
@@ -86,6 +101,9 @@ export function restaurarTema(): string {
  * Script en línea de `<head>`: restaura la clase antes del primer pintado para
  * evitar el destello del tema equivocado. Mismas reglas que `restaurarTema`.
  */
-export const SCRIPT_RESTAURAR_TEMA = `(function(){try{var m=${JSON.stringify(
-  Object.fromEntries(TEMAS.filter((t) => t.clase).map((t) => [t.id, t.clase])),
-)};var c=m[localStorage.getItem(${JSON.stringify(CLAVE_TEMA)})];if(c)document.documentElement.classList.add(c)}catch(e){}})();`;
+export const SCRIPT_RESTAURAR_TEMA = `(function(){try{var m=${JSON.stringify({
+  ...Object.fromEntries(TEMAS.filter((t) => t.clase).map((t) => [t.id, t.clase])),
+  ...Object.fromEntries(
+    Object.entries(TEMAS_RETIRADOS).map(([viejo, nuevo]) => [viejo, TEMAS.find((t) => t.id === nuevo)?.clase]),
+  ),
+})};var c=m[localStorage.getItem(${JSON.stringify(CLAVE_TEMA)})];if(c)document.documentElement.classList.add(c)}catch(e){}})();`;

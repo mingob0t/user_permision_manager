@@ -66,5 +66,5 @@ input:-webkit-autofill:active{
    declara variables (DIS-047). Sin clase de tema, `light dark` sigue la
    preferencia del sistema (igual que los tokens). */
 :root { color-scheme: light dark; }
-html.light, html.theme-emerald-light, html.theme-rose-light { color-scheme: light; }
-html.dark, html.theme-obsidian-dark, html.theme-violet-dark { color-scheme: dark; }
+html.light { color-scheme: light; }
+html.dark { color-scheme: dark; }

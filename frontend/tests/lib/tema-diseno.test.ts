@@ -18,8 +18,6 @@ function esquema(selector: string): string | undefined {
 describe('color-scheme por tema', () => {
   const esperado: Record<string, string> = {
     ':root': 'light dark', 'html.light': 'light', 'html.dark': 'dark',
-    'html.theme-emerald-light': 'light', 'html.theme-obsidian-dark': 'dark',
-    'html.theme-rose-light': 'light', 'html.theme-violet-dark': 'dark',
   };
   for (const [selector, valor] of Object.entries(esperado)) {
     it(`${selector} declara ${valor}`, () => {
