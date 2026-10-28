@@ -8,12 +8,12 @@
 | **Fase** | 7 |
 | **Módulo / Área** | tokens |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
+| **Inicio** | 2026-10-27 |
+| **Finalizada** | 2026-10-27 |
+| **Estatus Git** | Merge a develop |
 | **Rama** | `dis/DIS-055-tokens-por-capas-primitivos-y-semanticos` |
 | **Commits / PR** | |
 | **Requiere migración BD** | No |
