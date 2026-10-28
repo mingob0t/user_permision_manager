@@ -31,48 +31,65 @@ thead tr {
     height: var(--control-alto, 48px); /* DIS-072: unificado a altura de control / 48px */
 }
 
-/* --- GLOBAL UI NORMALIZE: Premium Inputs --- */
-:where(input[type="password"], 
-input[type="email"], 
-input[type="number"], 
-input[type="url"], 
-input[type="color"],
-input:not([type]),
-select, 
-textarea) {
+/* --- Form Controls: Input, Select, Textarea (DIS-059) --- */
+.nexus-input,
+.nexus-select,
+.nexus-textarea {
     width: 100%;
+    min-height: var(--control-alto, 48px);
     background-color: rgb(var(--color-input-bg));
     color: var(--color-input-text);
-    border: 2px solid rgb(var(--color-panel-border));
-    border-radius: var(--radius-base);
-    padding: 0.75rem 1.25rem;
+    border: var(--borde-ancho, 1px) solid rgb(var(--color-panel-border));
+    border-radius: var(--radius-base, 12px);
+    padding: 0.75rem 1rem;
     font-size: 0.875rem;
     font-weight: 700;
     outline: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--duracion-rapida, 150ms) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-:where(input[type="password"], 
-input[type="email"], 
-input[type="number"], 
-input[type="url"], 
-input[type="color"],
-input:not([type]),
-select, 
-textarea):focus {
+.nexus-input:hover,
+.nexus-select:hover,
+.nexus-textarea:hover {
+    border-color: rgb(var(--borde-fuerte, var(--color-panel-border)));
+}
+
+.nexus-input:focus,
+.nexus-select:focus,
+.nexus-textarea:focus {
     border-color: rgb(var(--color-input-focus));
-    box-shadow: 0 0 0 4px rgb(var(--color-input-focus) / 0.1);
+    box-shadow: 0 0 0 var(--foco-ancho, 2px) rgb(var(--foco-anillo, var(--color-input-focus)));
 }
 
-:where(input:disabled) {
-    background-color: rgb(var(--color-button-disabled-bg));
-    color: rgb(var(--color-button-disabled-text));
+.nexus-input:disabled,
+.nexus-select:disabled,
+.nexus-textarea:disabled,
+.nexus-input[aria-disabled="true"],
+.nexus-select[aria-disabled="true"],
+.nexus-textarea[aria-disabled="true"] {
+    background-color: rgb(var(--deshabilitado-fondo, var(--color-button-disabled-bg)));
+    color: rgb(var(--deshabilitado-texto, var(--color-button-disabled-text)));
+    border-color: rgb(var(--deshabilitado-borde, var(--color-panel-border)));
     cursor: not-allowed;
-    opacity: 0.6;
 }
 
-:where(input)::placeholder {
-    color: rgb(var(--color-label-text) / 0.4);
+.nexus-input:read-only,
+.nexus-textarea:read-only {
+    background-color: rgb(var(--solo-lectura-fondo, var(--color-input-bg)));
+    color: rgb(var(--color-input-text));
+    border-color: rgb(var(--borde-sutil, var(--color-panel-border)));
+    cursor: default;
+}
+
+.nexus-input[aria-invalid="true"],
+.nexus-select[aria-invalid="true"],
+.nexus-textarea[aria-invalid="true"] {
+    border-color: rgb(var(--peligro-borde, var(--color-danger, 220 38 38))) !important;
+}
+
+.nexus-input::placeholder,
+.nexus-textarea::placeholder {
+    color: rgb(var(--color-label-text) / 0.6);
     font-weight: 500;
 }
 

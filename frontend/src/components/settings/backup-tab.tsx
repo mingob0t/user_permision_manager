@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { Button } from '../form';
+import { Button, FileInput } from '../form';
 import { Card, ErrorNote, SuccessNote } from '../ui';
 
 export function BackupTab() {
@@ -69,15 +69,14 @@ export function BackupTab() {
           Sobrescribe la configuración con la del paquete. Las cuentas que ya
           existan no se modifican.
         </p>
-        <input
-          type="file"
+        <FileInput
           accept=".zip,application/zip"
           disabled={busy}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) restore(file);
           }}
-          className="mt-3 block min-h-12 text-sm text-label"
+          className="mt-3 block"
         />
       </div>
     </Card>

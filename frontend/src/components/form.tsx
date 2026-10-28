@@ -8,7 +8,7 @@
  * `.nexus-btn`, casillas `.nexus-checkbox` y modales `.nx-modal-glass`.
  */
 
-import { useId, useRef } from 'react';
+import React, { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { CAMPOS, esVisible, useFocusTrap } from '@/lib/use-focus-trap';
 import { useScrollLock } from '@/lib/use-scroll-lock';
@@ -16,10 +16,14 @@ import { useScrollLock } from '@/lib/use-scroll-lock';
 export function Field({
   label,
   hint,
+  error,
+  errorId,
   children,
 }: {
   label: string;
   hint?: string;
+  error?: string;
+  errorId?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -31,35 +35,62 @@ export function Field({
       {hint ? (
         <span className="mt-1.5 block text-xs text-label/85">{hint}</span>
       ) : null}
+      {error ? (
+        <span id={errorId} className="mt-1.5 block min-h-5 text-xs font-bold text-error-text">
+          {error}
+        </span>
+      ) : null}
     </label>
   );
 }
 
-// users.html: el input estándar del portal.
-const INPUT =
-  'w-full h-12 bg-surface-container/30 border border-panel-border rounded-xl px-4 ' +
+// users.html: el input estándar del portal con estados completos (DIS-059).
+const FIELD_BASE =
+  'w-full bg-surface-container/30 border border-panel-border rounded-xl px-4 ' +
   'text-sm font-bold text-body-text placeholder:text-label/85 ' +
   'focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all ' +
-  'disabled:opacity-50';
+  'aria-invalid:border-error-text ' +
+  'disabled:cursor-not-allowed disabled:bg-surface-container/20 disabled:text-label/50 ' +
+  'read-only:cursor-default read-only:bg-surface-container/10 read-only:border-panel-border/50';
 
-export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`${INPUT} ${props.className ?? ''}`} />;
-}
+export const TextInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  function TextInput({ className = '', ...props }, ref) {
+    const isInvalid = props['aria-invalid'] === true || props['aria-invalid'] === 'true';
+    return (
+      <input
+        ref={ref}
+        {...props}
+        className={`nexus-input h-12 ${FIELD_BASE} ${isInvalid ? 'border-error-text' : ''} ${className}`}
+      />
+    );
+  },
+);
 
-export function TextArea(
-  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>,
-) {
-  return (
-    <textarea
-      {...props}
-      className={`${INPUT} h-auto py-3 ${props.className ?? ''}`}
-    />
-  );
-}
+export const TextArea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
+  function TextArea({ className = '', ...props }, ref) {
+    const isInvalid = props['aria-invalid'] === true || props['aria-invalid'] === 'true';
+    return (
+      <textarea
+        ref={ref}
+        {...props}
+        className={`nexus-textarea h-auto py-3 ${FIELD_BASE} ${isInvalid ? 'border-error-text' : ''} ${className}`}
+      />
+    );
+  },
+);
 
-export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={`${INPUT} ${props.className ?? ''}`} />;
-}
+export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(
+  function Select({ className = '', ...props }, ref) {
+    const isInvalid = props['aria-invalid'] === true || props['aria-invalid'] === 'true';
+    return (
+      <select
+        ref={ref}
+        {...props}
+        className={`nexus-select h-12 ${FIELD_BASE} appearance-none pr-10 ${isInvalid ? 'border-error-text' : ''} ${className}`}
+      />
+    );
+  },
+);
 
 /** Casilla con su etiqueta; la etiqueta da el área táctil de 48 px (DIS-008). */
 export function Checkbox({
@@ -67,12 +98,44 @@ export function Checkbox({
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return (
-    <label className="flex min-h-12 items-center gap-3 text-sm font-bold text-body-text">
-      <input type="checkbox" {...props} className="nexus-checkbox" />
+    <label className="flex min-h-12 items-center gap-3 text-sm font-bold text-body-text cursor-pointer">
+      <input type="checkbox" {...props} className="nexus-checkbox cursor-pointer" />
       {label}
     </label>
   );
 }
+
+export function FileInput({ className = '', ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      type="file"
+      {...props}
+      className={`min-h-12 text-sm text-label file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-contrast file:cursor-pointer hover:file:opacity-90 ${className}`}
+    />
+  );
+}
+
+export function ColorInput({ className = '', ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      type="color"
+      {...props}
+      className={`h-12 w-20 cursor-pointer rounded-xl border border-panel-border bg-surface-container/30 p-1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary ${className}`}
+    />
+  );
+}
+
+export function Radio({ className = '', ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      type="radio"
+      {...props}
+      className={`accent-primary cursor-pointer ${className}`}
+    />
+  );
+}
+
+export { FieldErrorNote, FieldHint, describedBy, focusFirstError } from './platforms/field-notes';
 
 import { Button } from './button';
 export { Button, type ButtonProps, type ButtonVariant } from './button';
@@ -195,8 +258,7 @@ export function ConfirmDialog({
             onClick={() => {
               if (!busy) onConfirm();
             }}
-            aria-disabled={busy || undefined}
-            className="aria-disabled:opacity-40"
+            busy={busy}
           >
             {busy ? 'Eliminando…' : confirmLabel}
           </Button>

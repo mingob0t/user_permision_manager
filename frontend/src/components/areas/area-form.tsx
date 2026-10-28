@@ -13,19 +13,9 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import type { Area, AreaInput } from '@/lib/types';
-import { Button, Checkbox, Field, Modal, TextArea, TextInput } from '../form';
+import { Button, Checkbox, ColorInput, Field, FieldErrorNote, Modal, TextArea, TextInput } from '../form';
 import { ErrorNote } from '../ui';
 import { erroresDeCampo, mensajeDeError } from './area-errors';
-
-/** Mensaje de un campo rechazado por el servidor, ligado al control con `aria-describedby`. */
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-  return (
-    <span id={id} className="mt-1.5 block text-xs font-bold text-error-text">
-      {message}
-    </span>
-  );
-}
 
 /** Id del campo Nombre: recibe el foco cuando es inválido (`TextInput` no acepta `ref`). */
 const NAME_ID = 'area-name';
@@ -110,7 +100,7 @@ export function AreaForm({
             {...invalido('area-name-error', fields.name)}
           />
         </Field>
-        <FieldError id="area-name-error" message={fields.name} />
+        <FieldErrorNote id="area-name-error" message={fields.name} />
       </div>
 
       <div>
@@ -122,7 +112,7 @@ export function AreaForm({
             {...invalido('area-description-error', fields.description)}
           />
         </Field>
-        <FieldError id="area-description-error" message={fields.description} />
+        <FieldErrorNote id="area-description-error" message={fields.description} />
       </div>
 
       <div>
@@ -130,14 +120,13 @@ export function AreaForm({
           label="Color"
           hint={form.color ? undefined : 'Si no eliges uno, se usa el color por omisión.'}
         >
-          <TextInput
-            type="color" className="p-1"
+          <ColorInput
             value={form.color ?? ''}
             onChange={(e) => setForm({ ...form, color: e.target.value })}
             {...invalido('area-color-error', fields.color)}
           />
         </Field>
-        <FieldError id="area-color-error" message={fields.color} />
+        <FieldErrorNote id="area-color-error" message={fields.color} />
       </div>
 
       <div>
@@ -147,7 +136,7 @@ export function AreaForm({
           onChange={(e) => setForm({ ...form, status: e.target.checked ? 'Activo' : 'Inactivo' })}
           {...invalido('area-status-error', fields.status)}
         />
-        <FieldError id="area-status-error" message={fields.status} />
+        <FieldErrorNote id="area-status-error" message={fields.status} />
       </div>
     </Modal>
   );
