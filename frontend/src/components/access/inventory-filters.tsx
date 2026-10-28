@@ -12,7 +12,8 @@
 
 import { useState } from 'react';
 import type { AccessLevel, AccessOrigin, InventoryParams } from '@/lib/access/types';
-import { Button, Field, Select, TextInput } from '../form';
+import { FilterBar, FilterBarGrid, FilterBarSearch } from '../filter-bar';
+import { Field, Select, TextInput } from '../form';
 import { NIVELES } from './access-status-badge';
 import { FILTROS } from './my-access';
 import { type OpcionesAlcance, ScopeSelects } from './scope-filters';
@@ -85,8 +86,8 @@ export function InventoryFilters({
   }
 
   return (
-    <div className="space-y-3">
-      <form role="search" onSubmit={buscar} className="grid gap-3 sm:grid-cols-[1fr_auto]">
+    <FilterBar label="Filtros del inventario" layout="stack">
+      <FilterBarSearch onSubmit={buscar}>
         <TextInput
           type="search"
           value={borrador}
@@ -95,10 +96,9 @@ export function InventoryFilters({
           placeholder="Nombre o correo del usuario…"
           aria-label="Buscar en el inventario por nombre o correo del usuario"
         />
-        <Button type="submit" variant="secondary">Buscar</Button>
-      </form>
+      </FilterBarSearch>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <FilterBarGrid>
         <ScopeSelects
           areaId={filtros.areaId}
           platformId={filtros.platformId}
@@ -140,7 +140,7 @@ export function InventoryFilters({
             ))}
           </Select>
         </Field>
-      </div>
-    </div>
+      </FilterBarGrid>
+    </FilterBar>
   );
 }

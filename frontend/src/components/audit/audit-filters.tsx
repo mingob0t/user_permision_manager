@@ -15,7 +15,8 @@ import { useState } from 'react';
 import type { AuditParams, AuditResult } from '@/lib/access/types';
 import { BUSQUEDA_MAX, limpiarBusqueda } from '../access/inventory-filters';
 import { type OpcionesAlcance, ScopeSelects } from '../access/scope-filters';
-import { Button, Field, Select, TextInput } from '../form';
+import { FilterBar, FilterBarError, FilterBarGrid, FilterBarSearch } from '../filter-bar';
+import { Field, Select, TextInput } from '../form';
 import { ACCIONES, RESULTADOS } from './audit-actions';
 
 export interface FiltrosAuditoria {
@@ -112,8 +113,8 @@ export function AuditFilters({
   const describe = errorFechas ? ID_ERROR_FECHAS : undefined;
 
   return (
-    <div className="space-y-3">
-      <form role="search" onSubmit={buscar} className="grid gap-3 sm:grid-cols-[1fr_auto]">
+    <FilterBar label="Filtros de la auditoría" layout="stack">
+      <FilterBarSearch onSubmit={buscar}>
         <TextInput
           type="search"
           value={borrador}
@@ -122,10 +123,9 @@ export function AuditFilters({
           placeholder="Quién actuó o sobre qué…"
           aria-label="Buscar en la auditoría por quién actuó o sobre qué"
         />
-        <Button type="submit" variant="secondary">Buscar</Button>
-      </form>
+      </FilterBarSearch>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <FilterBarGrid>
         <Field label="Desde">
           <TextInput
             type="date"
@@ -177,13 +177,9 @@ export function AuditFilters({
             onChange={onChange}
           />
         ) : null}
-      </div>
+      </FilterBarGrid>
 
-      {errorFechas ? (
-        <p id={ID_ERROR_FECHAS} role="alert" className="text-sm font-bold text-error-text">
-          {errorFechas}
-        </p>
-      ) : null}
-    </div>
+      <FilterBarError id={ID_ERROR_FECHAS} message={errorFechas} />
+    </FilterBar>
   );
 }

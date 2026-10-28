@@ -17,11 +17,6 @@ export const EXCEPCIONES_SIMETRIA: Record<string, ExcepcionSimetria> = {
     tarea: 'DIS-074',
     motivo: 'z-[60] arbitrario heredado en contenedor de toast; será reemplazado en DIS-074',
   },
-  'components/filter-bar.tsx': {
-    cantidad: 1,
-    tarea: 'DIS-069',
-    motivo: 'min-w-56 fuera de escala en FilterBar; será normalizado en DIS-069',
-  },
   'components/data-table.tsx': {
     cantidad: 1,
     tarea: 'DIS-071',

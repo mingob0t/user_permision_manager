@@ -7,6 +7,7 @@
  */
 
 import type { Job, JobOperation, JobParams, JobStatus } from '@/lib/access/types';
+import { FilterBar, FilterBarGrid } from '../filter-bar';
 import { Field, Select } from '../form';
 import { type OpcionesAlcance, ScopeSelects } from '../access/scope-filters';
 import { ESTADOS_EJECUCION, OPERACIONES, PROVEEDORES } from './job-catalog';
@@ -62,41 +63,43 @@ export function JobsFilters({
   onChange: (cambio: Partial<FiltrosEjecuciones>) => void;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <Field label="Estado">
-        <Select
-          id={FILTRO_ESTADO_ID}
-          value={filtros.status ?? ''}
-          onChange={(event) => onChange({ status: (event.target.value || null) as JobStatus | null })}
-        >
-          <option value="">Todos los estados</option>
-          {opciones(TEXTO_ESTADOS)}
-        </Select>
-      </Field>
-      <Field label="Operación">
-        <Select
-          value={filtros.operation ?? ''}
-          onChange={(event) => onChange({ operation: (event.target.value || null) as JobOperation | null })}
-        >
-          <option value="">Todas las operaciones</option>
-          {opciones(OPERACIONES)}
-        </Select>
-      </Field>
-      <Field label="Proveedor">
-        <Select
-          value={filtros.provider ?? ''}
-          onChange={(event) => onChange({ provider: (event.target.value || null) as Job['provider'] | null })}
-        >
-          <option value="">Todos los proveedores</option>
-          {opciones(PROVEEDORES)}
-        </Select>
-      </Field>
-      <ScopeSelects
-        areaId={filtros.areaId}
-        platformId={filtros.platformId}
-        opciones={alcance}
-        onChange={onChange}
-      />
-    </div>
+    <FilterBar label="Filtros de ejecuciones">
+      <FilterBarGrid>
+        <Field label="Estado">
+          <Select
+            id={FILTRO_ESTADO_ID}
+            value={filtros.status ?? ''}
+            onChange={(event) => onChange({ status: (event.target.value || null) as JobStatus | null })}
+          >
+            <option value="">Todos los estados</option>
+            {opciones(TEXTO_ESTADOS)}
+          </Select>
+        </Field>
+        <Field label="Operación">
+          <Select
+            value={filtros.operation ?? ''}
+            onChange={(event) => onChange({ operation: (event.target.value || null) as JobOperation | null })}
+          >
+            <option value="">Todas las operaciones</option>
+            {opciones(OPERACIONES)}
+          </Select>
+        </Field>
+        <Field label="Proveedor">
+          <Select
+            value={filtros.provider ?? ''}
+            onChange={(event) => onChange({ provider: (event.target.value || null) as Job['provider'] | null })}
+          >
+            <option value="">Todos los proveedores</option>
+            {opciones(PROVEEDORES)}
+          </Select>
+        </Field>
+        <ScopeSelects
+          areaId={filtros.areaId}
+          platformId={filtros.platformId}
+          opciones={alcance}
+          onChange={onChange}
+        />
+      </FilterBarGrid>
+    </FilterBar>
   );
 }
