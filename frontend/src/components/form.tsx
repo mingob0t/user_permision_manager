@@ -13,7 +13,9 @@ import { createPortal } from 'react-dom';
 import { CAMPOS, esVisible, useFocusTrap } from '@/lib/use-focus-trap';
 import { useScrollLock } from '@/lib/use-scroll-lock';
 import { Icono } from './icono';
+import { AlertDialog, type AlertDialogProps, type AlertDialogType } from './alert-dialog';
 export { Drawer, type DrawerProps } from './drawer';
+export { AlertDialog, type AlertDialogProps, type AlertDialogType };
 
 export function Field({
   label,
@@ -139,7 +141,6 @@ export function Radio({ className = '', ...props }: React.InputHTMLAttributes<HT
 
 export { FieldErrorNote, FieldHint, describedBy, focusFirstError } from './platforms/field-notes';
 
-import { Button } from './button';
 export { Button, type ButtonProps, type ButtonVariant } from './button';
 export { ButtonLink, type ButtonLinkProps } from './button-link';
 
@@ -233,7 +234,7 @@ export function ConfirmDialog({
   confirmLabel = 'Eliminar',
   onConfirm,
   onCancel,
-  busy,
+  busy = false,
 }: {
   title: string;
   message: string;
@@ -242,32 +243,23 @@ export function ConfirmDialog({
   onCancel: () => void;
   busy?: boolean;
 }) {
-  const mensajeId = useId();
+  const confirmText = busy
+    ? (confirmLabel === 'Eliminar' ? 'Eliminando…' : `${confirmLabel}…`)
+    : confirmLabel;
+
   return (
-    <Modal
+    <AlertDialog
+      open={true}
       title={title}
+      message={message}
+      type="pregunta"
+      role="dialog"
+      confirmLabel={confirmText}
+      cancelLabel="Cancelar"
+      confirmVariant="danger"
+      onConfirm={onConfirm}
       onClose={onCancel}
-      describedBy={mensajeId}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onCancel}>
-            Cancelar
-          </Button>
-          {/* H3: `aria-disabled` mientras se envía (con `disabled` el foco caería en `body`);
-              el clic se ignora. */}
-          <Button
-            variant="danger"
-            onClick={() => {
-              if (!busy) onConfirm();
-            }}
-            busy={busy}
-          >
-            {busy ? 'Eliminando…' : confirmLabel}
-          </Button>
-        </>
-      }
-    >
-      <p id={mensajeId} className="text-sm font-bold text-label">{message}</p>
-    </Modal>
+      busy={busy}
+    />
   );
 }
