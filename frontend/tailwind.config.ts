@@ -204,6 +204,9 @@ export default {
       minWidth: {
         control: 'var(--control-alto)',
       },
+      zIndex: {
+        '60': '60',
+      },
     },
   },
   plugins: [],

@@ -12,11 +12,6 @@ export interface ExcepcionSimetria {
 }
 
 export const EXCEPCIONES_SIMETRIA: Record<string, ExcepcionSimetria> = {
-  'components/toast.tsx': {
-    cantidad: 1,
-    tarea: 'DIS-074',
-    motivo: 'z-[60] arbitrario heredado en contenedor de toast; será reemplazado en DIS-074',
-  },
   'components/data-table.tsx': {
     cantidad: 1,
     tarea: 'DIS-071',

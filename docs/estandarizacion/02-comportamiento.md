@@ -39,3 +39,19 @@ La prueba `frontend/tests/accesibilidad/patrones-unicos.test.ts` valida en tiemp
    - Toda transición se restringe estrictamente a `opacity` y `transform`.
    - Con `prefers-reduced-motion: reduce`, las animaciones y transiciones se anulan (`animation: none`, `motion-reduce:transition-none`).
 
+---
+
+## 4. Tabla de Decisión: Diálogo (`AlertDialog`) o Toast (`useToast`) (DIS-074)
+
+| Situación | Patrón Canónico | ¿Se cierra solo? |
+|---|---|---|
+| **Acción destructiva o irreversible** (eliminar, revocar, purgar, rechazar) | `<AlertDialog type="pregunta">` o `"aviso"`; botón peligro con verbo de acción | No |
+| **Acción con efecto importante sobre otros** (aprobar, reintentar, cambiar rol) | `<AlertDialog type="pregunta">` con confirmación explícita | No |
+| **Resultado que el usuario debe leer o copiar** (error bloqueante, credenciales) | `<AlertDialog type="error">` o `"exito"` con botón «Entendido» | No |
+| **Éxito de rutina** (guardado, marcado como favorito) | Toast éxito (`useToast().avisar('success', ...)`) | Sí (≥ 5 s, pausa con hover/foco) |
+| **Error recuperable no crítico** (falla toggle favorito, tema) | Toast error (`useToast().avisar('error', ...)`) | No mientras tenga foco; botón cerrar |
+| **Error de validación de campo** | `<FieldErrorNote>` en línea bajo el campo | — |
+| **Error al cargar vista o sección** | `<ErrorNote>` en la zona reservada | — |
+| **Estado persistente de la pantalla** (falta de configuración) | `<Note>` en línea | — |
+
+
