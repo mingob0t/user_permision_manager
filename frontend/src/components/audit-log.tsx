@@ -7,17 +7,16 @@
  */
 
 import { auditApi } from '@/lib/access/audit';
+import { PageHeader } from './page-header';
 import { AuditHistory } from './audit/audit-history';
 
 export function AuditLog() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Auditoría</h1>
-        <p className="mt-1 text-sm text-label">
-          Registro de acciones sobre el sistema.
-        </p>
-      </div>
+      <PageHeader
+        title="Auditoría"
+        description="Registro de acciones sobre el sistema."
+      />
       <AuditHistory cargar={auditApi.list} />
     </div>
   );

@@ -13,6 +13,7 @@ import { useAsync } from '@/lib/use-async';
 import type { Platform, PlatformWarning } from '@/lib/types';
 import { DataTable } from './data-table';
 import { Button, ConfirmDialog } from './form';
+import { PageHeader } from './page-header';
 import { columnasPlataformas } from './platforms/platform-columns';
 import { MissingLinkNote } from './platforms/missing-link-note';
 import { PlatformForm } from './platforms/platform-form';
@@ -106,22 +107,21 @@ function PlatformAdminContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 ref={heading} tabIndex={-1} className="text-2xl font-semibold">Administrar plataformas</h1>
-          <p className="mt-1 text-sm text-label">
-            Los enlaces del catálogo y a qué área pertenecen.
-          </p>
-        </div>
-        {canManage ? (
-          <Button
-            onClick={(e) => open(e, () => setCreating(true))}
-            disabled={areas.loading || (areas.data ?? []).length === 0}
-          >
-            Nueva plataforma
-          </Button>
-        ) : null}
-      </div>
+      <PageHeader
+        h1Ref={heading}
+        title="Administrar plataformas"
+        description="Los enlaces del catálogo y a qué área pertenecen."
+        actions={
+          canManage ? (
+            <Button
+              onClick={(e) => open(e, () => setCreating(true))}
+              disabled={areas.loading || (areas.data ?? []).length === 0}
+            >
+              Nueva plataforma
+            </Button>
+          ) : null
+        }
+      />
 
       {/* Región de estado siempre montada: el aviso se anuncia al aparecer. */}
       <div role="status">

@@ -3,6 +3,7 @@
 /** Configuración del sistema: contenedor con las pestañas de Ajustes. */
 
 import { useState } from 'react';
+import { PageHeader } from './page-header';
 import { useSession } from './session-provider';
 import { Tabs, TabPanel } from './tabs';
 import { BackupTab } from './settings/backup-tab';
@@ -35,14 +36,14 @@ export function SettingsPanel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Ajustes</h1>
-        <p className="mt-1 text-sm text-label">
-          {isAdmin
+      <PageHeader
+        title="Ajustes"
+        description={
+          isAdmin
             ? 'Configuración del sistema y preferencias personales.'
-            : 'Tus preferencias personales.'}
-        </p>
-      </div>
+            : 'Tus preferencias personales.'
+        }
+      />
 
       <Tabs
         tabs={tabs}
