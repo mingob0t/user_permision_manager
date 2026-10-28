@@ -22,7 +22,7 @@ import { rutaConFiltro } from '../access/filtro-url';
 import { listLoadError } from '../access/request-errors';
 import { Button, ButtonLink } from '../form';
 import { useSession } from '../session-provider';
-import { EmptyNote, ErrorNote, Spinner, StatTile } from '../ui';
+import { EmptyNote, ErrorNote, Skeleton, StatTile } from '../ui';
 
 /** Pantallas a las que lleva cada contador. */
 export const RUTAS_INICIO = {
@@ -201,7 +201,9 @@ export function RoleSummary({ onFallo }: { onFallo?: (fallo: boolean) => void })
         </ButtonLink>
       </div>
 
-      {resumen.loading && !data ? <Spinner label="Cargando el resumen…" /> : null}
+      {resumen.loading && !data ? (
+        <Skeleton variant="contador" count={3} ariaLabel="Cargando el resumen…" />
+      ) : null}
 
       {resumen.error ? (
         <div className="space-y-3">

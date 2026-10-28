@@ -20,7 +20,7 @@ import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
 import { RegionDeAnuncios } from '../region-de-anuncios';
 import { useSession } from '../session-provider';
-import { EmptyNote, ErrorNote, Spinner } from '../ui';
+import { EmptyNote, ErrorNote, Skeleton } from '../ui';
 import { AccessStatusBadge, ESTADOS, NIVELES, hayAccesosTransitorios } from './access-status-badge';
 import { formatearFecha } from './fecha';
 import { ListPager } from './list-pager';
@@ -138,7 +138,9 @@ export function MyAccess({ estadoInicial }: { estadoInicial?: Filtro }) {
         ))}
       </Select>
 
-      {lista.loading && !data ? <Spinner label="Cargando tus accesos…" /> : null}
+      {lista.loading && !data ? (
+        <Skeleton variant="fila" count={4} ariaLabel="Cargando tus accesos…" />
+      ) : null}
 
       {lista.error ? (
         <div className="space-y-3">

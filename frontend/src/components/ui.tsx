@@ -158,18 +158,30 @@ export function Skeleton({
     rect: 'h-full w-full',
   };
 
-  const items = Array.from({ length: count }, (_, i) => (
-    <div
-      key={i}
-      role="status"
-      aria-label={ariaLabel}
-      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
-    >
-      <span className="sr-only">{ariaLabel}</span>
-    </div>
-  ));
+  if (count <= 1) {
+    return (
+      <div
+        role="status"
+        aria-label={ariaLabel}
+        className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+      >
+        <span className="sr-only">{ariaLabel}</span>
+      </div>
+    );
+  }
 
-  return count === 1 ? items[0] : <div className="space-y-3 w-full">{items}</div>;
+  return (
+    <div role="status" aria-label={ariaLabel} className="space-y-3 w-full">
+      <span className="sr-only">{ariaLabel}</span>
+      {Array.from({ length: count }, (_, i) => (
+        <div
+          key={i}
+          aria-hidden="true"
+          className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+        />
+      ))}
+    </div>
+  );
 }
 
 /**

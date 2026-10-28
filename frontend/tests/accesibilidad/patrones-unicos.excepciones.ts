@@ -21,14 +21,6 @@ export interface ExcepcionPatron {
 
 export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
   // Tablas fuera de data-table.tsx: 0 excepciones (todas migradas en DIS-071)
-  'components/dashboard.tsx': [
-    {
-      patron: 'h1',
-      cantidad: 1,
-      tarea: 'DIS-070',
-      motivo: 'Encabezado h1 de vista; migrar a PageHeader en DIS-070',
-    },
-  ],
   'components/audit/platform-audit-history.tsx': [
     {
       patron: 'h1',
@@ -38,14 +30,6 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
     },
   ],
   'components/audit/user-audit-history.tsx': [
-    {
-      patron: 'h1',
-      cantidad: 1,
-      tarea: 'DIS-070',
-      motivo: 'Encabezado h1 de vista; migrar a PageHeader en DIS-070',
-    },
-  ],
-  'components/access/my-requests-view.tsx': [
     {
       patron: 'h1',
       cantidad: 1,
@@ -65,9 +49,6 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
   'components/login-form.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-063', motivo: 'Título en login; migrar a PageHeader en DIS-063/DIS-070' },
   ],
-  'components/notifications-list.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
   'components/platform-admin.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
@@ -80,9 +61,6 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
   'components/users-list.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
-  'components/favorites-list.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
   'app/not-found.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
@@ -90,9 +68,6 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
   'app/inventory/page.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
-  'app/platforms/page.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
   'app/admin/jobs/page.tsx': [

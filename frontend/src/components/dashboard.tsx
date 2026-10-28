@@ -17,8 +17,9 @@ import { useAsync } from '@/lib/use-async';
 import { useTokenColors } from '@/lib/use-token-colors';
 import { RoleSummary } from './home/role-summary';
 import { useSession } from './session-provider';
-import { Card, ErrorNote, Spinner, StatTile } from './ui';
+import { Card, ErrorNote, RegionDeAviso, Skeleton, StatTile } from './ui';
 import { DataTable } from './data-table';
+import { PageHeader } from './page-header';
 
 export function Dashboard() {
   const { session } = useSession();
@@ -27,20 +28,26 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Panel</h1>
-        <p className="mt-1 text-sm text-label">
-          {session?.permissions.is_admin
+      <PageHeader
+        title="Panel"
+        description={
+          session?.permissions.is_admin
             ? 'Vista global del sistema.'
-            : 'Datos de las áreas a las que tienes acceso.'}
-        </p>
-      </div>
+            : 'Datos de las áreas a las que tienes acceso.'
+        }
+      />
 
       <RoleSummary onFallo={setResumenFallo} />
 
-      {loading ? <Spinner /> : null}
-      {error ? <ErrorNote message={error} /> : null}
-      {stats ? <Estadisticas stats={stats} resumenFallo={resumenFallo} /> : null}
+      <RegionDeAviso minHeight="min-h-6">
+        {error ? <ErrorNote message={error} /> : null}
+      </RegionDeAviso>
+
+      {loading ? (
+        <Skeleton variant="tarjeta" count={4} ariaLabel="Cargando estadísticas…" />
+      ) : stats ? (
+        <Estadisticas stats={stats} resumenFallo={resumenFallo} />
+      ) : null}
     </div>
   );
 }

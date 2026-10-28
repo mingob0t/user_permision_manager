@@ -6,7 +6,8 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import { Button, ConfirmDialog } from './form';
-import { Card, EmptyNote, ErrorNote, Spinner } from './ui';
+import { PageHeader } from './page-header';
+import { Card, EmptyNote, ErrorNote, RegionDeAviso, Skeleton } from './ui';
 
 const ICONS: Record<string, string> = {
   success: '✓', error: '✕', warning: '!', info: 'i',
@@ -54,31 +55,32 @@ export function NotificationsList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Notificaciones</h1>
-          <p className="mt-1 text-sm text-label">
-            {unread > 0 ? `${unread} sin leer.` : 'Todo al día.'}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {unread > 0 ? (
-            <Button variant="secondary" onClick={markAll} disabled={busy}>
-              Marcar todas como leídas
-            </Button>
-          ) : null}
-          {(data ?? []).length > 0 ? (
-            <Button variant="danger" onClick={() => setClearing(true)}>
-              Vaciar
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <PageHeader
+        title="Notificaciones"
+        description={unread > 0 ? `${unread} sin leer.` : 'Todo al día.'}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {unread > 0 ? (
+              <Button variant="secondary" onClick={markAll} disabled={busy}>
+                Marcar todas como leídas
+              </Button>
+            ) : null}
+            {(data ?? []).length > 0 ? (
+              <Button variant="danger" onClick={() => setClearing(true)}>
+                Vaciar
+              </Button>
+            ) : null}
+          </div>
+        }
+      />
 
-      {loading ? <Spinner /> : null}
-      {error ? <ErrorNote message={error} /> : null}
+      <RegionDeAviso minHeight="min-h-6">
+        {error ? <ErrorNote message={error} /> : null}
+      </RegionDeAviso>
 
-      {!loading && !error ? (
+      {loading ? (
+        <Skeleton variant="fila" count={4} ariaLabel="Cargando notificaciones…" />
+      ) : !error ? (
         (data ?? []).length === 0 ? (
           <EmptyNote message="No tienes notificaciones." />
         ) : (

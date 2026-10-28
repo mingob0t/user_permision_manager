@@ -5,9 +5,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
+import { PageHeader } from './page-header';
 import { PlatformCard } from './platform-card';
 import { RegionDeAnuncios } from './region-de-anuncios';
-import { EmptyNote, ErrorNote, Spinner } from './ui';
+import { EmptyNote, ErrorNote, RegionDeAviso, Skeleton } from './ui';
 
 export function FavoritesList() {
   const { data, loading, error, reload } = useAsync(() => api.favorites(), []);
@@ -41,17 +42,19 @@ export function FavoritesList() {
   return (
     <div className="space-y-6">
       <RegionDeAnuncios mensaje={anuncio} />
-      <div>
-        <h1 ref={encabezado} tabIndex={-1} className="text-2xl font-semibold outline-none">Favoritos</h1>
-        <p className="mt-1 text-sm text-label">
-          Tus accesos marcados para consulta rápida.
-        </p>
-      </div>
+      <PageHeader
+        h1Ref={encabezado}
+        title="Favoritos"
+        description="Tus accesos marcados para consulta rápida."
+      />
 
-      {loading ? <Spinner /> : null}
-      {error ? <ErrorNote message={error} /> : null}
+      <RegionDeAviso minHeight="min-h-6">
+        {error ? <ErrorNote message={error} /> : null}
+      </RegionDeAviso>
 
-      {!loading && !error ? (
+      {loading ? (
+        <Skeleton variant="tarjeta" count={4} ariaLabel="Cargando favoritos…" />
+      ) : !error ? (
         (data ?? []).length === 0 ? (
           <EmptyNote message="Todavía no has marcado ninguna plataforma como favorita." />
         ) : (

@@ -60,7 +60,7 @@ describe('DIS-070: PageHeader y Plantillas canónicas de pantalla', () => {
         </PantallaListado>,
       );
 
-      expect(screen.getAllByRole('status', { name: 'Cargando listado…' }).length).toBe(3);
+      expect(screen.getByRole('status', { name: 'Cargando listado…' })).toBeDefined();
       expect(screen.queryByText('Contenido de lista')).toBeNull();
     });
 
