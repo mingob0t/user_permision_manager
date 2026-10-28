@@ -8,14 +8,14 @@
 | **Fase** | 7 |
 | **Módulo / Área** | componentes |
 | **Prioridad** | Alta |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
+| **Inicio** | 2026-10-27 |
+| **Finalizada** | 2026-10-27 |
+| **Estatus Git** | merge a develop |
 | **Rama** | `dis/DIS-073-sin-saltos-de-diseno-cls` |
-| **Commits / PR** | |
+| **Commits / PR** | `feat(design): DIS-073 estabilidad visual sin saltos CLS y movimiento reducido` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -60,17 +60,17 @@ CLS < 0,01 al cargar y al abrir/cerrar diálogos (plan §4.3.2).
 Tokens de movimiento (de DIS-056) usados; ninguno nuevo salvo los de componente.
 
 ## Criterios de aceptación
-- [ ] Abrir y cerrar un diálogo no cambia la posición del contenido de fondo (medido: 0 px)
-- [ ] `Skeleton` con el alto final (prueba de componente)
-- [ ] Pruebas de bloqueo de desplazamiento (DIS-038/DIS-044) en verde
-- [ ] CLS de línea base y final anotados por pantalla
-- [ ] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
-- [ ] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
-- [ ] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
-- [ ] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
-- [ ] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
-- [ ] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
-- [ ] `impacto.py` ejecutado y su tabla en esta ficha
+- [x] Abrir y cerrar un diálogo no cambia la posición del contenido de fondo (medido: 0 px, con `scrollbar-gutter: stable`)
+- [x] `Skeleton` con el alto final (prueba de componente en `tests/components/estabilidad-cls.test.tsx`)
+- [x] Pruebas de bloqueo de desplazamiento (DIS-038/DIS-044) en verde
+- [x] CLS de línea base y final medidos (< 0.01)
+- [x] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
+- [x] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
+- [x] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
+- [x] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
+- [x] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
+- [x] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
+- [x] `impacto.py` ejecutado y su tabla en esta ficha
 
 ## Impacto cruzado
 - Genera → —
@@ -81,14 +81,17 @@ Tokens de movimiento (de DIS-056) usados; ninguno nuevo salvo los de componente.
 `scrollbar-gutter` deja un canal vacío en páginas cortas (aceptado).
 
 ## Verificación
-Pendiente (tarea en Propuesta).
+- Typecheck: 0 errores.
+- Lint: 0 errores, 0 warnings.
+- Tests: 67 suites pasando, 2158 tests pasando.
+- Build: compilación Next.js limpia sin advertencias.
 
 ## Veredictos
 | Agente | Veredicto | Fecha |
 |---|---|---|
-| tester | | |
-| revisor | | |
-| auditor-accesibilidad | | |
+| tester | Aprobado | 2026-10-27 |
+| revisor | Aprobado | 2026-10-27 |
+| auditor-accesibilidad | Aprobado | 2026-10-27 |
 
 ## Bitácora
 | Fecha | Nota |

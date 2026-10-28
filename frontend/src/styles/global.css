@@ -19,11 +19,13 @@ body {
     overflow: hidden;
 }
 
-/* DIS-038/DIS-044: bloqueo del desplazamiento del fondo con Modal o el menú
-   móvil abiertos. `useScrollLock` pone la clase en la raíz (`#raiz-app`); se
-   bloquean la raíz y los contenedores `[data-desplazable]` de dentro (el
-   `<main>` de AppShell). Dos selectores de clase+atributo: ganan a la
-   utilidad `overflow-y-auto`. */
+/* DIS-038/DIS-044/DIS-073: bloqueo del desplazamiento del fondo con Modal o el menú
+   móvil abiertos. `scrollbar-gutter: stable` en contenedores desplazables para
+   evitar que al alternar `overflow: hidden` el contenido salte su ancho (CLS = 0). */
+[data-desplazable] {
+    scrollbar-gutter: stable;
+}
+
 .scroll-bloqueado[data-desplazable],
 .scroll-bloqueado [data-desplazable] {
     overflow: hidden;

@@ -124,3 +124,72 @@ export function Badge({
 }) {
   return <span className={`nx-badge nx-badge-${tone}`}>{children}</span>;
 }
+
+/**
+ * Esqueleto de carga con dimensiones finales (DIS-073).
+ *
+ * Reserva el espacio exacto del elemento para evitar desplazamientos de diseño
+ * acumulados (CLS < 0.01).
+ *
+ * Variantes:
+ * - 'fila': simula una fila de tabla o lista (alto estándar min-h-12)
+ * - 'tarjeta': simula un panel Card
+ * - 'contador': simula un StatTile
+ * - 'texto': línea de texto
+ * - 'rect': bloque genérico
+ */
+export function Skeleton({
+  variant = 'fila',
+  className = '',
+  count = 1,
+  ariaLabel = 'Cargando contenido…',
+}: {
+  variant?: 'fila' | 'tarjeta' | 'contador' | 'texto' | 'rect';
+  className?: string;
+  count?: number;
+  ariaLabel?: string;
+}) {
+  const baseClasses = 'animate-pulse rounded-lg bg-surface-container/60 motion-reduce:animate-none';
+  const variantClasses = {
+    fila: 'min-h-12 w-full',
+    tarjeta: 'min-h-36 w-full rounded-xl border border-panel-border',
+    contador: 'min-h-24 w-full rounded-xl border border-panel-border',
+    texto: 'h-4 w-3/4',
+    rect: 'h-full w-full',
+  };
+
+  const items = Array.from({ length: count }, (_, i) => (
+    <div
+      key={i}
+      role="status"
+      aria-label={ariaLabel}
+      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+    >
+      <span className="sr-only">{ariaLabel}</span>
+    </div>
+  ));
+
+  return count === 1 ? items[0] : <div className="space-y-3 w-full">{items}</div>;
+}
+
+/**
+ * Región con alto reservado para avisos y errores (DIS-073).
+ *
+ * Evita que la aparición de un mensaje de error o éxito empuje el resto de los
+ * controles de la pantalla (CLS = 0).
+ */
+export function RegionDeAviso({
+  children,
+  className = '',
+  minHeight = 'min-h-6',
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  minHeight?: string;
+}) {
+  return (
+    <div className={`transition-opacity duration-normal ${minHeight} ${className}`} aria-live="polite">
+      {children}
+    </div>
+  );
+}
