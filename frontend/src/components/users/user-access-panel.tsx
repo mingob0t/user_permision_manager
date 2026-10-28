@@ -16,13 +16,12 @@
  * - Refresco con `usePolling` y el intervalo de la preferencia del usuario.
  */
 
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { grantsApi } from '@/lib/access/grants';
 import type { Access, AccessListParams, AccessOrigin, AccessStatus } from '@/lib/access/types';
 import type { ManagedUser } from '@/lib/types';
 import { usePolling } from '@/lib/use-polling';
-import { Button, Select } from '../form';
+import { Button, ButtonLink, Select } from '../form';
 import { useSession } from '../session-provider';
 import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
 import { AccessStatusBadge, NIVELES } from '../access/access-status-badge';
@@ -326,13 +325,13 @@ export function UserAccessPanel({ user, onClose }: { user: ManagedUser; onClose:
         </div>
         <div className="flex flex-wrap gap-3">
           {/* DIS-020: historial del usuario en Auditoría. */}
-          <Link
+          <ButtonLink
             href={rutaHistorialUsuario(user.id)}
-            className="nexus-btn nexus-btn-secondary"
+            variant="secondary"
             aria-label={`Historial de ${user.name} en Auditoría`}
           >
             Historial
-          </Link>
+          </ButtonLink>
           <Button variant="secondary" onClick={onClose}>Cerrar accesos</Button>
         </div>
       </div>

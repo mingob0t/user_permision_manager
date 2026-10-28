@@ -74,27 +74,9 @@ export function Checkbox({
   );
 }
 
-export function Button({
-  variant = 'primary',
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'danger';
-}) {
-  // .nexus-btn y sus variantes vienen de components.css.
-  const variants = {
-    primary: 'nexus-btn-primary',
-    secondary: 'nexus-btn-secondary',
-    // DIS-004: relleno y texto de peligro por token. DIS-010: clase propia `.nexus-btn-danger`.
-    danger: 'nexus-btn-danger',
-  };
-  return (
-    <button
-      type="button"
-      {...props}
-      className={`nexus-btn ${variants[variant]} disabled:opacity-40 disabled:pointer-events-none ${props.className ?? ''}`}
-    />
-  );
-}
+import { Button } from './button';
+export { Button, type ButtonProps, type ButtonVariant } from './button';
+export { ButtonLink, type ButtonLinkProps } from './button-link';
 
 /**
  * Diálogo modal, con el cristal del portal (.nx-modal-glass).

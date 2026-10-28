@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Button, ButtonLink } from '@/components/form';
 import { useEffect } from 'react';
 
 /** Error de renderizado. Sustituye a templates/errors/500.html. */
@@ -27,19 +27,12 @@ export default function ErrorPage({
           avisa al administrador.
         </p>
         <div className="mt-6 flex justify-center gap-2">
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
+          <Button variant="primary" onClick={reset}>
             Reintentar
-          </button>
-          <Link
-            href="/"
-            className="inline-flex min-h-12 items-center justify-center rounded-lg border border-panel-border px-4 py-2 text-sm text-label outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
+          </Button>
+          <ButtonLink href="/" variant="secondary">
             Ir al inicio
-          </Link>
+          </ButtonLink>
         </div>
       </div>
     </div>

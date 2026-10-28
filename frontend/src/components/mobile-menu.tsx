@@ -20,6 +20,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { enfocables, useFocusTrap } from '@/lib/use-focus-trap';
 import { useScrollLock } from '@/lib/use-scroll-lock';
+import { Button } from './form';
 
 /** Desde `md` (768 px, breakpoint de Tailwind) el menú móvil no se muestra: se cierra. */
 const CONSULTA_MD = '(min-width: 768px)';
@@ -82,16 +83,16 @@ export function MobileMenu({
 
   return (
     <>
-      <button
+      <Button
         ref={button}
-        type="button"
+        variant="secondary"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded-lg border border-panel-border px-3 text-sm text-label outline-none hover:text-body-text focus-visible:ring-2 focus-visible:ring-primary md:hidden"
+        className="min-h-12 min-w-12 shrink-0 md:hidden focus-visible:ring-2 focus-visible:ring-primary"
       >
         Menú
-      </button>
+      </Button>
 
       {montado
         ? createPortal(
@@ -108,13 +109,13 @@ export function MobileMenu({
             >
               <div className="flex items-center justify-between gap-2 pb-4">
                 <p className="px-3 text-lg font-semibold">Nexus</p>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
                   onClick={close}
-                  className="inline-flex min-h-12 min-w-12 items-center justify-center rounded-lg border border-panel-border px-3 text-sm text-label outline-none hover:text-body-text focus-visible:ring-2 focus-visible:ring-primary"
+                  className="min-h-12 min-w-12 focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   Cerrar
-                </button>
+                </Button>
               </div>
               {children(close)}
             </div>

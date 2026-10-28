@@ -11,7 +11,6 @@ import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import type { Area } from '@/lib/types';
 import { variablesCss } from '@/lib/variables-css';
-import { ACCION_FILA, ACCION_FILA_PELIGRO } from './acciones-fila';
 import { AreaAdminsPanel } from './areas/area-admins-panel';
 import { mensajeDeError } from './areas/area-errors';
 import { AreaForm } from './areas/area-form';
@@ -129,32 +128,29 @@ function AreasScreen() {
                   {/* Acciones de 48 px (DIS-008); bajan de línea si no caben. */}
                   {canEdit ? (
                     <div className="mt-3 flex flex-wrap gap-1 border-t border-panel-border pt-3">
-                      <button
-                        type="button"
+                      <Button
+                        variant="fila"
                         onClick={() => setEditing(area)}
                         aria-label={`Editar ${area.name}`}
-                        className={ACCION_FILA}
                       >
                         Editar
-                      </button>
+                      </Button>
                       {isAdmin ? (
-                        <button
-                          type="button"
+                        <Button
+                          variant="fila"
                           onClick={() => setAssigning(area)}
                           aria-label={`Administradores de ${area.name}`}
-                          className={ACCION_FILA}
                         >
                           Administradores
-                        </button>
+                        </Button>
                       ) : null}
-                      <button
-                        type="button"
+                      <Button
+                        variant="fila-peligro"
                         onClick={() => setRemoving(area)}
                         aria-label={`Eliminar ${area.name}`}
-                        className={ACCION_FILA_PELIGRO}
                       >
                         Eliminar
-                      </button>
+                      </Button>
                     </div>
                   ) : null}
                 </Card>

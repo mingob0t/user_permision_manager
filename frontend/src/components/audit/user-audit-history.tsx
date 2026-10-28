@@ -8,7 +8,7 @@
  * - Usuario: solo el suyo; otro id muestra "sin permiso" sin pedir nada.
  */
 
-import Link from 'next/link';
+import { ButtonLink } from '../form';
 import { useCallback, useState } from 'react';
 import { auditApi } from '@/lib/access/audit';
 import type { AuditEntryV1, AuditParams } from '@/lib/access/types';
@@ -57,9 +57,9 @@ export function UserAuditHistory({ userId }: { userId: number }) {
             {(propio ? session.email : correo) ?? 'Eventos donde actuó o que lo afectaron.'}
           </p>
         </div>
-        <Link href={RUTA_AUDITORIA} className="nexus-btn nexus-btn-secondary">
+        <ButtonLink href={RUTA_AUDITORIA} variant="secondary">
           Toda la auditoría
-        </Link>
+        </ButtonLink>
       </div>
       <AuditHistory cargar={cargar} onDatos={nombrar} />
     </div>

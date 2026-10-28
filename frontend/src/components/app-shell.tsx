@@ -8,6 +8,7 @@ import { MobileMenu } from './mobile-menu';
 import { meetsRequirement, type RoleRequirement } from './require-role';
 import { ThemeSelector } from './theme-selector';
 import { SessionProvider, useSession } from './session-provider';
+import { ButtonLink } from './form';
 import { ErrorNote, Spinner } from './ui';
 
 interface NavItem {
@@ -128,12 +129,13 @@ function Frame({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <ThemeSelector />
-          <a
+          <ButtonLink
             href="/logout"
-            className="inline-flex min-h-12 shrink-0 items-center rounded-lg border border-panel-border px-3 text-sm text-label outline-none hover:text-body-text focus-visible:ring-2 focus-visible:ring-primary"
+            variant="secondary"
+            className="shrink-0"
           >
             Salir
-          </a>
+          </ButtonLink>
           </div>
         </header>
 

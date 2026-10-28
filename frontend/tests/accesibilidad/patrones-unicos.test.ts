@@ -53,7 +53,7 @@ describe('DIS-068: Regla «Un patrón, un componente»', () => {
 
     // 2. Regla nexus-btn: exclusivo de Button / ButtonLink
     it(`${relativo} respeta la regla de botones unificados`, () => {
-      if (relativo === 'components/form.tsx' || relativo === 'components/button.tsx') return;
+      if (relativo === 'components/form.tsx' || relativo === 'components/button.tsx' || relativo === 'components/button-link.tsx') return;
       const ocurrencias = [...contenido.matchAll(/(?<![\w-])nexus-btn(?![-\w])/g)].length;
       const exp = excepcionDe('nexus-btn');
       if (exp) {
