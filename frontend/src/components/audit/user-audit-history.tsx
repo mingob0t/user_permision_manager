@@ -9,12 +9,13 @@
  */
 
 import { ButtonLink } from '../form';
+import { PageHeader } from '../page-header';
 import { useCallback, useState } from 'react';
 import { auditApi } from '@/lib/access/audit';
 import type { AuditEntryV1, AuditParams } from '@/lib/access/types';
 import { FORBIDDEN_MESSAGE } from '../require-role';
 import { useSession } from '../session-provider';
-import { ErrorNote, Spinner } from '../ui';
+import { ErrorNote, Skeleton } from '../ui';
 import { AuditHistory } from './audit-history';
 import { RUTA_AUDITORIA } from './audit-routes';
 
@@ -37,7 +38,7 @@ export function UserAuditHistory({ userId }: { userId: number }) {
     setCorreo((actual) => actual ?? correoDelUsuario(items, userId));
   }, [userId]);
 
-  if (loading) return <Spinner label="Cargando sesión…" />;
+  if (loading) return <Skeleton variant="fila" count={4} ariaLabel="Cargando sesión…" />;
   if (error) return <ErrorNote message={error} />;
   if (!session) return null;
 
@@ -48,19 +49,15 @@ export function UserAuditHistory({ userId }: { userId: number }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-semibold">
-            {propio ? 'Mi historial' : 'Historial del usuario'}
-          </h1>
-          <p className="mt-1 break-words text-sm text-label">
-            {(propio ? session.email : correo) ?? 'Eventos donde actuó o que lo afectaron.'}
-          </p>
-        </div>
-        <ButtonLink href={RUTA_AUDITORIA} variant="secondary">
-          Toda la auditoría
-        </ButtonLink>
-      </div>
+      <PageHeader
+        title={propio ? 'Mi historial' : 'Historial del usuario'}
+        description={(propio ? session.email : correo) ?? 'Eventos donde actuó o que lo afectaron.'}
+        actions={
+          <ButtonLink href={RUTA_AUDITORIA} variant="secondary">
+            Toda la auditoría
+          </ButtonLink>
+        }
+      />
       <AuditHistory cargar={cargar} onDatos={nombrar} />
     </div>
   );
