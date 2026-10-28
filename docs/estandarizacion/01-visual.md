@@ -72,3 +72,30 @@ Para cada estado (`exito`, `aviso`, `peligro`, `info`, `neutro`):
 | **Solo lectura** | `--solo-lectura-fondo` | `.solo-lectura` | Fondo diferenciado para campos `[readonly]` |
 | **Movimiento** | `--duracion-corta`, `--duracion-media`, `--curva` | `duration-corta`, `duration-media`, `ease-curva` | Transiciones normalizadas (150ms/250ms); 0ms en `prefers-reduced-motion` |
 
+## 6. Escalas Visuales (DIS-057)
+
+### Tipografía y Fuentes
+- **Pila Sans del Sistema** (`--fuente-texto`): `ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`. Sin dependencias de Google Fonts ni bloqueo de red.
+- **Pila Mono** (`--fuente-mono`): `ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`.
+- **Escala de Tamaños**:
+  - `text-xs`: 12 px (umbral mínimo accesible WCAG AA)
+  - `text-sm`: 14 px
+  - `text-base`: 16 px
+  - `text-lg`: 18 px
+  - `text-xl`: 20 px
+  - `text-2xl`: 24 px
+  - `text-3xl`: 30 px
+
+### Radios de Borde
+- `rounded-control` (`--radio-control`): 8 px (botones, inputs, selectores)
+- `rounded-tarjeta` (`--radio-tarjeta`): 12 px (paneles contenedores y tarjetas)
+- `rounded-dialogo` (`--radio-dialogo`): 16 px (ventanas modales y cuadros de diálogo)
+- `rounded-pastilla` (`--radio-pastilla`): 9999 px (insignias, chips)
+
+### Bordes y Sombras
+- `border-base` (`--borde-ancho`): 1 px estándar.
+- `shadow-1` (`--sombra-1`): elevación sutil para tarjetas en reposo.
+- `shadow-2` (`--sombra-2`): elevación media para tarjetas activas y dropdowns.
+- `shadow-3` (`--sombra-3`): elevación alta para modales y diálogos superpuestos.
+
+

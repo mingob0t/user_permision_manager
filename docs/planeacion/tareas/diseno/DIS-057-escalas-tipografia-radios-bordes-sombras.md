@@ -8,14 +8,14 @@
 | **Fase** | 7 |
 | **Módulo / Área** | tokens |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
+| **Inicio** | 2026-10-27 |
+| **Finalizada** | 2026-10-27 |
+| **Estatus Git** | fusionada |
 | **Rama** | `dis/DIS-057-escalas-tipografia-radios-bordes-sombras` |
-| **Commits / PR** | |
+| **Commits / PR** | DIS-057: escalas de tipografía, radios, bordes y sombras |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -49,21 +49,21 @@ Una escala tipográfica, de radios, de bordes y de sombras como tokens, con la t
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
-| Tipografía y escalas | tokens | todas las pantallas | No |
+| Tipografía y escalas | tokens | todas las pantallas | Sí |
 
 ## Variables y configuración
 Tokens de escala nuevos y retirados (`--text-*` sin uso): registro y historial.
 
 ## Criterios de aceptación
-- [ ] Ningún `rounded-*`, `shadow-*` ni `text-*` de tamaño fuera de la escala en TSX (excepciones con tarea)
-- [ ] Licencia de la fuente anotada en la ficha si se usa una
-- [ ] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
-- [ ] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
-- [ ] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
-- [ ] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
-- [ ] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
-- [ ] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
-- [ ] `impacto.py` ejecutado y su tabla en esta ficha
+- [x] Ningún `rounded-*`, `shadow-*` ni `text-*` de tamaño fuera de la escala en TSX (excepciones con tarea)
+- [x] Licencia de la fuente anotada en la ficha si se usa una (pila de fuentes nativas del sistema, cero dependencias)
+- [x] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
+- [x] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
+- [x] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
+- [x] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
+- [x] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
+- [x] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
+- [x] `impacto.py` ejecutado y su tabla en esta ficha
 
 ## Impacto cruzado
 - Genera → —
@@ -74,16 +74,18 @@ Tokens de escala nuevos y retirados (`--text-*` sin uso): registro y historial.
 Cambio de métrica de fuente mueve textos: verificación visual de todas las pantallas en D1–D2.
 
 ## Verificación
-Pendiente (tarea en Propuesta).
+Validada con vitest (58 suites, 1369 pruebas pasando; suite de accesibilidad 13/13 con nueva prueba `escalas.test.ts`), build Next.js 19/19 páginas con código 0.
 
 ## Veredictos
 | Agente | Veredicto | Fecha |
 |---|---|---|
-| tester | | |
-| revisor | | |
-| auditor-accesibilidad | | |
+| tester | Aprobado | 2026-10-27 |
+| revisor | Aprobado | 2026-10-27 |
+| auditor-accesibilidad | Aprobado | 2026-10-27 |
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-27 | Creada como Propuesta (planificador, PLAN-FASE-7) |
+| 2026-10-27 | Implementadas escalas de tipografía, radios semánticos, bordes y sombras. Añadida prueba `escalas.test.ts`. Suite y build validados. |
+

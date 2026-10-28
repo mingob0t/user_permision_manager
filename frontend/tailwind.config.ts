@@ -157,6 +157,18 @@ export default {
       borderRadius: {
         base: 'var(--radius-base)',
         panel: 'var(--radius-panel)',
+        control: 'var(--radio-control)',
+        tarjeta: 'var(--radio-tarjeta)',
+        dialogo: 'var(--radio-dialogo)',
+        pastilla: 'var(--radio-pastilla)',
+      },
+      boxShadow: {
+        1: 'var(--sombra-1)',
+        2: 'var(--sombra-2)',
+        3: 'var(--sombra-3)',
+      },
+      borderWidth: {
+        base: 'var(--borde-ancho)',
       },
       transitionDuration: {
         corta: 'var(--duracion-corta)',
@@ -166,8 +178,17 @@ export default {
         curva: 'var(--curva)',
       },
       fontFamily: {
-        // base.html carga Inter desde Google Fonts.
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['var(--fuente-texto)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['var(--fuente-mono)', 'ui-monospace', 'monospace'],
+      },
+      fontSize: {
+        xs: ['var(--text-xs)', { lineHeight: '1rem' }],
+        sm: ['var(--text-sm)', { lineHeight: '1.25rem' }],
+        base: ['var(--text-base)', { lineHeight: '1.5rem' }],
+        lg: ['var(--text-lg)', { lineHeight: '1.75rem' }],
+        xl: ['var(--text-xl)', { lineHeight: '1.75rem' }],
+        '2xl': ['var(--text-2xl)', { lineHeight: '2rem' }],
+        '3xl': ['var(--text-3xl)', { lineHeight: '2.25rem' }],
       },
     },
   },
