@@ -7,8 +7,9 @@ import { api } from '@/lib/api';
 import { useAsync } from '@/lib/use-async';
 import type { DirectoryUser, ManagedUser } from '@/lib/types';
 import { Button, ConfirmDialog } from './form';
+import { PageHeader } from './page-header';
 import { useSession } from './session-provider';
-import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from './ui';
+import { Card, EmptyNote, ErrorNote, RegionDeAviso, Skeleton, SuccessNote } from './ui';
 import { AdminAreasDialog, RemoveAdminDialog } from './users/admin-role-dialog';
 import { DirectoryAccountForm } from './users/directory-account-form';
 import { DirectoryPicker } from './users/directory-picker';
@@ -85,29 +86,29 @@ export function UsersList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Usuarios</h1>
-          <p className="mt-1 text-sm text-label">
-            {session?.permissions.is_admin
-              ? 'Todos los usuarios del sistema.'
-              : 'Usuarios de las áreas que administras.'}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {isAdmin ? (
-            <>
-              <Button variant="secondary" onClick={() => setDirectory(true)}>
-                Buscar en directorio
-              </Button>
-              <Button variant="secondary" onClick={() => setShowPurge((v) => !v)}>
-                {showPurge ? 'Ocultar purga' : 'Purgar inactivas'}
-              </Button>
-            </>
-          ) : null}
-          <Button onClick={() => setCreatingAccount(true)}>Nuevo usuario</Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Usuarios"
+        description={
+          session?.permissions.is_admin
+            ? 'Todos los usuarios del sistema.'
+            : 'Usuarios de las áreas que administras.'
+        }
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {isAdmin ? (
+              <>
+                <Button variant="secondary" onClick={() => setDirectory(true)}>
+                  Buscar en directorio
+                </Button>
+                <Button variant="secondary" onClick={() => setShowPurge((v) => !v)}>
+                  {showPurge ? 'Ocultar purga' : 'Purgar inactivas'}
+                </Button>
+              </>
+            ) : null}
+            <Button onClick={() => setCreatingAccount(true)}>Nuevo usuario</Button>
+          </div>
+        }
+      />
 
       <div role="status" ref={avisoRef} tabIndex={-1} className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary">
         {aviso ? (
@@ -133,11 +134,13 @@ export function UsersList() {
         />
       ) : null}
 
-      {problem ? <ErrorNote message={problem} /> : null}
-      {users.loading ? <Spinner /> : null}
-      {users.error ? <ErrorNote message={users.error} /> : null}
+      <RegionDeAviso minHeight="min-h-6">
+        {problem ? <ErrorNote message={problem} /> : users.error ? <ErrorNote message={users.error} /> : null}
+      </RegionDeAviso>
 
-      {!users.loading && !users.error ? (
+      {users.loading ? (
+        <Skeleton variant="tarjeta" count={3} ariaLabel="Cargando usuarios…" />
+      ) : !users.error ? (
         (users.data ?? []).length === 0 ? (
           <EmptyNote message="No hay usuarios dentro de tu alcance." />
         ) : (

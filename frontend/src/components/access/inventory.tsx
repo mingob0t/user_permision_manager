@@ -19,7 +19,7 @@ import { useAsync } from '@/lib/use-async';
 import { rutaHistorialPlataforma } from '../audit/audit-routes';
 import { Button, ButtonLink } from '../form';
 import { valorPermitido } from './filtro-url';
-import { EmptyNote, ErrorNote, Spinner } from '../ui';
+import { EmptyNote, ErrorNote, Skeleton } from '../ui';
 import {
   FILTROS_INICIALES,
   type FiltrosInventario,
@@ -118,7 +118,9 @@ export function Inventory() {
         </div>
       </div>
 
-      {lista.loading && !data ? <Spinner label="Cargando el inventario…" /> : null}
+      {lista.loading && !data ? (
+        <Skeleton variant="fila" count={5} ariaLabel="Cargando el inventario…" />
+      ) : null}
 
       {lista.error ? (
         <div className="space-y-3">
