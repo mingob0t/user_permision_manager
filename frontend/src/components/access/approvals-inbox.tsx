@@ -24,7 +24,7 @@ import { useAsync } from '@/lib/use-async';
 import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
 import { useSession } from '../session-provider';
-import { Card, EmptyNote, ErrorNote, Spinner, SuccessNote } from '../ui';
+import { Card, EmptyNote, ErrorNote, Skeleton, SuccessNote } from '../ui';
 import { AccessStatusBadge, NIVELES } from './access-status-badge';
 import { ApproveDialog } from './approve-dialog';
 import { formatearFecha } from './fecha';
@@ -271,7 +271,9 @@ export function ApprovalsInbox() {
         </Select>
       </div>
 
-      {lista.loading && !data ? <Spinner label="Cargando la bandeja…" /> : null}
+      {lista.loading && !data ? (
+        <Skeleton variant="fila" count={4} ariaLabel="Cargando la bandeja…" />
+      ) : null}
 
       {lista.error ? (
         <div className="space-y-3">

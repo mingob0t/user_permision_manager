@@ -1,8 +1,9 @@
 import { Suspense } from 'react';
 import { AppShell } from '@/components/app-shell';
+import { PageHeader } from '@/components/page-header';
 import { Inventory } from '@/components/access/inventory';
 import { RequireRole } from '@/components/require-role';
-import { Spinner } from '@/components/ui';
+import { Skeleton } from '@/components/ui';
 
 /**
  * Inventario de permisos (DIS-021): admin de área (sus áreas) y superadmin
@@ -13,14 +14,11 @@ export default function Page() {
     <AppShell>
       <RequireRole requires="any_admin">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold">Inventario</h1>
-            <p className="mt-1 text-sm text-label">
-              Quién tiene qué plataforma, con qué nivel, desde cuándo y quién lo aprobó, en tus
-              áreas (todas, si eres superadmin).
-            </p>
-          </div>
-          <Suspense fallback={<Spinner label="Cargando…" />}>
+          <PageHeader
+            title="Inventario"
+            description="Quién tiene qué plataforma, con qué nivel, desde cuándo y quién lo aprobó, en tus áreas (todas, si eres superadmin)."
+          />
+          <Suspense fallback={<Skeleton variant="fila" count={5} ariaLabel="Cargando inventario…" />}>
             <Inventory />
           </Suspense>
         </div>

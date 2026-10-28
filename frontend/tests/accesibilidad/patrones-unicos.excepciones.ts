@@ -55,28 +55,16 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
   'components/audit-log.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
-  'components/areas-list.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
-  'components/users-list.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
   'app/not-found.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
   'app/error.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
-  'app/inventory/page.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
   'app/admin/jobs/page.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
   'app/admin/connectors/page.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
-  'app/approvals/page.tsx': [
     { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
   ],
 };

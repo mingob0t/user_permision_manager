@@ -15,9 +15,10 @@ import { AreaAdminsPanel } from './areas/area-admins-panel';
 import { mensajeDeError } from './areas/area-errors';
 import { AreaForm } from './areas/area-form';
 import { Button, ConfirmDialog } from './form';
+import { PageHeader } from './page-header';
 import { RequireRole, meetsRequirement } from './require-role';
 import { useSession } from './session-provider';
-import { Badge, Card, EmptyNote, ErrorNote, Spinner } from './ui';
+import { Badge, Card, EmptyNote, ErrorNote, RegionDeAviso, Skeleton } from './ui';
 
 /** Sin rol de administración muestra el estado "sin permiso" y no llama a la API. */
 export function AreasList() {
@@ -68,21 +69,19 @@ function AreasScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Áreas</h1>
-          <p className="mt-1 text-sm text-label">
-            {isAdmin ? 'Todas las áreas del sistema.' : 'Áreas que administras.'}
-          </p>
-        </div>
-        {canCreate ? <Button onClick={() => setCreating(true)}>Nueva área</Button> : null}
-      </div>
+      <PageHeader
+        title="Áreas"
+        description={isAdmin ? 'Todas las áreas del sistema.' : 'Áreas que administras.'}
+        actions={canCreate ? <Button onClick={() => setCreating(true)}>Nueva área</Button> : null}
+      />
 
-      {problem ? <ErrorNote message={problem} /> : null}
-      {loading ? <Spinner /> : null}
-      {error ? <ErrorNote message={error} /> : null}
+      <RegionDeAviso minHeight="min-h-6">
+        {problem ? <ErrorNote message={problem} /> : error ? <ErrorNote message={error} /> : null}
+      </RegionDeAviso>
 
-      {!loading && !error ? (
+      {loading ? (
+        <Skeleton variant="tarjeta" count={3} ariaLabel="Cargando áreas…" />
+      ) : !error ? (
         (data ?? []).length === 0 ? (
           <EmptyNote message="No hay áreas dentro de tu alcance." />
         ) : (
