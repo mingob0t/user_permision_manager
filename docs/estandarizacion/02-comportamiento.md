@@ -25,7 +25,8 @@ Ninguna pantalla, vista o módulo debe implementar marcado ad hoc para component
 ## 2. Validación Automatizada
 La prueba `frontend/tests/accesibilidad/patrones-unicos.test.ts` valida en tiempo de compilación y pruebas:
 1. No se permite la inclusión de ningún nuevo `<table>`, `<h1>`, `role="tablist"` o clases `.nexus-btn` fuera de los componentes autorizados.
-2. Toda excepción heredada existente está cuantificada estrictamente en `patrones-unicos.excepciones.ts` y disminuye con cada iteración de los bloques C y D.
+2. Toda excepción heredada existente fue eliminada al 100% en DIS-067 (`EXCEPCIONES_PATRONES = {}`), asegurando conformidad absoluta con la arquitectura de componentes unificados.
+
 
 ---
 

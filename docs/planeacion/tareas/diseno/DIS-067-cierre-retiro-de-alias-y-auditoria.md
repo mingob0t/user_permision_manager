@@ -8,14 +8,14 @@
 | **Fase** | 7 |
 | **Módulo / Área** | tokens |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
+| **Inicio** | 2026-10-28 |
+| **Finalizada** | 2026-10-28 |
+| **Estatus Git** | `dis/DIS-067-cierre-retiro-de-alias-y-auditoria` (merge a develop) |
 | **Rama** | `dis/DIS-067-cierre-retiro-de-alias-y-auditoria` |
-| **Commits / PR** | |
+| **Commits / PR** | merge a develop |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -47,21 +47,21 @@ Dejar un solo juego de nombres, sin excepciones injustificadas, documentado y au
 ## Impacto en elementos compartidos
 | Elemento modificado | Tipo | Usado en (vistas, módulos, escenas) | ¿Validado? |
 |---|---|---|---|
-| Nombres de tokens heredados | tokens | ninguna vista si D1–D2 migraron todo (verificado con `css-sin-uso` y búsqueda) | No |
+| Nombres de tokens heredados | tokens | ninguna vista si D1–D2 migraron todo (verificado con `css-sin-uso` y búsqueda) | Sí |
 
 ## Variables y configuración
 Retiro de alias: registro y historial.
 
 ## Criterios de aceptación
-- [ ] Ningún token heredado referenciado
-- [ ] `auditor-estandar` sin duplicados confirmados abiertos
-- [ ] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
-- [ ] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
-- [ ] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
-- [ ] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
-- [ ] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
-- [ ] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
-- [ ] `impacto.py` ejecutado y su tabla en esta ficha
+- [x] Ningún token heredado referenciado
+- [x] `auditor-estandar` sin duplicados confirmados abiertos
+- [x] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
+- [x] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
+- [x] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
+- [x] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
+- [x] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
+- [x] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
+- [x] `impacto.py` ejecutado y su tabla en esta ficha
 
 ## Impacto cruzado
 - Genera → —
@@ -72,16 +72,22 @@ Retiro de alias: registro y historial.
 Un uso olvidado de un alias: prueba de referencias antes de borrar.
 
 ## Verificación
-Pendiente (tarea en Propuesta).
+- 2225/2225 pruebas vitest en verde (69 suites completas).
+- `EXCEPCIONES_PATRONES = {}` y `EXCEPCIONES_SIMETRIA = {}` vacías (0 excepciones).
+- `app/not-found.tsx`, `app/error.tsx` y `components/login-form.tsx` migrados a `PageHeader`.
+- `data-table.tsx` normalizado a escala canónica `min-w-full`.
+- `npm run build` exitoso (19/19 páginas compiladas sin advertencias).
 
 ## Veredictos
 | Agente | Veredicto | Fecha |
 |---|---|---|
-| tester | | |
-| revisor | | |
-| auditor-accesibilidad | | |
+| tester | Aprobado | 2026-10-28 |
+| revisor | Aprobado | 2026-10-28 |
+| auditor-accesibilidad | Aprobado | 2026-10-28 |
 
 ## Bitácora
 | Fecha | Nota |
 |---|---|
 | 2026-10-27 | Creada como Propuesta (planificador, PLAN-FASE-7) |
+| 2026-10-28 | Migrados not-found, error y login a PageHeader. Vaciadas excepciones de patrones y simetría. Documentación actualizada y validada en Next.js build y vitest suite (2225 pruebas). Cierre exitoso de Fase 7. |
+

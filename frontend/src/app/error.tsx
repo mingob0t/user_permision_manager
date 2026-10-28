@@ -2,6 +2,7 @@
 
 import { Button, ButtonLink } from '@/components/form';
 import { Brand } from '@/components/brand';
+import { PageHeader } from '@/components/page-header';
 import { useEffect } from 'react';
 
 /** Error de renderizado. Sustituye a templates/errors/500.html. */
@@ -23,11 +24,11 @@ export default function ErrorPage({
       <div className="max-w-md text-center">
         <Brand size="lg" className="mb-6 items-center" />
         <p className="text-5xl font-semibold tabular-nums text-label">500</p>
-        <h1 className="mt-3 text-xl font-medium">Algo ha fallado</h1>
-        <p className="mt-2 text-sm text-label">
-          No se pudo completar la operación. Vuelve a intentarlo; si persiste,
-          avisa al administrador.
-        </p>
+        <PageHeader
+          title="Algo ha fallado"
+          description="No se pudo completar la operación. Vuelve a intentarlo; si persiste, avisa al administrador."
+          className="text-center sm:flex-col sm:items-center"
+        />
         <div className="mt-6 flex justify-center gap-2">
           <Button variant="primary" onClick={reset}>
             Reintentar

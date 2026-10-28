@@ -32,7 +32,7 @@ export type DataColumn<T> = {
 };
 
 const CELDA = 'px-4 py-2.5';
-const ANCHO_MINIMO = 'min-w-[44rem]';
+const ANCHO_MINIMO = 'min-w-full';
 
 export interface DataTableProps<T> {
   /** Nombre accesible de la región o tabla. */

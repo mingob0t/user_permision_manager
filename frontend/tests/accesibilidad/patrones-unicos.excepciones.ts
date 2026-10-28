@@ -20,15 +20,6 @@ export interface ExcepcionPatron {
 }
 
 export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
-  // Tablas fuera de data-table.tsx: 0 excepciones (todas migradas en DIS-071)
-  // h1 restantes en componentes y pantallas
-  'components/login-form.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-063', motivo: 'Título en login; migrar a PageHeader en DIS-063/DIS-070' },
-  ],
-  'app/not-found.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
-  'app/error.tsx': [
-    { patron: 'h1', cantidad: 1, tarea: 'DIS-070', motivo: 'Encabezado h1; migrar a PageHeader en DIS-070' },
-  ],
+  // 0 excepciones: 100% de tablas, botones, h1, tablists y diálogos usan componentes unificados (DIS-067).
 };
+
