@@ -1,29 +1,17 @@
 'use client';
 
 /**
- * Elevación a admin de área (DIS-019, F-USR-03, F-AREA-02; contrato
+ * Elevación a admin de área (DIS-019, DIS-075, F-USR-03, F-AREA-02; contrato
  * `areas-y-roles.md` 2.1). Solo el superadmin la ve: `UsersList` no monta
  * estos diálogos para nadie más y el servidor vuelve a validarlo.
- *
- * - `AdminAreasDialog`: "Hacer admin" (rol `usuario` → `admin_area` con
- *   `PUT /users/<id>` y luego sus áreas con `PUT /users/<id>/managed-areas`)
- *   o cambiar las áreas de quien ya es admin. Al menos un área: para dejar
- *   ninguna se usa "Quitar admin".
- * - `RemoveAdminDialog`: "Quitar admin" (`role: usuario`); el servidor borra
- *   sus áreas administradas y revoca sus accesos automáticos (FNC-055).
- * - Es una acción sensible: el diálogo es la confirmación y explica el efecto
- *   con las áreas concretas antes de enviar. Patrón de `ApproveDialog`
- *   (DIS-015): `aria-disabled` durante el envío; describe el diálogo
- *   (`describedBy`, DIS-031) un texto estático: la pista de las áreas en
- *   `AdminAreasDialog` y el efecto en `RemoveAdminDialog`. Hacer admin usa el botón primario;
- *   Quitar admin, `danger` (DIS-043: retira permisos y accesos automáticos).
+ * Migrado a `AlertDialog` (DIS-075).
  */
 
 import { useId, useState } from 'react';
 import { api } from '@/lib/api';
 import { usersApi } from '@/lib/access/users';
 import type { AreaRef, ManagedUser } from '@/lib/types';
-import { Button, Modal } from '../form';
+import { AlertDialog } from '../alert-dialog';
 import { ErrorNote } from '../ui';
 import { AreaChecklist } from './area-checklist';
 import { MENSAJE_SIN_AREAS, describeRoleError } from './admin-role-errors';
@@ -99,8 +87,6 @@ export function AdminAreasDialog({
     let rolAplicado = false;
     try {
       if (elevar) {
-        // Mismo rol repetido no es una asignación (el servidor lo ignora):
-        // reintentar tras un fallo del segundo paso es seguro.
         await api.updateUser(user.id, { role: 'admin_area' });
         rolAplicado = true;
       }
@@ -119,22 +105,17 @@ export function AdminAreasDialog({
   }
 
   return (
-    <Modal
+    <AlertDialog
+      open={true}
       title={elevar ? `Hacer admin a ${quien}` : `Áreas que administra ${quien}`}
       onClose={onClose}
-      // H6: descripción estática (la pista de la lista de áreas, `${AREAS_ID}-pista` de
-      // `AreaChecklist`); el efecto cambia con cada casilla y se anuncia por `aria-live`.
+      onConfirm={guardar}
+      type="pregunta"
+      confirmVariant="primary"
+      confirmLabel={sending ? 'Guardando…' : elevar ? 'Hacer admin' : 'Guardar áreas'}
+      cancelLabel="Cancelar"
+      busy={sending}
       describedBy={`${AREAS_ID}-pista`}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={guardar} aria-disabled={sending || undefined} className="aria-disabled:opacity-40">
-            {sending ? 'Guardando…' : elevar ? 'Hacer admin' : 'Guardar áreas'}
-          </Button>
-        </>
-      }
     >
       <div aria-busy={sending} className="space-y-5">
         <AreaChecklist
@@ -156,7 +137,7 @@ export function AdminAreasDialog({
         </div>
         {error ? <ErrorNote message={error} /> : null}
       </div>
-    </Modal>
+    </AlertDialog>
   );
 }
 
@@ -194,21 +175,17 @@ export function RemoveAdminDialog({
   }
 
   return (
-    <Modal
+    <AlertDialog
+      open={true}
       title={`Quitar admin a ${quien}`}
       onClose={onClose}
+      onConfirm={quitar}
+      type="aviso"
+      confirmVariant="danger"
+      confirmLabel={sending ? 'Quitando…' : 'Quitar admin'}
+      cancelLabel="Cancelar"
+      busy={sending}
       describedBy={`${efectoId} ${avisoId}`}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          {/* `danger` (DIS-043): acción destructiva; el texto sobre `--color-error-solid` pasa AA (DIS-004). */}
-          <Button variant="danger" onClick={quitar} aria-disabled={sending || undefined} className="aria-disabled:opacity-40">
-            {sending ? 'Quitando…' : 'Quitar admin'}
-          </Button>
-        </>
-      }
     >
       <div aria-busy={sending} className="space-y-3">
         <p id={efectoId} className="text-sm text-body-text">
@@ -221,6 +198,6 @@ export function RemoveAdminDialog({
         </p>
         {error ? <ErrorNote message={error} /> : null}
       </div>
-    </Modal>
+    </AlertDialog>
   );
 }

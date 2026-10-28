@@ -235,6 +235,8 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   busy = false,
+  type = 'aviso',
+  role = 'alertdialog',
 }: {
   title: string;
   message: string;
@@ -242,6 +244,8 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
   busy?: boolean;
+  type?: AlertDialogType;
+  role?: 'alertdialog' | 'dialog';
 }) {
   const confirmText = busy
     ? (confirmLabel === 'Eliminar' ? 'Eliminando…' : `${confirmLabel}…`)
@@ -252,8 +256,8 @@ export function ConfirmDialog({
       open={true}
       title={title}
       message={message}
-      type="pregunta"
-      role="dialog"
+      type={type}
+      role={role}
       confirmLabel={confirmText}
       cancelLabel="Cancelar"
       confirmVariant="danger"

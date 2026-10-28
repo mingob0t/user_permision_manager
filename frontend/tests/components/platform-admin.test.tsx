@@ -61,7 +61,7 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 function dialogo() {
-  return within(screen.getByRole('dialog'));
+  return within(screen.queryByRole('alertdialog') ?? screen.getByRole('dialog'));
 }
 
 async function abrirAlta() {
@@ -234,6 +234,7 @@ describe('PlatformAdmin: avisos y estados', () => {
     expect(await screen.findByText('Guardada con avisos')).toBeTruthy();
     expect(screen.getByText('El grupo de nivel usuario no existe en el directorio.')).toBeTruthy();
     expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     fireEvent.click(screen.getByText('Cerrar aviso'));
     expect(screen.queryByText('Guardada con avisos')).toBeNull();
   });
@@ -373,14 +374,14 @@ describe('PlatformAdmin: accesibilidad (revisión de DIS-017)', () => {
     vi.mocked(api.deletePlatform).mockRejectedValue(new ApiError(status, 'detalle interno', { code: 'x' }));
     render(<PlatformAdmin />);
     fireEvent.click(await screen.findByRole('button', { name: 'Eliminar Contabilidad' }));
-    fireEvent.click(within(screen.getByRole('dialog')).getByText('Eliminar'));
+    fireEvent.click(within(screen.queryByRole('alertdialog') ?? screen.getByRole('dialog')).getByText('Eliminar'));
     expect(await screen.findByText(mensaje)).toBeTruthy();
   });
 });
 
 async function abrirAltaSinRender() {
   fireEvent.click(screen.getByText('Nueva plataforma'));
-  const modal = within(screen.getByRole('dialog'));
+  const modal = within(screen.queryByRole('alertdialog') ?? screen.getByRole('dialog'));
   fireEvent.change(modal.getByLabelText(/^Nombre/), { target: { value: 'Nueva' } });
   fireEvent.change(modal.getByLabelText(/^Descripción/), { target: { value: 'Descripción' } });
   return modal;

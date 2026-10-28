@@ -1,20 +1,15 @@
 'use client';
 
 /**
- * Confirmación de eliminar el conector de una plataforma (DIS-022,
+ * Confirmación de eliminar el conector de una plataforma (DIS-022, DIS-075,
  * `DELETE /platforms/<id>/connector`, contrato `conectores-y-ejecuciones.md` 1.1).
- *
- * - Explica el efecto antes de confirmar. El servidor lo impide con accesos
- *   vigentes (`409 plataforma_con_accesos`).
- * - Patrón de `RevokeAccessDialog` (DIS-018): botón de confirmar `danger`
- *   (DIS-043; pasa AA desde DIS-004) y `aria-disabled` durante el envío.
- * - El efecto y su detalle describen el diálogo (`describedBy`, DIS-031).
+ * Migrado a `AlertDialog` (DIS-075).
  */
 
 import { useId, useState } from 'react';
 import { connectorsApi } from '@/lib/access/connectors';
 import type { Platform } from '@/lib/types';
-import { Button, Modal } from '../form';
+import { AlertDialog } from '../alert-dialog';
 import { ErrorNote } from '../ui';
 import { describeConnectorDeleteError } from './connector-errors';
 
@@ -50,23 +45,17 @@ export function ConnectorDeleteDialog({
   }
 
   return (
-    <Modal
+    <AlertDialog
+      open={true}
       title="Eliminar conector"
       onClose={onClose}
+      onConfirm={confirmar}
+      type="aviso"
+      confirmVariant="danger"
+      confirmLabel={sending ? 'Eliminando…' : 'Eliminar'}
+      cancelLabel="Cancelar"
+      busy={sending}
       describedBy={`${efectoId} ${detalleId}`}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button
-            variant="danger"
-            onClick={confirmar}
-            aria-disabled={sending || undefined}
-            className="aria-disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            {sending ? 'Eliminando…' : 'Eliminar'}
-          </Button>
-        </>
-      }
     >
       <div aria-busy={sending} className="space-y-3">
         <p id={efectoId} className="text-sm text-body-text">
@@ -79,6 +68,6 @@ export function ConnectorDeleteDialog({
         </p>
         {error ? <ErrorNote message={error} /> : null}
       </div>
-    </Modal>
+    </AlertDialog>
   );
 }

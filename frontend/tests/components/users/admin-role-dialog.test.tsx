@@ -219,7 +219,7 @@ describe('UsersList: acciones de rol', () => {
     vi.mocked(api.areas).mockReturnValue(new Promise((r) => { resolverAreas = r; }) as never);
     render(<UsersList />);
     fireEvent.click(await screen.findByRole('button', { name: 'Hacer admin de área a Ana Ruiz' }));
-    const cancelar = within(screen.getByRole('dialog')).getByText('Cancelar');
+    const cancelar = within(screen.getByRole('alertdialog')).getByText('Cancelar');
     cancelar.focus();
     // Llegan las áreas: `UsersList` se vuelve a renderizar con el diálogo abierto.
     resolverAreas(AREAS);
@@ -231,11 +231,11 @@ describe('UsersList: acciones de rol', () => {
     render(<UsersList />);
     const boton = await screen.findByRole('button', { name: 'Hacer admin de área a Ana Ruiz' });
     fireEvent.click(boton);
-    fireEvent.click(within(screen.getByRole('dialog')).getByText('Cancelar'));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByText('Cancelar'));
     expect(document.activeElement).toBe(boton);
 
     fireEvent.click(boton);
-    const modal = within(screen.getByRole('dialog'));
+    const modal = within(screen.getByRole('alertdialog'));
     fireEvent.click(modal.getByLabelText('Finanzas'));
     fireEvent.click(modal.getByText('Hacer admin'));
     const aviso = await screen.findByText('Ana Ruiz ahora es admin de área de: Finanzas.');

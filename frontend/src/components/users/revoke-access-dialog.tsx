@@ -1,21 +1,16 @@
 'use client';
 
 /**
- * Confirmación de revocar un acceso (DIS-018, F-ACC-02, `POST /access/<id>/revoke`,
+ * Confirmación de revocar un acceso (DIS-018, DIS-075, F-ACC-02, `POST /access/<id>/revoke`,
  * contrato `accesos.md` 1.1): motivo opcional de hasta 500 caracteres (P7).
- *
- * - Mismo patrón que `access/reject-dialog.tsx` (DIS-015): contador ligado con
- *   `aria-describedby`, error del campo con el foco y `aria-disabled` durante
- *   el envío para que el foco no caiga en `body`.
- * - Botón de confirmar `danger` (DIS-043): revocar es destructivo y, desde
- *   DIS-004, el texto sobre `--color-error-solid` pasa AA (4,83:1).
- * - El efecto y la advertencia describen el diálogo (`describedBy`, DIS-031).
+ * Migrado a `AlertDialog` (DIS-075).
  */
 
 import { useState } from 'react';
 import { grantsApi } from '@/lib/access/grants';
 import type { Access } from '@/lib/access/types';
-import { Button, Field, Modal, TextArea } from '../form';
+import { AlertDialog } from '../alert-dialog';
+import { Field, TextArea } from '../form';
 import { FieldErrorNote, FieldHint, describedBy } from '../platforms/field-notes';
 import { ErrorNote } from '../ui';
 import { NIVELES } from '../access/access-status-badge';
@@ -77,29 +72,20 @@ export function RevokeAccessDialog({
   }
 
   return (
-    <Modal
+    <AlertDialog
+      open={true}
       title="Revocar acceso"
       onClose={onClose}
+      type="aviso"
+      confirmVariant="danger"
+      confirmLabel={sending ? 'Revocando…' : 'Revocar'}
+      cancelLabel="Cancelar"
+      confirmDisabled={excede}
+      confirmForm={FORM_ID}
+      confirmType="submit"
+      confirmAriaDescribedBy={PISTA_ID}
       describedBy={`${EFECTO_ID} ${AVISO_ID}`}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            type="submit"
-            form={FORM_ID}
-            disabled={excede}
-            // Mientras se envía: `aria-disabled` para que el foco no caiga en `body`.
-            aria-disabled={sending || undefined}
-            className="aria-disabled:opacity-40"
-            aria-describedby={PISTA_ID}
-          >
-            {sending ? 'Revocando…' : 'Revocar'}
-          </Button>
-        </>
-      }
+      busy={sending}
     >
       <form id={FORM_ID} onSubmit={submit} noValidate aria-busy={sending} className="space-y-5">
         <p id={EFECTO_ID} className="text-sm text-body-text">
@@ -130,6 +116,6 @@ export function RevokeAccessDialog({
 
         {error ? <ErrorNote message={error} /> : null}
       </form>
-    </Modal>
+    </AlertDialog>
   );
 }

@@ -151,11 +151,11 @@ describe('ApprovalsInbox: aprobar', () => {
     render(<ApprovalsInbox />);
     const ana = await screen.findByRole('listitem', { name: FILA_ANA });
     fireEvent.click(within(ana).getByRole('button', { name: 'Aprobar la solicitud de Ana Ruiz para Contabilidad' }));
-    const dialogo = screen.getByRole('dialog', { name: 'Aprobar solicitud' });
+    const dialogo = screen.getByRole('alertdialog', { name: 'Aprobar solicitud' });
     expect(requestsApi.approve).not.toHaveBeenCalled();
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Aprobar' }));
 
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
     expect(requestsApi.approve).toHaveBeenCalledWith(41);
     expect(requestsApi.inbox).toHaveBeenCalledTimes(1);
     const actualizada = fila(FILA_ANA);
@@ -171,8 +171,8 @@ describe('ApprovalsInbox: aprobar', () => {
     const boton = within(await screen.findByRole('listitem', { name: FILA_ANA }))
       .getByRole('button', { name: /^Aprobar/ });
     fireEvent.click(boton);
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancelar' }));
-    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(requestsApi.approve).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(boton);
   });
@@ -187,8 +187,8 @@ describe('ApprovalsInbox: aprobar', () => {
     render(<ApprovalsInbox />);
     fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
       .getByRole('button', { name: /^Aprobar/ }));
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Aprobar' }));
-    expect(await within(screen.getByRole('dialog')).findByText(mensaje)).toBeTruthy();
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Aprobar' }));
+    expect(await within(screen.getByRole('alertdialog')).findByText(mensaje)).toBeTruthy();
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenCalledTimes(recarga ? 2 : 1));
   });
 });
@@ -200,10 +200,10 @@ describe('ApprovalsInbox: foco (auditor-accesibilidad)', () => {
     render(<ApprovalsInbox />);
     fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
       .getByRole('button', { name: /^Aprobar/ }));
-    const boton = within(screen.getByRole('dialog')).getByRole('button', { name: 'Aprobar' }) as HTMLButtonElement;
+    const boton = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Aprobar' }) as HTMLButtonElement;
     boton.focus();
     fireEvent.click(boton);
-    const enviando = within(screen.getByRole('dialog')).getByRole('button', { name: 'Aprobando…' }) as HTMLButtonElement;
+    const enviando = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Aprobando…' }) as HTMLButtonElement;
     expect(enviando.disabled).toBe(false);
     expect(enviando.getAttribute('aria-disabled')).toBe('true');
     expect(document.activeElement).toBe(enviando);
@@ -219,7 +219,7 @@ describe('ApprovalsInbox: foco (auditor-accesibilidad)', () => {
     render(<ApprovalsInbox />);
     fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
       .getByRole('button', { name: /^Rechazar/ }));
-    const dialogo = screen.getByRole('dialog');
+    const dialogo = screen.getByRole('alertdialog');
     fireEvent.change(within(dialogo).getByLabelText('Motivo del rechazo'), { target: { value: MOTIVO } });
     const boton = within(dialogo).getByRole('button', { name: 'Rechazar' }) as HTMLButtonElement;
     boton.focus();
@@ -236,7 +236,7 @@ describe('ApprovalsInbox: foco (auditor-accesibilidad)', () => {
       .getByRole('button', { name: /^Aprobar/ });
     fireEvent.click(boton);
     boton.remove();
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancelar' }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancelar' }));
     expect(document.activeElement).toBe(screen.getByLabelText('Filtrar la bandeja por estado'));
   });
 });
@@ -246,7 +246,7 @@ describe('ApprovalsInbox: rechazar', () => {
     render(<ApprovalsInbox />);
     fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
       .getByRole('button', { name: /^Rechazar/ }));
-    const dialogo = screen.getByRole('dialog', { name: 'Rechazar solicitud' });
+    const dialogo = screen.getByRole('alertdialog', { name: 'Rechazar solicitud' });
     return {
       dialogo,
       motivo: within(dialogo).getByLabelText('Motivo del rechazo') as HTMLTextAreaElement,
@@ -277,7 +277,7 @@ describe('ApprovalsInbox: rechazar', () => {
     fireEvent.change(motivo, { target: { value: `  ${MOTIVO}  ` } });
     expect(enviar.disabled).toBe(false);
     fireEvent.click(enviar);
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
     expect(requestsApi.reject).toHaveBeenCalledWith(41, MOTIVO);
     const actualizada = fila(FILA_ANA);
     expect(within(actualizada).getByText('Rechazada')).toBeTruthy();
