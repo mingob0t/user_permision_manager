@@ -51,14 +51,7 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
       motivo: 'Encabezado h1 de vista; migrar a PageHeader en DIS-070',
     },
   ],
-  // Pestañas (role="tablist") fuera de Tabs
   'components/access/my-requests-view.tsx': [
-    {
-      patron: 'tablist',
-      cantidad: 1,
-      tarea: 'DIS-060',
-      motivo: 'Pestañas manuales con role="tablist"; migrar a Tabs en DIS-060',
-    },
     {
       patron: 'h1',
       cantidad: 1,
@@ -67,12 +60,6 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
     },
   ],
   'components/settings-panel.tsx': [
-    {
-      patron: 'tablist',
-      cantidad: 1,
-      tarea: 'DIS-060',
-      motivo: 'Pestañas manuales con role="tablist"; migrar a Tabs en DIS-060',
-    },
     {
       patron: 'h1',
       cantidad: 1,
