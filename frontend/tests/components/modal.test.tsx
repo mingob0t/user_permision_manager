@@ -194,7 +194,7 @@ describe('Modal: describedBy', () => {
     render(
       <ConfirmDialog title="Eliminar" message="Se borrará el área." onConfirm={() => undefined} onCancel={() => undefined} />,
     );
-    const dialogo = screen.getByRole('dialog', { name: 'Eliminar' });
+    const dialogo = screen.getByRole('alertdialog', { name: 'Eliminar' });
     const id = dialogo.getAttribute('aria-describedby');
     expect(id && document.getElementById(id)?.textContent).toBe('Se borrará el área.');
   });

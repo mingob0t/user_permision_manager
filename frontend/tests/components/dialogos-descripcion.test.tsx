@@ -22,7 +22,8 @@ const ADMIN = { ...MOCK_USER, role: 'admin_area' as const, managed_areas: [{ id:
 
 /** Texto que lee el lector de pantalla como descripción del diálogo. */
 function descripcion(): string {
-  const ids = screen.getByRole('dialog').getAttribute('aria-describedby') ?? '';
+  const dialog = screen.queryByRole('alertdialog') ?? screen.getByRole('dialog');
+  const ids = dialog.getAttribute('aria-describedby') ?? '';
   expect(ids).not.toBe('');
   return ids
     .split(' ')

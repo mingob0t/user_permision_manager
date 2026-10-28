@@ -217,7 +217,7 @@ describe('reintentar', () => {
     const ul = await lista();
     expect(within(ul).getAllByRole('button', { name: /^Reintentar/ })).toHaveLength(1);
     fireEvent.click(within(ul).getByRole('button', { name: 'Reintentar la ejecución n.º 301' }));
-    const dialogo = screen.getByRole('dialog', { name: 'Reintentar ejecución' });
+    const dialogo = screen.getByRole('alertdialog', { name: 'Reintentar ejecución' });
     expect(within(dialogo).getByText(efectoReintento(FALLIDA))).toBeTruthy();
     expect(retry).not.toHaveBeenCalled();
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Reintentar' }));
@@ -232,7 +232,7 @@ describe('reintentar', () => {
     retry.mockRejectedValue(new ApiError(409, 'Solo se reintenta...', { code: 'estado_invalido' }));
     const ul = await lista();
     fireEvent.click(within(ul).getByRole('button', { name: 'Reintentar la ejecución n.º 301' }));
-    const dialogo = screen.getByRole('dialog', { name: 'Reintentar ejecución' });
+    const dialogo = screen.getByRole('alertdialog', { name: 'Reintentar ejecución' });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Reintentar' }));
     expect(await within(dialogo).findByText(/Ya no se puede reintentar/)).toBeTruthy();
     await waitFor(() => expect(jobs).toHaveBeenCalledTimes(2));

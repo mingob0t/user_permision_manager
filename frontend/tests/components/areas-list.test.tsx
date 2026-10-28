@@ -80,7 +80,7 @@ afterEach(() => {
 });
 
 function dialogo() {
-  return within(screen.getByRole('dialog'));
+  return within(screen.queryByRole('alertdialog') ?? screen.getByRole('dialog'));
 }
 
 function tarjeta(nombre: string) {
@@ -231,6 +231,7 @@ describe('Errores del formulario y de la baja', () => {
     await waitFor(() => expect(api.deleteArea).toHaveBeenCalledWith(3));
     expect(await screen.findByText(mensaje)).toBeTruthy();
     expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 });
 

@@ -1,22 +1,16 @@
 'use client';
 
 /**
- * Rechazo de una solicitud (DIS-015, RF-06, `POST /access-requests/<id>/reject`,
+ * Rechazo de una solicitud (DIS-015, DIS-075, RF-06, `POST /access-requests/<id>/reject`,
  * contrato `solicitudes.md` 1.1): motivo obligatorio de 10 a 500 caracteres.
- *
- * - Mismo patrón que la justificación de `request-form-modal.tsx` (DIS-013):
- *   contador ligado con `aria-describedby`, error del campo con el foco.
- * - Sin motivo válido el botón "Rechazar" queda deshabilitado y la pista dice
- *   por qué (ligada también al botón).
- * - Botón `danger` (DIS-043): rechazar es destructivo y, desde DIS-004, el
- *   texto sobre `--color-error-solid` pasa AA (4,83:1).
- * - El resumen de la solicitud describe el diálogo (`describedBy`, DIS-031).
+ * Migrado a `AlertDialog` (DIS-075).
  */
 
 import { useState } from 'react';
 import { requestsApi } from '@/lib/access/requests';
 import type { AccessRequest } from '@/lib/access/types';
-import { Button, Field, Modal, TextArea } from '../form';
+import { AlertDialog } from '../alert-dialog';
+import { Field, TextArea } from '../form';
 import { FieldErrorNote, FieldHint, describedBy } from '../platforms/field-notes';
 import { ErrorNote } from '../ui';
 import { NIVELES } from './access-status-badge';
@@ -80,29 +74,20 @@ export function RejectDialog({
   }
 
   return (
-    <Modal
+    <AlertDialog
+      open={true}
       title="Rechazar solicitud"
       onClose={onClose}
+      type="aviso"
+      confirmVariant="danger"
+      confirmLabel={sending ? 'Rechazando…' : 'Rechazar'}
+      cancelLabel="Cancelar"
+      confirmDisabled={!valido}
+      confirmForm={FORM_ID}
+      confirmType="submit"
+      confirmAriaDescribedBy={PISTA_ID}
       describedBy={RESUMEN_ID}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            variant="danger"
-            type="submit"
-            form={FORM_ID}
-            disabled={!valido}
-            // Mientras se envía: `aria-disabled` para que el foco no caiga en `body`.
-            aria-disabled={sending || undefined}
-            className="aria-disabled:opacity-40"
-            aria-describedby={PISTA_ID}
-          >
-            {sending ? 'Rechazando…' : 'Rechazar'}
-          </Button>
-        </>
-      }
+      busy={sending}
     >
       <form id={FORM_ID} onSubmit={submit} noValidate aria-busy={sending} className="space-y-5">
         <p id={RESUMEN_ID} className="text-sm text-label">
@@ -130,6 +115,6 @@ export function RejectDialog({
 
         {error ? <ErrorNote message={error} /> : null}
       </form>
-    </Modal>
+    </AlertDialog>
   );
 }

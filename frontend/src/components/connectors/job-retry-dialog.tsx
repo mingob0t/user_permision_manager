@@ -1,21 +1,15 @@
 'use client';
 
 /**
- * Confirmación de reintentar una ejecución fallida (DIS-022, P10,
+ * Confirmación de reintentar una ejecución fallida (DIS-022, DIS-075, P10,
  * `POST /provisioning/jobs/<id>/retry`, contrato 1.1; solo superadmin).
- *
- * - Explica el efecto antes de confirmar: la ejecución vuelve a `pendiente` y
- *   el acceso a "en proceso" o "revocando"; queda en la auditoría.
- * - Patrón de `RevokeAccessDialog` (DIS-018): botón primario (reintentar no
- *   es destructivo) y `aria-disabled` durante el envío para que el foco no
- *   caiga en `body`.
- * - El efecto y su detalle describen el diálogo (`describedBy`, DIS-031).
+ * Migrado a `AlertDialog` (DIS-075).
  */
 
 import { useId, useState } from 'react';
 import { provisioningApi } from '@/lib/access/provisioning';
 import type { Job, JobDetail } from '@/lib/access/types';
-import { Button, Modal } from '../form';
+import { AlertDialog } from '../alert-dialog';
 import { ErrorNote } from '../ui';
 import { describeRetryError } from './job-errors';
 
@@ -58,22 +52,17 @@ export function JobRetryDialog({
   }
 
   return (
-    <Modal
+    <AlertDialog
+      open={true}
       title="Reintentar ejecución"
       onClose={onClose}
+      onConfirm={confirmar}
+      type="pregunta"
+      confirmVariant="primary"
+      confirmLabel={sending ? 'Reintentando…' : 'Reintentar'}
+      cancelLabel="Cancelar"
+      busy={sending}
       describedBy={`${efectoId} ${detalleId}`}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button
-            onClick={confirmar}
-            aria-disabled={sending || undefined}
-            className="aria-disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            {sending ? 'Reintentando…' : 'Reintentar'}
-          </Button>
-        </>
-      }
     >
       <div aria-busy={sending} className="space-y-3">
         <p id={efectoId} className="text-sm text-body-text">{efectoReintento(job)}</p>
@@ -83,6 +72,6 @@ export function JobRetryDialog({
         </p>
         {error ? <ErrorNote message={error} /> : null}
       </div>
-    </Modal>
+    </AlertDialog>
   );
 }

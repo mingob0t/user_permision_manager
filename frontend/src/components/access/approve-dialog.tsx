@@ -1,15 +1,14 @@
 'use client';
 
 /**
- * Confirmación de aprobar una solicitud (DIS-015, `POST /access-requests/<id>/approve`
- * con `{}`, contrato `solicitudes.md` 1.1). `Modal` con botón primario: aprobar
- * no es destructivo (`ConfirmDialog` es para eliminar).
+ * Confirmación de aprobar una solicitud (DIS-015, DIS-075, `POST /access-requests/<id>/approve`
+ * con `{}`, contrato `solicitudes.md` 1.1). `AlertDialog` accesible estilo SweetAlert propio.
  */
 
 import { useId, useState } from 'react';
 import { requestsApi } from '@/lib/access/requests';
 import type { AccessRequest } from '@/lib/access/types';
-import { Button, Modal } from '../form';
+import { AlertDialog } from '../alert-dialog';
 import { ErrorNote } from '../ui';
 import { NIVELES } from './access-status-badge';
 import { describeDecisionError } from './request-errors';
@@ -58,21 +57,17 @@ export function ApproveDialog({
   }
 
   return (
-    <Modal
+    <AlertDialog
+      open={true}
       title="Aprobar solicitud"
       onClose={onClose}
+      onConfirm={aprobar}
+      type="pregunta"
+      confirmLabel={sending ? 'Aprobando…' : 'Aprobar'}
+      cancelLabel="Cancelar"
+      confirmVariant="primary"
+      busy={sending}
       describedBy={`${efectoId} ${detalleId}`}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          {/* `aria-disabled` mientras se envía: el foco se queda en el botón (con `disabled` caería en `body`). */}
-          <Button onClick={aprobar} aria-disabled={sending || undefined} className="aria-disabled:opacity-40">
-            {sending ? 'Aprobando…' : 'Aprobar'}
-          </Button>
-        </>
-      }
     >
       <div aria-busy={sending} className="space-y-3">
         <p id={efectoId} className="text-sm text-body-text">{efectoAprobacion(request)}</p>
@@ -82,6 +77,6 @@ export function ApproveDialog({
         </p>
         {error ? <ErrorNote message={error} /> : null}
       </div>
-    </Modal>
+    </AlertDialog>
   );
 }

@@ -203,7 +203,7 @@ describe('UserAccessPanel: revocar', () => {
     const boton = within(await screen.findByRole('listitem', { name: FILA_CONTA }))
       .getByRole('button', { name: REVOCAR_CONTA });
     fireEvent.click(boton);
-    const dialogo = screen.getByRole('dialog', { name: 'Revocar acceso' });
+    const dialogo = screen.getByRole('alertdialog', { name: 'Revocar acceso' });
     return {
       boton,
       dialogo,
@@ -220,7 +220,7 @@ describe('UserAccessPanel: revocar', () => {
     expect(enviar.disabled).toBe(false);
     fireEvent.click(enviar);
 
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
     expect(grantsApi.revoke).toHaveBeenCalledWith(77, null);
     expect(grantsApi.ofUser).toHaveBeenCalledTimes(1);
     const fila = screen.getByRole('listitem', { name: FILA_CONTA });
@@ -252,7 +252,7 @@ describe('UserAccessPanel: revocar', () => {
   it('cancelar no llama a la API y devuelve el foco al botón de la fila', async () => {
     const { boton, dialogo } = await abrirRevocacion();
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Cancelar' }));
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(grantsApi.revoke).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(boton);
   });

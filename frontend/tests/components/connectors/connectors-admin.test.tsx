@@ -276,7 +276,7 @@ describe('panel del conector', () => {
     mocks.remove.mockRejectedValueOnce(new ApiError(409, 'x', { code: 'plataforma_con_accesos' }));
     const panel = await abrir();
     fireEvent.click(await within(panel).findByRole('button', { name: 'Eliminar el conector de Contabilidad' }));
-    const dialogo = screen.getByRole('dialog', { name: 'Eliminar conector' });
+    const dialogo = screen.getByRole('alertdialog', { name: 'Eliminar conector' });
     expect(within(dialogo).getByText(/no podrán\s+aplicarse/)).toBeTruthy();
     expect(mocks.remove).not.toHaveBeenCalled();
 
@@ -286,7 +286,7 @@ describe('panel del conector', () => {
     mocks.remove.mockResolvedValueOnce({ status: 'success' });
     fireEvent.click(within(dialogo).getByRole('button', { name: 'Eliminar' }));
     expect(await within(panel).findByText(AVISO_ELIMINADO)).toBeTruthy();
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(within(panel).getByText(/aún no tiene conector/)).toBeTruthy();
   });
 

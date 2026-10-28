@@ -21,7 +21,7 @@ import { useScrollLock } from '@/lib/use-scroll-lock';
 export type AlertDialogType = 'exito' | 'error' | 'aviso' | 'info' | 'pregunta';
 
 export interface AlertDialogProps {
-  open: boolean;
+  open?: boolean;
   onClose: () => void;
   title: string;
   message?: string;
@@ -34,6 +34,11 @@ export interface AlertDialogProps {
   busy?: boolean;
   children?: React.ReactNode;
   devolverA?: React.RefObject<HTMLElement | null>;
+  describedBy?: string;
+  confirmDisabled?: boolean;
+  confirmForm?: string;
+  confirmType?: 'button' | 'submit';
+  confirmAriaDescribedBy?: string;
 }
 
 const TYPE_CONFIG: Record<
@@ -73,7 +78,7 @@ const TYPE_CONFIG: Record<
 };
 
 export function AlertDialog({
-  open,
+  open = true,
   onClose,
   title,
   message,
@@ -86,6 +91,11 @@ export function AlertDialog({
   busy = false,
   children,
   devolverA,
+  describedBy,
+  confirmDisabled = false,
+  confirmForm,
+  confirmType,
+  confirmAriaDescribedBy,
 }: AlertDialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -127,7 +137,7 @@ export function AlertDialog({
         role={role}
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={message ? descId : undefined}
+        aria-describedby={describedBy ?? (message ? descId : undefined)}
         tabIndex={-1}
         className="nx-modal-glass relative w-full max-w-dialogo rounded-2xl p-6 text-center shadow-2xl outline-none"
       >
@@ -172,7 +182,12 @@ export function AlertDialog({
             ref={confirmButtonRef}
             variant={botonVariante}
             busy={busy}
+            disabled={confirmDisabled}
+            form={confirmForm}
+            type={confirmType ?? (confirmForm ? 'submit' : 'button')}
+            aria-describedby={confirmAriaDescribedBy}
             onClick={() => {
+              if (confirmForm && confirmType === 'submit') return;
               if (onConfirm) onConfirm();
               else onClose();
             }}
