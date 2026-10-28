@@ -98,4 +98,37 @@ Para cada estado (`exito`, `aviso`, `peligro`, `info`, `neutro`):
 - `shadow-2` (`--sombra-2`): elevación media para tarjetas activas y dropdowns.
 - `shadow-3` (`--sombra-3`): elevación alta para modales y diálogos superpuestos.
 
+## 7. Simetría, Rejilla e Íconos (DIS-072)
+
+### Escala de Espaciado 8pt
+- `espacio-1`: 4 px (micro-ajustes y paddings compactos)
+- `espacio-2`: 8 px (separación interna base)
+- `espacio-3`: 12 px (espaciado entre elementos afines)
+- `espacio-4`: 16 px (margen y relleno estándar de contenedor)
+- `espacio-6`: 24 px (separación entre grupos o bloques de formulario)
+- `espacio-8`: 32 px (separación entre secciones principales)
+- `espacio-12`: 48 px (espaciado generoso de cabeceras)
+
+### Alturas y Dimensiones de Control
+- `--control-alto`: 48 px (área táctil garantizada para botones, inputs y filas de cabecera de tabla).
+- Utilidades: `h-control`, `min-h-control`, `min-w-control`.
+
+### Anchos Máximos
+- `max-w-contenido` (`--contenido-max`): 1280 px (ancho máximo de la vista principal).
+- `max-w-formulario` (`--formulario-max`): 640 px (ancho óptimo de lectura y entrada de datos).
+- `max-w-dialogo` (`--dialogo-max`): 560 px (ancho estándar de ventanas modales).
+
+### Rejilla
+- Columnas: 12 columnas (`--rejilla-columnas`).
+- Canal / Gutter: 16 px (`--rejilla-canal`).
+
+### Componente de Íconos (`<Icono />`)
+- Componente estándar SVG (`frontend/src/components/icono.tsx`) con `currentColor` y soporte de accesibilidad automática (`aria-hidden` / `aria-label`).
+- Tamaños:
+  - `sm`: 16 px (`--icono-sm`)
+  - `md`: 20 px (`--icono-md`)
+  - `lg`: 24 px (`--icono-lg`)
+- Catálogo de íconos base: `cerrar`, `marca`, `favorito`, `exito`, `error`, `aviso`, `info`, `pregunta`.
+
+
 

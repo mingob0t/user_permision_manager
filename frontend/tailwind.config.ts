@@ -190,6 +190,20 @@ export default {
         '2xl': ['var(--text-2xl)', { lineHeight: '2rem' }],
         '3xl': ['var(--text-3xl)', { lineHeight: '2.25rem' }],
       },
+      maxWidth: {
+        contenido: 'var(--contenido-max)',
+        formulario: 'var(--formulario-max)',
+        dialogo: 'var(--dialogo-max)',
+      },
+      height: {
+        control: 'var(--control-alto)',
+      },
+      minHeight: {
+        control: 'var(--control-alto)',
+      },
+      minWidth: {
+        control: 'var(--control-alto)',
+      },
     },
   },
   plugins: [],
