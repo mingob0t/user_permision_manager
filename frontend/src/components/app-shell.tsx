@@ -10,6 +10,7 @@ import { ThemeSelector } from './theme-selector';
 import { SessionProvider, useSession } from './session-provider';
 import { ButtonLink } from './form';
 import { ErrorNote, Spinner } from './ui';
+import { Brand } from './brand';
 
 interface NavItem {
   href: string;
@@ -63,8 +64,8 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={`flex min-h-12 items-center rounded-lg px-3 py-2 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary ${
               active
-                ? 'bg-primary/15 font-medium text-primary-text'
-                : 'text-label hover:bg-surface-container hover:text-body-text'
+                ? 'border-l-4 border-primary bg-primary/15 pl-2 font-semibold text-primary-text'
+                : 'text-label hover:bg-surface-container hover:text-body-text active:bg-surface-container'
             }`}
           >
             {item.label}
@@ -109,7 +110,7 @@ function Frame({ children }: { children: React.ReactNode }) {
     // DIS-044: el marco ocupa la ventana; se desplazan el `<main>` y, si no cabe, la barra lateral.
     <div className="flex h-dvh">
       <aside className="hidden w-60 shrink-0 overflow-y-auto border-r border-panel-border bg-panel-fill p-4 md:block">
-        <p className="px-3 pb-4 text-lg font-semibold">Nexus</p>
+        <Brand size="md" className="px-3 pb-4" />
         <Nav />
       </aside>
 
