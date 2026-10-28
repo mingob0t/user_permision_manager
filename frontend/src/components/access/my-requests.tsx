@@ -19,7 +19,7 @@ import { usePolling } from '@/lib/use-polling';
 import { Button, Select } from '../form';
 import { RegionDeAnuncios } from '../region-de-anuncios';
 import { useSession } from '../session-provider';
-import { EmptyNote, ErrorNote, Spinner } from '../ui';
+import { EmptyNote, ErrorNote, Skeleton } from '../ui';
 import { AccessStatusBadge, ESTADOS as ESTADOS_ACCESO, NIVELES } from './access-status-badge';
 import { formatearFecha } from './fecha';
 import { ListPager } from './list-pager';
@@ -140,7 +140,9 @@ export function MyRequests({ estadoInicial }: { estadoInicial?: RequestStatus })
         ))}
       </Select>
 
-      {lista.loading && !data ? <Spinner label="Cargando tus solicitudes…" /> : null}
+      {lista.loading && !data ? (
+        <Skeleton variant="fila" count={4} ariaLabel="Cargando tus solicitudes…" />
+      ) : null}
 
       {lista.error ? (
         <div className="space-y-3">

@@ -8,7 +8,7 @@
 import type { CatalogItem } from '@/lib/access/types';
 import type { Platform } from '@/lib/types';
 import { Button } from '../form';
-import { EmptyNote, ErrorNote, Spinner } from '../ui';
+import { EmptyNote, ErrorNote, Skeleton } from '../ui';
 import { RequestCatalogCard, puedeSolicitar } from './request-catalog-card';
 import type { MisPlataformas } from './use-catalogo-solicitable';
 
@@ -39,8 +39,9 @@ export function CatalogGrid({
 }) {
   return (
     <>
-      {(catalogo.loading && !catalogo.data) || (mias?.loading && !catalogo.error)
-        ? <Spinner label="Cargando catálogo…" /> : null}
+      {(catalogo.loading && !catalogo.data) || (mias?.loading && !catalogo.error) ? (
+        <Skeleton variant="tarjeta" count={4} ariaLabel="Cargando catálogo…" />
+      ) : null}
 
       {mias?.error && !mias.loading ? (
         <div className="space-y-3">

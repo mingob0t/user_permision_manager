@@ -28,9 +28,9 @@ describe('DIS-073: Estabilidad de diseño (CLS) y movimiento reducido', () => {
   });
 
   it('Skeleton genera múltiples elementos si count > 1', () => {
-    render(<Skeleton variant="fila" count={3} ariaLabel="Cargando lista…" />);
-    const items = screen.getAllByRole('status', { name: 'Cargando lista…' });
-    expect(items.length).toBe(3);
+    const { container } = render(<Skeleton variant="fila" count={3} ariaLabel="Cargando lista…" />);
+    expect(screen.getByRole('status', { name: 'Cargando lista…' })).toBeDefined();
+    expect(container.querySelectorAll('[aria-hidden="true"]').length).toBe(3);
   });
 
   it('RegionDeAviso mantiene reserva de espacio y canal aria-live', () => {

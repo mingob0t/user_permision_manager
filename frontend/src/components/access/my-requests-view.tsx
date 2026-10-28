@@ -10,9 +10,10 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { PageHeader } from '../page-header';
 import { useSession } from '../session-provider';
 import { Tabs, TabPanel, destinoPorTecla } from '../tabs';
-import { EmptyNote, ErrorNote, Spinner } from '../ui';
+import { EmptyNote, ErrorNote, Skeleton } from '../ui';
 import { valorPermitido } from './filtro-url';
 import { FILTROS, MyAccess } from './my-access';
 import { ESTADOS, MyRequests } from './my-requests';
@@ -43,7 +44,7 @@ export function MyRequestsView() {
   }));
   const [pestana, setPestana] = useState<Pestana>(inicial.pestana);
 
-  if (loading) return <Spinner label="Cargando sesión…" />;
+  if (loading) return <Skeleton variant="fila" count={3} ariaLabel="Cargando sesión…" />;
   if (error) return <ErrorNote message={error} />;
   if (!session) return null;
 
@@ -51,12 +52,10 @@ export function MyRequestsView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Mis solicitudes y accesos</h1>
-        <p className="mt-1 text-sm text-label">
-          El estado de tus solicitudes y de los accesos que ya tienes.
-        </p>
-      </div>
+      <PageHeader
+        title="Mis solicitudes y accesos"
+        description="El estado de tus solicitudes y de los accesos que ya tienes."
+      />
 
       {esSuperadmin ? (
         <EmptyNote message={MENSAJE_SUPERADMIN} />
