@@ -9,6 +9,8 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import { useToast } from './toast';
 
+import { ToggleChip } from './toggle-chip';
+
 export function FavoriteButton({
   platformId,
   name,
@@ -48,17 +50,16 @@ export function FavoriteButton({
   }
 
   return (
-    <button
-      type="button"
+    <ToggleChip
+      variant="icon"
       onClick={toggle}
       aria-disabled={busy}
-      aria-pressed={favorite}
+      pressed={favorite}
       aria-label={`Favorito: ${name}`}
-      className="inline-flex min-h-12 min-w-12 shrink-0 items-center justify-center rounded text-lg leading-none outline-none transition-colors hover:bg-surface-container focus-visible:ring-2 focus-visible:ring-primary aria-disabled:opacity-50"
     >
       <span className={favorite ? 'text-warning-text' : 'text-label'}>
         {favorite ? '★' : '☆'}
       </span>
-    </button>
+    </ToggleChip>
   );
 }

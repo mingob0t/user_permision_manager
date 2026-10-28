@@ -1,4 +1,4 @@
-/** Selector de etiquetas (chips) de selección múltiple. */
+import { ToggleChip } from '../toggle-chip';
 
 export function TagPicker<T extends { id: number; name: string }>({
   options,
@@ -18,23 +18,16 @@ export function TagPicker<T extends { id: number; name: string }>({
     <div className="flex flex-wrap gap-2">
       {options.map((option) => {
         const on = selected.includes(option.id);
-        // DIS-008: chip de 48 px con foco visible.
         return (
-          <button
+          <ToggleChip
             key={option.id}
-            type="button"
-            aria-pressed={on}
+            pressed={on}
             onClick={() =>
               onChange(on ? selected.filter((id) => id !== option.id) : [...selected, option.id])
             }
-            className={`inline-flex min-h-12 min-w-12 items-center justify-center rounded-full border px-3 text-xs outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary ${
-              on
-                ? 'border-primary bg-primary/15 text-primary-text'
-                : 'border-panel-border text-label hover:text-body-text'
-            }`}
           >
             {option.name}
-          </button>
+          </ToggleChip>
         );
       })}
     </div>

@@ -9,12 +9,15 @@
  */
 
 import { useSearchParams } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useSession } from '../session-provider';
+import { Tabs, TabPanel, destinoPorTecla } from '../tabs';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
 import { valorPermitido } from './filtro-url';
 import { FILTROS, MyAccess } from './my-access';
 import { ESTADOS, MyRequests } from './my-requests';
+
+export { destinoPorTecla };
 
 type Pestana = 'solicitudes' | 'accesos';
 
@@ -27,17 +30,6 @@ export const MENSAJE_SUPERADMIN =
   'Como superadmin tienes acceso a todas las plataformas: no solicitas accesos ni tienes accesos propios que revisar aquí.';
 
 const tabId = (id: Pestana) => `mis-${id}-pestana`;
-
-/** Teclas del patrón WAI-ARIA de pestañas: índice destino o `null`. */
-export function destinoPorTecla(tecla: string, actual: number, total: number): number | null {
-  switch (tecla) {
-    case 'ArrowRight': return (actual + 1) % total;
-    case 'ArrowLeft': return (actual - 1 + total) % total;
-    case 'Home': return 0;
-    case 'End': return total - 1;
-    default: return null;
-  }
-}
 const panelId = (id: Pestana) => `mis-${id}-panel`;
 
 export function MyRequestsView() {
@@ -50,22 +42,12 @@ export function MyRequestsView() {
     acceso: valorPermitido(params?.get('status'), FILTROS.map((f) => f.valor)),
   }));
   const [pestana, setPestana] = useState<Pestana>(inicial.pestana);
-  const botones = useRef<(HTMLButtonElement | null)[]>([]);
 
   if (loading) return <Spinner label="Cargando sesión…" />;
   if (error) return <ErrorNote message={error} />;
   if (!session) return null;
 
   const esSuperadmin = session.permissions.is_admin;
-
-  // Activación automática: la flecha mueve el foco y selecciona la pestaña.
-  function alPulsar(event: React.KeyboardEvent<HTMLButtonElement>, indice: number) {
-    const destino = destinoPorTecla(event.key, indice, PESTANAS.length);
-    if (destino === null) return;
-    event.preventDefault();
-    setPestana(PESTANAS[destino].id);
-    botones.current[destino]?.focus();
-  }
 
   return (
     <div className="space-y-6">
@@ -80,46 +62,20 @@ export function MyRequestsView() {
         <EmptyNote message={MENSAJE_SUPERADMIN} />
       ) : (
         <>
-          {/* Clases de las pestañas de Ajustes (`settings-panel.tsx`) más 48 px de alto y teclado WAI-ARIA. */}
-          <div
-            className="flex flex-wrap gap-1 border-b border-panel-border"
-            role="tablist"
-            aria-label="Mis solicitudes y accesos"
-          >
-            {PESTANAS.map((item, indice) => (
-              <button
-                key={item.id}
-                ref={(el) => { botones.current[indice] = el; }}
-                id={tabId(item.id)}
-                type="button"
-                role="tab"
-                aria-selected={pestana === item.id}
-                aria-controls={panelId(item.id)}
-                tabIndex={pestana === item.id ? 0 : -1}
-                onClick={() => setPestana(item.id)}
-                onKeyDown={(event) => alPulsar(event, indice)}
-                className={`-mb-px min-h-12 border-b-2 px-3 py-3 text-sm transition-colors ${
-                  pestana === item.id
-                    ? 'border-primary font-medium text-primary-text'
-                    : 'border-transparent text-label hover:text-body-text'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            tabs={PESTANAS}
+            value={pestana}
+            onChange={setPestana}
+            ariaLabel="Mis solicitudes y accesos"
+            getTabId={tabId}
+            getPanelId={panelId}
+          />
 
-          <div
-            role="tabpanel"
-            id={panelId(pestana)}
-            aria-labelledby={tabId(pestana)}
-            tabIndex={0}
-            className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
+          <TabPanel id={panelId(pestana)} tabId={tabId(pestana)}>
             {pestana === 'solicitudes'
               ? <MyRequests estadoInicial={inicial.pestana === 'solicitudes' ? inicial.solicitud : undefined} />
               : <MyAccess estadoInicial={inicial.pestana === 'accesos' ? inicial.acceso : undefined} />}
-          </div>
+          </TabPanel>
         </>
       )}
     </div>
