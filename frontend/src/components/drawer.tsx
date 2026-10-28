@@ -90,7 +90,7 @@ export function Drawer({
             aria-hidden="true"
             data-testid="drawer-backdrop"
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-overlay backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 z-40 bg-overlay backdrop-blur-xs transition-opacity motion-reduce:transition-none"
           />
 
           <div
@@ -100,7 +100,7 @@ export function Drawer({
             aria-label={ariaLabel ?? (title ? undefined : 'Panel lateral')}
             aria-labelledby={ariaLabel ? undefined : (title ? titleId : undefined)}
             tabIndex={-1}
-            className={`fixed inset-y-0 ${borderClass} z-50 ${width} overflow-y-auto bg-panel-fill p-4 shadow-2xl outline-none transition-transform duration-200`}
+            className={`fixed inset-y-0 ${borderClass} z-50 ${width} overflow-y-auto bg-panel-fill p-4 shadow-2xl outline-none transition-transform duration-200 motion-reduce:transition-none`}
           >
             <div className="flex items-center justify-between gap-2 pb-4">
               {title ? (

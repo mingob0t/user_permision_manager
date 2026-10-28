@@ -150,9 +150,28 @@ thead tr {
 :root {
     --nx-border: rgb(var(--color-panel-border));
 }
+
+@keyframes modal-entrada {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 .nx-modal-glass {
     background-color: rgb(var(--color-panel-fill));
     border: 2px solid var(--nx-border);
+    animation: modal-entrada var(--duracion-corta) var(--curva-movimiento) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nx-modal-glass {
+        animation: none;
+    }
 }
 
 /* === NEXUS PREMIUM UI COMPONENTS — v4.0 === */

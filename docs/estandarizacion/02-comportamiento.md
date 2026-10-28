@@ -26,3 +26,16 @@ Ninguna pantalla, vista o módulo debe implementar marcado ad hoc para component
 La prueba `frontend/tests/accesibilidad/patrones-unicos.test.ts` valida en tiempo de compilación y pruebas:
 1. No se permite la inclusión de ningún nuevo `<table>`, `<h1>`, `role="tablist"` o clases `.nexus-btn` fuera de los componentes autorizados.
 2. Toda excepción heredada existente está cuantificada estrictamente en `patrones-unicos.excepciones.ts` y disminuye con cada iteración de los bloques C y D.
+
+---
+
+## 3. Estabilidad Visual (Sin saltos de diseño / CLS < 0.01) y Movimiento Reducido (DIS-073)
+
+### Reglas de Estabilidad:
+1. **Canales de desplazamiento estables:** Todo contenedor desplazable (`[data-desplazable]`) declara `scrollbar-gutter: stable` en CSS para evitar que al activar el bloqueo de scroll (`useScrollLock`) o al alternar diálogos el contenido salte lateralmente.
+2. **Cargas asíncronas con esqueletos:** Las operaciones de carga deben reservar el espacio final mediante `<Skeleton variant="fila" | "tarjeta" | "contador">` para evitar el desplazamiento vertical del contenido.
+3. **Zonas reservadas para avisos:** Los formularios y cabeceras de listado usan `<RegionDeAviso minHeight="...">` para evitar que la aparición de un mensaje de error o éxito empuje los controles inferiores.
+4. **Animaciones respetuosas:**
+   - Toda transición se restringe estrictamente a `opacity` y `transform`.
+   - Con `prefers-reduced-motion: reduce`, las animaciones y transiciones se anulan (`animation: none`, `motion-reduce:transition-none`).
+
