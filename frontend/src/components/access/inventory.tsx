@@ -11,14 +11,13 @@
  * - Sin refresco periódico (contrato, "Refresco"): botón "Recargar".
  */
 
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { inventoryApi } from '@/lib/access/inventory';
 import type { InventoryParams } from '@/lib/access/types';
 import { useAsync } from '@/lib/use-async';
 import { rutaHistorialPlataforma } from '../audit/audit-routes';
-import { Button } from '../form';
+import { Button, ButtonLink } from '../form';
 import { valorPermitido } from './filtro-url';
 import { EmptyNote, ErrorNote, Spinner } from '../ui';
 import {
@@ -99,13 +98,13 @@ export function Inventory() {
         <div className="flex flex-wrap gap-3">
           {/* DIS-020: con una plataforma elegida, su historial en Auditoría. */}
           {plataformaElegida ? (
-            <Link
+            <ButtonLink
               href={rutaHistorialPlataforma(plataformaElegida.id)}
-              className="nexus-btn nexus-btn-secondary"
+              variant="secondary"
               aria-label={`Historial de ${plataformaElegida.name} en Auditoría`}
             >
               Historial
-            </Link>
+            </ButtonLink>
           ) : null}
           {/* `aria-disabled` mientras carga: el foco se queda en el botón (con `disabled` caería en `body`). */}
           <Button

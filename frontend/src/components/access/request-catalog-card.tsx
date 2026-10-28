@@ -16,7 +16,7 @@ import type { CatalogItem } from '@/lib/access/types';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Platform } from '@/lib/types';
 import { FavoriteButton } from '../favorite-button';
-import { Button } from '../form';
+import { Button, ButtonLink } from '../form';
 import { Badge } from '../ui';
 import { AccessStatusBadge } from './access-status-badge';
 
@@ -84,16 +84,17 @@ export function RequestCatalogCard({
 
       <div className="mt-auto space-y-2 pt-4">
         {enlace ? (
-          <a
+          <ButtonLink
             href={enlace}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Abrir ${platform.name} (se abre en una pestaña nueva)`}
             onClick={() => { void api.registerVisit(platform.id).catch(() => undefined); }}
-            className="nexus-btn nexus-btn-primary w-full"
+            variant="primary"
+            className="w-full"
           >
             Abrir
-          </a>
+          </ButtonLink>
         ) : null}
         {puedeSolicitar(item) ? (
           <Button

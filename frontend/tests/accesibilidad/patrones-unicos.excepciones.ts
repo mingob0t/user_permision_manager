@@ -35,54 +35,7 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
       motivo: 'Encabezado h1 de vista; migrar a PageHeader en DIS-070',
     },
   ],
-  // Clases nexus-btn fuera de Button / ButtonLink
-  'components/access/inventory.tsx': [
-    {
-      patron: 'nexus-btn',
-      cantidad: 1,
-      tarea: 'DIS-058',
-      motivo: 'Link con clase nexus-btn; migrar a ButtonLink en DIS-058',
-    },
-  ],
-  'components/access/request-catalog-card.tsx': [
-    {
-      patron: 'nexus-btn',
-      cantidad: 1,
-      tarea: 'DIS-058',
-      motivo: 'Link con clase nexus-btn; migrar a ButtonLink en DIS-058',
-    },
-  ],
-  'components/platforms/platform-integration-fields.tsx': [
-    {
-      patron: 'nexus-btn',
-      cantidad: 1,
-      tarea: 'DIS-058',
-      motivo: 'Link con clase nexus-btn; migrar a ButtonLink en DIS-058',
-    },
-  ],
-  'components/home/role-summary.tsx': [
-    {
-      patron: 'nexus-btn',
-      cantidad: 2,
-      tarea: 'DIS-058',
-      motivo: 'Links con clase nexus-btn; migrar a ButtonLink en DIS-058',
-    },
-  ],
-  'components/users/user-access-panel.tsx': [
-    {
-      patron: 'nexus-btn',
-      cantidad: 1,
-      tarea: 'DIS-058',
-      motivo: 'Link con clase nexus-btn; migrar a ButtonLink en DIS-058',
-    },
-  ],
   'components/audit/platform-audit-history.tsx': [
-    {
-      patron: 'nexus-btn',
-      cantidad: 1,
-      tarea: 'DIS-058',
-      motivo: 'Link con clase nexus-btn; migrar a ButtonLink en DIS-058',
-    },
     {
       patron: 'h1',
       cantidad: 1,
@@ -91,12 +44,6 @@ export const EXCEPCIONES_PATRONES: Record<string, ExcepcionPatron[]> = {
     },
   ],
   'components/audit/user-audit-history.tsx': [
-    {
-      patron: 'nexus-btn',
-      cantidad: 1,
-      tarea: 'DIS-058',
-      motivo: 'Link con clase nexus-btn; migrar a ButtonLink en DIS-058',
-    },
     {
       patron: 'h1',
       cantidad: 1,

@@ -10,9 +10,8 @@
  * - Con accesos vigentes no se cambian el tipo ni los grupos (`409`).
  */
 
-import Link from 'next/link';
 import type { IntegrationType } from '@/lib/types';
-import { Field, Select, TextInput } from '../form';
+import { ButtonLink, Field, Select, TextInput } from '../form';
 import { describedBy, FieldErrorNote, FieldHint } from './field-notes';
 
 /** Valores de la sección; `''` = sin elegir (alta) o sin cambiar (edición). */
@@ -189,9 +188,9 @@ export function PlatformIntegrationFields({
             El acceso lo da un conector, que se configura aparte.
           </p>
           {isSuperadmin ? (
-            <Link href={RUTA_CONECTORES} className="nexus-btn nexus-btn-secondary">
+            <ButtonLink href={RUTA_CONECTORES} variant="secondary">
               Configurar conectores
-            </Link>
+            </ButtonLink>
           ) : null}
         </div>
       ) : null}

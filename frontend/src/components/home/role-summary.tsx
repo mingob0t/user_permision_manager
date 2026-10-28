@@ -20,7 +20,7 @@ import { RUTA_AUDITORIA } from '../audit/audit-routes';
 import { formatearFecha } from '../access/fecha';
 import { rutaConFiltro } from '../access/filtro-url';
 import { listLoadError } from '../access/request-errors';
-import { Button } from '../form';
+import { Button, ButtonLink } from '../form';
 import { useSession } from '../session-provider';
 import { EmptyNote, ErrorNote, Spinner, StatTile } from '../ui';
 
@@ -153,9 +153,9 @@ function Contenido({ resumen }: { resumen: HomeSummary }) {
       <div role="status" className="space-y-3">
         <EmptyNote message={MENSAJES_VACIO[resumen.scope]} />
         {resumen.scope === 'propio' ? (
-          <Link href={RUTAS_INICIO.catalogo} className="nexus-btn nexus-btn-primary">
+          <ButtonLink href={RUTAS_INICIO.catalogo} variant="primary">
             Ir al catálogo
-          </Link>
+          </ButtonLink>
         ) : null}
       </div>
     );
@@ -196,9 +196,9 @@ export function RoleSummary({ onFallo }: { onFallo?: (fallo: boolean) => void })
         <h2 id={TITULO_ID} className="text-lg font-semibold">
           {data ? TITULOS[data.scope] : 'Resumen'}
         </h2>
-        <Link href={RUTA_AUDITORIA} className="nexus-btn nexus-btn-secondary">
+        <ButtonLink href={RUTA_AUDITORIA} variant="secondary">
           Ver auditoría
-        </Link>
+        </ButtonLink>
       </div>
 
       {resumen.loading && !data ? <Spinner label="Cargando el resumen…" /> : null}

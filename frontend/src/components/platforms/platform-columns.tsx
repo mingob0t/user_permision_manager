@@ -1,11 +1,10 @@
 /** Columnas de la tabla de Administrar plataformas (DIS-010, DIS-035). */
 
-import Link from 'next/link';
 import type { Platform } from '@/lib/types';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import { atributoTexto, variablesChipPlataforma } from '@/lib/color-legible';
 import { variablesCss } from '@/lib/variables-css';
-import { ACCION_FILA, ACCION_FILA_PELIGRO } from '../acciones-fila';
+import { Button, ButtonLink } from '../form';
 import { rutaHistorialPlataforma } from '../audit/audit-routes';
 import type { DataColumn } from '../data-table';
 import { Badge } from '../ui';
@@ -71,31 +70,29 @@ export function columnasPlataformas({
       cell: (platform) => (
         // DIS-035: historial en Auditoría y acciones de 48 px (DIS-008), en una línea.
         <div className="flex justify-end gap-1">
-          <Link
+          <ButtonLink
             href={rutaHistorialPlataforma(platform.id)}
+            variant="fila"
             aria-label={`Historial de ${platform.name} en Auditoría`}
-            className={ACCION_FILA}
           >
             Historial
-          </Link>
+          </ButtonLink>
           {canManage ? (
             <>
-              <button
-                type="button"
+              <Button
+                variant="fila"
                 onClick={(e) => onEdit(e, platform)}
                 aria-label={`Editar ${platform.name}`}
-                className={ACCION_FILA}
               >
                 Editar
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="fila-peligro"
                 onClick={(e) => onRemove(e, platform)}
                 aria-label={`Eliminar ${platform.name}`}
-                className={ACCION_FILA_PELIGRO}
               >
                 Eliminar
-              </button>
+              </Button>
             </>
           ) : null}
         </div>

@@ -3,7 +3,7 @@
 /** Tarjeta de un usuario en la lista: datos, insignias de rol y acciones de fila. */
 
 import type { ManagedUser } from '@/lib/types';
-import { ACCION_FILA, ACCION_FILA_PELIGRO } from '../acciones-fila';
+import { Button } from '../form';
 import { Badge, Card } from '../ui';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -66,59 +66,53 @@ export function UserCard({
 
       {/* Acciones de 48 px (DIS-008; las de rol, DIS-019); bajan de línea si no caben. */}
       <div className="mt-3 flex flex-wrap gap-1 border-t border-panel-border pt-3">
-        <button
-          type="button"
+        <Button
+          variant="fila"
           onClick={() => onEdit(user)}
           aria-label={`Editar ${user.name}`}
-          className={ACCION_FILA}
         >
           Editar
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="fila"
           onClick={(event) => onAccess(event.currentTarget, user)}
           aria-label={`Accesos de ${user.name}`}
-          className={ACCION_FILA}
         >
           Accesos
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="fila-peligro"
           onClick={() => onRemove(user)}
           aria-label={`Eliminar ${user.name}`}
-          className={ACCION_FILA_PELIGRO}
         >
           Eliminar
-        </button>
+        </Button>
         {/* DIS-019: acciones de rol solo para el superadmin. */}
         {isAdmin && user.role === 'usuario' ? (
-          <button
-            type="button"
+          <Button
+            variant="fila"
             onClick={(event) => onRole(event.currentTarget, user, 'areas')}
             aria-label={`Hacer admin de área a ${user.name}`}
-            className={ACCION_FILA}
           >
             Hacer admin
-          </button>
+          </Button>
         ) : null}
         {isAdmin && user.role === 'admin_area' ? (
           <>
-            <button
-              type="button"
+            <Button
+              variant="fila"
               onClick={(event) => onRole(event.currentTarget, user, 'areas')}
               aria-label={`Áreas admin de ${user.name}`}
-              className={ACCION_FILA}
             >
               Áreas admin
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="fila"
               onClick={(event) => onRole(event.currentTarget, user, 'quitar')}
               aria-label={`Quitar admin de área a ${user.name}`}
-              className={ACCION_FILA}
             >
               Quitar admin
-            </button>
+            </Button>
           </>
         ) : null}
       </div>

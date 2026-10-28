@@ -168,6 +168,24 @@ textarea):focus {
     transform: scale(0.96);
 }
 
+.nexus-btn:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 var(--foco-ancho, 2px) rgb(var(--color-foco-anillo, var(--color-primary))),
+                0 0 0 calc(var(--foco-ancho, 2px) + var(--foco-separacion, 2px)) rgb(var(--color-superficie, var(--color-surface-bg))) !important;
+}
+
+.nexus-btn:disabled,
+.nexus-btn[aria-disabled="true"],
+.nexus-btn.estado-deshabilitado {
+    background: rgb(var(--color-deshabilitado-fondo)) !important;
+    color: rgb(var(--color-deshabilitado-texto)) !important;
+    border-color: rgb(var(--color-deshabilitado-borde)) !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    transform: none !important;
+}
+
 .nexus-btn-primary {
     background: rgb(var(--color-primary-solid)) !important;
     color: rgb(var(--color-on-primary)) !important;
@@ -175,7 +193,7 @@ textarea):focus {
 }
 
 /* DIS-031 (H6): sin efecto de hover ni de pulsación con `aria-disabled`. */
-.nexus-btn-primary:hover:not([aria-disabled="true"]) {
+.nexus-btn-primary:hover:not([aria-disabled="true"]):not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 15px 30px -8px rgb(var(--color-primary) / 0.4) !important;
 }
@@ -187,7 +205,7 @@ textarea):focus {
     box-shadow: 0 10px 20px -5px rgb(var(--color-error) / 0.3) !important;
 }
 
-.nexus-btn-danger:hover:not([aria-disabled="true"]) {
+.nexus-btn-danger:hover:not([aria-disabled="true"]):not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 15px 30px -8px rgb(var(--color-error) / 0.4) !important;
 }
@@ -198,10 +216,56 @@ textarea):focus {
     border: 1px solid rgb(var(--color-panel-border)) !important;
 }
 
-.nexus-btn-secondary:hover:not([aria-disabled="true"]) {
+.nexus-btn-secondary:hover:not([aria-disabled="true"]):not(:disabled) {
     border-color: rgb(var(--color-primary)) !important; /* DIS-004: borde a 3:1 */
     color: rgb(var(--color-primary-text)) !important;
     background: rgb(var(--color-primary) / 0.05) !important;
+}
+
+/* DIS-058: variantes de fila para acciones de tabla / tarjeta */
+.nexus-btn-fila {
+    min-width: 3rem !important;
+    height: 3rem !important;
+    padding: 0 0.75rem !important;
+    border-radius: var(--radio-control, 0.5rem) !important;
+    background: transparent !important;
+    color: rgb(var(--color-primary-text)) !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
+    font-weight: 500 !important;
+    letter-spacing: normal !important;
+}
+
+.nexus-btn-fila:hover:not([aria-disabled="true"]):not(:disabled) {
+    background: rgb(var(--color-primary) / 0.1) !important;
+    transform: none !important;
+}
+
+.nexus-btn-fila-peligro {
+    min-width: 3rem !important;
+    height: 3rem !important;
+    padding: 0 0.75rem !important;
+    border-radius: var(--radio-control, 0.5rem) !important;
+    background: transparent !important;
+    color: rgb(var(--color-error-text)) !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
+    font-weight: 500 !important;
+    letter-spacing: normal !important;
+}
+
+.nexus-btn-fila-peligro:hover:not([aria-disabled="true"]):not(:disabled) {
+    background: rgb(var(--color-error) / 0.1) !important;
+    transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nexus-btn,
+    .nexus-btn:hover,
+    .nexus-btn:active {
+        transform: none !important;
+        transition: none !important;
+    }
 }
 
 /* --- NUCLEAR SELECT ARROW FIX --- */
