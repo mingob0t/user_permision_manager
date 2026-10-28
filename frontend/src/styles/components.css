@@ -28,7 +28,7 @@
 .nx-badge-cyan    { background: rgb(var(--badge-cyan-bg)) !important;    color: rgb(var(--badge-cyan-text)) !important;    border-color: rgb(var(--badge-cyan-text) / 0.2) !important;    }
 
 thead tr {
-    height: 60px; /* Altura ajustada a 60px por solicitud del usuario */
+    height: var(--control-alto, 48px); /* DIS-072: unificado a altura de control / 48px */
 }
 
 /* --- GLOBAL UI NORMALIZE: Premium Inputs --- */

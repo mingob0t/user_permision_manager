@@ -277,6 +277,29 @@
   --text-xl:   20px;
   --text-2xl:  24px;
   --text-3xl:  30px;
+
+  /* ─────────────────────────────────────────────
+     SIMETRÍA Y REJILLA — 8pt (DIS-072)
+  ───────────────────────────────────────────── */
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-6: 24px;
+  --espacio-8: 32px;
+  --espacio-12: 48px;
+
+  --control-alto: 48px;
+  --contenido-max: 1280px;
+  --formulario-max: 640px;
+  --dialogo-max: 560px;
+
+  --rejilla-columnas: 12;
+  --rejilla-canal: 16px;
+
+  --icono-sm: 16px;
+  --icono-md: 20px;
+  --icono-lg: 24px;
 }
 
 
@@ -433,6 +456,27 @@
     --sombra-1: 0 1px 2px 0 rgb(0 0 0 / 0.35);
     --sombra-2: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.45);
     --sombra-3: 0 10px 15px -3px rgb(0 0 0 / 0.55), 0 4px 6px -4px rgb(0 0 0 / 0.55);
+
+    /* Simetría y Rejilla — 8pt (DIS-072) */
+    --espacio-1: 4px;
+    --espacio-2: 8px;
+    --espacio-3: 12px;
+    --espacio-4: 16px;
+    --espacio-6: 24px;
+    --espacio-8: 32px;
+    --espacio-12: 48px;
+
+    --control-alto: 48px;
+    --contenido-max: 1280px;
+    --formulario-max: 640px;
+    --dialogo-max: 560px;
+
+    --rejilla-columnas: 12;
+    --rejilla-canal: 16px;
+
+    --icono-sm: 16px;
+    --icono-md: 20px;
+    --icono-lg: 24px;
   }
 }
 
@@ -585,6 +629,27 @@ html.dark {
   --sombra-1: 0 1px 2px 0 rgb(0 0 0 / 0.35);
   --sombra-2: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.45);
   --sombra-3: 0 10px 15px -3px rgb(0 0 0 / 0.55), 0 4px 6px -4px rgb(0 0 0 / 0.55);
+
+  /* Simetría y Rejilla — 8pt (DIS-072) */
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-6: 24px;
+  --espacio-8: 32px;
+  --espacio-12: 48px;
+
+  --control-alto: 48px;
+  --contenido-max: 1280px;
+  --formulario-max: 640px;
+  --dialogo-max: 560px;
+
+  --rejilla-columnas: 12;
+  --rejilla-canal: 16px;
+
+  --icono-sm: 16px;
+  --icono-md: 20px;
+  --icono-lg: 24px;
 }
 
 @media (prefers-reduced-motion: reduce) {
