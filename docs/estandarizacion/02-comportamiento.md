@@ -54,4 +54,27 @@ La prueba `frontend/tests/accesibilidad/patrones-unicos.test.ts` valida en tiemp
 | **Error al cargar vista o sección** | `<ErrorNote>` en la zona reservada | — |
 | **Estado persistente de la pantalla** (falta de configuración) | `<Note>` en línea | — |
 
+---
+
+## 5. Plantillas Canónicas de Pantalla (`components/plantillas/`) (DIS-070)
+
+Para garantizar consistencia arquitectónica y visual en todas las vistas de la aplicación:
+
+1. **`PantallaListado`:**
+   - **Estructura:** `PageHeader` (con acciones primarias como "Nueva...") → `FilterBar` → `RegionDeAviso` → Estados (Skeleton, EmptyNote, ErrorNote) → Tabla/Lista (`DataTable`) → `ListPager`.
+   - **Uso:** Vistas administrativas y catálogos (Plataformas, Áreas, Usuarios, Inventario, Aprobaciones, Auditoría, Ejecuciones, Notificaciones, Mis solicitudes).
+
+2. **`PantallaDetalle`:**
+   - **Estructura:** `PageHeader` (con botón Volver) → `RegionDeAviso` → Resumen (`Card` / `DataList`) → Secciones de detalle.
+   - **Uso:** Historial de auditoría por usuario/plataforma, detalle de ejecuciones, conectores.
+
+3. **`PantallaFormulario`:**
+   - **Estructura:** `PageHeader` → `RegionDeAviso` → Formulario en ancho `max-w-formulario` → Campos → Barra de acciones (primaria a la derecha).
+   - **Uso:** Vistas de edición/alta completas y pestañas de Ajustes.
+
+4. **`PantallaPanel`:**
+   - **Estructura:** `PageHeader` → `RegionDeAviso` → Rejilla de métricas (`StatTile` / `Card`) → Bloques modulares.
+   - **Uso:** Inicio / Dashboard, Catálogo de autoservicio, Favoritos.
+
+
 
