@@ -7,20 +7,36 @@
  * No se define aquí ningún estilo propio.
  */
 
+export type CardVariant = 'default' | 'link' | 'selectable';
+
+export interface CardProps extends React.HTMLAttributes<HTMLElement> {
+  children: React.ReactNode;
+  className?: string;
+  variant?: CardVariant;
+  as?: 'div' | 'article' | 'section' | 'label' | 'fieldset';
+}
+
+const CARD_VARIANTS: Record<CardVariant, string> = {
+  default: '',
+  link: 'transition-colors hover:border-primary/60',
+  selectable: 'cursor-pointer has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary',
+};
+
 export function Card({
   children,
   className = '',
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+  variant = 'default',
+  as: Component = 'div',
+  ...props
+}: CardProps) {
   // index.html: bg-panel-fill border border-panel-border rounded-xl p-6 shadow-sm
   return (
-    <div
-      className={`bg-panel-fill border border-panel-border rounded-xl p-6 shadow-sm ${className}`}
+    <Component
+      {...props}
+      className={`bg-panel-fill border border-panel-border rounded-xl p-6 shadow-sm ${CARD_VARIANTS[variant]} ${className}`}
     >
       {children}
-    </div>
+    </Component>
   );
 }
 

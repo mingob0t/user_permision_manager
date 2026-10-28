@@ -12,6 +12,8 @@ import React, { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { CAMPOS, esVisible, useFocusTrap } from '@/lib/use-focus-trap';
 import { useScrollLock } from '@/lib/use-scroll-lock';
+import { Icono } from './icono';
+export { Drawer, type DrawerProps } from './drawer';
 
 export function Field({
   label,
@@ -203,14 +205,14 @@ export function Modal({
           <h2 id={tituloId} className="text-sm font-black uppercase tracking-[0.15em] text-panel-header-text">
             {title}
           </h2>
-          {/* DIS-031: área táctil de 48 px (antes 36). */}
+          {/* DIS-031, DIS-061: área táctil de 48 px con Icono accesible. */}
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
             className="min-w-12 min-h-12 flex items-center justify-center rounded-base text-label hover:bg-surface-container transition-colors"
           >
-            ✕
+            <Icono nombre="cerrar" tamano="md" ariaHidden={true} />
           </button>
         </div>
         <div ref={cuerpo} className="space-y-5 px-6 py-5">{children}</div>

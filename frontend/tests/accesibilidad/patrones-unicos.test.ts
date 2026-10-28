@@ -104,6 +104,7 @@ describe('DIS-068: Regla «Un patrón, un componente»', () => {
       if (
         relativo === 'components/form.tsx' ||
         relativo === 'components/modal.tsx' ||
+        relativo === 'components/drawer.tsx' ||
         relativo === 'components/alert-dialog.tsx'
       )
         return;

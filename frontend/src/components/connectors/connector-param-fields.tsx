@@ -9,6 +9,7 @@
  */
 
 import { Field, Select, TextArea, TextInput } from '../form';
+import { Card } from '../ui';
 import { FieldErrorNote, describedBy } from '../platforms/field-notes';
 import { type CampoParametro, GRUPOS, type GrupoId, camposVisibles } from './connector-params';
 
@@ -105,9 +106,10 @@ export function ConnectorParamFields({
         if (campos.length === 0) return null;
         const { titulo, opcional } = GRUPOS[grupo];
         return (
-          <fieldset
+          <Card
+            as="fieldset"
             key={grupo}
-            className="min-w-0 space-y-4 rounded-xl border border-panel-border p-4"
+            className="min-w-0 space-y-4 p-4"
             aria-describedby={opcional ? `${prefijo}-grupo-${grupo}-nota` : undefined}
           >
             <legend className="px-2 text-xs font-black uppercase tracking-[0.1em] text-label">{titulo}</legend>
@@ -128,7 +130,7 @@ export function ConnectorParamFields({
                 onChange={(valor) => onChange(campo.clave, valor)}
               />
             ))}
-          </fieldset>
+          </Card>
         );
       })}
     </>
