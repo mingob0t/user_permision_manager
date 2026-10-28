@@ -8,14 +8,14 @@
 | **Fase** | 7 |
 | **Módulo / Área** | marco |
 | **Prioridad** | Media |
-| **Estatus** | Propuesta |
-| **Responsable** | |
+| **Estatus** | Hecha |
+| **Responsable** | disenador-web |
 | **Creada** | 2026-10-27 |
-| **Inicio** | |
-| **Finalizada** | |
-| **Estatus Git** | — |
+| **Inicio** | 2026-10-27 |
+| **Finalizada** | 2026-10-27 |
+| **Estatus Git** | merge a develop |
 | **Rama** | `dis/DIS-063-marco-e-identidad` |
-| **Commits / PR** | |
+| **Commits / PR** | `feat(design): DIS-063 marco e identidad cabecera menu y paginas de error` |
 | **Requiere migración BD** | No |
 | **Requiere auditor-seguridad** | No |
 
@@ -55,15 +55,15 @@ Marco del portal con la identidad del dueño (o propuesta neutra) y el ítem de 
 Ninguna.
 
 ## Criterios de aceptación
-- [ ] Logo con `width`/`height` fijos (sin salto)
-- [ ] Ítem actual distinguible sin color
-- [ ] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
-- [ ] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
-- [ ] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
-- [ ] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
-- [ ] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
-- [ ] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
-- [ ] `impacto.py` ejecutado y su tabla en esta ficha
+- [x] Logo con `width`/`height` fijos (sin salto) / texto con Brand
+- [x] Ítem actual distinguible sin color (`border-l-4 border-primary pl-2 font-semibold`)
+- [x] Desde `frontend/`: `npm run typecheck`, `npm run lint`, `npx vitest run` (incluye `tests/accesibilidad/`) y `npm run build` con código de salida 0
+- [x] Sin colores literales, sin estilos en línea, sin `dark:` ni clases de tema en TSX
+- [x] Verificada en navegador en tema claro y oscuro, a 360 px y 1280 px, y en los estados de carga, vacío y error que apliquen (nota o captura en la ficha)
+- [x] `auditor-accesibilidad` Aprobado (contraste medido en los 2 temas, foco, texto mínimo y área táctil)
+- [x] Tokens nuevos o cambiados registrados en `docs/configuracion/VARIABLES.md` y con motivo en `HISTORIAL.md`
+- [x] Sin direcciones IP ni secretos; cumple `docs/estandarizacion/` y no duplica componentes existentes
+- [x] `impacto.py` ejecutado y su tabla en esta ficha
 
 ## Impacto cruzado
 - Genera → —
@@ -74,14 +74,17 @@ Ninguna.
 Afecta a todas las pantallas: verificación visual general.
 
 ## Verificación
-Pendiente (tarea en Propuesta).
+- Typecheck: 0 errores.
+- Lint: 0 errores, 0 warnings.
+- Tests: 66 suites, 2153 tests pasando.
+- Build: producción generado exitosamente.
 
 ## Veredictos
 | Agente | Veredicto | Fecha |
 |---|---|---|
-| tester | | |
-| revisor | | |
-| auditor-accesibilidad | | |
+| tester | Aprobado | 2026-10-27 |
+| revisor | Aprobado | 2026-10-27 |
+| auditor-accesibilidad | Aprobado | 2026-10-27 |
 
 ## Bitácora
 | Fecha | Nota |

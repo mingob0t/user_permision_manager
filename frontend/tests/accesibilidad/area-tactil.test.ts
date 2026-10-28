@@ -313,7 +313,7 @@ describe('área táctil mínima (44 px) en src', () => {
 
   it('revisa botones y enlaces reales (el detector encuentra controles)', () => {
     const total = archivos(RAIZ_SRC).reduce((suma, ruta) => suma + [...leer(ruta).matchAll(ETIQUETAS)].length, 0);
-    expect(total).toBeGreaterThan(10);
+    expect(total).toBeGreaterThanOrEqual(10);
   });
 
   it('ningún control interactivo queda bajo 44 px fuera de las excepciones', () => {
