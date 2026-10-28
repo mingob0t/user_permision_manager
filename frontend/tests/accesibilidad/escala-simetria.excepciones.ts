@@ -12,9 +12,6 @@ export interface ExcepcionSimetria {
 }
 
 export const EXCEPCIONES_SIMETRIA: Record<string, ExcepcionSimetria> = {
-  'components/data-table.tsx': {
-    cantidad: 1,
-    tarea: 'DIS-071',
-    motivo: 'min-w-[44rem] heredado en tabla de datos; será normalizado a escala en DIS-071',
-  },
+  // 0 excepciones: 100% de componentes y pantallas usan tokens y escala canónica 8pt (DIS-067).
 };
+

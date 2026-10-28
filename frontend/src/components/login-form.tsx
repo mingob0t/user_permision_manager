@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { AuthContext } from '@/lib/types';
 import { Button, Checkbox, Field, TextInput } from './form';
+import { PageHeader } from './page-header';
 import { Card, ErrorNote, Spinner } from './ui';
 
 export function LoginForm() {
@@ -78,12 +79,11 @@ export function LoginForm() {
   return (
     <div className="grid min-h-screen place-items-center p-4">
       <div className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold">Nexus</h1>
-          <p className="mt-1 text-sm text-label">
-            Catálogo centralizado de plataformas
-          </p>
-        </div>
+        <PageHeader
+          title="Nexus"
+          description="Catálogo centralizado de plataformas"
+          className="mb-6 text-center sm:flex-col sm:items-center"
+        />
 
         <Card className="space-y-4">
           {error ? <ErrorNote message={error} /> : null}

@@ -6,8 +6,15 @@
 
 | Elemento | Tipo | Dónde vive | Para qué | Usado en |
 |---|---|---|---|---|
+| `PageHeader` | Componente | `frontend/src/components/page-header.tsx` | Encabezado estándar de pantalla (`h1` único, descripción, acciones y migas de pan) (DIS-070) | Todas las pantallas del sistema |
+| `PantallaListado`, `PantallaDetalle`, `PantallaFormulario`, `PantallaPanel` | Componentes plantilla | `frontend/src/components/plantillas/` | Plantillas canónicas de composición para listados, fichas, formularios y paneles (DIS-070) | Vistas y módulos |
+| `AlertDialog` | Componente | `frontend/src/components/alert-dialog.tsx` | Diálogos modales accesibles para confirmaciones y alertas críticas (DIS-074, DIS-075) | Confirmaciones en todas las vistas |
+| `Skeleton`, `RegionDeAviso` | Componentes | `frontend/src/components/ui.tsx` | Marcadores de carga accesibles sin CLS y zonas reservadas para notificaciones sin saltos (DIS-073) | Todas las pantallas |
+| `Icono` | Componente | `frontend/src/components/icono.tsx` | Catálogo centralizado de íconos vectoriales SVG accesibles (DIS-072) | Todo el frontend |
+| `Tabs`, `ToggleChip` | Componentes | `frontend/src/components/tabs.tsx` | Navegación accesible por pestañas y conmutadores WAI-ARIA (DIS-060) | Settings, MyRequests, etc. |
 | `Card`, `PanelHeader`, `StatTile`, `Spinner`, `ErrorNote`, `EmptyNote`, `Badge` | Componentes React | `frontend/src/components/ui.tsx:10-105` | Contenedor, KPI, estados de carga, error y vacío, insignias (`nx-badge-<tono>`) | Todas las pantallas |
-| `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button` | Componentes de formulario | `frontend/src/components/form.tsx:13-95` | Campos y botones estándar | areas, users, platform-admin, settings |
+| `Field`, `TextInput`, `TextArea`, `Select`, `Checkbox`, `Button`, `ButtonLink` | Componentes de formulario | `frontend/src/components/form.tsx` | Campos y botones estándar con matriz de estados unificada (DIS-058, DIS-059) | areas, users, platform-admin, settings |
+
 | `variablesCss`, `.nx-chip-solid`, `.nx-chip-tint` | Función y clases CSS | `frontend/src/lib/variables-css.ts`, `frontend/src/styles/components.css` | Color que solo se conoce al ejecutar (plataforma, área) como variable `--chip-*`; la clase lo pinta. Sustituye `style={{ background: … }}` | `PlatformCard`, `PlatformAdmin`, `AreasList` (DIS-012). DIS-048: el texto no usa el color libre; `textoLegible` / `atributoTexto` (`lib/color-legible.ts`) eligen texto claro u oscuro por luminancia de `bg_color` y `.nx-chip-solid[data-texto]` lo pinta con `--color-texto-sobre-fondo-*` |
 | `Modal` | Componente | `frontend/src/components/form.tsx` | Diálogo con footer; foco inicial en el primer campo, atrapado con Tab y devuelto al cerrar; `describedBy` → `aria-describedby`, nombre con `aria-labelledby`; en portal en `body`; velo `bg-overlay`, bloqueo del fondo e `inert` (DIS-031, DIS-038, DIS-044) | Todas las pantallas con diálogo (lista en DIS-031) |
 | `useFocusTrap`, `ENFOCABLES`, `CAMPOS`, `enfocables`, `esVisible`, `enfocarPrimero` | Hook y utilidades | `frontend/src/lib/use-focus-trap.ts` | Trampa de foco: foco inicial, Tab/Mayús+Tab cíclicos solo por lo visible, Escape (respeta `defaultPrevented`), devolución del foco con destino alterno (`<main>` o `h1`); pila para diálogos superpuestos (DIS-031) | `Modal`, `MobileMenu` |

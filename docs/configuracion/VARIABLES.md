@@ -287,3 +287,35 @@ Definidos en `frontend/src/styles/tokens.css` (tema claro en `:root, html.light`
 | `--color-input-border` | Borde de campo (sin consumidores) | `131 145 165`; emerald `149 143 139`; rose `219 102 128` | `88 102 123` (SO, `html.dark`); obsidian `101 101 109`; violet `104 84 167` | `tokens.css` | FNC-001 (heredado); valores DIS-006, 2026-10-26 | Vigente (sin consumidor aún) |
 | `--text-xs` | Mínimo de la escala tipográfica (12 px): insignias, botones, cabeceras de tabla, contador del tour, casilla | `12px` | ídem (no depende del tema) | `tokens.css` | FNC-001 (heredado); mínimo DIS-007, 2026-10-26 | Vigente |
 | `--text-2xs` | Texto de 10 px (insignias, superíndices) | `10px` | ídem | `tokens.css` | FNC-001 (heredado) | Baja DIS-007, 2026-10-26 (sin usos; bajo el mínimo de 12 px) |
+
+### Tokens de Fase 7 (DIS-054 a DIS-072, cierre DIS-067)
+
+Definidos en `frontend/src/styles/tokens.css` bajo la arquitectura de 3 capas (ADR-007): Primitivos, Semánticos y Alias heredados.
+
+| Token | Rol funcional / Significado | Valor tema claro | Valor tema oscuro (`html.dark` y SO) | Archivo | Tarea | Estatus |
+|---|---|---|---|---|---|---|
+| `--color-fondo` | Fondo general de aplicación | `248 250 252` | `15 23 42` | `tokens.css` | DIS-055 | Vigente |
+| `--color-superficie` | Superficie de paneles y tarjetas | `255 255 255` | `30 41 59` | `tokens.css` | DIS-055 | Vigente |
+| `--color-superficie-elevada` | Diálogos modales y popovers | `255 255 255` | `51 65 85` | `tokens.css` | DIS-055 | Vigente |
+| `--color-superficie-hundida` | Fondos de tablas, inputs y barras | `241 245 249` | `15 23 42` | `tokens.css` | DIS-055 | Vigente |
+| `--color-velo` | Velo de fondo para diálogos | `0 0 0 / 0.6` | `0 0 0 / 0.75` | `tokens.css` | DIS-055 | Vigente |
+| `--color-texto` | Texto primario accesible | `15 23 42` | `248 250 252` | `tokens.css` | DIS-055 | Vigente |
+| `--color-texto-secundario` | Subtítulos y descripciones | `71 85 105` | `203 213 225` | `tokens.css` | DIS-055 | Vigente |
+| `--color-texto-tenue` | Metadatos y textos menores | `100 116 139` | `148 163 184` | `tokens.css` | DIS-055 | Vigente |
+| `--color-borde` | Borde base de componentes | `203 213 225` | `51 65 85` | `tokens.css` | DIS-055 | Vigente |
+| `--color-borde-sutil` | Divisores secundarios | `226 232 240` | `30 41 59` | `tokens.css` | DIS-055 | Vigente |
+| `--color-borde-fuerte` | Bordes destacados y foco | `148 163 184` | `71 85 105` | `tokens.css` | DIS-055 | Vigente |
+| `--color-accion` | Color primario de acción | `37 99 235` | `59 130 246` | `tokens.css` | DIS-055 | Vigente |
+| `--color-accion-hover` | Estado hover de acción | `29 78 216` | `96 165 250` | `tokens.css` | DIS-055 | Vigente |
+| `--color-accion-presionada` | Estado activo/presionado | `30 64 175` | `147 197 253` | `tokens.css` | DIS-055 | Vigente |
+| `--foco-anillo` | Anillo de foco accesible 3:1 | `37 99 235` | `96 165 250` | `tokens.css` | DIS-056 | Vigente |
+| `--foco-ancho`, `--foco-separacion` | Grosor y margen del foco | `2px`, `2px` | `2px`, `2px` | `tokens.css` | DIS-056 | Vigente |
+| `--deshabilitado-fondo` | Fondo de control deshabilitado | `241 245 249` | `30 41 59` | `tokens.css` | DIS-056 | Vigente |
+| `--deshabilitado-texto` | Texto de control deshabilitado | `148 163 184` | `100 116 139` | `tokens.css` | DIS-056 | Vigente |
+| `--invalido-borde` | Borde de error de campo | `220 38 38` | `239 68 68` | `tokens.css` | DIS-056 | Vigente |
+| `--duracion-corta`, `--duracion-media` | Duraciones de transición | `150ms`, `250ms` | `150ms`, `250ms` (0ms con reduced-motion) | `tokens.css` | DIS-056 | Vigente |
+| `--control-alto` | Altura táctil mínima accesible | `48px` | `48px` | `tokens.css` | DIS-072 | Vigente |
+| `--contenido-max`, `--formulario-max`, `--dialogo-max` | Anchos máximos semánticos | `1280px`, `640px`, `560px` | `1280px`, `640px`, `560px` | `tokens.css` | DIS-072 | Vigente |
+| `--espacio-1` a `--espacio-12` | Escala única de espaciado 8pt | `4px`, `8px`, `12px`, `16px`, `24px`, `32px`, `48px` | ídem | `tokens.css` | DIS-072 | Vigente |
+| `--icono-sm`, `--icono-md`, `--icono-lg` | Tamaños normalizados de ícono | `16px`, `20px`, `24px` | ídem | `tokens.css` | DIS-072 | Vigente |
+

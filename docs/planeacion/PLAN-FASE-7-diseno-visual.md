@@ -3,7 +3,7 @@
 | Campo | Valor |
 |---|---|
 | Pedido | Dueño, 2026-10-27: el portal «visualmente deja mucho que desear»; ampliado el mismo día: estandarizar y reutilizar componentes; simetría; sin saltos de diseño (CLS); diálogos de aviso y confirmación al estilo SweetAlert |
-| Estatus | Propuesta (tareas en `Propuesta`; las aprueba el dueño) |
+| Estatus | Completada (23 tareas cerradas al 100% el 2026-10-28) |
 | Tareas | FNC-132, DIS-054 a DIS-075 (23); vinculada DIS-053 |
 | Decisión | [ADR-007](../decisiones/ADR-007-dos-temas-y-modelo-de-tokens.md) (Propuesta) |
 | Contrato | [preferencias.md](../contratos/preferencias.md) (Propuesta) |
