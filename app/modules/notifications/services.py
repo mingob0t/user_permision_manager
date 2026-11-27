@@ -199,6 +199,10 @@ def send_test_email(server, port, encryption, username, password, sender_name, t
 
 # `{clave}` de una plantilla: letras, dígitos y guion bajo.
 PATRON_VARIABLE = re.compile(r'\{(\w+)\}')
+# Encabezado y cita que quedan vacíos cuando no hay motivo (FNC-216), p. ej.
+# `<p>Motivo:</p><blockquote></blockquote>` de `solicitud_rechazada`.
+PATRON_BLOQUE_VACIO = re.compile(
+    r'<p>[^<]*:</p>\s*<blockquote>\s*</blockquote>\s*')
 # Saltos de línea que, en una cabecera, abrirían otra (SEC-MAIL-01).
 PATRON_SALTO_DE_LINEA = re.compile(r'[\r\n]+')
 
@@ -284,6 +288,8 @@ def send_notification_by_slug(slug, target_email, context=None):
 
         body = render_template_text(template.body, context,
                                     escape_html=bool(template.is_html))
+        if template.is_html:
+            body = PATRON_BLOQUE_VACIO.sub('', body)
         subject = render_subject(template.subject, context)
 
         msg = MIMEMultipart()

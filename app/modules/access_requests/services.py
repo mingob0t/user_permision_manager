@@ -21,7 +21,7 @@ from app.authz import is_admin
 from app.modules.access import errores as errores_acceso
 from app.modules.access.rules import acceso_a_reemplazar
 from app.modules.access.tipos import NIVELES
-from app.modules.access_requests import catalogo, errores
+from app.modules.access_requests import catalogo, errores, motivos
 from app.modules.access_requests.models import PlatformAccessRequest
 from app.modules.access_requests.tipos import (
     ACCESS_REQUEST_JUSTIFICATION_MAX_LENGTH, ESTADO_PENDIENTE)
@@ -60,15 +60,24 @@ MENSAJE_SOLO_USUARIO = ('Solo se solicita el nivel usuario; el nivel admin lo '
                         'otorga un administrador.')
 
 
+MENSAJE_JUSTIFICACION_OBLIGATORIA = 'Escribe el motivo de tu solicitud.'
+
+
 def limpiar_justificacion(valor):
-    """Opcional (decisión del dueño, 2026-10-20); recortada y ≤ 500."""
-    if valor is None:
+    """Según `SOLICITUD_MOTIVO` (FNC-216): `oculto` la descarta (null),
+    `opcional` la acepta (decisión del dueño, 2026-10-20) y `obligatorio` la
+    exige. Recortada y ≤ 500."""
+    modo = motivos.modo_solicitud()
+    if modo == motivos.MODO_OCULTO:
         return None
-    if not isinstance(valor, str):
+    if valor is not None and not isinstance(valor, str):
         raise errores_acceso.validacion('justification', 'Debe ser texto.')
-    valor = valor.strip()
+    valor = (valor or '').strip()
     if len(valor) > ACCESS_REQUEST_JUSTIFICATION_MAX_LENGTH:
         raise errores_acceso.validacion('justification', MENSAJE_LARGO)
+    if not valor and modo == motivos.MODO_OBLIGATORIO:
+        raise errores_acceso.validacion('justification',
+                                        MENSAJE_JUSTIFICACION_OBLIGATORIA)
     return valor or None
 
 

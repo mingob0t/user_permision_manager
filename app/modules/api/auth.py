@@ -18,6 +18,7 @@ import os
 from flask import Blueprint, current_app, jsonify, redirect, request, session
 from flask_login import current_user, login_required, login_user, logout_user
 
+from app.modules.access_requests import motivos
 from app.modules.api.helpers import endpoint_retirado
 from app.modules.audit.services import add_audit_log
 from app.modules.auth import oidc
@@ -89,6 +90,8 @@ def context():
         'app_title': (os.getenv('APP_TITLE') or os.getenv('NEXT_PUBLIC_APP_TITLE')
                       or TITULO_APP_POR_DEFECTO),
         'domain': os.getenv('DOMAIN') or os.getenv('NEXT_PUBLIC_DOMAIN') or '',
+        # Si la web pide motivo al solicitar y al rechazar (FNC-216).
+        'motivos': motivos.como_dict(),
         'support_email': (os.getenv('SUPPORT_EMAIL')
                           or os.getenv('NEXT_PUBLIC_SUPPORT_EMAIL')
                           or CORREO_SOPORTE_POR_DEFECTO),

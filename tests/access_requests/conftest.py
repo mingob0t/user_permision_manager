@@ -63,3 +63,10 @@ def cambiar_de_actor():
     """Las peticiones comparten el contexto de la app de la prueba: se olvida
     el usuario que Flask-Login dejó en `g` antes de usar otro cliente."""
     g.pop('_login_user', None)
+
+
+@pytest.fixture(autouse=True)
+def motivo_de_solicitud_opcional(monkeypatch):
+    """Las pruebas heredadas parten del modo `opcional` (antes de FNC-216);
+    `test_motivos.py` prueba los tres modos."""
+    monkeypatch.setenv('SOLICITUD_MOTIVO', 'opcional')

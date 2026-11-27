@@ -33,7 +33,7 @@ from app.authz import (can_manage_platform, can_manage_user, is_admin,
 from app.modules.access import errores as errores_acceso
 from app.modules.access.services import otorgar
 from app.modules.access.tipos import ORIGEN_SOLICITUD
-from app.modules.access_requests import catalogo, errores
+from app.modules.access_requests import catalogo, errores, motivos
 from app.modules.access_requests.models import PlatformAccessRequest
 from app.modules.access_requests.services import (MODULO_AUDITORIA,
                                                   estado_auditado)
@@ -85,8 +85,16 @@ def validar_decisor(actor, solicitud):
 # --------------------------------------------------------------------------- #
 
 def limpiar_motivo_rechazo(valor):
-    """RF-06: obligatorio, recortado, 10–500 caracteres; si no, `422`."""
+    """Según `RECHAZO_MOTIVO` (FNC-216, modifica RF-06): `obligatorio` exige
+    10–500 caracteres recortados; `opcional` admite vacío (null) y, si viene,
+    aplica la misma regla; `oculto` lo descarta (null). Si no, `422`."""
+    modo = motivos.modo_rechazo()
+    if modo == motivos.MODO_OCULTO:
+        return None
     motivo = valor.strip() if isinstance(valor, str) else ''
+    if not motivo and modo == motivos.MODO_OPCIONAL and (
+            valor is None or isinstance(valor, str)):
+        return None
     if not (ACCESS_REQUEST_REJECTION_MIN_LENGTH <= len(motivo)
             <= ACCESS_REQUEST_REJECTION_MAX_LENGTH):
         raise errores_acceso.validacion('reason', MENSAJE_MOTIVO)

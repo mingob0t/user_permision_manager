@@ -570,7 +570,7 @@ def test_el_secreto_no_viaja_en_la_redireccion_ni_en_el_context(client, oidc):
 
 # Claves de marca agregadas al contexto (contrato autenticacion: marca).
 CLAVES_DE_MARCA = {'authelia_url', 'app_name', 'app_title', 'domain',
-                   'support_email'}
+                   'support_email', 'motivos'}
 
 
 def _contexto_sin_marca(datos):

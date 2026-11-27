@@ -34,7 +34,7 @@ Son reglas obligatorias para toda tarea y sirven de criterio de revisión para `
 | SEC-AUTHZ-07 | Un admin aprueba, rechaza y revoca solo en sus áreas | Prueba | RF-03 |
 | SEC-AUTHZ-08 | Nadie aprueba su propia solicitud ni modifica sus propios accesos o rol | Prueba | — |
 | SEC-AUTHZ-09 | El actor sale de la sesión; cada endpoint tiene una lista blanca de campos y rechaza `role`, `is_active`, `auth_source` y `password_hash` | Prueba de *mass assignment* | SEG-09 |
-| SEC-AUTHZ-10 | Las solicitudes siguen una máquina de estados con control de concurrencia; el rechazo exige motivo | Prueba de doble aprobación | RF-06 |
+| SEC-AUTHZ-10 | Las solicitudes siguen una máquina de estados con control de concurrencia; el rechazo exige motivo (configurable con `RECHAZO_MOTIVO`, FNC-216) | Prueba de doble aprobación | RF-06 |
 | SEC-AUTHZ-11 | Purga, importación y bajas masivas: solo el superadmin, con confirmación explícita; la importación nunca da roles admin | Prueba | SEG-06, 17 |
 
 ## 3. OpenLDAP

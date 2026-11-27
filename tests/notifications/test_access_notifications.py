@@ -380,3 +380,16 @@ def test_sin_destinatarios_no_conecta_ni_audita(correo, crear_area,
     assert resultado == {'status': 'skipped', 'recipients': 0}
     assert correo.conexiones == []
     assert _fallos() == []
+
+
+def test_rechazo_sin_motivo_no_deja_el_parrafo_vacio(correo, escenario):
+    """FNC-216: sin motivo se omite «Motivo:» y su cita (plantilla de la BD)."""
+    e = escenario
+
+    avisos.notificar_solicitud_rechazada(e['ana'], e['plataforma'], 'usuario',
+                                         None)
+
+    cuerpo = _cuerpo(correo.enviados[0])
+    assert 'Motivo' not in cuerpo
+    assert '<blockquote' not in cuerpo
+    assert 'rechazó tu solicitud' in cuerpo

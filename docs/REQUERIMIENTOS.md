@@ -50,7 +50,7 @@ Portal para gestionar el acceso a plataformas internas agrupadas por **áreas**.
 | RF-03 | Un admin no aprueba solicitudes de áreas que no gestiona; las solicita como usuario. |
 | RF-04 | Solo el superadmin crea o eleva admins. |
 | RF-05 | La auditoría se basa en lo registrado en el portal (no se concilia contra LDAP ni contra las plataformas). |
-| RF-06 | El rechazo de una solicitud exige motivo. |
+| RF-06 | El rechazo de una solicitud exige motivo. **Configurable (FNC-216, decisión del dueño 2026-11-27):** `RECHAZO_MOTIVO` = `obligatorio` (por omisión) \| `opcional` \| `oculto`; el dueño pidió explícitamente poder rechazar sin motivo. Con `opcional`/`oculto` el rechazo sigue auditado. |
 
 ### Pantallas por rol
 | Pantalla | Usuario | Admin | Superadmin |
