@@ -209,6 +209,15 @@ describe('DIS-131: resumen', () => {
     expect(screen.getByText('3 por aprobar')).toBeTruthy();
   });
 
+  it('DIS-155: mientras carga, el esqueleto tiene la forma del Resumen (4 KPI, tabla y 2 gráficas)', async () => {
+    vi.mocked(requestsApi.inboxStats).mockReturnValue(new Promise(() => {}));
+    const { container } = render_();
+    expect(await screen.findByRole('status', { name: 'Cargando el resumen de solicitudes…' })).toBeTruthy();
+    expect(container.querySelectorAll('[data-esqueleto="kpi"]')).toHaveLength(4);
+    expect(container.querySelectorAll('[data-esqueleto="tabla"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[data-esqueleto="grafica"]')).toHaveLength(2);
+  });
+
   it('DIS-154: listas y tablas con nombre accesible completo y leyenda que no desborda', async () => {
     render_();
     const estado = await screen.findByRole('list', { name: 'Solicitudes por estado' });

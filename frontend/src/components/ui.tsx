@@ -266,6 +266,9 @@ export function Badge({
  * - 'texto': línea de texto
  * - 'rect': bloque genérico
  */
+/** Clases base del esqueleto: las reutilizan los esqueletos con forma propia (DIS-155). */
+export const CLASES_ESQUELETO = 'animate-pulse rounded-lg bg-surface-container/60 motion-reduce:animate-none';
+
 export function Skeleton({
   variant = 'fila',
   className = '',
@@ -277,7 +280,7 @@ export function Skeleton({
   count?: number;
   ariaLabel?: string;
 }) {
-  const baseClasses = 'animate-pulse rounded-lg bg-surface-container/60 motion-reduce:animate-none';
+  const baseClasses = CLASES_ESQUELETO;
   const variantClasses = {
     fila: 'min-h-12 w-full',
     tarjeta: 'min-h-36 w-full rounded-xl border border-panel-border',

@@ -16,7 +16,7 @@ import { api } from '@/lib/api';
 import type { Stats } from '@/lib/types';
 import { Button } from '../form';
 import { useSession } from '../session-provider';
-import { ErrorNote, Skeleton } from '../ui';
+import { CLASES_ESQUELETO, ErrorNote } from '../ui';
 import { DonaAreas } from './dona-areas';
 import { DonaConectores } from './dona-conectores';
 import { DonaEstados } from './dona-estados';
@@ -90,6 +90,31 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
   );
 }
 
+const CAJA_ESQUELETO = `${CLASES_ESQUELETO} rounded-xl border border-panel-border`;
+export const MENSAJE_CARGA_RESUMEN = 'Cargando el resumen de solicitudes…';
+
+/**
+ * DIS-155: esqueleto con la misma rejilla que `Contenido` (4 KPI; tabla 3/5 y dos gráficas 2/5)
+ * para que la pantalla no salte al llegar los datos. Un solo `status` para el lector de pantalla.
+ */
+function EsqueletoResumen() {
+  return (
+    <div role="status" aria-label={MENSAJE_CARGA_RESUMEN} className="flex flex-1 min-h-0 flex-col gap-4">
+      <span className="sr-only">{MENSAJE_CARGA_RESUMEN}</span>
+      <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" aria-hidden="true">
+        {Array.from({ length: 4 }, (_, i) => <div key={i} data-esqueleto="kpi" className={`${CAJA_ESQUELETO} min-h-52`} />)}
+      </div>
+      <div className="grid w-full flex-1 min-h-0 grid-cols-1 gap-4 lg:grid-cols-5" aria-hidden="true">
+        <div data-esqueleto="tabla" className={`${CAJA_ESQUELETO} min-h-96 lg:col-span-3`} />
+        <div className="flex min-h-0 flex-col gap-4 lg:col-span-2">
+          <div data-esqueleto="grafica" className={`${CAJA_ESQUELETO} min-h-64 flex-1`} />
+          <div data-esqueleto="grafica" className={`${CAJA_ESQUELETO} min-h-64 flex-1`} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ApprovalsResumen() {
   const { session } = useSession();
   const resumen = usePolling(
@@ -110,5 +135,5 @@ export function ApprovalsResumen() {
       </div>
     );
   }
-  return <Skeleton variant="tarjeta" count={3} ariaLabel="Cargando el resumen de solicitudes…" />;
+  return <EsqueletoResumen />;
 }
