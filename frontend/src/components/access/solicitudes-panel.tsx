@@ -151,8 +151,8 @@ export function SolicitudesPanel() {
     <section aria-labelledby={TITULO_ID} className="flex flex-1 min-h-0 flex-col h-full min-w-0">
       <Card className="!p-0 flex flex-1 min-h-0 flex-col overflow-hidden shadow-1 border border-panel-border/80">
         <PanelHeader
-          title="Solicitudes"
-          subtitle="Pendientes por aprobar"
+          title="Por aprobar"
+          subtitle="Pendientes de tu decisión"
           icon="solicitudes"
           titleId={TITULO_ID}
           // h3: dentro del resumen (h2 oculto), al nivel de la dona y las gráficas.

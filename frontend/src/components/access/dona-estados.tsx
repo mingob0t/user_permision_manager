@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * KPI «Solicitudes por estado» (DIS-131, DIS-141): dona de pendientes, aprobadas y rechazadas
+ * KPI «Por estado» (DIS-131, DIS-141; título corto en DIS-151): dona de pendientes, aprobadas y rechazadas
  * con los colores semánticos de aviso, éxito y peligro (tokens). Usa `DonaKpi` (DIS-144).
  */
 
@@ -24,7 +24,7 @@ export const ESTADOS_DONA: { estado: RequestStatus; nombre: string; punto: strin
 export function DonaEstados({ stats }: { stats: InboxStats }) {
   return (
     <DonaKpi
-      titulo="Solicitudes por estado"
+      titulo="Por estado"
       icono="solicitudes"
       paleta={PALETA_ESTADOS}
       filas={ESTADOS_DONA.map(({ estado, nombre, punto }) => (

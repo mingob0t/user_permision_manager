@@ -62,8 +62,8 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
         </div>
         <div className="flex min-h-0 flex-col gap-4 lg:col-span-2">
           <GraficaBarras
-            titulo="Solicitudes por área"
-            subtitulo={`Las ${MAX_BARRAS} áreas con más solicitudes`}
+            titulo="Áreas"
+            subtitulo={`Las ${MAX_BARRAS} con más solicitudes`}
             icono="areas"
             serie="Solicitudes"
             columna="Área"
@@ -72,8 +72,8 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
             vacioMensaje="Aún no hay solicitudes en las áreas de tu alcance."
           />
           <GraficaBarras
-            titulo="Solicitudes por plataforma"
-            subtitulo={`Las ${MAX_BARRAS} plataformas con más solicitudes`}
+            titulo="Plataformas"
+            subtitulo={`Las ${MAX_BARRAS} con más solicitudes`}
             icono="plataformas"
             serie="Solicitudes"
             columna="Plataforma"

@@ -3,7 +3,7 @@
 /**
  * Tarjeta KPI con dona (DIS-131, generalizada en DIS-144): recharts `Pie` con `innerRadius`,
  * colores por token y leyenda con cifra y porcentaje en texto (la gráfica es decorativa para el
- * lector de pantalla). La usan «Solicitudes por estado» y «Solicitudes por área».
+ * lector de pantalla). La usan las cuatro KPI del Resumen de Solicitudes (DIS-146, DIS-151).
  */
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
@@ -39,6 +39,7 @@ export function DonaKpi({
   filas,
   vacioTitulo,
   vacioMensaje,
+  textoTotal = 'en total',
 }: {
   titulo: string;
   icono: NombreIcono;
@@ -47,6 +48,8 @@ export function DonaKpi({
   filas: FilaDona[];
   vacioTitulo: string;
   vacioMensaje: string;
+  /** Texto tras el total en el subtítulo (DIS-151), p. ej. «por aprobar». */
+  textoTotal?: string;
 }) {
   const total = filas.reduce((suma, fila) => suma + fila.cantidad, 0);
   const colores = useTokenColors({ ...TOKENS_BASE, ...paleta }) as Record<string, string>;
@@ -54,7 +57,7 @@ export function DonaKpi({
 
   return (
     <Card className="!p-0 flex h-full flex-col overflow-hidden shadow-1 border border-panel-border/80">
-      <PanelHeader title={titulo} subtitle={`${total} en total`} icon={icono} titleTag="h3" />
+      <PanelHeader title={titulo} subtitle={`${total} ${textoTotal}`} icon={icono} titleTag="h3" />
       {total === 0 ? (
         <PremiumEmptyState variant="seamless" icono={icono} title={vacioTitulo} message={vacioMensaje} />
       ) : (

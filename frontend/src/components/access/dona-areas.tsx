@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * KPI «Solicitudes pendientes por área» (DIS-144, DIS-145): dona con las áreas que más solicitudes
+ * KPI «Pendientes por área» (DIS-144, DIS-145; título corto en DIS-151): dona con las áreas que más solicitudes
  * pendientes tienen (`inbox/stats.pending_by_area`, ya ordenado; v1.4) y el resto agrupado en
  * «Otras». Los colores son los tokens de los indicadores existentes, uno por serie.
  */
@@ -43,7 +43,8 @@ export function filasPorArea(stats: InboxStats): FilaDona[] {
 export function DonaAreas({ stats }: { stats: InboxStats }) {
   return (
     <DonaKpi
-      titulo="Solicitudes pendientes por área"
+      titulo="Pendientes por área"
+      textoTotal="por aprobar"
       icono="areas"
       paleta={PALETA_AREAS}
       filas={filasPorArea(stats)}

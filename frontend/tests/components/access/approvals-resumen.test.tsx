@@ -84,7 +84,7 @@ afterEach(() => {
 describe('DIS-131: resumen', () => {
   it('DIS-141: KPI = dona por estado, conectores y usuarios por rol; sin tarjetas de aprobadas/rechazadas ni «Abrir»', async () => {
     render_();
-    const leyenda = await screen.findByRole('list', { name: 'Solicitudes por estado' });
+    const leyenda = await screen.findByRole('list', { name: 'Por estado' });
     const items = within(leyenda).getAllByRole('listitem').map((li) => li.textContent);
     expect(items[0]).toContain('Pendientes');
     expect(items[0]).toContain('25 %');
@@ -116,7 +116,7 @@ describe('DIS-131: resumen', () => {
     cleanup();
     vi.mocked(api.stats).mockRejectedValue(new ApiError(500, 'x'));
     render_();
-    await screen.findByRole('list', { name: 'Solicitudes por estado' });
+    await screen.findByRole('list', { name: 'Por estado' });
     expect(screen.queryByRole('list', { name: 'Usuarios' })).toBeNull();
   });
 
@@ -164,20 +164,30 @@ describe('DIS-131: resumen', () => {
   it('gráficas por área y plataforma con su tabla alternativa', async () => {
     render_();
     // DIS-145: la dona es «pendientes por área»; «Solicitudes por área» queda solo en las barras.
-    expect((await screen.findAllByRole('heading', { name: 'Solicitudes por área' })).length).toBe(1);
-    expect(screen.getByRole('heading', { name: 'Solicitudes pendientes por área' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Solicitudes por plataforma' })).toBeTruthy();
-    expect(screen.getByRole('table', { name: 'Solicitudes por área' })).toBeTruthy();
+    expect((await screen.findAllByRole('heading', { name: 'Áreas' })).length).toBe(1);
+    expect(screen.getByRole('heading', { name: 'Pendientes por área' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Plataformas' })).toBeTruthy();
+    expect(screen.getByRole('table', { name: 'Áreas' })).toBeTruthy();
     expect(screen.getByText('Contabilidad')).toBeTruthy();
   });
 
   it('DIS-147: la tabla de pendientes va antes (3/5) que las gráficas (2/5)', async () => {
     render_();
-    const grafica = await screen.findByRole('heading', { name: 'Solicitudes por área' });
-    const tabla = screen.getByRole('heading', { level: 3, name: 'Solicitudes' });
+    const grafica = await screen.findByRole('heading', { name: 'Áreas' });
+    const tabla = screen.getByRole('heading', { level: 3, name: 'Por aprobar' });
     expect(tabla.compareDocumentPosition(grafica) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(tabla.closest('.lg\\:col-span-3')).toBeTruthy();
     expect(grafica.closest('.lg\\:col-span-2')).toBeTruthy();
+  });
+
+  it('DIS-151: los títulos del Resumen no repiten «Solicitudes» y Pendientes por área dice «N por aprobar»', async () => {
+    render_();
+    await screen.findByRole('list', { name: 'Conectores' });
+    const resumen = screen.getByRole('region', { name: 'Resumen de solicitudes' });
+    const titulos = within(resumen).getAllByRole('heading', { level: 3 }).map((h) => h.textContent ?? '');
+    expect(titulos.length).toBeGreaterThan(0);
+    titulos.forEach((t) => expect(t).not.toMatch(/^Solicitudes/));
+    expect(screen.getByText('3 por aprobar')).toBeTruthy();
   });
 
   it('DIS-150: en la fila de KPI, Usuarios va antes que Conectores', async () => {
@@ -192,7 +202,7 @@ describe('DIS-131: resumen', () => {
       { platform_id: i + 1, platform: `Plataforma ${i + 1}`, area: 'Finanzas', count: 10 - i }));
     vi.mocked(requestsApi.inboxStats).mockResolvedValue({ ...STATS, by_platform: muchas });
     const { container } = render_();
-    const grafica = await screen.findByRole('heading', { name: 'Solicitudes por área' });
+    const grafica = await screen.findByRole('heading', { name: 'Áreas' });
     expect(grafica.closest('.lg\\:col-span-2')?.className).toContain('min-h-0');
     const contenedores = container.querySelectorAll<HTMLElement>('.recharts-responsive-container');
     expect(contenedores.length).toBeGreaterThan(0);
@@ -204,7 +214,7 @@ describe('DIS-131: resumen', () => {
       { area_id: i + 1, area: `Área ${i + 1}`, count: 100 - i }));
     vi.mocked(requestsApi.inboxStats).mockResolvedValue({ ...STATS, by_area: muchas });
     render_();
-    const tabla = await screen.findByRole('table', { name: 'Solicitudes por área' });
+    const tabla = await screen.findByRole('table', { name: 'Áreas' });
     expect(within(tabla).getAllByRole('row')).toHaveLength(MAX_BARRAS + 1);
   });
 
@@ -225,19 +235,19 @@ describe('DIS-131: resumen', () => {
     render_();
     expect(await screen.findByRole('alert')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
-    expect(await screen.findByRole('list', { name: 'Solicitudes por estado' })).toBeTruthy();
+    expect(await screen.findByRole('list', { name: 'Por estado' })).toBeTruthy();
   });
 
   it('la vista principal no incluye la tabla de la bandeja (sin filtros)', async () => {
     render_();
-    await screen.findByRole('list', { name: 'Solicitudes por estado' });
+    await screen.findByRole('list', { name: 'Por estado' });
     expect(screen.queryByLabelText('Filtrar la bandeja por área')).toBeNull();
     expect(screen.queryByLabelText('Filtrar la bandeja por estado')).toBeNull();
   });
 
   it('DIS-132: la vista principal no lleva texto descriptivo bajo el título', async () => {
     render_();
-    await screen.findByRole('list', { name: 'Solicitudes por estado' });
+    await screen.findByRole('list', { name: 'Por estado' });
     expect(screen.queryByText(/Resumen de las solicitudes de acceso/)).toBeNull();
   });
 });
@@ -276,14 +286,14 @@ describe('DIS-131: tablas por estado (`?status=`)', () => {
   it('un estado inválido en la URL muestra el resumen', async () => {
     url.consulta = 'status=otro';
     render_();
-    expect(await screen.findByRole('list', { name: 'Solicitudes por estado' })).toBeTruthy();
+    expect(await screen.findByRole('list', { name: 'Por estado' })).toBeTruthy();
   });
 });
 
 describe('DIS-144/145: KPI por área y espaciado', () => {
   it('KPI «Solicitudes pendientes por área» con cifra y porcentaje de cada área', async () => {
     render_();
-    const leyenda = await screen.findByRole('list', { name: 'Solicitudes pendientes por área' });
+    const leyenda = await screen.findByRole('list', { name: 'Pendientes por área' });
     const items = within(leyenda).getAllByRole('listitem').map((li) => li.textContent);
     expect(items[0]).toContain('Finanzas');
     expect(items[0]).toContain('67 %');
@@ -302,7 +312,7 @@ describe('DIS-144/145: KPI por área y espaciado', () => {
 
   it('sin doble espacio: la vista usa flex con gap (el h1 oculto no suma margen) y llena el alto', async () => {
     const { container } = render_();
-    await screen.findByRole('list', { name: 'Solicitudes por estado' });
+    await screen.findByRole('list', { name: 'Por estado' });
     const vista = container.querySelector('section[aria-label="Resumen de solicitudes"]')!.parentElement!;
     expect(vista.className).not.toMatch(/space-y-/);
     expect(vista.className).toMatch(/flex-col/);
