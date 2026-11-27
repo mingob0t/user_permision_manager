@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Resumen de Solicitudes (DIS-131, rehecho en DIS-141 y DIS-144): fila de KPI (donas por estado
- * y por área, conectores y usuarios por rol, sin «Abrir»), gráficas por área y por plataforma (3/5) y el
+ * Resumen de Solicitudes (DIS-131, rehecho en DIS-141 y DIS-144): fila de KPI (cuatro `DonaKpi`:
+ * estado, área pendiente, conectores y usuarios por rol; DIS-146), gráficas por área y por plataforma (3/5) y el
  * panel de pendientes por aprobar (2/5, `SolicitudesPanel`). Datos de
  * `GET /access-requests/inbox/stats` y `GET /stats` con `usePolling` y el intervalo de
  * preferencia. La tabla de cada estado es `ApprovalsInbox` (otra sección de la URL).
@@ -11,16 +11,16 @@
 import type { InboxStats } from '@/lib/access/types';
 import { requestsApi } from '@/lib/access/requests';
 import { usePolling } from '@/lib/use-polling';
-import { useDisenoTarjetas } from '../dashboard/use-diseno-tarjetas';
 import { GraficaBarras } from '../dashboard/grafica-barras';
-import { TarjetaIndicador } from '../dashboard/tarjeta-indicador';
 import { api } from '@/lib/api';
 import type { Stats } from '@/lib/types';
 import { Button } from '../form';
 import { useSession } from '../session-provider';
 import { ErrorNote, Skeleton } from '../ui';
 import { DonaAreas } from './dona-areas';
+import { DonaConectores } from './dona-conectores';
 import { DonaEstados } from './dona-estados';
+import { DonaUsuarios } from './dona-usuarios';
 import { SolicitudesPanel } from './solicitudes-panel';
 import { listLoadError } from './request-errors';
 
@@ -35,7 +35,6 @@ export const RUTA_SOLICITUDES = '/approvals';
  * falla) solo queda la dona.
  */
 function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null }) {
-  const diseno = useDisenoTarjetas();
   const porArea = stats.by_area.slice(0, MAX_BARRAS).map((fila) => (
     { id: fila.area_id, etiqueta: fila.area, cantidad: fila.count }));
   const porPlataforma = stats.by_platform.slice(0, MAX_BARRAS).map((fila) => (
@@ -47,21 +46,11 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
       <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <DonaEstados stats={stats} />
         <DonaAreas stats={stats} />
-        {panel?.connectors !== undefined ? (
-          <TarjetaIndicador
-            indicador="connectors"
-            valor={panel.connectors}
-            desglose={panel.desglose?.connectors}
-            diseno={diseno}
-          />
+        {panel?.connectors !== undefined && panel.desglose?.connectors ? (
+          <DonaConectores desglose={panel.desglose.connectors} />
         ) : null}
-        {panel?.users !== undefined ? (
-          <TarjetaIndicador
-            indicador="users_by_role"
-            valor={panel.users}
-            desglose={panel.desglose?.users_by_role}
-            diseno={diseno}
-          />
+        {panel?.users !== undefined && panel.desglose?.users_by_role ? (
+          <DonaUsuarios desglose={panel.desglose.users_by_role} />
         ) : null}
       </div>
 

@@ -90,11 +90,19 @@ describe('DIS-131: resumen', () => {
     expect(items[0]).toContain('25 %');
     expect(items[1]).toContain('58 %');
     expect(items[2]).toContain('17 %');
-    const conectores = await screen.findByRole('group', { name: 'Conectores' });
-    expect(within(conectores).getAllByText('4').length).toBeGreaterThan(0);
-    const usuarios = screen.getByRole('group', { name: 'Usuarios' });
-    expect(within(usuarios).getAllByText('9').length).toBeGreaterThan(0);
-    expect(usuarios.textContent).toMatch(/administradores/);
+    // DIS-146: conectores y usuarios con el mismo diseño de dona (título, «N en total», leyenda con % ).
+    const conectores = await screen.findByRole('list', { name: 'Conectores' });
+    const filasConectores = within(conectores).getAllByRole('listitem').map((li) => li.textContent);
+    expect(filasConectores[0]).toContain('Asociados');
+    expect(filasConectores[0]).toContain('75 %');
+    expect(filasConectores[1]).toContain('Sin asociar');
+    const usuarios = screen.getByRole('list', { name: 'Usuarios' });
+    const filasUsuarios = within(usuarios).getAllByRole('listitem').map((li) => li.textContent);
+    expect(filasUsuarios[0]).toContain('Usuarios');
+    expect(filasUsuarios[0]).toContain('67 %');
+    expect(filasUsuarios[1]).toContain('Administradores');
+    expect(screen.getByText('4 en total')).toBeTruthy();
+    expect(screen.getByText('9 en total')).toBeTruthy();
     expect(screen.queryByRole('group', { name: 'Aprobadas' })).toBeNull();
     expect(screen.queryByRole('group', { name: 'Rechazadas' })).toBeNull();
     expect(screen.queryByRole('link', { name: /^Abrir solicitudes/ })).toBeNull();
@@ -103,13 +111,13 @@ describe('DIS-131: resumen', () => {
   it('DIS-141: sin conectores en /stats (admin de área) no hay KPI de conectores; si /stats falla solo queda la dona', async () => {
     vi.mocked(api.stats).mockResolvedValue({ ...PANEL, connectors: undefined });
     render_();
-    await screen.findByRole('group', { name: 'Usuarios' });
-    expect(screen.queryByRole('group', { name: 'Conectores' })).toBeNull();
+    await screen.findByRole('list', { name: 'Usuarios' });
+    expect(screen.queryByRole('list', { name: 'Conectores' })).toBeNull();
     cleanup();
     vi.mocked(api.stats).mockRejectedValue(new ApiError(500, 'x'));
     render_();
     await screen.findByRole('list', { name: 'Solicitudes por estado' });
-    expect(screen.queryByRole('group', { name: 'Usuarios' })).toBeNull();
+    expect(screen.queryByRole('list', { name: 'Usuarios' })).toBeNull();
   });
 
   it('DIS-141: panel «Solicitudes»: pendientes, 8 por página, usuario, área/plataforma, fecha y acciones', async () => {
