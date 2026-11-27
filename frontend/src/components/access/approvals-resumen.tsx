@@ -47,11 +47,11 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
         <DonaEstados stats={stats} />
         <DonaAreas stats={stats} />
         {/* DIS-150: Usuarios antes que Conectores (pedido del dueño). */}
-        {panel?.users !== undefined && panel.desglose?.users_by_role ? (
-          <DonaUsuarios desglose={panel.desglose.users_by_role} />
+        {panel?.users !== undefined ? (
+          <DonaUsuarios valor={panel.users} desglose={panel.desglose?.users_by_role} />
         ) : null}
-        {panel?.connectors !== undefined && panel.desglose?.connectors ? (
-          <DonaConectores desglose={panel.desglose.connectors} />
+        {panel?.connectors !== undefined ? (
+          <DonaConectores valor={panel.connectors} desglose={panel.desglose?.connectors} />
         ) : null}
       </div>
 

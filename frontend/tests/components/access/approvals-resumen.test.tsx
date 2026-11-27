@@ -40,6 +40,9 @@ import { ApprovalsView } from '@/components/access/approvals-view';
 import { MAX_BARRAS } from '@/components/access/approvals-resumen';
 import { SOLICITUDES_POR_PAGINA } from '@/components/access/solicitudes-panel';
 import { NOMBRE_OTRAS, filasPorArea } from '@/components/access/dona-areas';
+import { filasConectores } from '@/components/access/dona-conectores';
+import { filasUsuarios } from '@/components/access/dona-usuarios';
+import { PAR_DOS_SERIES } from '@/components/dashboard/dona-kpi';
 import { ApiError, api } from '@/lib/api';
 import type { Stats } from '@/lib/types';
 
@@ -178,6 +181,22 @@ describe('DIS-131: resumen', () => {
     expect(tabla.compareDocumentPosition(grafica) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(tabla.closest('.lg\\:col-span-3')).toBeTruthy();
     expect(grafica.closest('.lg\\:col-span-2')).toBeTruthy();
+  });
+
+  it('DIS-152: Conectores y Usuarios usan el par de colores con luminancia separada', () => {
+    const puntos = [PAR_DOS_SERIES.primera.punto, PAR_DOS_SERIES.segunda.punto];
+    expect(filasConectores(4, { parte: 3, resto: 1 }).map((f) => f.punto)).toEqual(puntos);
+    expect(filasUsuarios(9, { parte: 6, resto: 3 }).map((f) => f.punto)).toEqual(puntos);
+  });
+
+  it('DIS-152: sin desglose, Conectores y Usuarios muestran el total en vez de ocultarse', async () => {
+    vi.mocked(api.stats).mockResolvedValue({ ...PANEL, desglose: undefined });
+    render_();
+    const conectores = await screen.findByRole('list', { name: 'Conectores' });
+    expect(within(conectores).getAllByRole('listitem')[0].textContent).toContain('Total');
+    const usuarios = screen.getByRole('list', { name: 'Usuarios' });
+    expect(within(usuarios).getAllByRole('listitem')[0].textContent).toContain('9');
+    expect(screen.getByText('4 en total')).toBeTruthy();
   });
 
   it('DIS-151: los títulos del Resumen no repiten «Solicitudes» y Pendientes por área dice «N por aprobar»', async () => {

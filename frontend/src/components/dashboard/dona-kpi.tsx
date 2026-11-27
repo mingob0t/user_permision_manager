@@ -32,6 +32,16 @@ export interface FilaDona {
   punto: string;
 }
 
+/**
+ * DIS-152: par de series para las donas de dos partes. Entre los tokens de indicador es el único
+ * par con luminancia bien separada (razón 1.62; los demás ≤ 1.44), así los segmentos se distinguen
+ * también sin percibir el tono. Ambos pasan 3:1 contra la superficie en claro y oscuro.
+ */
+export const PAR_DOS_SERIES = {
+  primera: { token: '--color-indicador-plataformas', punto: 'nx-dona__punto--serie-2' },
+  segunda: { token: '--color-indicador-solicitudes', punto: 'nx-dona__punto--serie-5' },
+} as const;
+
 export function DonaKpi({
   titulo,
   icono,
