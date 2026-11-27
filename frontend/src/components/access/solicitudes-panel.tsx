@@ -204,7 +204,6 @@ export function SolicitudesPanel() {
               <FilasFantasma
                 cantidad={Math.max(0, SOLICITUDES_POR_PAGINA - items.length)}
                 desde={items.length}
-                columnas={COLUMNAS.length}
                 claseGrid={GRID}
               />
             </ul>

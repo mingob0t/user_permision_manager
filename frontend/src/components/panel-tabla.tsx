@@ -2,7 +2,7 @@
 
 /**
  * Piezas de la «tabla de panel» de 8 filas a todo lo alto (estilo de «Actividad reciente»,
- * DIS-079): encabezado de columnas con degradado, filas fantasma para mantener la simetría y
+ * DIS-079): encabezado de columnas con degradado, filas de relleno vacías (zebra) para mantener la simetría y
  * pie con «N de total registros» y paginador `‹ N/TOTAL ›` (DIS-141).
  *
  * La rejilla de columnas la define quien la usa (`claseGrid`, p. ej.
@@ -32,16 +32,18 @@ export function PanelTablaEncabezado({ columnas, claseGrid }: { columnas: string
   );
 }
 
-/** Filas vacías (solo escritorio) que completan la página; `desde` = filas reales ya pintadas. */
+/**
+ * Filas de relleno (solo escritorio) que completan la página; `desde` = filas reales ya pintadas.
+ * DIS-148: vacías, sin barras ni círculos de esqueleto, para no aparentar registros que no
+ * existen; solo continúan la alternancia de color (zebra) y el borde de las filas reales.
+ */
 export function FilasFantasma({
   cantidad,
   desde,
-  columnas,
   claseGrid,
 }: {
   cantidad: number;
   desde: number;
-  columnas: number;
   claseGrid: string;
 }) {
   return (
@@ -50,18 +52,9 @@ export function FilasFantasma({
         <li
           key={`fantasma-${idx}`}
           aria-hidden="true"
-          className={`hidden sm:grid sm:items-center sm:gap-3 sm:px-4 flex-1 min-h-0 border-b border-panel-border/20 opacity-20 select-none pointer-events-none ${claseGrid} ${claseFilaPanel(desde + idx)}`}
-        >
-          {Array.from({ length: columnas }).map((__, c) =>
-            c === columnas - 1 ? (
-              <div key={c} className="flex justify-end">
-                <span className="size-7 rounded-full bg-panel-border/60" />
-              </div>
-            ) : (
-              <div key={c} className="h-3 w-20 rounded bg-panel-border/60" />
-            ),
-          )}
-        </li>
+          data-fila-relleno=""
+          className={`hidden sm:grid flex-1 min-h-0 border-b border-panel-border/20 select-none pointer-events-none ${claseGrid} ${claseFilaPanel(desde + idx)}`}
+        />
       ))}
     </>
   );
