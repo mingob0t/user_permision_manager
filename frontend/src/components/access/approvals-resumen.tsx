@@ -5,7 +5,7 @@
  * estado, área pendiente, conectores y usuarios por rol; DIS-146), panel de pendientes por aprobar (3/5,
  * `SolicitudesPanel`) y gráficas de barras horizontales por área y por plataforma (2/5). Datos de
  * `GET /access-requests/inbox/stats` y `GET /stats` con `usePolling` y el intervalo de
- * preferencia. La tabla de cada estado es `ApprovalsInbox` (otra sección de la URL).
+ * preferencia. El historial con filtros es `ApprovalsInbox` (otra sección de la URL).
  */
 
 import type { InboxStats } from '@/lib/access/types';

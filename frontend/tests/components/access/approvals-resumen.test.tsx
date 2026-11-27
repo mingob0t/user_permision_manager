@@ -20,7 +20,7 @@ vi.mock('@/lib/access/requests', () => ({
 }));
 vi.mock('@/lib/api', async (original) => ({
   ...(await original<typeof import('@/lib/api')>()),
-  api: { areas: vi.fn().mockResolvedValue([]), stats: vi.fn() },
+  api: { areas: vi.fn().mockResolvedValue([]), platforms: vi.fn().mockResolvedValue([]), stats: vi.fn() },
 }));
 vi.mock('@/components/session-provider', () => ({
   useSession: () => ({
@@ -290,16 +290,16 @@ describe('DIS-131: resumen', () => {
 });
 
 describe('DIS-131: tablas por estado (`?status=`)', () => {
-  it('pendientes: tabla con Aprobar/Rechazar, sin selector de estado y con Volver', async () => {
+  it('pendientes: tabla con Aprobar/Rechazar, filtros (DIS-156) y Volver en la barra', async () => {
     url.consulta = 'status=pendiente';
     render_();
-    const fila = await screen.findByRole('listitem', { name: /Solicitud de Ana Ruiz/ });
-    expect(requestsApi.inbox).toHaveBeenCalledWith({ status: 'pendiente', area_id: undefined, page: 1 });
+    const fila = (await screen.findByText('Ana Ruiz')).closest('tr') as HTMLElement;
+    expect(requestsApi.inbox).toHaveBeenCalledWith({ status: 'pendiente', area_id: undefined, page: 1, per_page: 8 });
     expect(within(fila).getByRole('button', { name: /Aprobar/ })).toBeTruthy();
     expect(within(fila).getByRole('button', { name: /Rechazar/ })).toBeTruthy();
-    expect(screen.queryByLabelText('Filtrar la bandeja por estado')).toBeNull();
+    expect(screen.getByLabelText('Filtrar la bandeja por estado')).toBeTruthy();
     expect(screen.getByLabelText('Filtrar la bandeja por área')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Volver' }).getAttribute('href')).toBe('/approvals');
+    expect(screen.getByRole('link', { name: 'Volver al resumen de Solicitudes' }).getAttribute('href')).toBe('/approvals');
     expect(requestsApi.inboxStats).not.toHaveBeenCalled();
   });
 
@@ -312,8 +312,8 @@ describe('DIS-131: tablas por estado (`?status=`)', () => {
         page: 1, per_page: 25, total: 1,
       });
       render_();
-      const fila = await screen.findByRole('listitem', { name: /Solicitud de Ana Ruiz/ });
-      await waitFor(() => expect(requestsApi.inbox).toHaveBeenCalledWith({ status: estado, area_id: undefined, page: 1 }));
+      const fila = (await screen.findByText('Ana Ruiz')).closest('tr') as HTMLElement;
+      await waitFor(() => expect(requestsApi.inbox).toHaveBeenCalledWith({ status: estado, area_id: undefined, page: 1, per_page: 8 }));
       expect(within(fila).getByText(etiqueta)).toBeTruthy();
       expect(within(fila).queryByRole('button', { name: /Aprobar|Rechazar/ })).toBeNull();
       if (estado === 'rechazada') expect(within(fila).getByText(/Sin necesidad/)).toBeTruthy();

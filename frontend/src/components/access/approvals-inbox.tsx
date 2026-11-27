@@ -5,66 +5,78 @@
  * `GET /access-requests/inbox`, contrato `solicitudes.md` 1.1).
  *
  * - Admin de área: sus áreas; superadmin: todas (lo decide el backend).
- * - Filtros por estado (`pendiente` por defecto, como el contrato) y área.
+ * - Historial (DIS-156): filtros Estado (Todas, Pendientes, Aprobadas, Rechazadas; `pendiente` por
+ *   defecto), Área > Plataforma en cascada y búsqueda `q` (con retraso), reflejados en la URL.
  * - Aprobar con confirmación; rechazar con motivo obligatorio.
  * - Tras decidir: la fila se actualiza con la respuesta del servidor (sin
  *   recargar) y el resultado se avisa con toast (DIS-091); el foco va al filtro
  *   de estado. El siguiente refresco la saca de pendientes.
  * - Refresco con `usePolling` y el intervalo de la preferencia del usuario.
+ * - DIS-156: mismo diseño que el detalle de un área en Plataformas: tarjeta de herramientas
+ *   (Volver, buscador, selectores) y `DataTable` con filas de una línea. El buscador y los
+ *   filtros los resuelve el backend (`q`, `area_id`, `platform_id`, `status=todas`; FNC-218).
  */
 
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { requestsApi } from '@/lib/access/requests';
-import type { AccessRequest, RequestStatus } from '@/lib/access/types';
-import type { AreaRef } from '@/lib/types';
+import type { AccessRequest, InboxStatus, RequestStatus } from '@/lib/access/types';
+import type { AreaRef, Platform } from '@/lib/types';
 import { useAsync } from '@/lib/use-async';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { usePolling } from '@/lib/use-polling';
-import { Button, Option, Select } from '../form';
+import { DataTable } from '../data-table';
+import { Button } from '../form';
 import { useSession } from '../session-provider';
 import { useToast } from '../toast';
-import { EmptyNote, ErrorNote, Skeleton } from '../ui';
-import { AccessStatusBadge, NIVELES } from './access-status-badge';
+import { Card, ErrorNote, Skeleton } from '../ui';
+import { NIVELES } from './access-status-badge';
 import { ApproveDialog } from './approve-dialog';
-import { formatearFecha } from './fecha';
+import {
+  ApprovalsInboxToolbar,
+  FILTRO_AREA_ID,
+  FILTRO_ESTADO_ID,
+  BUSCADOR_ID,
+} from './approvals-inbox-toolbar';
+import { columnasBandeja, type TipoDecision } from './approvals-inbox-columns';
 import { valorPermitido, idDeUrl } from './filtro-url';
-import { ListPager } from './list-pager';
 import { RejectDialog } from './reject-dialog';
 import { listLoadError } from './request-errors';
-import { ETIQUETA_CELDA, ResponsiveList, ResponsiveRow } from './responsive-list';
-import { ESTADOS_SOLICITUD, RequestStatusBadge } from './request-status-badge';
+import { ESTADOS_SOLICITUD } from './request-status-badge';
+
+export { MENSAJE_PROPIA } from './approvals-inbox-columns';
 
 const NOMBRE_LISTA = 'las solicitudes de tu bandeja';
-const FILTRO_ESTADO_ID = 'bandeja-filtro-estado';
-const FILTRO_AREA_ID = 'bandeja-filtro-area';
+/** Filas por página: las que caben en la tabla (como Plataformas, 8 con filas fantasma). */
+export const BANDEJA_POR_PAGINA = 8;
+/** Columnas condicionables (FNC-217 las ocultará según la configuración). */
+const MOSTRAR_JUSTIFICACION = true;
+const MOSTRAR_MOTIVO = true;
 
-/** Foco tras decidir: el filtro de estado, o el de área en la sección de un estado fijo (DIS-131). */
+/** Foco tras decidir: el filtro de estado (la fila decidida ya no tiene botones). */
 function enfocarFiltro(): void {
   (document.getElementById(FILTRO_ESTADO_ID) ?? document.getElementById(FILTRO_AREA_ID))?.focus();
 }
 
-/** Columnas en escritorio: solicitante, plataforma, nivel, estado, acciones. */
-const COLUMNAS =
-  'md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1.5fr)]';
-const ANCHO_COMPLETO = 'md:col-span-5';
-
-const ESTADOS = Object.keys(ESTADOS_SOLICITUD) as RequestStatus[];
+/** Estados del filtro (la URL admite `todas`). */
+export const ESTADOS_BANDEJA: readonly InboxStatus[] = ['todas', ...(Object.keys(ESTADOS_SOLICITUD) as RequestStatus[])];
+const RETRASO_BUSQUEDA_MS = 300;
 
 /** Plural del estado para el filtro y el estado vacío. */
-const ESTADO_PLURAL: Record<RequestStatus, string> = {
+const ESTADO_PLURAL: Record<InboxStatus, string> = {
+  todas: 'todas',
   pendiente: 'pendientes',
   aprobada: 'aprobadas',
   rechazada: 'rechazadas',
 };
 
-export const MENSAJE_PROPIA = 'Es tu solicitud: la decide otro administrador.';
-
-type Decision = { tipo: 'aprobar' | 'rechazar'; request: AccessRequest };
+type Decision = { tipo: TipoDecision; request: AccessRequest };
 
 /** Estado vacío según los filtros. */
-export function mensajeVacio(status: RequestStatus, conArea: boolean): string {
-  return `No hay solicitudes ${ESTADO_PLURAL[status]}${conArea ? ' en esa área' : ''}.`;
+export function mensajeVacio(status: InboxStatus, conFiltro: boolean): string {
+  if (status === 'todas') return `No hay solicitudes${conFiltro ? ' con esos filtros' : ''}.`;
+  return `No hay solicitudes ${ESTADO_PLURAL[status]}${conFiltro ? ' con esos filtros' : ''}.`;
 }
 
 /** Aviso tras decidir. */
@@ -75,106 +87,22 @@ export function avisoDecision(request: AccessRequest): string {
     : `Solicitud aprobada: ${quien}, nivel ${NIVELES[request.level]}. El acceso queda en proceso.`;
 }
 
-function Fila({
-  request,
-  propia,
-  onDecidir,
-}: {
-  request: AccessRequest;
-  propia: boolean;
-  onDecidir: (decision: Decision, trigger: HTMLButtonElement) => void;
-}) {
-  const rechazo = request.status === 'rechazada' ? request.rejection_reason : null;
-  const quien = `${request.requester.name} para ${request.platform.name}`;
-  return (
-    <ResponsiveRow columns={COLUMNAS} label={`Solicitud de ${quien}`}>
-      <div className="min-w-0">
-        <dt className={ETIQUETA_CELDA}>Solicitante</dt>
-        <dd className="font-semibold text-body-text">{request.requester.name}</dd>
-        <dd className="break-words text-sm text-label">{request.requester.email}</dd>
-      </div>
-      <div>
-        <dt className={ETIQUETA_CELDA}>Plataforma</dt>
-        <dd className="text-sm font-semibold text-body-text">{request.platform.name}</dd>
-        <dd className="text-sm text-label">{request.area.name}</dd>
-      </div>
-      <div>
-        <dt className={ETIQUETA_CELDA}>Nivel</dt>
-        <dd className="text-sm text-body-text">{NIVELES[request.level]}</dd>
-        {request.current_level ? (
-          <dd className="text-sm text-label">Tiene {NIVELES[request.current_level]}</dd>
-        ) : null}
-      </div>
-      <div>
-        <dt className={ETIQUETA_CELDA}>Estado</dt>
-        <dd className="flex flex-wrap gap-2">
-          <RequestStatusBadge status={request.status} />
-          {request.access ? <AccessStatusBadge status={request.access.status} /> : null}
-        </dd>
-        <dd className="text-sm text-label">Enviada: {formatearFecha(request.created_at)}</dd>
-        {request.decided_at ? (
-          <dd className="text-sm text-label">
-            Decidida: {formatearFecha(request.decided_at)}
-            {request.decided_by ? ` por ${request.decided_by.name}` : ''}
-          </dd>
-        ) : null}
-      </div>
-      <div>
-        <dt className={ETIQUETA_CELDA}>Acciones</dt>
-        {request.status !== 'pendiente' ? (
-          <dd className="text-sm text-label">Decidida</dd>
-        ) : propia ? (
-          <dd className="text-sm text-label">{MENSAJE_PROPIA}</dd>
-        ) : (
-          <dd className="flex flex-wrap gap-2">
-            <Button
-              aria-label={`Aprobar la solicitud de ${quien}`}
-              onClick={(event) => onDecidir({ tipo: 'aprobar', request }, event.currentTarget)}
-            >
-              Aprobar
-            </Button>
-            <Button
-              variant="secondary"
-              aria-label={`Rechazar la solicitud de ${quien}`}
-              onClick={(event) => onDecidir({ tipo: 'rechazar', request }, event.currentTarget)}
-            >
-              Rechazar
-            </Button>
-          </dd>
-        )}
-      </div>
-      {rechazo ? (
-        <div className={ANCHO_COMPLETO}>
-          <dt className="text-xs font-medium uppercase tracking-wide text-error-text">
-            Motivo del rechazo
-          </dt>
-          <dd className="break-words text-sm text-body-text">{rechazo}</dd>
-        </div>
-      ) : null}
-      <div className={ANCHO_COMPLETO}>
-        <dt className="text-xs font-medium uppercase tracking-wide text-label">Justificación</dt>
-        {/* Texto del solicitante: React lo escapa; nunca HTML. */}
-        <dd className="whitespace-pre-line break-words text-sm text-body-text">
-          {request.justification || 'Sin justificación.'}
-        </dd>
-      </div>
-    </ResponsiveRow>
-  );
-}
-
-/** `estadoFijo`: sección de un estado (DIS-131); sin él, el filtro de estado y la URL (DIS-036). */
-export function ApprovalsInbox({ estadoFijo }: { estadoFijo?: RequestStatus } = {}) {
+/** Bandeja / historial de solicitudes; los filtros llegan y se reflejan en la URL (DIS-036, DIS-156). */
+export function ApprovalsInbox({ volverHref }: { volverHref?: string } = {}) {
   const { session } = useSession();
   const esSuperadmin = session?.permissions.is_admin ?? false;
 
   // Estado que llega por la URL (DIS-036); lo inválido se ignora.
   const params = useSearchParams();
-  const [status, setStatus] = useState<RequestStatus>(
-    () => estadoFijo ?? valorPermitido(params?.get('status'), ESTADOS) ?? 'pendiente',
+  const [status, setStatus] = useState<InboxStatus>(
+    () => valorPermitido(params?.get('status'), ESTADOS_BANDEJA) ?? 'pendiente',
   );
   // Área que llega por la URL (DIS-137: «por aprobar» de la tarjeta de área).
   const [areaId, setAreaId] = useState<number | null>(() => idDeUrl(params?.get('area_id')));
   const [page, setPage] = useState(1);
+  const [plataformaId, setPlataformaId] = useState<number | null>(() => idDeUrl(params?.get('platform_id')));
+  const [busqueda, setBusqueda] = useState(() => params?.get('q') ?? '');
+  const q = useDebouncedValue(busqueda.trim(), RETRASO_BUSQUEDA_MS);
   /** Solicitudes decididas aquí, con la respuesta del servidor (por `id`). */
   const [decididas, setDecididas] = useState<Record<number, AccessRequest>>({});
   const [decision, setDecision] = useState<Decision | null>(null);
@@ -182,11 +110,18 @@ export function ApprovalsInbox({ estadoFijo }: { estadoFijo?: RequestStatus } = 
   const { avisar } = useToast();
 
   const lista = usePolling(
-    () => requestsApi.inbox({ status, area_id: areaId ?? undefined, page })
+    () => requestsApi.inbox({
+      status,
+      area_id: areaId ?? undefined,
+      ...(plataformaId !== null ? { platform_id: plataformaId } : {}),
+      ...(q ? { q } : {}),
+      page,
+      per_page: BANDEJA_POR_PAGINA,
+    })
       .catch((err: unknown) => {
         throw listLoadError(err, NOMBRE_LISTA);
       }),
-    { intervalSeconds: session?.preferences.refresh_interval, deps: [status, areaId, page] },
+    { intervalSeconds: session?.preferences.refresh_interval, deps: [status, areaId, plataformaId, q, page] },
   );
 
   // Áreas del filtro: las administradas; el superadmin, todas (`GET /areas`).
@@ -196,15 +131,41 @@ export function ApprovalsInbox({ estadoFijo }: { estadoFijo?: RequestStatus } = 
   );
   const areas: AreaRef[] = esSuperadmin ? (todas.data ?? []) : (session?.managed_areas ?? []);
 
+  // Plataformas del filtro: las del área elegida; sin área, las de todo el alcance (`GET /platforms`).
+  const plataformas = useAsync<Platform[]>(
+    () => api.platforms(areaId !== null ? { areaId } : {}),
+    [areaId],
+  );
+
+  // Los filtros quedan en la URL (sin añadir entradas al historial): F5 y Volver los conservan.
+  useEffect(() => {
+    const consulta = new URLSearchParams({ status });
+    if (areaId !== null) consulta.set('area_id', String(areaId));
+    if (plataformaId !== null) consulta.set('platform_id', String(plataformaId));
+    if (q) consulta.set('q', q);
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${consulta}`);
+  }, [status, areaId, plataformaId, q]);
+
   const items = useMemo(
     () => (lista.data?.items ?? []).map((item) => decididas[item.id] ?? item),
     [lista.data, decididas],
   );
 
-  function abrir(nueva: Decision, trigger: HTMLButtonElement) {
-    disparador.current = trigger;
-    setDecision(nueva);
-  }
+  const hayMotivos = items.some((item) => item.status === 'rechazada' && item.rejection_reason);
+
+  const miId = session?.id;
+  const columnas = useMemo(
+    () => columnasBandeja({
+      esPropia: (request) => request.requester.id === miId,
+      onDecidir: (tipo, request, trigger) => {
+        disparador.current = trigger;
+        setDecision({ tipo, request });
+      },
+      mostrarJustificacion: MOSTRAR_JUSTIFICACION,
+      mostrarMotivo: MOSTRAR_MOTIVO && hayMotivos,
+    }),
+    [miId, hayMotivos],
+  );
 
   // Estable: `Modal` reinstala su efecto (y el foco) si cambia `onClose`.
   const cerrar = useCallback(() => {
@@ -227,82 +188,95 @@ export function ApprovalsInbox({ estadoFijo }: { estadoFijo?: RequestStatus } = 
 
   const data = lista.data;
 
+  const limpiarBusqueda = () => {
+    setBusqueda('');
+    setPage(1);
+    document.getElementById(BUSCADOR_ID)?.focus();
+  };
+  const hayBusqueda = busqueda.trim() !== '';
+  const hayFiltros = hayBusqueda || areaId !== null || plataformaId !== null;
+  const totalPaginas = data ? Math.max(1, Math.ceil(data.total / data.per_page)) : 1;
+
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2 lg:w-2/3">
-        {estadoFijo ? null : (
-        <Select
-          id={FILTRO_ESTADO_ID}
-          value={status}
-          onChange={(event) => {
-            setStatus(event.target.value as RequestStatus);
+    <div className="flex h-full min-h-0 w-full flex-col gap-4">
+      <ApprovalsInboxToolbar
+        volverHref={volverHref}
+        busqueda={busqueda}
+        onBusqueda={(valor) => {
+          setBusqueda(valor);
+          setPage(1);
+        }}
+        estado={{
+          valor: status,
+          opciones: ESTADOS_BANDEJA.map((estado) => ({
+            valor: estado,
+            texto: ESTADO_PLURAL[estado].charAt(0).toUpperCase() + ESTADO_PLURAL[estado].slice(1),
+          })),
+          onChange: (valor) => {
+            setStatus(valor);
             setPage(1);
-          }}
-          aria-label="Filtrar la bandeja por estado"
-        >
-          {ESTADOS.map((estado) => (
-            <Option key={estado} value={estado}>
-              {ESTADO_PLURAL[estado].charAt(0).toUpperCase() + ESTADO_PLURAL[estado].slice(1)}
-            </Option>
-          ))}
-        </Select>
-        )}
-        <Select
-          id={FILTRO_AREA_ID}
-          value={areaId ?? ''}
-          onChange={(event) => {
-            setAreaId(event.target.value ? Number(event.target.value) : null);
-            setPage(1);
-          }}
-          aria-label="Filtrar la bandeja por área"
-        >
-          <Option value="">{esSuperadmin ? 'Todas las áreas' : 'Todas mis áreas'}</Option>
-          {areas.map((area) => (
-            <Option key={area.id} value={area.id}>{area.name}</Option>
-          ))}
-        </Select>
+          },
+        }}
+        areaId={areaId}
+        areas={areas}
+        etiquetaTodasAreas={esSuperadmin ? 'Todas las áreas' : 'Todas mis áreas'}
+        onArea={(id) => {
+          setAreaId(id);
+          setPlataformaId(null);
+          setPage(1);
+        }}
+        plataformaId={plataformaId}
+        plataformas={plataformas.data ?? []}
+        onPlataforma={(id) => {
+          setPlataformaId(id);
+          setPage(1);
+        }}
+      />
+
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        {lista.loading && !data ? (
+          // Esqueleto con la forma de la tabla (misma tarjeta y filas de una línea).
+          <Card className="!p-0 flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden border border-panel-border/80 shadow-1">
+            <div className="h-10 shrink-0 border-b-2 border-primary/40 bg-gradient-to-r from-primary/15 via-brand/10 to-accent/10" />
+            <div className="min-h-0 flex-1 space-y-2 p-4">
+              <Skeleton variant="fila" count={BANDEJA_POR_PAGINA} ariaLabel="Cargando la bandeja…" />
+            </div>
+          </Card>
+        ) : null}
+
+        {lista.error ? (
+          <div className="space-y-3">
+            <ErrorNote message={lista.error} />
+            <Button variant="secondary" onClick={refrescar}>Reintentar</Button>
+          </div>
+        ) : null}
+
+        {data ? (
+          <DataTable
+            label="Bandeja de aprobaciones"
+            columns={columnas}
+            rows={items}
+            rowKey={(request) => request.id}
+            emptyTitle={hayFiltros ? 'No se encontraron solicitudes' : undefined}
+            emptyMessage={
+              hayBusqueda
+                ? `No hay solicitudes que coincidan con «${busqueda.trim()}» con los filtros elegidos.`
+                : mensajeVacio(status, hayFiltros)
+            }
+            emptyIcon="solicitudes"
+            emptyAction={hayBusqueda ? (
+              <Button variant="fila" onClick={limpiarBusqueda} className="nx-btn-toolbar !w-auto !px-4">
+                <span>Limpiar búsqueda</span>
+              </Button>
+            ) : null}
+            page={data.page}
+            totalPages={totalPaginas}
+            totalRecords={data.total}
+            onPageChange={setPage}
+            targetRows={BANDEJA_POR_PAGINA}
+          />
+        ) : null}
       </div>
-
-      {lista.loading && !data ? (
-        <Skeleton variant="fila" count={4} ariaLabel="Cargando la bandeja…" />
-      ) : null}
-
-      {lista.error ? (
-        <div className="space-y-3">
-          <ErrorNote message={lista.error} />
-          <Button variant="secondary" onClick={refrescar}>Reintentar</Button>
-        </div>
-      ) : null}
-
-      {data ? (
-        items.length === 0 ? (
-          <EmptyNote message={mensajeVacio(status, areaId !== null)} />
-        ) : (
-          <>
-            <ResponsiveList
-              columns={COLUMNAS}
-              headers={['Solicitante', 'Plataforma', 'Nivel', 'Estado', 'Acciones']}
-              label="Bandeja de aprobaciones"
-            >
-              {items.map((request) => (
-                <Fila
-                  key={request.id}
-                  request={request}
-                  propia={request.requester.id === session?.id}
-                  onDecidir={abrir}
-                />
-              ))}
-            </ResponsiveList>
-            <ListPager
-              page={data.page}
-              perPage={data.per_page}
-              total={data.total}
-              label="Páginas de la bandeja"
-              onChange={setPage}
-            />
-          </>
-        )
-      ) : null}
 
       {decision?.tipo === 'aprobar' ? (
         <ApproveDialog

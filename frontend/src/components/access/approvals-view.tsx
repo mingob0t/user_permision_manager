@@ -2,28 +2,19 @@
 
 /**
  * Pantalla Solicitudes (DIS-131): sin `?status=` muestra el resumen (tarjetas, gráficas y dona);
- * con `?status=pendiente|aprobada|rechazada` abre la tabla de ese estado (`ApprovalsInbox` con el
- * estado fijo) y un botón Volver al resumen. La URL permite Volver y F5.
+ * con `?status=todas|pendiente|aprobada|rechazada` abre el historial (`ApprovalsInbox`, DIS-156) con
+ * sus filtros en la URL y un botón Volver al resumen en su barra. La URL permite Volver y F5.
  */
 
 import { useSearchParams } from 'next/navigation';
-import type { RequestStatus } from '@/lib/access/types';
 import { PageHeader } from '../page-header';
-import { ApprovalsInbox } from './approvals-inbox';
+import { ApprovalsInbox, ESTADOS_BANDEJA } from './approvals-inbox';
 import { ApprovalsResumen, RUTA_SOLICITUDES } from './approvals-resumen';
 import { valorPermitido } from './filtro-url';
 
-const ESTADOS: RequestStatus[] = ['pendiente', 'aprobada', 'rechazada'];
-
-const SECCIONES: Record<RequestStatus, { titulo: string; descripcion: string }> = {
-  pendiente: { titulo: 'Solicitudes pendientes', descripcion: 'Aprueba o rechaza con un motivo las solicitudes por decidir.' },
-  aprobada: { titulo: 'Solicitudes aprobadas', descripcion: 'Solicitudes de acceso ya aprobadas en tus áreas.' },
-  rechazada: { titulo: 'Solicitudes rechazadas', descripcion: 'Solicitudes de acceso rechazadas, con su motivo.' },
-};
-
 export function ApprovalsView() {
   const params = useSearchParams();
-  const estado = valorPermitido(params?.get('status'), ESTADOS);
+  const estado = valorPermitido(params?.get('status'), ESTADOS_BANDEJA);
 
   if (!estado) {
     return (
@@ -36,16 +27,14 @@ export function ApprovalsView() {
     );
   }
 
-  const { titulo, descripcion } = SECCIONES[estado];
   return (
-    <div className="space-y-6">
+    // DIS-156: como el detalle de Plataformas: Volver va en la barra de herramientas de la bandeja.
+    <div className="flex h-full w-full min-h-0 flex-col gap-4">
       <PageHeader
-        title={titulo}
-        description={descripcion}
-        backHref={RUTA_SOLICITUDES}
-        backLabel="Volver"
+        title="Historial de solicitudes"
+        description="Consulta con filtros las solicitudes de acceso de tus áreas y decide las pendientes."
       />
-      <ApprovalsInbox key={estado} estadoFijo={estado} />
+      <ApprovalsInbox volverHref={RUTA_SOLICITUDES} />
     </div>
   );
 }

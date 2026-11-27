@@ -121,7 +121,7 @@ describe('/approvals', () => {
 
   it('DIS-137: area_id de la URL filtra la bandeja por área', async () => {
     url.consulta = 'status=pendiente&area_id=3';
-    render(<ApprovalsInbox estadoFijo="pendiente" />);
+    render(<ApprovalsInbox />);
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'pendiente', area_id: 3 })));
     expect((screen.getByLabelText('Filtrar la bandeja por área') as HTMLSelectElement).value).toBe('3');

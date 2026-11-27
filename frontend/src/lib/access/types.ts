@@ -88,10 +88,19 @@ export interface AccessRequestInput {
   justification?: string | null;
 }
 
+/** Estado de la bandeja: `todas` = sin filtro de estado (contrato `solicitudes.md` 1.5, FNC-218). */
+export type InboxStatus = RequestStatus | 'todas';
+
 export interface RequestListParams extends PageParams {
   status?: RequestStatus;
   area_id?: number;
   platform_id?: number;
+}
+
+/** Parámetros de `GET /access-requests/inbox`; `q` busca en solicitante, correo y plataforma. */
+export interface InboxListParams extends Omit<RequestListParams, 'status'> {
+  status?: InboxStatus;
+  q?: string;
 }
 
 // --- Accesos e inventario (accesos.md) ---

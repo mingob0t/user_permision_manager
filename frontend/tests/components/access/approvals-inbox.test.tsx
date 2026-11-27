@@ -20,7 +20,7 @@ vi.mock('@/lib/access/requests', () => ({
 }));
 vi.mock('@/lib/api', async (original) => ({
   ...(await original<typeof import('@/lib/api')>()),
-  api: { areas: vi.fn() },
+  api: { areas: vi.fn(), platforms: vi.fn() },
 }));
 
 let esSuperadmin = false;
@@ -50,7 +50,7 @@ import { pistaMotivo } from '@/components/access/reject-dialog';
 import { MENSAJES_DECISION, MOTIVO_MAX, describeDecisionError } from '@/components/access/request-errors';
 
 function pagina<T>(items: T[], extra: Partial<Paginated<T>> = {}): Paginated<T> {
-  return { items, page: 1, per_page: 25, total: items.length, ...extra };
+  return { items, page: 1, per_page: 8, total: items.length, ...extra };
 }
 
 const PENDIENTE: AccessRequest = {
@@ -63,15 +63,24 @@ const PROPIA: AccessRequest = {
 };
 const MOTIVO = 'Usa el reporte compartido del área.';
 
-function fila(nombre: string) {
-  return screen.getByRole('listitem', { name: nombre });
+/** Fila de la tabla (DIS-156) que contiene al solicitante. */
+function fila(nombre: string): HTMLElement {
+  const celda = screen.getByText(nombre);
+  return celda.closest('tr') as HTMLElement;
 }
-const FILA_ANA = 'Solicitud de Ana Ruiz para Contabilidad';
+async function filaAsync(nombre: string): Promise<HTMLElement> {
+  await screen.findByText(nombre);
+  return fila(nombre);
+}
+const FILA_ANA = 'Ana Ruiz';
 
 beforeEach(() => {
   vi.clearAllMocks();
   esSuperadmin = false;
   vi.mocked(requestsApi.inbox).mockResolvedValue(pagina([PENDIENTE, PROPIA]));
+  vi.mocked(api.platforms).mockResolvedValue([
+    { id: 12, name: 'Contabilidad' }, { id: 14, name: 'Wiki' },
+  ] as unknown as Awaited<ReturnType<typeof api.platforms>>);
   vi.mocked(api.areas).mockResolvedValue([
     { id: 3, name: 'Finanzas' }, { id: 5, name: 'Ventas' },
   ] as Awaited<ReturnType<typeof api.areas>>);
@@ -82,8 +91,8 @@ afterEach(cleanup);
 describe('ApprovalsInbox: lista', () => {
   it('pide pendientes por defecto y muestra solicitante, plataforma, nivel, estado y justificación escapada', async () => {
     render(<ApprovalsInbox />);
-    const ana = await screen.findByRole('listitem', { name: FILA_ANA });
-    expect(requestsApi.inbox).toHaveBeenCalledWith({ status: 'pendiente', area_id: undefined, page: 1 });
+    const ana = await filaAsync(FILA_ANA);
+    expect(requestsApi.inbox).toHaveBeenCalledWith({ status: 'pendiente', area_id: undefined, page: 1, per_page: 8 });
     expect(within(ana).getByText('Ana Ruiz')).toBeTruthy();
     expect(within(ana).getByText('ana@ejemplo.local')).toBeTruthy();
     expect(within(ana).getByText('Finanzas')).toBeTruthy();
@@ -95,24 +104,24 @@ describe('ApprovalsInbox: lista', () => {
 
   it('la solicitud propia no tiene acciones y lo explica', async () => {
     render(<ApprovalsInbox />);
-    const propia = await screen.findByRole('listitem', { name: 'Solicitud de Luis Paz para Wiki' });
-    expect(within(propia).getByText(MENSAJE_PROPIA)).toBeTruthy();
+    const propia = await filaAsync('Luis Paz');
+    expect(within(propia).getByText(MENSAJE_PROPIA, { exact: false })).toBeTruthy();
     expect(within(propia).queryByRole('button')).toBeNull();
   });
 
   it('filtra por estado y por área (admin: sus áreas) y vuelve a la página 1', async () => {
     render(<ApprovalsInbox />);
-    await screen.findByRole('listitem', { name: FILA_ANA });
+    await filaAsync(FILA_ANA);
     fireEvent.change(screen.getByLabelText('Filtrar la bandeja por estado'), { target: { value: 'rechazada' } });
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
-      { status: 'rechazada', area_id: undefined, page: 1 }));
+      { status: 'rechazada', area_id: undefined, page: 1, per_page: 8 }));
     const area = screen.getByLabelText('Filtrar la bandeja por área');
     expect(within(area).getAllByRole('option').map((o) => o.textContent))
       .toEqual(['Todas mis áreas', 'Finanzas']);
     expect(api.areas).not.toHaveBeenCalled();
     fireEvent.change(area, { target: { value: '3' } });
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
-      { status: 'rechazada', area_id: 3, page: 1 }));
+      { status: 'rechazada', area_id: 3, page: 1, per_page: 8 }));
   });
 
   it('superadmin: el filtro de área lista todas las áreas', async () => {
@@ -136,15 +145,107 @@ describe('ApprovalsInbox: lista', () => {
     render(<ApprovalsInbox />);
     expect(await screen.findByText('No tienes permiso para ver las solicitudes de tu bandeja.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
-    expect(await screen.findByRole('listitem', { name: FILA_ANA })).toBeTruthy();
+    expect(await filaAsync(FILA_ANA)).toBeTruthy();
   });
 
   it('paginación', async () => {
     vi.mocked(requestsApi.inbox).mockResolvedValue(pagina([PENDIENTE], { total: 30 }));
     render(<ApprovalsInbox />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Siguiente' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Página siguiente/ }));
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
-      { status: 'pendiente', area_id: undefined, page: 2 }));
+      { status: 'pendiente', area_id: undefined, page: 2, per_page: 8 }));
+  });
+});
+
+describe('ApprovalsInbox: historial con filtros (DIS-156)', () => {
+  it('barra de herramientas: Volver, buscador, estado, área y plataforma', async () => {
+    render(<ApprovalsInbox volverHref="/approvals" />);
+    await filaAsync(FILA_ANA);
+    const volver = screen.getByRole('link', { name: 'Volver al resumen de Solicitudes' });
+    expect(volver.getAttribute('href')).toBe('/approvals');
+    expect(volver.className).toContain('nx-btn-toolbar');
+    expect(screen.getByRole('searchbox').className).toContain('nx-buscador-toolbar');
+    const estado = screen.getByLabelText('Filtrar la bandeja por estado');
+    expect(within(estado).getAllByRole('option').map((o) => o.textContent))
+      .toEqual(['Todas', 'Pendientes', 'Aprobadas', 'Rechazadas']);
+    expect((estado as HTMLSelectElement).value).toBe('pendiente');
+    expect(screen.getByLabelText('Filtrar la bandeja por plataforma')).toBeTruthy();
+  });
+
+  it('la tabla tiene las columnas compactas, justificación truncada con título y pie de registros', async () => {
+    render(<ApprovalsInbox />);
+    const ana = await filaAsync(FILA_ANA);
+    const cabeceras = screen.getAllByRole('columnheader').map((c) => c.textContent);
+    expect(cabeceras).toEqual(['Solicitante', 'Plataforma', 'Nivel', 'Estado', 'Justificación', 'Acciones']);
+    expect(within(ana).getByText('<b>Cierre</b> mensual').getAttribute('title')).toBe('<b>Cierre</b> mensual');
+    expect(within(ana).getByRole('button', { name: /^Aprobar/ })).toBeTruthy();
+    expect(screen.getByText('2 de 2 registros')).toBeTruthy();
+  });
+
+  it('«Todas»: pide `status=todas`, muestra el estado de cada fila y acciones solo en pendientes', async () => {
+    const aprobada: AccessRequest = {
+      ...PENDIENTE, id: 50, status: 'aprobada', requester: { id: 9, name: 'Eva Lara', email: 'eva@ejemplo.local' },
+      decided_at: '2026-10-13T12:30:00Z', decided_by: { id: 2, name: 'Luis Paz' },
+    };
+    const rechazada: AccessRequest = {
+      ...PENDIENTE, id: 51, status: 'rechazada', rejection_reason: MOTIVO,
+      requester: { id: 10, name: 'Raúl Soto', email: 'raul@ejemplo.local' },
+    };
+    vi.mocked(requestsApi.inbox).mockResolvedValue(pagina([PENDIENTE, aprobada, rechazada]));
+    render(<ApprovalsInbox />);
+    await filaAsync(FILA_ANA);
+    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por estado'), { target: { value: 'todas' } });
+    await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
+      { status: 'todas', area_id: undefined, page: 1, per_page: 8 }));
+    expect(within(fila('Ana Ruiz')).getByText('Pendiente')).toBeTruthy();
+    expect(within(fila('Eva Lara')).getByText('Aprobada')).toBeTruthy();
+    expect(within(fila('Eva Lara')).queryByRole('button')).toBeNull();
+    expect(within(fila('Raúl Soto')).getByText('Rechazada')).toBeTruthy();
+    expect(within(fila('Raúl Soto')).getByText(MOTIVO)).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Motivo del rechazo' })).toBeTruthy();
+  });
+
+  it('el buscador envía `q` recortado al backend con retraso y vuelve a la página 1', async () => {
+    render(<ApprovalsInbox />);
+    await filaAsync(FILA_ANA);
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '  ana  ' } });
+    await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
+      { status: 'pendiente', area_id: undefined, q: 'ana', page: 1, per_page: 8 }));
+    fireEvent.click(screen.getByRole('button', { name: 'Limpiar búsqueda' }));
+    await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
+      { status: 'pendiente', area_id: undefined, page: 1, per_page: 8 }));
+  });
+
+  it('sin resultados con búsqueda: lo explica y permite limpiarla', async () => {
+    vi.mocked(requestsApi.inbox).mockResolvedValue(pagina([]));
+    render(<ApprovalsInbox />);
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'zzz' } });
+    expect(await screen.findByText(/No hay solicitudes que coincidan con «zzz»/)).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /Limpiar búsqueda/ })).toHaveLength(2);
+  });
+
+  it('área > plataforma en cascada: la plataforma se pide por área y cambiar el área la limpia', async () => {
+    render(<ApprovalsInbox />);
+    await filaAsync(FILA_ANA);
+    expect(api.platforms).toHaveBeenLastCalledWith({});
+    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por área'), { target: { value: '3' } });
+    await waitFor(() => expect(api.platforms).toHaveBeenLastCalledWith({ areaId: 3 }));
+    const plataforma = screen.getByLabelText('Filtrar la bandeja por plataforma') as HTMLSelectElement;
+    await waitFor(() => expect(within(plataforma).getAllByRole('option')).toHaveLength(3));
+    fireEvent.change(plataforma, { target: { value: '14' } });
+    await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
+      { status: 'pendiente', area_id: 3, platform_id: 14, page: 1, per_page: 8 }));
+    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por área'), { target: { value: '' } });
+    await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
+      { status: 'pendiente', area_id: undefined, page: 1, per_page: 8 }));
+    expect((screen.getByLabelText('Filtrar la bandeja por plataforma') as HTMLSelectElement).value).toBe('');
+  });
+
+  it('los filtros quedan en la URL', async () => {
+    render(<ApprovalsInbox />);
+    await filaAsync(FILA_ANA);
+    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por estado'), { target: { value: 'aprobada' } });
+    await waitFor(() => expect(window.location.search).toContain('status=aprobada'));
   });
 });
 
@@ -155,7 +256,7 @@ describe('ApprovalsInbox: aprobar', () => {
       request: { ...PENDIENTE, status: 'aprobada', access: { id: 90, status: 'en_proceso' } },
     });
     renderConToast(<ApprovalsInbox />);
-    const ana = await screen.findByRole('listitem', { name: FILA_ANA });
+    const ana = await filaAsync(FILA_ANA);
     fireEvent.click(within(ana).getByRole('button', { name: 'Aprobar la solicitud de Ana Ruiz para Contabilidad' }));
     const dialogo = screen.getByRole('alertdialog', { name: 'Aprobar solicitud' });
     expect(requestsApi.approve).not.toHaveBeenCalled();
@@ -176,7 +277,7 @@ describe('ApprovalsInbox: aprobar', () => {
 
   it('cancelar no llama a la API y devuelve el foco al botón', async () => {
     render(<ApprovalsInbox />);
-    const boton = within(await screen.findByRole('listitem', { name: FILA_ANA }))
+    const boton = within(await filaAsync(FILA_ANA))
       .getByRole('button', { name: /^Aprobar/ });
     fireEvent.click(boton);
     fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Cancelar' }));
@@ -193,7 +294,7 @@ describe('ApprovalsInbox: aprobar', () => {
   ])('error %#: mensaje en español y recarga si quedó desactualizada', async (error, mensaje, recarga) => {
     vi.mocked(requestsApi.approve).mockRejectedValue(error);
     render(<ApprovalsInbox />);
-    fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
+    fireEvent.click(within(await filaAsync(FILA_ANA))
       .getByRole('button', { name: /^Aprobar/ }));
     fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Aprobar' }));
     expect(await within(screen.getByRole('alertdialog')).findByText(mensaje)).toBeTruthy();
@@ -206,7 +307,7 @@ describe('ApprovalsInbox: foco (auditor-accesibilidad)', () => {
     let fallar: (e: unknown) => void = () => {};
     vi.mocked(requestsApi.approve).mockReturnValue(new Promise((_, rej) => { fallar = rej; }));
     render(<ApprovalsInbox />);
-    fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
+    fireEvent.click(within(await filaAsync(FILA_ANA))
       .getByRole('button', { name: /^Aprobar/ }));
     const boton = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Aprobar' }) as HTMLButtonElement;
     boton.focus();
@@ -225,7 +326,7 @@ describe('ApprovalsInbox: foco (auditor-accesibilidad)', () => {
   it('mientras se rechaza el botón queda `aria-disabled` con el foco', async () => {
     vi.mocked(requestsApi.reject).mockReturnValue(new Promise(() => {}));
     render(<ApprovalsInbox />);
-    fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
+    fireEvent.click(within(await filaAsync(FILA_ANA))
       .getByRole('button', { name: /^Rechazar/ }));
     const dialogo = screen.getByRole('alertdialog');
     fireEvent.change(within(dialogo).getByLabelText('Motivo del rechazo'), { target: { value: MOTIVO } });
@@ -240,7 +341,7 @@ describe('ApprovalsInbox: foco (auditor-accesibilidad)', () => {
 
   it('al cerrar, si el botón de la fila ya no existe, el foco va al filtro de estado', async () => {
     render(<ApprovalsInbox />);
-    const boton = within(await screen.findByRole('listitem', { name: FILA_ANA }))
+    const boton = within(await filaAsync(FILA_ANA))
       .getByRole('button', { name: /^Aprobar/ });
     fireEvent.click(boton);
     boton.remove();
@@ -252,7 +353,7 @@ describe('ApprovalsInbox: foco (auditor-accesibilidad)', () => {
 describe('ApprovalsInbox: rechazar', () => {
   async function abrirRechazo(renderizar: (ui: React.ReactElement) => unknown = render) {
     renderizar(<ApprovalsInbox />);
-    fireEvent.click(within(await screen.findByRole('listitem', { name: FILA_ANA }))
+    fireEvent.click(within(await filaAsync(FILA_ANA))
       .getByRole('button', { name: /^Rechazar/ }));
     const dialogo = screen.getByRole('alertdialog', { name: 'Rechazar solicitud' });
     return {

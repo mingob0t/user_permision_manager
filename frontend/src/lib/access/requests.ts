@@ -5,6 +5,7 @@ import { MOCK_CATALOG, MOCK_INBOX_STATS, MOCK_REQUEST, page } from './mocks';
 import { jsonBody, withQuery } from './query';
 import type {
   AccessRequest, AccessRequestInput, CatalogItem, CatalogParams, InboxStats, Paginated,
+  InboxListParams,
   RequestListParams,
 } from './types';
 
@@ -26,7 +27,7 @@ export const requestsApi = {
       withQuery('/access-requests/mine', { ...params }), undefined, () => page([MOCK_REQUEST])),
 
   /** Bandeja del admin; por defecto `status=pendiente` (lo aplica el backend). */
-  inbox: (params: RequestListParams = {}) =>
+  inbox: (params: InboxListParams = {}) =>
     accessRequest<Paginated<AccessRequest>>(
       withQuery('/access-requests/inbox', { ...params }), undefined, () => page([MOCK_REQUEST])),
 
