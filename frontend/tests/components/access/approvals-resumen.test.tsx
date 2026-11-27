@@ -180,6 +180,18 @@ describe('DIS-131: resumen', () => {
     expect(grafica.closest('.lg\\:col-span-2')).toBeTruthy();
   });
 
+  it('DIS-149: las gráficas se encogen con su columna (sin alto mínimo por filas ni scroll de página)', async () => {
+    const muchas = Array.from({ length: MAX_BARRAS }, (_, i) => (
+      { platform_id: i + 1, platform: `Plataforma ${i + 1}`, area: 'Finanzas', count: 10 - i }));
+    vi.mocked(requestsApi.inboxStats).mockResolvedValue({ ...STATS, by_platform: muchas });
+    const { container } = render_();
+    const grafica = await screen.findByRole('heading', { name: 'Solicitudes por área' });
+    expect(grafica.closest('.lg\\:col-span-2')?.className).toContain('min-h-0');
+    const contenedores = container.querySelectorAll<HTMLElement>('.recharts-responsive-container');
+    expect(contenedores.length).toBeGreaterThan(0);
+    contenedores.forEach((c) => expect(c.getAttribute('style') ?? '').not.toMatch(/min-height/));
+  });
+
   it('recorta las gráficas al máximo de barras', async () => {
     const muchas = Array.from({ length: MAX_BARRAS + 5 }, (_, i) => (
       { area_id: i + 1, area: `Área ${i + 1}`, count: 100 - i }));

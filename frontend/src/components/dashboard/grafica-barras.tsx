@@ -16,9 +16,11 @@ import { DataTable } from '../data-table';
 import type { NombreIcono } from '../icono';
 import { Card, PanelHeader, PremiumEmptyState } from '../ui';
 
-/** Alto por fila (px), alto mínimo y ancho (px) reservado a las etiquetas del eje Y. */
-const ALTO_FILA = 32;
-const ALTO_MIN = 120;
+/**
+ * Ancho (px) reservado a las etiquetas del eje Y. DIS-149: la gráfica no fija un alto según el
+ * número de filas; toma el de su columna (`h-56` como base que se encoge con `flex-1 min-h-0`) y
+ * las barras se ajustan, así el Resumen no desborda la pantalla.
+ */
 const ANCHO_ETIQUETA = 110;
 const LARGO_ETIQUETA = 16;
 
@@ -77,7 +79,6 @@ export function GraficaBarras({
 }: Props) {
   const colores = useTokenColors(TOKENS_BARRAS);
   const gradiente = `nx-barras-${useId().replace(/:/g, '')}`;
-  const altoGrafica = Math.max(ALTO_MIN, filas.length * ALTO_FILA + 28);
   const color = alterna ? colores.serieAlterna || colores.serie : colores.serie;
 
   return (
@@ -87,8 +88,8 @@ export function GraficaBarras({
         <PremiumEmptyState variant="seamless" icono={icono} title={vacioTitulo} message={vacioMensaje} />
       ) : (
         <div className="flex flex-1 min-h-0 flex-col p-3">
-          <div className="w-full min-h-0 flex-1" aria-hidden="true">
-            <ResponsiveContainer width="100%" height="100%" minHeight={altoGrafica}>
+          <div className="h-56 w-full min-h-0 flex-1" aria-hidden="true">
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={filas} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id={gradiente} x1="0" y1="0" x2="1" y2="0">

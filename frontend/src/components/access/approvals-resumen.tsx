@@ -59,7 +59,7 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
         <div className="flex min-h-0 lg:col-span-3">
           <SolicitudesPanel />
         </div>
-        <div className="flex flex-col gap-4 lg:col-span-2">
+        <div className="flex min-h-0 flex-col gap-4 lg:col-span-2">
           <GraficaBarras
             titulo="Solicitudes por área"
             subtitulo={`Las ${MAX_BARRAS} áreas con más solicitudes`}
