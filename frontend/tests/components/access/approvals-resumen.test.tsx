@@ -54,6 +54,7 @@ const STATS: InboxStats = {
   by_status: { pendiente: 3, aprobada: 7, rechazada: 2 },
   by_area: [{ area_id: 3, area: 'Finanzas', count: 8 }, { area_id: 4, area: 'Ventas', count: 4 }],
   by_platform: [{ platform_id: 12, platform: 'Contabilidad', area: 'Finanzas', count: 5 }],
+  pending_by_area: [{ area_id: 3, area: 'Finanzas', count: 2 }, { area_id: 4, area: 'Ventas', count: 1 }],
 };
 const BASE: AccessRequest = {
   ...MOCK_REQUEST, id: 41, status: 'pendiente', rejection_reason: null, decided_at: null, decided_by: null,
@@ -154,8 +155,9 @@ describe('DIS-131: resumen', () => {
 
   it('gráficas por área y plataforma con su tabla alternativa', async () => {
     render_();
-    // DIS-144: también el KPI de dona lleva ese título.
-    expect((await screen.findAllByRole('heading', { name: 'Solicitudes por área' })).length).toBe(2);
+    // DIS-145: la dona es «pendientes por área»; «Solicitudes por área» queda solo en las barras.
+    expect((await screen.findAllByRole('heading', { name: 'Solicitudes por área' })).length).toBe(1);
+    expect(screen.getByRole('heading', { name: 'Solicitudes pendientes por área' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Solicitudes por plataforma' })).toBeTruthy();
     expect(screen.getByRole('table', { name: 'Solicitudes por área' })).toBeTruthy();
     expect(screen.getByText('Contabilidad')).toBeTruthy();
@@ -172,10 +174,11 @@ describe('DIS-131: resumen', () => {
 
   it('sin solicitudes: estados vacíos y panel sin pendientes', async () => {
     vi.mocked(requestsApi.inboxStats).mockResolvedValue({
-      total: 0, by_status: { pendiente: 0, aprobada: 0, rechazada: 0 }, by_area: [], by_platform: [],
+      total: 0, by_status: { pendiente: 0, aprobada: 0, rechazada: 0 }, by_area: [], by_platform: [], pending_by_area: [],
     });
     render_();
-    expect((await screen.findAllByText('Sin solicitudes por área')).length).toBe(2);
+    expect(await screen.findByText('Sin solicitudes por área')).toBeTruthy();
+    expect(screen.getByText('Sin solicitudes pendientes')).toBeTruthy();
     expect(screen.getByText('Sin solicitudes por plataforma')).toBeTruthy();
     vi.mocked(requestsApi.inbox).mockResolvedValue({ items: [], page: 1, per_page: 8, total: 0 });
     expect(screen.getByText('Sin solicitudes')).toBeTruthy();
@@ -241,10 +244,10 @@ describe('DIS-131: tablas por estado (`?status=`)', () => {
   });
 });
 
-describe('DIS-144: KPI por área y espaciado', () => {
-  it('KPI «Solicitudes por área» con cifra y porcentaje de cada área', async () => {
+describe('DIS-144/145: KPI por área y espaciado', () => {
+  it('KPI «Solicitudes pendientes por área» con cifra y porcentaje de cada área', async () => {
     render_();
-    const leyenda = await screen.findByRole('list', { name: 'Solicitudes por área' });
+    const leyenda = await screen.findByRole('list', { name: 'Solicitudes pendientes por área' });
     const items = within(leyenda).getAllByRole('listitem').map((li) => li.textContent);
     expect(items[0]).toContain('Finanzas');
     expect(items[0]).toContain('67 %');
@@ -253,12 +256,12 @@ describe('DIS-144: KPI por área y espaciado', () => {
   });
 
   it('más de 5 áreas: 4 con color propio y «Otras» con el resto', () => {
-    const by_area = Array.from({ length: 7 }, (_, i) => ({ area_id: i + 1, area: `Área ${i + 1}`, count: 10 - i }));
-    const filas = filasPorArea({ ...STATS, by_area });
+    const pending_by_area = Array.from({ length: 7 }, (_, i) => ({ area_id: i + 1, area: `Área ${i + 1}`, count: 10 - i }));
+    const filas = filasPorArea({ ...STATS, pending_by_area });
     expect(filas.map((f) => f.nombre)).toEqual(['Área 1', 'Área 2', 'Área 3', 'Área 4', NOMBRE_OTRAS]);
     expect(filas[4].cantidad).toBe(6 + 5 + 4);
     expect(new Set(filas.map((f) => f.color)).size).toBe(5);
-    expect(filasPorArea({ ...STATS, by_area: by_area.slice(0, 5) }).map((f) => f.nombre)).not.toContain(NOMBRE_OTRAS);
+    expect(filasPorArea({ ...STATS, pending_by_area: pending_by_area.slice(0, 5) }).map((f) => f.nombre)).not.toContain(NOMBRE_OTRAS);
   });
 
   it('sin doble espacio: la vista usa flex con gap (el h1 oculto no suma margen) y llena el alto', async () => {
