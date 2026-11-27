@@ -63,6 +63,7 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
         <div className="flex min-h-0 flex-col gap-4 lg:col-span-2">
           <GraficaBarras
             titulo="Áreas"
+            etiqueta="Solicitudes por área"
             subtitulo={`Las ${MAX_BARRAS} con más solicitudes`}
             icono="areas"
             serie="Solicitudes"
@@ -73,6 +74,7 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
           />
           <GraficaBarras
             titulo="Plataformas"
+            etiqueta="Solicitudes por plataforma"
             subtitulo={`Las ${MAX_BARRAS} con más solicitudes`}
             icono="plataformas"
             serie="Solicitudes"

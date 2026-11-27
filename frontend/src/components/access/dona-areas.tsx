@@ -44,6 +44,7 @@ export function DonaAreas({ stats }: { stats: InboxStats }) {
   return (
     <DonaKpi
       titulo="Pendientes por área"
+      etiqueta="Solicitudes pendientes por área"
       textoTotal="por aprobar"
       icono="areas"
       paleta={PALETA_AREAS}

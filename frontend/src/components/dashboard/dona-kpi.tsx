@@ -50,6 +50,7 @@ export function DonaKpi({
   vacioTitulo,
   vacioMensaje,
   textoTotal = 'en total',
+  etiqueta,
 }: {
   titulo: string;
   icono: NombreIcono;
@@ -60,6 +61,8 @@ export function DonaKpi({
   vacioMensaje: string;
   /** Texto tras el total en el subtítulo (DIS-151), p. ej. «por aprobar». */
   textoTotal?: string;
+  /** Nombre de la lista para lector de pantalla si el título corto no basta (DIS-154). */
+  etiqueta?: string;
 }) {
   const total = filas.reduce((suma, fila) => suma + fila.cantidad, 0);
   const colores = useTokenColors({ ...TOKENS_BASE, ...paleta }) as Record<string, string>;
@@ -102,13 +105,13 @@ export function DonaKpi({
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <ul className="grid min-w-0 flex-1 gap-2" aria-label={titulo}>
+          <ul className="grid min-w-0 flex-1 gap-2" aria-label={etiqueta ?? titulo}>
             {conPct.map((fila) => (
-              <li key={fila.clave} className="flex items-center gap-2 text-sm text-label">
+              <li key={fila.clave} className="flex min-w-0 items-center gap-2 text-sm text-label">
                 <span className={`${fila.punto} size-3 shrink-0 rounded-sm`} aria-hidden="true" />
                 <span className="min-w-0 flex-1 truncate" title={fila.nombre}>{fila.nombre}</span>
                 <b className="font-bold tabular-nums text-body-text">{fila.cantidad}</b>
-                <span className="w-12 text-right font-semibold tabular-nums text-body-text">{fila.pct} %</span>
+                <span className="w-12 shrink-0 text-right font-semibold tabular-nums text-body-text">{fila.pct} %</span>
               </li>
             ))}
           </ul>

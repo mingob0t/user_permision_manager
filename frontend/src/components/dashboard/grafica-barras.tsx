@@ -3,11 +3,10 @@
 /**
  * Panel con una gráfica de barras (recharts) y su alternativa textual (DIS-131, horizontales en DIS-147): Card +
  * PanelHeader + barras con los tokens de tema + tabla `srOnly` con los mismos datos + estado
- * vacío. Barras horizontales: etiqueta en el eje Y y cantidad en el eje X. Mismo aspecto que las gráficas del dashboard; ese archivo conserva su copia (ver
+ * vacío. DIS-154: barras sólidas (el degradado dejaba el extremo bajo 3:1 en oscuro). Barras horizontales: etiqueta en el eje Y y cantidad en el eje X. Mismo aspecto que las gráficas del dashboard; ese archivo conserva su copia (ver
  * propuesta de unificación en la ficha DIS-131).
  */
 
-import { useId } from 'react';
 import {
   Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
@@ -21,8 +20,9 @@ import { Card, PanelHeader, PremiumEmptyState } from '../ui';
  * número de filas; toma el de su columna (`h-56` como base que se encoge con `flex-1 min-h-0`) y
  * las barras se ajustan, así el Resumen no desborda la pantalla.
  */
-const ANCHO_ETIQUETA = 110;
-const LARGO_ETIQUETA = 16;
+const ANCHO_ETIQUETA = 124;
+/** DIS-154: 15 caracteres caben en `ANCHO_ETIQUETA` sin recortarse contra el borde izquierdo. */
+const LARGO_ETIQUETA = 15;
 
 interface PropsEtiqueta {
   x?: number;
@@ -72,13 +72,14 @@ interface Props {
   vacioMensaje: string;
   /** Usa el segundo color de serie para distinguir la gráfica. */
   alterna?: boolean;
+  /** Nombre de la tabla alternativa para lector de pantalla si el título corto no basta (DIS-154). */
+  etiqueta?: string;
 }
 
 export function GraficaBarras({
-  titulo, subtitulo, icono, serie, columna, filas, vacioTitulo, vacioMensaje, alterna = false,
+  titulo, subtitulo, icono, serie, columna, filas, vacioTitulo, vacioMensaje, alterna = false, etiqueta,
 }: Props) {
   const colores = useTokenColors(TOKENS_BARRAS);
-  const gradiente = `nx-barras-${useId().replace(/:/g, '')}`;
   const color = alterna ? colores.serieAlterna || colores.serie : colores.serie;
 
   return (
@@ -91,12 +92,6 @@ export function GraficaBarras({
           <div className="h-56 w-full min-h-0 flex-1" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={filas} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id={gradiente} x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor={color} stopOpacity={1} />
-                    <stop offset="100%" stopColor={color} stopOpacity={0.65} />
-                  </linearGradient>
-                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={colores.rejilla} horizontal={false} />
                 <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: colores.eje }} stroke={colores.rejilla} />
                 <YAxis
@@ -121,14 +116,14 @@ export function GraficaBarras({
                   itemStyle={{ color: colores.texto }}
                   labelStyle={{ color: colores.texto }}
                 />
-                <Bar dataKey="cantidad" name={serie} fill={`url(#${gradiente})`} radius={[0, 4, 4, 0]} />
+                <Bar dataKey="cantidad" name={serie} fill={color} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
           {/* Alternativa textual de la gráfica: los mismos datos. */}
           <DataTable
             srOnly
-            label={titulo}
+            label={etiqueta ?? titulo}
             columns={[
               { key: 'etiqueta', header: columna, cell: (fila) => fila.etiqueta },
               { key: 'cantidad', header: serie, cell: (fila) => fila.cantidad },

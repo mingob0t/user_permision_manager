@@ -25,6 +25,7 @@ export function DonaEstados({ stats }: { stats: InboxStats }) {
   return (
     <DonaKpi
       titulo="Por estado"
+      etiqueta="Solicitudes por estado"
       icono="solicitudes"
       paleta={PALETA_ESTADOS}
       filas={ESTADOS_DONA.map(({ estado, nombre, punto }) => (
