@@ -46,11 +46,12 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
       <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <DonaEstados stats={stats} />
         <DonaAreas stats={stats} />
-        {panel?.connectors !== undefined && panel.desglose?.connectors ? (
-          <DonaConectores desglose={panel.desglose.connectors} />
-        ) : null}
+        {/* DIS-150: Usuarios antes que Conectores (pedido del dueño). */}
         {panel?.users !== undefined && panel.desglose?.users_by_role ? (
           <DonaUsuarios desglose={panel.desglose.users_by_role} />
+        ) : null}
+        {panel?.connectors !== undefined && panel.desglose?.connectors ? (
+          <DonaConectores desglose={panel.desglose.connectors} />
         ) : null}
       </div>
 

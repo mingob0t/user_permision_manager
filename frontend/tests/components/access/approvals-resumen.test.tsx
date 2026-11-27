@@ -180,6 +180,13 @@ describe('DIS-131: resumen', () => {
     expect(grafica.closest('.lg\\:col-span-2')).toBeTruthy();
   });
 
+  it('DIS-150: en la fila de KPI, Usuarios va antes que Conectores', async () => {
+    render_();
+    const conectores = await screen.findByRole('list', { name: 'Conectores' });
+    const usuarios = screen.getByRole('list', { name: 'Usuarios' });
+    expect(usuarios.compareDocumentPosition(conectores) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('DIS-149: las gráficas se encogen con su columna (sin alto mínimo por filas ni scroll de página)', async () => {
     const muchas = Array.from({ length: MAX_BARRAS }, (_, i) => (
       { platform_id: i + 1, platform: `Plataforma ${i + 1}`, area: 'Finanzas', count: 10 - i }));
