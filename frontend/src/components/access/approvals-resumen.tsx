@@ -1,9 +1,9 @@
 'use client';
 
 /**
- * Resumen de Solicitudes (DIS-131, rehecho en DIS-141 y DIS-144): fila de KPI (cuatro `DonaKpi`:
- * estado, área pendiente, conectores y usuarios por rol; DIS-146), gráficas por área y por plataforma (3/5) y el
- * panel de pendientes por aprobar (2/5, `SolicitudesPanel`). Datos de
+ * Resumen de Solicitudes (DIS-131, rehecho en DIS-141 y DIS-144; tabla a la izquierda y barras horizontales a la derecha en DIS-147): fila de KPI (cuatro `DonaKpi`:
+ * estado, área pendiente, conectores y usuarios por rol; DIS-146), panel de pendientes por aprobar (3/5,
+ * `SolicitudesPanel`) y gráficas de barras horizontales por área y por plataforma (2/5). Datos de
  * `GET /access-requests/inbox/stats` y `GET /stats` con `usePolling` y el intervalo de
  * preferencia. La tabla de cada estado es `ApprovalsInbox` (otra sección de la URL).
  */
@@ -55,7 +55,11 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
       </div>
 
       <div className="grid w-full flex-1 min-h-0 grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="flex flex-col gap-4 lg:col-span-3">
+        {/* DIS-141: en lugar de la dona por estado, las pendientes con aprobar/rechazar. */}
+        <div className="flex min-h-0 lg:col-span-3">
+          <SolicitudesPanel />
+        </div>
+        <div className="flex flex-col gap-4 lg:col-span-2">
           <GraficaBarras
             titulo="Solicitudes por área"
             subtitulo={`Las ${MAX_BARRAS} áreas con más solicitudes`}
@@ -77,10 +81,6 @@ function Contenido({ stats, panel }: { stats: InboxStats; panel: Stats | null })
             vacioMensaje="Aún no hay solicitudes para las plataformas de tu alcance."
             alterna
           />
-        </div>
-        {/* DIS-141: en lugar de la dona por estado, las pendientes con aprobar/rechazar. */}
-        <div className="flex min-h-0 lg:col-span-2">
-          <SolicitudesPanel />
         </div>
       </div>
     </section>

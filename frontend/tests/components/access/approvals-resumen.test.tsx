@@ -171,6 +171,15 @@ describe('DIS-131: resumen', () => {
     expect(screen.getByText('Contabilidad')).toBeTruthy();
   });
 
+  it('DIS-147: la tabla de pendientes va antes (3/5) que las gráficas (2/5)', async () => {
+    render_();
+    const grafica = await screen.findByRole('heading', { name: 'Solicitudes por área' });
+    const tabla = screen.getByRole('heading', { level: 3, name: 'Solicitudes' });
+    expect(tabla.compareDocumentPosition(grafica) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(tabla.closest('.lg\\:col-span-3')).toBeTruthy();
+    expect(grafica.closest('.lg\\:col-span-2')).toBeTruthy();
+  });
+
   it('recorta las gráficas al máximo de barras', async () => {
     const muchas = Array.from({ length: MAX_BARRAS + 5 }, (_, i) => (
       { area_id: i + 1, area: `Área ${i + 1}`, count: 100 - i }));
