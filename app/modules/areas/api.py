@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 from app import db
 from app.authz import (any_admin_required, area_admin_required, can_manage_area,
                        is_area_admin, scoped_users)
-from app.modules.api.helpers import (AREA_DUPLICADA, CUERPO_INVALIDO,
+from app.modules.api.helpers import (AREA_DUPLICADA, AREA_SIN_ADMIN, CUERPO_INVALIDO,
                                      NO_ENCONTRADO, error_response, is_id_list,
                                      leer_cuerpo, validation_error)
 from app.modules.areas import validacion
@@ -106,6 +106,10 @@ def create_area():
         color=valores.get('color', validacion.COLOR_POR_OMISION),
         status=valores.get('status', validacion.ESTADO_POR_OMISION),
     )
+    # FNC-220: un área activa necesita admin; el admin de área que la crea
+    # lo es desde el alta.
+    if area.status != ESTADO_INACTIVO and not is_area_admin():
+        return error_response(*AREA_SIN_ADMIN)
     db.session.add(area)
     if is_area_admin():
         current_user.managed_areas.append(area)
@@ -135,6 +139,10 @@ def update_area(area_id):
 
     if not valores:
         return jsonify({'status': 'success', 'area': area.to_dict()})
+    # FNC-220: no se activa un área inactiva sin admin de área.
+    if (valores.get('status') == validacion.ESTADO_ACTIVO
+            and area.status == ESTADO_INACTIVO and not area.admins):
+        return error_response(*AREA_SIN_ADMIN)
     antes = area.to_dict()
     # FNC-210: plataformas que dejan de estar activas si el área se desactiva.
     estaba_activa = area.status != ESTADO_INACTIVO

@@ -20,6 +20,8 @@ OPERACION_PROPIA = ('No puedes cambiar tu propio rol.', 403,
 ROL_NO_ADMIN = ('El usuario no es administrador de área.', 409,
                 'rol_no_admin')
 AREA_DUPLICADA = ('Ya existe un área con ese nombre.', 409, 'area_duplicada')
+AREA_SIN_ADMIN = ('Asigna al menos un administrador antes de activar el '
+                  'área.', 409, 'area_sin_admin')
 AREA_CON_PLATAFORMAS = ('El área tiene plataformas; muévelas o elimínalas '
                         'antes.', 409, 'area_con_plataformas')
 AREA_CON_ACCESOS = ('El área tiene accesos vigentes.', 409,

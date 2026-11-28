@@ -202,3 +202,13 @@ def test_alta_de_plataforma_queda_auditada(cliente_admin):
     cliente_admin.post(A, json={'entity': 'platforms', 'records': [
         {'nombre': 'Nómina', 'descripcion': 'Pagos', 'area': area.name}]})
     assert AuditLog.query.filter_by(action='plataforma_creada', target='Nómina').count() == 1
+
+
+def test_areas_importadas_nacen_inactivas_sin_admin(cliente_admin):
+    """FNC-220: una área no se activa sin admin; la importación no lo tiene."""
+    res = cliente_admin.post('/api/v1/import/bulk', json={
+        'entity': 'areas', 'dry_run': False,
+        'records': [{'nombre': 'Importada', 'descripcion': 'x'}]})
+
+    assert res.status_code == 200
+    assert Area.query.filter_by(name='Importada').one().status == 'Inactivo'

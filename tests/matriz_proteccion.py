@@ -436,7 +436,7 @@ CASOS = (
 
     # ---- Áreas (areas/api.py) ----
     Caso('POST', f'{A}/areas', _fija(f'{A}/areas'), administradores(201),
-         _json({'name': 'Área nueva de prueba'}),
+         _json({'name': 'Área nueva de prueba', 'status': 'Inactivo'}),
          nota='FNC-045: el admin de área da de alta áreas'),
     Caso('PUT', f'{A}/areas/<int:area_id>', _area(), administradores(),
          _json({'description': 'Descripción editada'})),

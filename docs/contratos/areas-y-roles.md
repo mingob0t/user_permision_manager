@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 3.4 (2026-11-25) |
+| Versión | 3.5 (2026-11-28) |
 | Proveedor | backend (FNC-044, FNC-045, FNC-055, FNC-161, FNC-185) |
 | Consumidores | web (FNC-069; pantallas DIS-016, DIS-019) |
 | Solicitudes | — |
@@ -32,6 +32,7 @@ Entrada (lista blanca):
 | `status` | string | No | `Activo` \| `Inactivo` |
 
 - Admin de área en POST: se agrega a `area_admins` en la misma transacción; auditoría `area_creada`.
+- **Activación (v3.5, FNC-220):** un área no se activa sin al menos un admin de área. `POST` con `status` `Activo` (o ausente, que equivale a `Activo`) sin admin → `409 area_sin_admin`; el admin de área que crea el área sí pasa (queda como su admin), y el superadmin debe enviar `status: "Inactivo"` o asignar admin después. `PUT` que cambia de `Inactivo` a `Activo` sin admin → `409 area_sin_admin` y no cambia nada. Editar otros campos o un área ya activa sin admin no se bloquea. Quitar el último admin de un área activa **no** se bloquea (decisión del dueño, 2026-11-28).
 - Respuesta: `{"status": "success", "area": Area}` (tipo `Area` existente).
 
 ### `DELETE /areas/<id>` (P11, 2026-10-14)
@@ -77,6 +78,7 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | HTTP | `code` | Mensaje |
 |---|---|---|
 | 409 | `area_duplicada` | Ya existe un área con ese nombre. |
+| 409 | `area_sin_admin` | Asigna al menos un administrador antes de activar el área. (FNC-220) |
 | 409 | `area_con_plataformas` | El área tiene plataformas; muévelas o elimínalas antes. |
 | 409 | `area_con_accesos` | El área tiene accesos vigentes. |
 | 409 | `area_con_otros_admins` | El área tiene otros administradores; solo el superadmin puede darla de baja. |
@@ -119,3 +121,4 @@ Asigna las áreas que administra un `admin_area` (`area_admins`). Reemplaza la l
 | 3.2 | 2026-11-24 | FNC-168 (decisión del dueño: las cuentas viven en LDAP y entran por Authelia): las altas son `auth_source=sso`; `ldap` queda como origen heredado y la migración 0019 convierte las existentes. **Incompatible** para quien filtre por `ldap`: el cliente usa `lib/origen-cuenta.ts` (FNC-169) |
 | 3.3 | 2026-11-24 | FNC-185 (dueño): efecto en accesos de asignar/quitar áreas y de degradar el rol: nivel `admin` al ser admin, regreso a `usuario` (conservado) al dejar de serlo. Sin cambios de forma |
 | 3.4 | 2026-11-25 | FNC-206 (**aditivo**): `503 sin_permiso_en_directorio` al cambiar contraseña o rol cuando LDAP rechaza por permisos (antes `directorio_no_disponible` o `grupo_no_actualizado`). Sin cambios de forma |
+| 3.5 | 2026-11-28 | FNC-220 (dueño): `409 area_sin_admin` al crear un área activa o activar una inactiva sin admin de área. Cambia el alta del superadmin: sin `status` equivale a `Activo` y ahora falla sin admin (la web debe enviar `Inactivo`). Importación masiva de áreas: nacen `Inactivo` |

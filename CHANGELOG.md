@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Áreas: no se activa un área (ni se crea activa) sin al menos un admin de área: `409 area_sin_admin`; el admin de área que la crea sí pasa y las áreas de la importación masiva nacen `Inactivo`; quitar el último admin no se bloquea. Contrato `areas-y-roles` 3.5 (FNC-220, 2026-11-28).
 - Solicitudes: `GET /access-requests/inbox/stats` agrega `pending_by_platform` (pendientes por plataforma, mismo alcance que la bandeja); contrato `solicitudes` 1.6 (FNC-219, 2026-11-28).
 - Solicitudes: el motivo de la solicitud (`SOLICITUD_MOTIVO`: `oculto` por omisión, `opcional`, `obligatorio`) y el del rechazo (`RECHAZO_MOTIVO`: `obligatorio` por omisión, `opcional`, `oculto`) se deciden desde `.env`; un valor inválido detiene el arranque. Modifica RF-06 por pedido del dueño. `GET /auth/context` agrega `motivos`; el correo de rechazo omite «Motivo» si no hay; contratos `solicitudes` 1.5 y `autenticacion` 1.1 (FNC-216, 2026-11-27).
 - Web: los filtros Estado, Área y Plataforma del Historial de solicitudes usan el selector estándar de la barra (ícono, «Etiqueta: valor» y menú), nuevo componente `SelectorToolbar` (DIS-158, 2026-11-28).

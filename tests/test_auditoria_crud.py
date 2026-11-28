@@ -32,7 +32,7 @@ def datos(app):
 
 # (método, ruta, cuerpo, acción esperada, módulo, objetivo esperado)
 ACCIONES = [
-    ('POST', '/areas', {'name': 'Área nueva'},
+    ('POST', '/areas', {'name': 'Área nueva', 'status': 'Inactivo'},
      'area_creada', 'Áreas', 'Área nueva'),
     ('PUT', '/areas/{area}', {'description': 'Editada'},
      'area_editada', 'Áreas', 'Área auditada'),

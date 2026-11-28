@@ -111,7 +111,7 @@ def test_alta_audita_area_creada_con_actor_y_area(escena, como):
 
 
 def test_superadmin_crea_area_sin_quedar_en_area_admins(escena, como):
-    respuesta = como('super').post(f'{A}/areas', json={'name': 'Global'})
+    respuesta = como('super').post(f'{A}/areas', json={'name': 'Global', 'status': 'Inactivo'})
 
     assert respuesta.status_code == 201
     area = _area(respuesta.get_json()['area']['id'])
@@ -371,11 +371,13 @@ def test_la_auditoria_vieja_no_queda_ligada_a_un_area_que_reusa_el_id(
     """Seguridad (Baja): `area_id` se pone en NULL antes de borrar el área."""
     cliente = como('super')
     area_id = cliente.post(f'{A}/areas',
-                           json={'name': 'Efímera'}).get_json()['area']['id']
+                           json={'name': 'Efímera',
+                                 'status': 'Inactivo'}).get_json()['area']['id']
     assert cliente.delete(f'{A}/areas/{area_id}').status_code == 200
 
     nueva_id = cliente.post(f'{A}/areas',
-                            json={'name': 'Heredera'}).get_json()['area']['id']
+                            json={'name': 'Heredera',
+                                  'status': 'Inactivo'}).get_json()['area']['id']
 
     assert nueva_id == area_id  # SQLite reutiliza el id: el caso que importa
     db.session.expire_all()
@@ -393,7 +395,8 @@ def test_carrera_de_nombre_duplicado_da_409(escena, como, monkeypatch, metodo,
     monkeypatch.setattr(validacion, 'nombre_duplicado', lambda *a, **k: False)
 
     respuesta = como('super').open(f"{A}{ruta.format(A=escena['A'])}",
-                                   method=metodo, json={'name': 'Área B'})
+                                   method=metodo,
+                                   json={'name': 'Área B', 'status': 'Inactivo'})
 
     _codigo(respuesta, 409, 'area_duplicada')
     assert Area.query.filter_by(name='Área B').count() == 1
