@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Web: la tarjeta de área muestra el KPI «Solicitudes pendientes» junto a Plataformas (enlace al Historial filtrado por área; sustituye el badge «N por aprobar») y una fila de ancho completo con los administradores del área (DIS-162, 2026-11-28).
 - Web: los filtros Estado, Área y Plataforma del Historial de solicitudes usan el selector estándar de la barra (ícono, «Etiqueta: valor» y menú), nuevo componente `SelectorToolbar` (DIS-158, 2026-11-28).
 - Web: el Historial de solicitudes ya no muestra la descripción bajo el título y el error de carga sale en un toast en lugar de un recuadro sobre la tabla (DIS-157, 2026-11-28).
 - Accesos: toda plataforma da acceso por el grupo LDAP de su nivel (`app-{plataforma}-users`/`-admins`; DN derivado de `LDAP_PLATFORM_GROUP_TEMPLATE`, por omisión `cn=app-{plataforma}-{nivel}`, y grupo creado si no existe) y el conector pasa a ser un paso adicional: si la plataforma tiene conector disponible, tras el grupo se ejecuta su alta (y su baja al revocar); el cambio de nivel solo mueve el grupo. Toda plataforma activa es solicitable en ambos niveles (ya no hay «No disponible para solicitar» por falta de integración); `PUT /platforms/<id>/connector` funciona en cualquier plataforma; migración `0021` rellena los DN faltantes; contratos `plataformas-integracion` 1.5, `solicitudes` 1.2 y `conectores-y-ejecuciones` 1.5 (FNC-196, 2026-11-24).

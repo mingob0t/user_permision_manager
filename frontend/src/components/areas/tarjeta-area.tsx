@@ -18,38 +18,14 @@ import { variablesCss } from '@/lib/variables-css';
 import { obtenerImagenFondoArea } from '@/lib/card-backgrounds';
 import { Icono, type NombreIcono } from '../icono';
 import { EstadoBadgeBoton } from '../estado-badge-boton';
-import { Badge } from '../ui';
 import { rutaConFiltro } from '../access/filtro-url';
 
 /** Ruta de Solicitudes (`RUTA_SOLICITUDES` de approvals-resumen; aquí sin importar sus gráficas). */
 const RUTA_SOLICITUDES = '/approvals';
 
-/** Bandeja de pendientes filtrada por el área (DIS-137). */
+/** Historial de solicitudes filtrado por pendientes del área (DIS-137, DIS-162). */
 export function rutaPendientesArea(areaId: number): string {
   return rutaConFiltro(RUTA_SOLICITUDES, { status: 'pendiente', area_id: String(areaId) });
-}
-
-/**
- * «N por aprobar»: enlace a la bandeja de pendientes del área. Detiene el clic para que la
- * tarjeta (que abre las plataformas) no lo reciba.
- */
-function PendientesArea({ area, pendientes }: { area: Area; pendientes: number }) {
-  if (pendientes <= 0) return null;
-  const sustantivo = pendientes === 1 ? 'solicitud' : 'solicitudes';
-  return (
-    <Link
-      href={rutaPendientesArea(area.id)}
-      onClick={(evento) => evento.stopPropagation()}
-      aria-label={`${pendientes} ${sustantivo} por aprobar en ${area.name}. Abrir Solicitudes.`}
-      title="Ver solicitudes por aprobar"
-      // `.nx-estado-boton`: aspecto del badge y área táctil de 44 px con su ::after (DIS-114).
-      className="nx-estado-boton foco-visible rounded-full"
-    >
-      <Badge tone="warning" icon="reloj" iconTamano="xs">
-        {pendientes} por aprobar
-      </Badge>
-    </Link>
-  );
 }
 
 /** Logos que se muestran en el pie; el resto va como «+N». */
@@ -88,20 +64,56 @@ function Cifra({
   valor,
   etiqueta,
   compacta = false,
+  enlace,
 }: {
   icono: NombreIcono;
   valor: number;
   etiqueta: string;
   compacta?: boolean;
+  /** Si viene, la cifra es un enlace (DIS-162): detiene el clic para no abrir las plataformas. */
+  enlace?: { href: string; nombre: string };
 }) {
-  return (
-    <div className={`nx-area-card__cifra flex min-w-0 items-center ${compacta ? 'gap-2 rounded-lg p-2' : 'gap-3 rounded-xl p-3'} border`}>
+  const clases = `nx-area-card__cifra flex min-w-0 items-center ${compacta ? 'gap-2 rounded-lg p-2' : 'gap-3 rounded-xl p-3'} border`;
+  const contenido = (
+    <>
       <span className={`nx-area-card__mini grid ${compacta ? 'size-6 rounded-md' : 'size-8 rounded-lg'} shrink-0 place-items-center`} aria-hidden="true">
         <Icono nombre={icono} tamano={compacta ? 'xs' : 'sm'} />
       </span>
       <div className="min-w-0">
         <p className={`nx-area-card__valor ${compacta ? 'text-base' : 'text-xl'} font-extrabold leading-none tabular-nums`}>{valor}</p>
-        <p className={`mt-0.5 truncate ${compacta ? 'text-xs' : 'text-xs'} font-semibold uppercase tracking-wide text-label`}>{etiqueta}</p>
+        <p className="mt-0.5 truncate text-xs font-semibold uppercase tracking-wide text-label" title={etiqueta}>{etiqueta}</p>
+      </div>
+    </>
+  );
+  if (!enlace) return <div className={clases}>{contenido}</div>;
+  return (
+    <Link
+      href={enlace.href}
+      onClick={(evento) => evento.stopPropagation()}
+      aria-label={enlace.nombre}
+      title="Ver solicitudes pendientes"
+      className={`${clases} foco-visible min-h-12`}
+    >
+      {contenido}
+    </Link>
+  );
+}
+
+/**
+ * Fila de ancho completo con los administradores del área (DIS-162). El recuadro es el de
+ * `Cifra`; los nombres se truncan y el texto completo va en `title`.
+ */
+function AdministradoresArea({ area, compacta }: { area: Area; compacta: boolean }) {
+  const nombres = (area.admins ?? []).map((admin) => admin.name);
+  const texto = nombres.length > 0 ? nombres.join(', ') : 'Sin administrador';
+  return (
+    <div className={`nx-area-card__cifra col-span-full flex min-w-0 items-center ${compacta ? 'gap-2 rounded-lg p-2' : 'gap-3 rounded-xl p-3'} border`}>
+      <span className={`nx-area-card__mini grid ${compacta ? 'size-6 rounded-md' : 'size-8 rounded-lg'} shrink-0 place-items-center`} aria-hidden="true">
+        <Icono nombre="escudo" tamano={compacta ? 'xs' : 'sm'} />
+      </span>
+      <div className="min-w-0">
+        <p className="truncate text-xs font-semibold uppercase tracking-wide text-label">Administradores de área</p>
+        <p className="mt-0.5 truncate text-sm font-semibold text-body-text" title={texto}>{texto}</p>
       </div>
     </div>
   );
@@ -111,7 +123,7 @@ export function TarjetaArea({
   area,
   conteo,
   plataformas,
-  pendientes = 0,
+  pendientes,
   onSelect,
   puedeEditar = false,
   actualizarEstado,
@@ -124,7 +136,7 @@ export function TarjetaArea({
   conteo: number;
   /** Plataformas del área en el mismo alcance; de aquí salen los logos del pie. */
   plataformas: Platform[];
-  /** Solicitudes por aprobar del área (DIS-137); con 0 no se muestra nada. Solo variante estándar. */
+  /** Solicitudes pendientes del área (DIS-162); sin dato (consulta fallida) no se muestra la cifra. Solo variante estándar. */
   pendientes?: number;
   onSelect: (area: Area) => void;
   /** Quien puede editar el área (mismo permiso que «Editar»): su badge de estado conmuta (DIS-114). */
@@ -827,12 +839,24 @@ export function TarjetaArea({
               {area.description || 'Área organizativa del sistema.'}
             </p>
           </div>
-          <PendientesArea area={area} pendientes={pendientes} />
         </div>
 
-        <div className={`grid flex-1 grid-cols-2 content-center ${alturaEstandar ? 'gap-2 px-3 pb-2' : 'gap-2.5 px-4 pb-3'}`}>
+        <div className={`grid flex-1 grid-cols-3 content-center ${alturaEstandar ? 'gap-2 px-3 pb-2' : 'gap-2.5 px-4 pb-3'}`}>
           <Cifra icono="usuarios" valor={personas} etiqueta={personas === 1 ? 'Persona' : 'Personas'} compacta={alturaEstandar} />
           <Cifra icono="plataformas" valor={conteo} etiqueta={conteo === 1 ? 'Plataforma' : 'Plataformas'} compacta={alturaEstandar} />
+          {pendientes === undefined ? null : (
+            <Cifra
+              icono="reloj"
+              valor={pendientes}
+              etiqueta="Solicitudes pendientes"
+              compacta={alturaEstandar}
+              enlace={{
+                href: rutaPendientesArea(area.id),
+                nombre: `${pendientes} ${pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'} en ${area.name}. Abrir Historial.`,
+              }}
+            />
+          )}
+          <AdministradoresArea area={area} compacta={alturaEstandar} />
         </div>
       </div>
 
