@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TarjetaArea, rutaPendientesArea } from '@/components/areas/tarjeta-area';
 import type { Area, Platform } from '@/lib/types';
 import { CONTEXTOS, RUTA_TOKENS, variablesDeBloque } from '../utils/tokens-css';
-import { componer, MIN_TEXTO, parseColor, razonContraste, type Rgba } from '../utils/wcag';
+import { componer, MIN_NO_TEXTO, MIN_TEXTO, parseColor, razonContraste, type Rgba } from '../utils/wcag';
 
 afterEach(() => cleanup());
 
@@ -28,7 +28,7 @@ describe('TarjetaArea', () => {
   it('DIS-162: KPI «Solicitudes pendientes» enlaza al Historial filtrado del área sin abrir las plataformas', () => {
     const onSelect = vi.fn();
     render(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} pendientes={2} onSelect={onSelect} />);
-    const enlace = screen.getByRole('link', { name: '2 solicitudes pendientes en Finanzas. Abrir Historial.' });
+    const enlace = screen.getByRole('link', { name: 'Solicitudes pendientes: 2, en Finanzas. Abrir Historial.' });
     expect(enlace.getAttribute('href')).toBe('/approvals?status=pendiente&area_id=3');
     expect(enlace.textContent).toContain('Solicitudes pendientes');
     expect(enlace.className).toContain('nx-area-card__cifra');
@@ -42,9 +42,9 @@ describe('TarjetaArea', () => {
 
   it('DIS-162: con 0 pendientes muestra 0 (singular con 1); sin dato no hay KPI', () => {
     const { rerender } = render(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} pendientes={1} onSelect={vi.fn()} />);
-    expect(screen.getByRole('link', { name: '1 solicitud pendiente en Finanzas. Abrir Historial.' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Solicitudes pendientes: 1, en Finanzas. Abrir Historial.' })).toBeTruthy();
     rerender(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} pendientes={0} onSelect={vi.fn()} />);
-    expect(screen.getByRole('link', { name: '0 solicitudes pendientes en Finanzas. Abrir Historial.' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Solicitudes pendientes: 0, en Finanzas. Abrir Historial.' })).toBeTruthy();
     rerender(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} onSelect={vi.fn()} />);
     expect(screen.queryByRole('link')).toBeNull();
     expect(screen.queryByText('Solicitudes pendientes')).toBeNull();
@@ -75,7 +75,7 @@ describe('TarjetaArea', () => {
       const { rerender } = render(
         <TarjetaArea area={{ ...AREA, admins }} conteo={4} plataformas={PLATAFORMAS} pendientes={2} mostrarAdministradores variante={variante} onSelect={onSelect} />,
       );
-      const enlace = screen.getByRole('link', { name: '2 solicitudes pendientes en Finanzas. Abrir Historial.' });
+      const enlace = screen.getByRole('link', { name: 'Solicitudes pendientes: 2, en Finanzas. Abrir Historial.' });
       expect(enlace.getAttribute('href')).toBe('/approvals?status=pendiente&area_id=3');
       expect(enlace.textContent).toContain('Solicitudes pendientes');
       expect(enlace.className).toContain('foco-visible');
@@ -205,6 +205,20 @@ describe('TarjetaArea', () => {
 describe('TarjetaArea: CSS y contraste (AA en ambos temas)', () => {
   const CSS = readFileSync('src/styles/components.css', 'utf8');
   const tokens = readFileSync(RUTA_TOKENS, 'utf8');
+
+  it('DIS-164: sobre imagen (portada, flotante) el enlace usa un anillo de foco con 3:1 sobre la capa oscura', () => {
+    for (const variante of ['portada', 'flotante'] as const) {
+      const { unmount } = render(<TarjetaArea area={AREA} conteo={2} plataformas={PLATAFORMAS} pendientes={1} variante={variante} onSelect={vi.fn()} />);
+      const enlace = screen.getByRole('link', { name: 'Solicitudes pendientes: 1, en Finanzas. Abrir Historial.' });
+      expect(enlace.className, variante).toContain('foco-sobre-arte');
+      unmount();
+    }
+    expect(CSS).toMatch(/\.foco-sobre-arte:focus-visible\s*\{[^}]*outline-color:\s*rgb\(var\(--foco-anillo-sobre-arte\)\)/);
+    const anillo = parseColor(variablesDeBloque(tokens, CONTEXTOS.claro)['--foco-anillo-sobre-arte']);
+    // Peor caso: capa `arte-sombra` (negro) al 70 % sobre una imagen blanca.
+    const fondo = componer(parseColor('0 0 0 / 0.7'), parseColor('255 255 255'));
+    expect(razonContraste(anillo, fondo)).toBeGreaterThanOrEqual(MIN_NO_TEXTO);
+  });
 
   it('DIS-104: recuadros, cifras, pie y «Ver plataformas» toman el color del área', () => {
     for (const clase of ['__cifra', '__valor', '__pie', '__ir']) {

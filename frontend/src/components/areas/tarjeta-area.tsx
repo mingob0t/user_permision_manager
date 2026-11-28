@@ -62,7 +62,8 @@ function LogoPlataforma({ plataforma }: { plataforma: Platform }) {
 
 /** Nombre accesible del enlace a las solicitudes pendientes del área (DIS-162, DIS-164). */
 function nombrePendientes(area: Area, pendientes: number): string {
-  return `${pendientes} ${pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'} en ${area.name}. Abrir Historial.`;
+  // Empieza con el texto visible («Solicitudes pendientes») en singular y plural (WCAG 2.5.3).
+  return `Solicitudes pendientes: ${pendientes}, en ${area.name}. Abrir Historial.`;
 }
 
 /** Texto de los administradores del área (DIS-162): nombres separados por coma o «Sin administrador». */
@@ -153,7 +154,8 @@ function estiloKpi(tipo: 'glass' | 'oscuro' | 'claro', alturaEstandar: boolean):
     return { caja: `${base} bg-superficie/60 backdrop-blur-md border-primary/20`, mini: 'bg-primary/20 text-primary-text', valor: `${valor} text-body-text`, etiqueta: `${etiqueta} text-label`, texto: 'text-body-text' };
   }
   if (tipo === 'oscuro') {
-    return { caja: `${base} bg-arte-luz/10 backdrop-blur-md border-arte-luz/15 text-arte-luz`, mini: 'bg-arte-luz/15 text-arte-luz', valor: `${valor} text-arte-luz`, etiqueta: `${etiqueta} text-arte-pizarra-300`, texto: 'text-arte-luz' };
+    // `foco-sobre-arte`: anillo de foco con 3:1 sobre la capa oscura de la imagen en los dos temas.
+    return { caja: `${base} foco-sobre-arte bg-arte-luz/10 backdrop-blur-md border-arte-luz/15 text-arte-luz`, mini: 'bg-arte-luz/15 text-arte-luz', valor: `${valor} text-arte-luz`, etiqueta: `${etiqueta} text-arte-pizarra-300`, texto: 'text-arte-luz' };
   }
   return { caja: `${base} bg-superficie-hundida/70 border-panel-border/80`, mini: 'bg-superficie text-primary-text shadow-xs', valor: `${valor} text-body-text`, etiqueta: `${etiqueta} text-label`, texto: 'text-body-text' };
 }

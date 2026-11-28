@@ -32,3 +32,8 @@
 ## Verificación
 - `npm run typecheck` 0, `npm run lint` 0, `npx vitest run` 0 (3742 pruebas). Pruebas nuevas en `tarjeta-area.test.tsx` (parametrizada por las 10 variantes; «Usuario/Usuarios»); ajustadas las que buscaban «Persona».
 - Visual claro/oscuro, móvil y escritorio: no realizada (sin app levantada). Con 3 columnas las etiquetas pueden truncarse en tarjetas angostas (verlo en pantalla). Contraste: se reutilizan las mismas clases de texto de cada capa; no medido de nuevo.
+
+## Correcciones de auditor-accesibilidad
+- Foco del enlace sobre imagen (portada, flotante): token `--foco-anillo-sobre-arte` (96 165 250) y clase `foco-sobre-arte` (3:1 sobre la capa oscura; el anillo global no cambia).
+- Nombre accesible: «Solicitudes pendientes: N, en {área}. Abrir Historial.» (contiene el texto visible también con 1; WCAG 2.5.3).
+- Verificación: tsc 0, eslint 0, vitest 3744/3744 (salida 0); 13 pruebas fallan sin el cambio.

@@ -87,7 +87,7 @@ describe('PlatformAdmin: por aprobar en la tarjeta de área (DIS-137, DIS-162)',
       pending_by_area: [{ area_id: 3, area: 'Finanzas', count: 2 }],
     });
     render(<PlatformAdmin />);
-    const enlace = await screen.findByRole('link', { name: /2 solicitudes pendientes en Finanzas/ });
+    const enlace = await screen.findByRole('link', { name: /Solicitudes pendientes: 2, en Finanzas/ });
     expect(enlace.getAttribute('href')).toBe('/approvals?status=pendiente&area_id=3');
   });
 

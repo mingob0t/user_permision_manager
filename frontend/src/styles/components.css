@@ -762,6 +762,11 @@ select::-ms-expand {
     outline-offset: var(--foco-separacion);
 }
 
+/* Sobre imagen con capa oscura (`arte-sombra`), igual en los dos temas: anillo claro (DIS-164) */
+.foco-sobre-arte:focus-visible {
+    outline-color: rgb(var(--foco-anillo-sobre-arte));
+}
+
 /* Estado deshabilitado unificado */
 .estado-deshabilitado,
 :disabled.estado-deshabilitado,

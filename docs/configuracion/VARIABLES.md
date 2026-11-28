@@ -393,6 +393,7 @@ Definidos en `frontend/src/styles/tokens.css` bajo la arquitectura de 3 capas (A
 | `--color-accion-hover` | Estado hover de acción | `30 64 175` | `96 165 250` | `tokens.css` | DIS-055, DIS-076 (valor) | Vigente |
 | `--color-accion-presionada` | Estado activo/presionado | `30 58 138` | `29 78 216` | `tokens.css` | DIS-055, DIS-076 (valor) | Vigente |
 | `--foco-anillo` | Anillo de foco accesible 3:1 | `29 78 216` | `96 165 250` | `tokens.css` | DIS-056, DIS-076 (valor) | Vigente |
+| `--foco-anillo-sobre-arte` | Anillo de foco sobre imagen con capa oscura (`arte-sombra`), 3:1 en los dos temas | `96 165 250` | `96 165 250` | `tokens.css` | DIS-164, 2026-11-28 | Vigente |
 | `--foco-ancho`, `--foco-separacion` | Grosor y margen del foco | `2px`, `2px` | `2px`, `2px` | `tokens.css` | DIS-056 | Vigente |
 | `--deshabilitado-fondo` | Fondo de control deshabilitado | `245 246 248` | `17 22 33` | `tokens.css` | DIS-056, DIS-076 (valor) | Vigente |
 | `--deshabilitado-texto` | Texto de control deshabilitado | `152 162 179` | `100 116 139` | `tokens.css` | DIS-056, DIS-076 (valor) | Vigente |
