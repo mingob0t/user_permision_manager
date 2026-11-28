@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Solicitudes: `GET /access-requests/inbox/stats` agrega `pending_by_platform` (pendientes por plataforma, mismo alcance que la bandeja); contrato `solicitudes` 1.6 (FNC-219, 2026-11-28).
 - Solicitudes: el motivo de la solicitud (`SOLICITUD_MOTIVO`: `oculto` por omisión, `opcional`, `obligatorio`) y el del rechazo (`RECHAZO_MOTIVO`: `obligatorio` por omisión, `opcional`, `oculto`) se deciden desde `.env`; un valor inválido detiene el arranque. Modifica RF-06 por pedido del dueño. `GET /auth/context` agrega `motivos`; el correo de rechazo omite «Motivo» si no hay; contratos `solicitudes` 1.5 y `autenticacion` 1.1 (FNC-216, 2026-11-27).
 - Web: los filtros Estado, Área y Plataforma del Historial de solicitudes usan el selector estándar de la barra (ícono, «Etiqueta: valor» y menú), nuevo componente `SelectorToolbar` (DIS-158, 2026-11-28).
 - Web: el Historial de solicitudes ya no muestra la descripción bajo el título y el error de carga sale en un toast en lugar de un recuadro sobre la tabla (DIS-157, 2026-11-28).
