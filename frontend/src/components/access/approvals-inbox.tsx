@@ -15,6 +15,7 @@
  * - DIS-156: mismo diseño que el detalle de un área en Plataformas: tarjeta de herramientas
  *   (Volver, buscador, selectores) y `DataTable` con filas de una línea. El buscador y los
  *   filtros los resuelve el backend (`q`, `area_id`, `platform_id`, `status=todas`; FNC-218).
+ * - DIS-163: URL limpia (`/approvals/historial`); los filtros viven en `sessionStorage` de la pestaña.
  * - DIS-157: el error de carga sale en un toast (no en un recuadro sobre la tabla).
  */
 
@@ -41,7 +42,7 @@ import {
   BUSCADOR_ID,
 } from './approvals-inbox-toolbar';
 import { columnasBandeja, type TipoDecision } from './approvals-inbox-columns';
-import { valorPermitido, idDeUrl } from './filtro-url';
+import { filtrosIniciales, guardarFiltrosHistorial } from './filtros-historial';
 import { RejectDialog } from './reject-dialog';
 import { listLoadError } from './request-errors';
 import { ESTADOS_SOLICITUD } from './request-status-badge';
@@ -95,14 +96,13 @@ export function ApprovalsInbox({ volverHref }: { volverHref?: string } = {}) {
 
   // Estado que llega por la URL (DIS-036); lo inválido se ignora.
   const params = useSearchParams();
-  const [status, setStatus] = useState<InboxStatus>(
-    () => valorPermitido(params?.get('status'), ESTADOS_BANDEJA) ?? 'pendiente',
-  );
-  // Área que llega por la URL (DIS-137: «por aprobar» de la tarjeta de área).
-  const [areaId, setAreaId] = useState<number | null>(() => idDeUrl(params?.get('area_id')));
+  // DIS-163: filtros de la URL de entrada (DIS-036/137) o los guardados en la pestaña.
+  const [inicial] = useState(() => filtrosIniciales(params, ESTADOS_BANDEJA, 'pendiente'));
+  const [status, setStatus] = useState<InboxStatus>(inicial.status);
+  const [areaId, setAreaId] = useState<number | null>(inicial.areaId);
   const [page, setPage] = useState(1);
-  const [plataformaId, setPlataformaId] = useState<number | null>(() => idDeUrl(params?.get('platform_id')));
-  const [busqueda, setBusqueda] = useState(() => params?.get('q') ?? '');
+  const [plataformaId, setPlataformaId] = useState<number | null>(inicial.plataformaId);
+  const [busqueda, setBusqueda] = useState(inicial.q);
   const q = useDebouncedValue(busqueda.trim(), RETRASO_BUSQUEDA_MS);
   /** Solicitudes decididas aquí, con la respuesta del servidor (por `id`). */
   const [decididas, setDecididas] = useState<Record<number, AccessRequest>>({});
@@ -138,13 +138,9 @@ export function ApprovalsInbox({ volverHref }: { volverHref?: string } = {}) {
     [areaId],
   );
 
-  // Los filtros quedan en la URL (sin añadir entradas al historial): F5 y Volver los conservan.
+  // DIS-163: los filtros se guardan en la pestaña y la URL queda limpia (`/approvals/historial`).
   useEffect(() => {
-    const consulta = new URLSearchParams({ status });
-    if (areaId !== null) consulta.set('area_id', String(areaId));
-    if (plataformaId !== null) consulta.set('platform_id', String(plataformaId));
-    if (q) consulta.set('q', q);
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${consulta}`);
+    guardarFiltrosHistorial({ status, areaId, plataformaId, q });
   }, [status, areaId, plataformaId, q]);
 
   const items = useMemo(

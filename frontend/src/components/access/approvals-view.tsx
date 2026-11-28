@@ -2,21 +2,26 @@
 
 /**
  * Pantalla Solicitudes (DIS-131): sin `?status=` muestra el resumen (tarjetas, gráficas y dona);
- * con `?status=todas|pendiente|aprobada|rechazada` abre el historial (`ApprovalsInbox`, DIS-156) con
- * sus filtros en la URL y un botón Volver al resumen en su barra. La URL permite Volver y F5.
+ * con `?status=todas|pendiente|aprobada|rechazada` (enlaces de entrada) o en `/approvals/historial`
+ * abre el historial (`ApprovalsInbox`, DIS-156) con Volver al resumen en su barra. DIS-163: la URL
+ * queda limpia en `/approvals/historial` y los filtros se conservan en la pestaña (F5).
  */
 
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { PageHeader } from '../page-header';
 import { ApprovalsInbox, ESTADOS_BANDEJA } from './approvals-inbox';
 import { ApprovalsResumen, RUTA_SOLICITUDES } from './approvals-resumen';
 import { valorPermitido } from './filtro-url';
+import { RUTA_HISTORIAL } from './filtros-historial';
 
 export function ApprovalsView() {
   const params = useSearchParams();
-  const estado = valorPermitido(params?.get('status'), ESTADOS_BANDEJA);
+  const pathname = usePathname();
+  // DIS-163: Historial por su ruta limpia o por un enlace de entrada con `?status=`.
+  const historial = pathname === RUTA_HISTORIAL
+    || Boolean(valorPermitido(params?.get('status'), ESTADOS_BANDEJA));
 
-  if (!estado) {
+  if (!historial) {
     return (
       // DIS-144: como el Dashboard (flex + gap): el h1 oculto no suma espacio y el resumen
       // llena el alto del contenedor.

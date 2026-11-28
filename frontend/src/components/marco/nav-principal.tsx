@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icono } from '../icono';
 import { useSession } from '../session-provider';
-import { seccionesVisibles } from './nav-items';
+import { entradaDeRuta, seccionesVisibles } from './nav-items';
 import {
   ModalTransicionPortal,
   guardarOmitirModalPortal,
@@ -104,7 +104,8 @@ export function NavPrincipal({
             </p>
           )}
           {entradas.map((item) => {
-            const activo = pathname === item.href;
+            // DIS-163: también activo en sus subrutas (`/approvals/historial`), como las migas.
+            const activo = entradaDeRuta(pathname)?.href === item.href;
             const contador = contadores[item.href] ?? 0;
             const nombre = contador > 0 ? `${item.label}, ${textoPendientes(contador)}` : item.label;
             return (

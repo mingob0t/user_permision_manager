@@ -85,3 +85,24 @@ describe('NavPrincipal transición hacia Portal', () => {
   });
 });
 
+
+describe('NavPrincipal: ítem activo en subrutas (DIS-163)', () => {
+  afterEach(() => {
+    cleanup();
+    rutaMock.actual = '/';
+  });
+
+  it('en `/approvals/historial` queda activo «Solicitudes» y solo él', () => {
+    rutaMock.actual = '/approvals/historial';
+    render(<NavPrincipal />);
+    const activos = document.querySelectorAll('[aria-current="page"]');
+    expect(activos).toHaveLength(1);
+    expect(activos[0].getAttribute('href')).toBe('/approvals');
+  });
+
+  it('en `/approvals` sigue activo «Solicitudes»', () => {
+    rutaMock.actual = '/approvals';
+    render(<NavPrincipal />);
+    expect(document.querySelector('[aria-current="page"]')?.getAttribute('href')).toBe('/approvals');
+  });
+});

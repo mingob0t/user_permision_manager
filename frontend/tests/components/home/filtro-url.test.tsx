@@ -47,6 +47,7 @@ import { MyRequestsView } from '@/components/access/my-requests-view';
 const VACIA: Paginated<never> = { items: [], page: 1, per_page: 25, total: 0 };
 
 beforeEach(() => {
+  window.sessionStorage.clear(); // DIS-163: filtros del Historial por pestaña.
   vi.clearAllMocks();
   url.consulta = '';
   vi.mocked(requestsApi.mine).mockResolvedValue(VACIA);

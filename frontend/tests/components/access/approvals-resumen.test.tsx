@@ -10,10 +10,10 @@ import { ToastProvider } from '@/components/toast';
 import type { AccessRequest, InboxStats } from '@/lib/access/types';
 import { crearRaiz, simularCajas } from '../../utils/dom-simulado';
 
-const url = { consulta: '' };
+const url = { consulta: '', ruta: '/approvals' };
 vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(url.consulta),
-  usePathname: () => '/approvals',
+  usePathname: () => url.ruta,
 }));
 vi.mock('@/lib/access/requests', () => ({
   requestsApi: { inbox: vi.fn(), inboxStats: vi.fn(), approve: vi.fn(), reject: vi.fn() },
@@ -68,6 +68,8 @@ function render_() {
 }
 
 beforeEach(() => {
+  window.sessionStorage.clear(); // DIS-163: filtros del Historial por pestaña.
+  url.ruta = '/approvals';
   // recharts (`ResponsiveContainer`) necesita ResizeObserver, que jsdom no trae.
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
   simularCajas();
@@ -290,6 +292,15 @@ describe('DIS-131: resumen', () => {
 });
 
 describe('DIS-131: tablas por estado (`?status=`)', () => {
+  it('DIS-163: `/approvals/historial` sin parámetros abre el Historial (URL limpia)', async () => {
+    url.ruta = '/approvals/historial';
+    url.consulta = '';
+    render_();
+    expect(await screen.findByText('Ana Ruiz')).toBeTruthy();
+    expect(screen.getByLabelText('Filtrar la bandeja por estado')).toBeTruthy();
+    expect(requestsApi.inboxStats).not.toHaveBeenCalled();
+  });
+
   it('pendientes: tabla con Aprobar/Rechazar, filtros (DIS-156) y Volver en la barra', async () => {
     url.consulta = 'status=pendiente';
     render_();

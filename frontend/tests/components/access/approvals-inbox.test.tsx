@@ -78,6 +78,9 @@ const FILA_ANA = 'Ana Ruiz';
 beforeEach(() => {
   vi.clearAllMocks();
   esSuperadmin = false;
+  // DIS-163: los filtros se guardan en la pestaña; cada prueba parte limpia.
+  window.sessionStorage.clear();
+  window.history.replaceState(null, '', '/');
   vi.mocked(requestsApi.inbox).mockResolvedValue(pagina([PENDIENTE, PROPIA]));
   vi.mocked(api.platforms).mockResolvedValue([
     { id: 12, name: 'Contabilidad' }, { id: 14, name: 'Wiki' },
@@ -257,11 +260,31 @@ describe('ApprovalsInbox: historial con filtros (DIS-156)', () => {
     expect(valorSelector('Filtrar la bandeja por plataforma')).toBe('Todas');
   });
 
-  it('los filtros quedan en la URL', async () => {
+  it('DIS-163: URL limpia; los filtros se guardan en la pestaña y se recuperan al recargar', async () => {
+    window.history.replaceState(null, '', '/approvals?status=pendiente&area_id=3');
     render(<ApprovalsInbox />);
     await filaAsync(FILA_ANA);
     elegirEnSelector('Filtrar la bandeja por estado', 'Aprobadas');
-    await waitFor(() => expect(window.location.search).toContain('status=aprobada'));
+    elegirEnSelector('Filtrar la bandeja por área', 'Finanzas');
+    await waitFor(() => expect(window.location.pathname).toBe('/approvals/historial'));
+    expect(window.location.search).toBe('');
+    cleanup();
+
+    // «F5»: sin parámetros en la URL, se usan los guardados.
+    vi.mocked(requestsApi.inbox).mockClear();
+    render(<ApprovalsInbox />);
+    await waitFor(() => expect(requestsApi.inbox).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'aprobada', area_id: 3 })));
+  });
+
+  it('DIS-163: sin sessionStorage disponible usa los valores por defecto y no falla', async () => {
+    const obtener = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('bloqueado'); });
+    const guardar = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('bloqueado'); });
+    render(<ApprovalsInbox />);
+    expect(await filaAsync(FILA_ANA)).toBeTruthy();
+    expect(requestsApi.inbox).toHaveBeenCalledWith(expect.objectContaining({ status: 'pendiente' }));
+    obtener.mockRestore();
+    guardar.mockRestore();
   });
 });
 
