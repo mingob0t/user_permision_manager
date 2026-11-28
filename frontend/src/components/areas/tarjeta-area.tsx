@@ -4,13 +4,14 @@
  * Tarjeta de área del catálogo de administración (DIS-102).
  *
  * Encabezado: icono del área (degradado de su color) + nombre y descripción. Cuerpo: dos
- * recuadros con las personas y las plataformas del área. Pie: logos de las primeras 3
+ * recuadros con los usuarios y las plataformas del área. Pie: logos de las primeras 3
  * plataformas, «+N» y «Ver plataformas». Ocupa toda la celda de la rejilla: el cuerpo se
  * reparte el alto sobrante (las cifras quedan centradas, sin hueco vacío). El color del área es un dato: viaja como `--area-color` y `.nx-area-card*`
  * (components.css) lo consume; el texto sale de tokens.
  */
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { atributoTexto, textoLegible, variablesChipPlataforma } from '@/lib/color-legible';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import type { Area, Platform } from '@/lib/types';
@@ -59,6 +60,35 @@ function LogoPlataforma({ plataforma }: { plataforma: Platform }) {
   );
 }
 
+/** Nombre accesible del enlace a las solicitudes pendientes del área (DIS-162, DIS-164). */
+function nombrePendientes(area: Area, pendientes: number): string {
+  return `${pendientes} ${pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'} en ${area.name}. Abrir Historial.`;
+}
+
+/** Texto de los administradores del área (DIS-162): nombres separados por coma o «Sin administrador». */
+function textoAdministradores(area: Area): string {
+  const nombres = (area.admins ?? []).map((admin) => admin.name);
+  return nombres.length > 0 ? nombres.join(', ') : 'Sin administrador';
+}
+
+/**
+ * Enlace al Historial con las pendientes del área, común a todas las variantes (DIS-164).
+ * Detiene el clic para que la tarjeta (que abre las plataformas) no lo reciba.
+ */
+function EnlacePendientes({ area, pendientes, className, children }: { area: Area; pendientes: number; className: string; children: ReactNode }) {
+  return (
+    <Link
+      href={rutaPendientesArea(area.id)}
+      onClick={(evento) => evento.stopPropagation()}
+      aria-label={nombrePendientes(area, pendientes)}
+      title="Ver solicitudes pendientes"
+      className={`${className} foco-visible min-h-12 min-w-12`}
+    >
+      {children}
+    </Link>
+  );
+}
+
 function Cifra({
   icono,
   valor,
@@ -71,7 +101,7 @@ function Cifra({
   etiqueta: string;
   compacta?: boolean;
   /** Si viene, la cifra es un enlace (DIS-162): detiene el clic para no abrir las plataformas. */
-  enlace?: { href: string; nombre: string };
+  enlace?: { area: Area; pendientes: number };
 }) {
   const clases = `nx-area-card__cifra flex min-w-0 items-center ${compacta ? 'gap-2 rounded-lg p-2' : 'gap-3 rounded-xl p-3'} border`;
   const contenido = (
@@ -87,15 +117,9 @@ function Cifra({
   );
   if (!enlace) return <div className={clases}>{contenido}</div>;
   return (
-    <Link
-      href={enlace.href}
-      onClick={(evento) => evento.stopPropagation()}
-      aria-label={enlace.nombre}
-      title="Ver solicitudes pendientes"
-      className={`${clases} foco-visible min-h-12`}
-    >
+    <EnlacePendientes area={enlace.area} pendientes={enlace.pendientes} className={clases}>
       {contenido}
-    </Link>
+    </EnlacePendientes>
   );
 }
 
@@ -104,8 +128,7 @@ function Cifra({
  * `Cifra`; los nombres se truncan y el texto completo va en `title`.
  */
 function AdministradoresArea({ area, compacta }: { area: Area; compacta: boolean }) {
-  const nombres = (area.admins ?? []).map((admin) => admin.name);
-  const texto = nombres.length > 0 ? nombres.join(', ') : 'Sin administrador';
+  const texto = textoAdministradores(area);
   return (
     <div className={`nx-area-card__cifra col-span-full flex min-w-0 items-center ${compacta ? 'gap-2 rounded-lg p-2' : 'gap-3 rounded-xl p-3'} border`}>
       <span className={`nx-area-card__mini grid ${compacta ? 'size-6 rounded-md' : 'size-8 rounded-lg'} shrink-0 place-items-center`} aria-hidden="true">
@@ -114,6 +137,55 @@ function AdministradoresArea({ area, compacta }: { area: Area; compacta: boolean
       <div className="min-w-0">
         <p className="truncate text-xs font-semibold uppercase tracking-wide text-label">Administradores de área</p>
         <p className="mt-0.5 truncate text-sm font-semibold text-body-text" title={texto}>{texto}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Clases de los recuadros de «Solicitudes pendientes» y «Administradores» según el estilo de cifra de cada variante (DIS-164). */
+interface EstiloKpi { caja: string; mini: string; valor: string; etiqueta: string; texto: string }
+
+function estiloKpi(tipo: 'glass' | 'oscuro' | 'claro', alturaEstandar: boolean): EstiloKpi {
+  const valor = `${alturaEstandar ? 'text-xs' : 'text-sm'} font-black leading-none tabular-nums`;
+  const etiqueta = 'mt-0.5 truncate text-xs font-bold uppercase tracking-wider';
+  const base = `flex min-w-0 items-center gap-2 rounded-xl border ${alturaEstandar ? 'p-1.5' : 'p-2'}`;
+  if (tipo === 'glass') {
+    return { caja: `${base} bg-superficie/60 backdrop-blur-md border-primary/20`, mini: 'bg-primary/20 text-primary-text', valor: `${valor} text-body-text`, etiqueta: `${etiqueta} text-label`, texto: 'text-body-text' };
+  }
+  if (tipo === 'oscuro') {
+    return { caja: `${base} bg-arte-luz/10 backdrop-blur-md border-arte-luz/15 text-arte-luz`, mini: 'bg-arte-luz/15 text-arte-luz', valor: `${valor} text-arte-luz`, etiqueta: `${etiqueta} text-arte-pizarra-300`, texto: 'text-arte-luz' };
+  }
+  return { caja: `${base} bg-superficie-hundida/70 border-panel-border/80`, mini: 'bg-superficie text-primary-text shadow-xs', valor: `${valor} text-body-text`, etiqueta: `${etiqueta} text-label`, texto: 'text-body-text' };
+}
+
+/** Cifra «Solicitudes pendientes» con el estilo de la variante (DIS-164). Sin dato no se pinta. */
+function KpiPendientes({ area, pendientes, estilo }: { area: Area; pendientes?: number; estilo: EstiloKpi }) {
+  if (pendientes === undefined) return null;
+  return (
+    <EnlacePendientes area={area} pendientes={pendientes} className={estilo.caja}>
+      <span className={`grid size-6 shrink-0 place-items-center rounded-lg ${estilo.mini}`} aria-hidden="true">
+        <Icono nombre="reloj" tamano="xs" />
+      </span>
+      <div className="min-w-0">
+        <p className={estilo.valor}>{pendientes}</p>
+        <p className={estilo.etiqueta} title="Solicitudes pendientes">Solicitudes pendientes</p>
+      </div>
+    </EnlacePendientes>
+  );
+}
+
+/** Fila de ancho completo con los administradores, con el estilo de la variante (DIS-164). */
+function FilaAdministradores({ area, estilo, mostrar }: { area: Area; estilo: EstiloKpi; mostrar: boolean }) {
+  if (!mostrar) return null;
+  const texto = textoAdministradores(area);
+  return (
+    <div className={`col-span-full ${estilo.caja}`}>
+      <span className={`grid size-6 shrink-0 place-items-center rounded-lg ${estilo.mini}`} aria-hidden="true">
+        <Icono nombre="escudo" tamano="xs" />
+      </span>
+      <div className="min-w-0">
+        <p className={estilo.etiqueta}>Administradores de área</p>
+        <p className={`mt-0.5 truncate text-sm font-semibold ${estilo.texto}`} title={texto}>{texto}</p>
       </div>
     </div>
   );
@@ -137,9 +209,9 @@ export function TarjetaArea({
   conteo: number;
   /** Plataformas del área en el mismo alcance; de aquí salen los logos del pie. */
   plataformas: Platform[];
-  /** Solicitudes pendientes del área (DIS-162); sin dato (consulta fallida) no se muestra la cifra. Solo variante estándar. */
+  /** Solicitudes pendientes del área (DIS-162); sin dato (consulta fallida) no se muestra la cifra. Aplica a todas las variantes (DIS-164). */
   pendientes?: number;
-  /** Fila de administradores del área (DIS-162): solo en Gestión > Plataformas > Áreas. */
+  /** Fila de administradores del área (DIS-162, DIS-164): todas las variantes; solo la pide Gestión > Plataformas > Áreas. */
   mostrarAdministradores?: boolean;
   onSelect: (area: Area) => void;
   /** Quien puede editar el área (mismo permiso que «Editar»): su badge de estado conmuta (DIS-114). */
@@ -199,7 +271,7 @@ export function TarjetaArea({
           </p>
         </div>
 
-        <div className={`relative z-10 grid grid-cols-2 gap-2 ${alturaEstandar ? 'my-1' : 'my-2'}`}>
+        <div className={`relative z-10 grid ${pendientes === undefined ? 'grid-cols-2' : 'grid-cols-3'} gap-2 ${alturaEstandar ? 'my-1' : 'my-2'}`}>
           <div className={`flex items-center gap-2 rounded-xl bg-superficie/60 backdrop-blur-md border border-primary/20 ${alturaEstandar ? 'p-2' : 'p-2.5'}`}>
             <span className="grid size-6 place-items-center rounded-lg bg-primary/20 text-primary-text">
               <Icono nombre="usuarios" tamano="xs" />
@@ -207,7 +279,7 @@ export function TarjetaArea({
             <div className="min-w-0">
               <p className={`${alturaEstandar ? 'text-xs' : 'text-sm'} font-black leading-none tabular-nums text-body-text`}>{personas}</p>
               <p className="mt-0.5 truncate text-xs font-bold uppercase tracking-wider text-label">
-                {personas === 1 ? 'Persona' : 'Personas'}
+                {personas === 1 ? 'Usuario' : 'Usuarios'}
               </p>
             </div>
           </div>
@@ -223,6 +295,8 @@ export function TarjetaArea({
               </p>
             </div>
           </div>
+          <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('glass', alturaEstandar)} />
+          <FilaAdministradores area={area} estilo={estiloKpi('glass', alturaEstandar)} mostrar={mostrarAdministradores} />
         </div>
 
         <div className={`relative z-10 mt-auto ${alturaEstandar ? 'pt-1.5' : 'pt-2.5'} border-t border-primary/20 flex items-center justify-between gap-3`}>
@@ -298,6 +372,12 @@ export function TarjetaArea({
             </div>
           </div>
 
+          {pendientes === undefined && !mostrarAdministradores ? null : (
+          <div className="grid gap-2 pt-1">
+            <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('oscuro', alturaEstandar)} />
+            <FilaAdministradores area={area} estilo={estiloKpi('oscuro', alturaEstandar)} mostrar={mostrarAdministradores} />
+          </div>
+          )}
           <div className={`${alturaEstandar ? 'pt-1.5' : 'pt-2'} border-t border-arte-luz/15 flex items-center justify-between gap-2`}>
             <div className="flex items-center">
               {plataformas.slice(0, LOGOS_VISIBLES).map((p) => (
@@ -379,7 +459,7 @@ export function TarjetaArea({
         </div>
 
         {/* Métricas con diseño glassmórfico de alta fidelidad */}
-        <div className={`relative z-10 grid grid-cols-2 gap-2 ${alturaEstandar ? 'my-1' : 'my-2'}`}>
+        <div className={`relative z-10 grid ${pendientes === undefined ? 'grid-cols-2' : 'grid-cols-3'} gap-2 ${alturaEstandar ? 'my-1' : 'my-2'}`}>
           <div className={`flex items-center gap-2 rounded-xl bg-arte-luz/10 backdrop-blur-md border border-arte-luz/15 ${alturaEstandar ? 'p-1.5' : 'p-2'} text-arte-luz`}>
             <span className="grid size-6 place-items-center rounded-lg bg-arte-luz/15 text-arte-luz">
               <Icono nombre="usuarios" tamano="xs" />
@@ -387,7 +467,7 @@ export function TarjetaArea({
             <div className="min-w-0">
               <p className={`${alturaEstandar ? 'text-xs' : 'text-sm'} font-black leading-none tabular-nums text-arte-luz`}>{personas}</p>
               <p className="mt-0.5 truncate text-xs font-bold uppercase tracking-wider text-arte-pizarra-300">
-                {personas === 1 ? 'Persona' : 'Personas'}
+                {personas === 1 ? 'Usuario' : 'Usuarios'}
               </p>
             </div>
           </div>
@@ -403,6 +483,8 @@ export function TarjetaArea({
               </p>
             </div>
           </div>
+          <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('oscuro', alturaEstandar)} />
+          <FilaAdministradores area={area} estilo={estiloKpi('oscuro', alturaEstandar)} mostrar={mostrarAdministradores} />
         </div>
 
         {/* Pie: Logos apilados + Botón Explorar */}
@@ -493,14 +575,14 @@ export function TarjetaArea({
           </div>
 
           {/* Métricas compactas */}
-          <div className="grid grid-cols-2 gap-2 pt-0.5">
+          <div className={`grid ${pendientes === undefined ? 'grid-cols-2' : 'grid-cols-3'} gap-2 pt-0.5`}>
             <div className={`flex items-center gap-1.5 rounded-xl bg-superficie-hundida/70 border border-panel-border/80 ${alturaEstandar ? 'p-1.5' : 'p-2'}`}>
               <span className="grid size-5 place-items-center rounded-lg bg-superficie text-primary-text shadow-xs">
                 <Icono nombre="usuarios" tamano="xs" />
               </span>
               <div className="min-w-0">
                 <p className="text-xs font-black tabular-nums text-body-text leading-none">{personas}</p>
-                <p className="text-xs font-bold uppercase tracking-wider text-label mt-0.5">Personas</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-label mt-0.5">Usuarios</p>
               </div>
             </div>
 
@@ -513,6 +595,9 @@ export function TarjetaArea({
                 <p className="text-xs font-bold uppercase tracking-wider text-label mt-0.5">Plataformas</p>
               </div>
             </div>
+
+            <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('claro', alturaEstandar)} />
+            <FilaAdministradores area={area} estilo={estiloKpi('claro', alturaEstandar)} mostrar={mostrarAdministradores} />
           </div>
 
           {/* Pie: botón de acción */}
@@ -580,6 +665,12 @@ export function TarjetaArea({
             <h3 className={`${alturaEstandar ? 'text-sm' : 'text-base'} font-bold tracking-tight text-body-text truncate`} title={area.name}>{area.name}</h3>
             <p className="text-xs text-label mt-0.5 line-clamp-1">{area.description || 'Área organizativa del sistema.'}</p>
           </div>
+          {pendientes === undefined && !mostrarAdministradores ? null : (
+          <div className="grid gap-2 pt-1">
+            <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('claro', alturaEstandar)} />
+            <FilaAdministradores area={area} estilo={estiloKpi('claro', alturaEstandar)} mostrar={mostrarAdministradores} />
+          </div>
+          )}
           <div className={`${alturaEstandar ? 'pt-1.5' : 'pt-2'} border-t border-panel-border/80 flex items-center justify-between gap-3 mt-auto`}>
             <div>
               <span className={`${alturaEstandar ? 'text-lg' : 'text-xl'} font-black text-body-text tabular-nums`}>{personas}</span>
@@ -630,8 +721,14 @@ export function TarjetaArea({
             <h3 className={`${alturaEstandar ? 'text-sm' : 'text-base'} font-bold text-body-text`}>{area.name}</h3>
             <p className="text-xs text-label line-clamp-1">{area.description || 'Área organizativa del sistema.'}</p>
             <div className="text-xs font-bold text-label pt-0.5">
-              {personas} {personas === 1 ? 'persona' : 'personas'} • {conteo} plataformas
+              {personas} {personas === 1 ? 'usuario' : 'usuarios'} • {conteo} plataformas
             </div>
+            {pendientes === undefined && !mostrarAdministradores ? null : (
+            <div className="grid gap-2 pt-1 text-left">
+              <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('claro', alturaEstandar)} />
+              <FilaAdministradores area={area} estilo={estiloKpi('claro', alturaEstandar)} mostrar={mostrarAdministradores} />
+            </div>
+            )}
           </div>
         </div>
         <div className={`${alturaEstandar ? 'p-3 pt-0' : 'p-4 pt-0'} text-center mt-auto`}>
@@ -684,6 +781,12 @@ export function TarjetaArea({
               ))}
               {restantes > 0 ? <span className="text-xs font-bold text-label">+{restantes}</span> : null}
             </div>
+            {pendientes === undefined && !mostrarAdministradores ? null : (
+            <div className="grid gap-2 pt-1">
+              <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('claro', alturaEstandar)} />
+              <FilaAdministradores area={area} estilo={estiloKpi('claro', alturaEstandar)} mostrar={mostrarAdministradores} />
+            </div>
+            )}
           </div>
         </div>
         <div className={`${alturaEstandar ? 'p-3 pt-0' : 'p-4 pt-0'} flex gap-2 mt-auto`}>
@@ -741,6 +844,12 @@ export function TarjetaArea({
               <span className="text-xs font-bold text-primary-text">{conteo} activas</span>
             </div>
           </div>
+          {pendientes === undefined && !mostrarAdministradores ? null : (
+          <div className="grid gap-2 mt-2">
+            <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('claro', alturaEstandar)} />
+            <FilaAdministradores area={area} estilo={estiloKpi('claro', alturaEstandar)} mostrar={mostrarAdministradores} />
+          </div>
+          )}
         </div>
 
         <div className={`mt-auto ${alturaEstandar ? 'pt-2' : 'pt-3'} border-t border-panel-border/80`}>
@@ -799,6 +908,12 @@ export function TarjetaArea({
                 <span>{conteo} plataformas</span>
               </span>
             </div>
+            {pendientes === undefined && !mostrarAdministradores ? null : (
+            <div className="grid gap-2 pt-1 text-left">
+              <KpiPendientes area={area} pendientes={pendientes} estilo={estiloKpi('claro', alturaEstandar)} />
+              <FilaAdministradores area={area} estilo={estiloKpi('claro', alturaEstandar)} mostrar={mostrarAdministradores} />
+            </div>
+            )}
           </div>
         </div>
 
@@ -845,7 +960,7 @@ export function TarjetaArea({
         </div>
 
         <div className={`grid flex-1 grid-cols-3 content-center ${alturaEstandar ? 'gap-2 px-3 pb-2' : 'gap-2.5 px-4 pb-3'}`}>
-          <Cifra icono="usuarios" valor={personas} etiqueta={personas === 1 ? 'Persona' : 'Personas'} compacta={alturaEstandar} />
+          <Cifra icono="usuarios" valor={personas} etiqueta={personas === 1 ? 'Usuario' : 'Usuarios'} compacta={alturaEstandar} />
           <Cifra icono="plataformas" valor={conteo} etiqueta={conteo === 1 ? 'Plataforma' : 'Plataformas'} compacta={alturaEstandar} />
           {pendientes === undefined ? null : (
             <Cifra
@@ -853,10 +968,7 @@ export function TarjetaArea({
               valor={pendientes}
               etiqueta="Solicitudes pendientes"
               compacta={alturaEstandar}
-              enlace={{
-                href: rutaPendientesArea(area.id),
-                nombre: `${pendientes} ${pendientes === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'} en ${area.name}. Abrir Historial.`,
-              }}
+              enlace={{ area, pendientes }}
             />
           )}
           {mostrarAdministradores ? <AdministradoresArea area={area} compacta={alturaEstandar} /> : null}

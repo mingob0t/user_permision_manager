@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Web: las 10 variantes de la tarjeta de área muestran «Solicitudes pendientes» (enlace al Historial por área) y la fila de administradores (DIS-162 solo cubría la estándar); además «Persona/Personas» pasa a «Usuario/Usuarios» en la tarjeta (DIS-164, 2026-11-28).
 - Web: el Historial de solicitudes vive en `/approvals/historial` con la URL limpia; los filtros se conservan en la pestaña y los enlaces con filtros siguen funcionando (DIS-163, 2026-11-28).
 - Web: la tarjeta de área muestra el KPI «Solicitudes pendientes» junto a Plataformas (enlace al Historial filtrado por área; sustituye el badge «N por aprobar») y una fila de ancho completo con los administradores del área (DIS-162, 2026-11-28).
 - Solicitudes: el motivo de la solicitud (`SOLICITUD_MOTIVO`: `oculto` por omisión, `opcional`, `obligatorio`) y el del rechazo (`RECHAZO_MOTIVO`: `obligatorio` por omisión, `opcional`, `oculto`) se deciden desde `.env`; un valor inválido detiene el arranque. Modifica RF-06 por pedido del dueño. `GET /auth/context` agrega `motivos`; el correo de rechazo omite «Motivo» si no hay; contratos `solicitudes` 1.5 y `autenticacion` 1.1 (FNC-216, 2026-11-27).

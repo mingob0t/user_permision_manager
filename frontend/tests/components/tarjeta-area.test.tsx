@@ -67,12 +67,51 @@ describe('TarjetaArea', () => {
     expect(screen.queryByText('Administradores de área')).toBeNull();
   });
 
-  it('encabezado con nombre y descripción, y cifras de personas y plataformas', () => {
+  it.each(['estandar', 'glass', 'flotante', 'portada', 'banner', 'split', 'onda', 'directorio', 'bento', 'medallon'] as const)(
+    'DIS-164: variante %s con enlace de pendientes y fila de administradores',
+    (variante) => {
+      const onSelect = vi.fn();
+      const admins = [{ id: 1, name: 'Ana Pérez', email: 'ana@x.test' }];
+      const { rerender } = render(
+        <TarjetaArea area={{ ...AREA, admins }} conteo={4} plataformas={PLATAFORMAS} pendientes={2} mostrarAdministradores variante={variante} onSelect={onSelect} />,
+      );
+      const enlace = screen.getByRole('link', { name: '2 solicitudes pendientes en Finanzas. Abrir Historial.' });
+      expect(enlace.getAttribute('href')).toBe('/approvals?status=pendiente&area_id=3');
+      expect(enlace.textContent).toContain('Solicitudes pendientes');
+      expect(enlace.className).toContain('foco-visible');
+      expect(enlace.className).toContain('min-h-12');
+      fireEvent.click(enlace);
+      expect(onSelect).not.toHaveBeenCalled();
+      expect(screen.getByText('Administradores de área').closest('.col-span-full')).toBeTruthy();
+      expect(screen.getByText('Ana Pérez').getAttribute('title')).toBe('Ana Pérez');
+      rerender(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} pendientes={0} mostrarAdministradores variante={variante} onSelect={onSelect} />);
+      expect(screen.getByText('Sin administrador')).toBeTruthy();
+      // Sin dato de pendientes ni fila pedida (catálogo y otras vistas) no se pinta nada.
+      rerender(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} variante={variante} onSelect={onSelect} />);
+      expect(screen.queryByRole('link')).toBeNull();
+      expect(screen.queryByText('Solicitudes pendientes')).toBeNull();
+      expect(screen.queryByText('Administradores de área')).toBeNull();
+    },
+  );
+
+  it('DIS-164: «Usuario/Usuarios» en lugar de «Persona/Personas» en las variantes con cifras', () => {
+    for (const variante of ['glass', 'portada', 'banner', 'estandar'] as const) {
+      const { unmount } = render(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} variante={variante} onSelect={vi.fn()} />);
+      expect(screen.getByText('Usuarios')).toBeTruthy();
+      expect(screen.queryByText(/persona/i)).toBeNull();
+      unmount();
+    }
+    const { unmount } = render(<TarjetaArea area={{ ...AREA, users_count: 1 }} conteo={4} plataformas={PLATAFORMAS} variante="onda" onSelect={vi.fn()} />);
+    expect(screen.getByText(/1 usuario •/)).toBeTruthy();
+    unmount();
+  });
+
+  it('encabezado con nombre y descripción, y cifras de usuarios y plataformas', () => {
     render(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} onSelect={vi.fn()} />);
     expect(screen.getByRole('heading', { name: 'Finanzas' })).toBeTruthy();
     expect(screen.getByText('Contabilidad y tesorería')).toBeTruthy();
     expect(screen.getByText('12')).toBeTruthy();
-    expect(screen.getByText('Personas')).toBeTruthy();
+    expect(screen.getByText('Usuarios')).toBeTruthy();
     expect(screen.getByText('4')).toBeTruthy();
     expect(screen.getByText('Plataformas')).toBeTruthy();
     expect(screen.getByText('Ver plataformas')).toBeTruthy();
@@ -81,7 +120,7 @@ describe('TarjetaArea', () => {
   it('descripción vacía: texto de respaldo; singular en las cifras', () => {
     render(<TarjetaArea area={{ ...AREA, description: null, users_count: 1 }} conteo={1} plataformas={[PLATAFORMAS[0]]} onSelect={vi.fn()} />);
     expect(screen.getByText('Área organizativa del sistema.')).toBeTruthy();
-    expect(screen.getByText('Persona')).toBeTruthy();
+    expect(screen.getByText('Usuario')).toBeTruthy();
     expect(screen.getByText('Plataforma')).toBeTruthy();
   });
 
@@ -172,7 +211,7 @@ describe('TarjetaArea: CSS y contraste (AA en ambos temas)', () => {
       expect(CSS, clase).toMatch(new RegExp(`\\.nx-area-card${clase}\\s*\\{[^}]*var\\(--nx-area`));
     }
     const { container } = render(<TarjetaArea area={AREA} conteo={2} plataformas={PLATAFORMAS} pendientes={0} mostrarAdministradores onSelect={vi.fn()} />);
-    // Personas, Plataformas, Solicitudes pendientes y Administradores de área (DIS-162).
+    // Usuarios, Plataformas, Solicitudes pendientes y Administradores de área (DIS-162).
     expect(container.querySelectorAll('.nx-area-card__cifra')).toHaveLength(4);
     expect(container.querySelectorAll('.nx-area-card__valor')).toHaveLength(3);
     expect(container.querySelector('.nx-area-card__pie')).toBeTruthy();
