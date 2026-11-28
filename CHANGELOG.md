@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Web: en Gestión > área > plataformas, columna «Solicitudes pendientes» por plataforma con enlace al Historial filtrado por área y plataforma (DIS-161, 2026-11-28).
 - Web: al crear un área, el superadmin la deja inactiva hasta asignarle un administrador; con administrador se activa sola, sin él avisa que quedó inactiva (DIS-165, 2026-11-28).
 - Web: el Historial de solicitudes ya no muestra la columna Nivel; la fecha va en su propia columna y Justificación solo aparece si `SOLICITUD_MOTIVO` no es `oculto` (DIS-160, 2026-11-28).
 - Web: las 10 variantes de la tarjeta de área muestran «Solicitudes pendientes» (enlace al Historial por área) y la fila de administradores (DIS-162 solo cubría la estándar); además «Persona/Personas» pasa a «Usuario/Usuarios» en la tarjeta (DIS-164, 2026-11-28).

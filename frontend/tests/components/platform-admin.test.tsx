@@ -783,6 +783,20 @@ describe('PlatformAdmin: accesibilidad (revisión de DIS-017)', () => {
     }
   });
 
+  it('DIS-161: la tabla de plataformas del área muestra sus pendientes con enlace al Historial filtrado', async () => {
+    vi.mocked(requestsApi.inboxStats).mockResolvedValue({
+      total: 2, by_status: { pendiente: 2, aprobada: 0, rechazada: 0 },
+      by_area: [{ area_id: 3, area: 'Finanzas', count: 2 }], by_platform: [],
+      pending_by_area: [{ area_id: 3, area: 'Finanzas', count: 2 }],
+      pending_by_platform: [{ platform_id: 12, platform: 'Contabilidad', area_id: 3, area: 'Finanzas', count: 2 }],
+    });
+    render(<PlatformAdmin initialAreaId={3} />);
+    await screen.findByRole('region', { name: 'Plataformas de Finanzas' });
+    expect(await screen.findByRole('columnheader', { name: 'Solicitudes pendientes' })).toBeTruthy();
+    const enlace = screen.getByRole('link', { name: 'Solicitudes pendientes: 2, en Contabilidad. Abrir Historial.' });
+    expect(enlace.getAttribute('href')).toBe('/approvals?status=pendiente&area_id=3&platform_id=12');
+  });
+
   it('DIS-008: la tabla desplazable es una región con nombre, enfocable y con foco visible; la cabecera de selección tiene checkbox', async () => {
     render(<PlatformAdmin initialAreaId={3} />);
     const region = await screen.findByRole('region', { name: 'Plataformas de Finanzas' });

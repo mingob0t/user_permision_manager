@@ -1,5 +1,6 @@
 /** Columnas de la tabla de Administrar plataformas (DIS-010, DIS-035). */
 
+import Link from 'next/link';
 import type { Platform } from '@/lib/types';
 import { enlaceSeguro } from '@/lib/enlace-seguro';
 import { atributoTexto, variablesChipPlataforma } from '@/lib/color-legible';
@@ -7,6 +8,19 @@ import { variablesCss } from '@/lib/variables-css';
 import type { DataColumn } from '../data-table';
 import { EstadoBadgeBoton } from '../estado-badge-boton';
 import { Badge } from '../ui';
+import { rutaConFiltro } from '../access/filtro-url';
+
+/** Ruta del Historial de solicitudes (`RUTA_SOLICITUDES`); aquí sin importar el Resumen y sus gráficas. */
+const RUTA_SOLICITUDES = '/approvals';
+
+/** DIS-161: Historial con las pendientes de la plataforma (filtro de área y plataforma). */
+export function rutaPendientesPlataforma(platform: Pick<Platform, 'id' | 'area_id'>): string {
+  return rutaConFiltro(RUTA_SOLICITUDES, {
+    status: 'pendiente',
+    area_id: String(platform.area_id),
+    platform_id: String(platform.id),
+  });
+}
 
 /** DIS-138: etiqueta de la columna Enlace para las plataformas sin enlace a propósito. */
 export const ETIQUETA_SIN_ENLACE_WEB = 'No requiere enlace web';
@@ -28,6 +42,7 @@ export function columnasPlataformas({
   puedeEditarEstado = false,
   actualizarEstado,
   onEstadoCambiado,
+  pendientes,
 }: {
   selectedPlatformIds: Set<number>;
   allSelected: boolean;
@@ -38,8 +53,13 @@ export function columnasPlataformas({
   puedeEditarEstado?: boolean;
   actualizarEstado?: (platform: Platform, status: 'Activo' | 'Inactivo') => Promise<unknown>;
   onEstadoCambiado?: () => void;
+  /**
+   * DIS-161: solicitudes pendientes por plataforma (`inbox/stats.pending_by_platform`, FNC-219).
+   * Sin dato (consulta fallida o sin permiso) no se muestra la columna.
+   */
+  pendientes?: Record<number, number>;
 }): DataColumn<Platform>[] {
-  return [
+  const columnas: DataColumn<Platform>[] = [
     {
       key: 'seleccion',
       header: (
@@ -134,4 +154,29 @@ export function columnasPlataformas({
       ),
     },
   ];
+
+  if (pendientes) {
+    columnas.push({
+      key: 'pendientes',
+      header: 'Solicitudes pendientes',
+      headerClassName: 'px-6 py-2 font-black tracking-wider text-primary-text select-none',
+      cellClassName: 'px-6 py-1.5',
+      cell: (platform) => {
+        const n = pendientes[platform.id] ?? 0;
+        return (
+          <Link
+            href={rutaPendientesPlataforma(platform)}
+            // La fila alterna la selección al hacer clic: el enlace no debe seleccionarla.
+            onClick={(evento) => evento.stopPropagation()}
+            aria-label={`Solicitudes pendientes: ${n}, en ${platform.name}. Abrir Historial.`}
+            title="Ver solicitudes pendientes"
+            className="inline-flex min-h-12 min-w-12 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-xs font-bold tabular-nums text-primary-text transition-colors hover:bg-surface-container outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {n}
+          </Link>
+        );
+      },
+    });
+  }
+  return columnas;
 }

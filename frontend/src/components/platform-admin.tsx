@@ -385,6 +385,13 @@ function PlatformAdminContent({ initialAreaId }: { initialAreaId?: number | null
     for (const fila of resumenSolicitudes.data?.pending_by_area ?? []) mapa[fila.area_id] = fila.count;
     return mapa;
   }, [resumenSolicitudes.data]);
+  // DIS-161: pendientes por plataforma (FNC-219); sin datos la columna no se muestra.
+  const pendientesPorPlataforma = useMemo(() => {
+    if (!resumenSolicitudes.data) return undefined;
+    const mapa: Record<number, number> = {};
+    for (const fila of resumenSolicitudes.data.pending_by_platform ?? []) mapa[fila.platform_id] = fila.count;
+    return mapa;
+  }, [resumenSolicitudes.data]);
 
   // Áreas gestionables según el rol (superadmin ve todas; admin de área solo las suyas)
   const assignableAreas = useMemo(() => {
@@ -575,12 +582,13 @@ function PlatformAdminContent({ initialAreaId }: { initialAreaId?: number | null
         puedeEditarEstado: Boolean(session?.permissions.is_admin || session?.permissions.is_area_admin),
         actualizarEstado: (platform, status) => api.updatePlatform(platform.id, { status }),
         onEstadoCambiado: () => recargarPlataformas.current(),
+        pendientes: pendientesPorPlataforma,
       }),
     // `toggleSelectAllPlatforms` solo lee `allSelected` y `allDisplayPlatformIds` (ya en las
     // dependencias) y usa el setter funcional: no hay dato viejo; agregarla recrearía las
     // columnas en cada render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeSelectedPlatformIds, allSelected, someSelected, allDisplayPlatformIds, session?.permissions.is_admin, session?.permissions.is_area_admin],
+    [activeSelectedPlatformIds, allSelected, someSelected, allDisplayPlatformIds, session?.permissions.is_admin, session?.permissions.is_area_admin, pendientesPorPlataforma],
   );
 
   async function remove() {
