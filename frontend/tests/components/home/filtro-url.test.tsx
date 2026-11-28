@@ -41,6 +41,7 @@ import { requestsApi } from '@/lib/access/requests';
 import { ApprovalsInbox } from '@/components/access/approvals-inbox';
 import { idDeUrl, rutaConFiltro, valorPermitido } from '@/components/access/filtro-url';
 import { Inventory } from '@/components/access/inventory';
+import { valorSelector } from '../../utils/selector-toolbar';
 import { MyRequestsView } from '@/components/access/my-requests-view';
 
 const VACIA: Paginated<never> = { items: [], page: 1, per_page: 25, total: 0 };
@@ -124,7 +125,7 @@ describe('/approvals', () => {
     render(<ApprovalsInbox />);
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'pendiente', area_id: 3 })));
-    expect((screen.getByLabelText('Filtrar la bandeja por área') as HTMLSelectElement).value).toBe('3');
+    expect(valorSelector('Filtrar la bandeja por área')).toBe('Finanzas');
   });
 
   it('DIS-137: area_id inválido se ignora', async () => {

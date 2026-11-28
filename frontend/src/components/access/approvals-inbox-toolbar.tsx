@@ -4,12 +4,14 @@
  * Barra de herramientas de la bandeja de aprobaciones (DIS-156): misma tarjeta, botón Volver y
  * buscador que el detalle de un área en Plataformas (`platform-admin.tsx`, clases
  * `nx-btn-toolbar` y `nx-buscador-toolbar`), con el selector de área y de estado y plataforma.
+ * DIS-158: los selectores usan `SelectorToolbar` (antes `Select` nativo, fuera del estándar).
  */
 
 import type { InboxStatus } from '@/lib/access/types';
 import type { AreaRef } from '@/lib/types';
 import { Icono } from '../icono';
-import { ButtonLink, Option, Select } from '../form';
+import { ButtonLink } from '../form';
+import { SelectorToolbar } from '../selector-toolbar';
 
 export const FILTRO_ESTADO_ID = 'bandeja-filtro-estado';
 export const FILTRO_AREA_ID = 'bandeja-filtro-area';
@@ -96,43 +98,42 @@ export function ApprovalsInboxToolbar({
           ) : null}
         </div>
 
-        <Select
+        {/* DIS-158: selectores con el estándar de la barra de Plataformas (ícono, «Etiqueta: valor»). */}
+        <SelectorToolbar
           id={FILTRO_ESTADO_ID}
-          className="!w-auto min-w-40"
-          value={estado.valor}
-          onChange={(event) => estado.onChange(event.target.value as InboxStatus)}
-          aria-label="Filtrar la bandeja por estado"
-        >
-          {estado.opciones.map((opcion) => (
-            <Option key={opcion.valor} value={opcion.valor}>{opcion.texto}</Option>
-          ))}
-        </Select>
+          etiqueta="Estado"
+          icono="inventario"
+          valor={estado.valor}
+          opciones={estado.opciones}
+          onChange={estado.onChange}
+          ariaLabel="Filtrar la bandeja por estado"
+        />
 
-        <Select
+        <SelectorToolbar<number | ''>
           id={FILTRO_AREA_ID}
-          className="!w-auto min-w-44"
-          value={areaId ?? ''}
-          onChange={(event) => onArea(event.target.value ? Number(event.target.value) : null)}
-          aria-label="Filtrar la bandeja por área"
-        >
-          <Option value="">{etiquetaTodasAreas}</Option>
-          {areas.map((area) => (
-            <Option key={area.id} value={area.id}>{area.name}</Option>
-          ))}
-        </Select>
+          etiqueta="Área"
+          icono="areas"
+          valor={areaId ?? ''}
+          opciones={[
+            { valor: '', texto: etiquetaTodasAreas },
+            ...areas.map((area) => ({ valor: area.id, texto: area.name })),
+          ]}
+          onChange={(v) => onArea(v === '' ? null : v)}
+          ariaLabel="Filtrar la bandeja por área"
+        />
 
-        <Select
+        <SelectorToolbar<number | ''>
           id={FILTRO_PLATAFORMA_ID}
-          className="!w-auto min-w-44"
-          value={plataformaId ?? ''}
-          onChange={(event) => onPlataforma(event.target.value ? Number(event.target.value) : null)}
-          aria-label="Filtrar la bandeja por plataforma"
-        >
-          <Option value="">Todas las plataformas</Option>
-          {plataformas.map((plataforma) => (
-            <Option key={plataforma.id} value={plataforma.id}>{plataforma.name}</Option>
-          ))}
-        </Select>
+          etiqueta="Plataforma"
+          icono="plataformas"
+          valor={plataformaId ?? ''}
+          opciones={[
+            { valor: '', texto: 'Todas' },
+            ...plataformas.map((plataforma) => ({ valor: plataforma.id, texto: plataforma.name })),
+          ]}
+          onChange={(v) => onPlataforma(v === '' ? null : v)}
+          ariaLabel="Filtrar la bandeja por plataforma"
+        />
       </div>
     </div>
   );
