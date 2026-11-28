@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.5 (2026-11-27) |
+| Versión | 1.6 (2026-11-28) |
 | Proveedor | backend (FNC-056, FNC-057) |
 | Consumidores | web (FNC-069; pantallas DIS-013, DIS-014, DIS-015, DIS-131) |
 | Solicitudes | — |
@@ -92,7 +92,8 @@ Resumen para la pantalla Solicitudes (DIS-131). Mismo alcance que `inbox` (`appr
   "by_status": { "pendiente": 3, "aprobada": 7, "rechazada": 2 },
   "by_area": [ { "area_id": 3, "area": "Finanzas", "count": 8 } ],
   "by_platform": [ { "platform_id": 12, "platform": "Contabilidad", "area": "Finanzas", "count": 5 } ],
-  "pending_by_area": [ { "area_id": 3, "area": "Finanzas", "count": 2 } ] }
+  "pending_by_area": [ { "area_id": 3, "area": "Finanzas", "count": 2 } ],
+  "pending_by_platform": [ { "platform_id": 12, "platform": "Contabilidad", "area_id": 3, "area": "Finanzas", "count": 2 } ] }
 ```
 | Campo | Regla |
 |---|---|
@@ -100,6 +101,7 @@ Resumen para la pantalla Solicitudes (DIS-131). Mismo alcance que `inbox` (`appr
 | `by_area`, `by_platform` | Solo con `count > 0`; orden `count` descendente y nombre ascendente; sin límite (la web recorta) |
 | `total` | Suma de `by_status` |
 | `pending_by_area` | v1.4 (FNC-212): como `by_area`, pero solo `pendiente` (por aprobar); lo usa la tarjeta de área |
+| `pending_by_platform` | v1.6 (FNC-219): solo `pendiente`, por plataforma, con `area_id` y `area`; solo `count > 0`, mismo orden y alcance que `by_platform`; lo usa Gestión > área > plataformas (DIS-161) |
 
 ## `POST /access-requests/<id>/approve`
 - Sin cuerpo (`{}`).
@@ -158,3 +160,4 @@ Decisión del dueño (2026-11-27): se controla desde `.env` (`SOLICITUD_MOTIVO`,
 | 1.3 | 2026-11-24 | FNC-199 (dueño): solo se solicita el nivel `usuario`; `level` opcional (por omisión `usuario`), `admin` → `422`. `requestable_levels` ⊆ `["usuario"]` |
 | 1.4 | 2026-11-26 | FNC-212: `inbox/stats` agrega `pending_by_area` (solo pendientes por área). Campo nuevo, sin cambios de forma en lo existente |
 | 1.5 | 2026-11-27 | FNC-216 (dueño): motivo de solicitud y de rechazo configurables por `.env`; `GET /auth/context` agrega `motivos`; `rejection_reason` puede ser null también en rechazadas. Campos existentes sin cambio de forma |
+| 1.6 | 2026-11-28 | FNC-219: `inbox/stats` agrega `pending_by_platform` (pendientes por plataforma, con `area_id`). Campo nuevo, sin cambios de forma en lo existente. Coordinación: FNC-218 (otra sesión) también toca este contrato; quien integre segundo toma la versión siguiente (1.7) y conserva ambas filas |

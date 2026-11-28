@@ -263,7 +263,8 @@ def procesar_areas(
                 description=valores.get('description'),
                 color=valores.get('color', validacion_areas.COLOR_POR_OMISION),
                 icon=valores.get('icon', validacion_areas.ICONO_POR_OMISION),
-                status=validacion_areas.ESTADO_POR_OMISION,
+                # FNC-220: sin admin no se puede activar; se activa después.
+                status=validacion_areas.ESTADO_INACTIVO,
             )
             db.session.add(nueva_area)
             add_audit_log(f'CREAR ÁREA: {nombre_saneado}', module='Áreas',

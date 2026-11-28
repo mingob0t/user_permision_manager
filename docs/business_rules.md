@@ -6315,3 +6315,16 @@ Un miembro de Packet ve `tacacs` «Sin acceso», pulsa «Solicitar acceso» y la
 
 Afecta a [catalogo.py](../app/modules/access_requests/catalogo.py) (`NIVELES_SOLICITABLES`) y [services.py](../app/modules/access_requests/services.py).
 
+## Un área no se activa sin administrador
+
+### Regla
+
+Un área no puede estar activa sin al menos un admin de área. Crearla activa o pasarla de `Inactivo` a `Activo` sin admin responde `409 area_sin_admin` («Asigna al menos un administrador antes de activar el área.»). El admin de área que crea un área queda como su admin, así que sí puede crearla activa. Las áreas de la importación masiva (CSV, `flask alta areas`) nacen `Inactivo`. Quitar el último admin de un área activa no se bloquea (decisión del dueño, 2026-11-28, para no frenar las bajas de usuarios).
+
+### Ejemplo
+
+El superadmin crea «Legal» sin enviar `status`: recibe `409`. La crea `Inactivo`, asigna un admin y la activa con `PUT`: pasa.
+
+### Impacto
+
+Afecta a [api.py](../app/modules/areas/api.py), [services.py](../app/modules/bulk_import/services.py) y [areas-y-roles.md](contratos/areas-y-roles.md).

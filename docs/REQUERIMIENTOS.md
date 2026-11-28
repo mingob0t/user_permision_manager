@@ -49,6 +49,7 @@ Portal para gestionar el acceso a plataformas internas agrupadas por **áreas**.
 | RF-02 | Cada plataforma tiene dos grupos en OpenLDAP: nivel usuario y nivel admin. OpenLDAP es la fuente de verdad del acceso. |
 | RF-03 | Un admin no aprueba solicitudes de áreas que no gestiona; las solicita como usuario. |
 | RF-04 | Solo el superadmin crea o eleva admins. |
+| RF-04b | Un área no se activa (ni se crea activa) sin al menos un admin de área (FNC-220, dueño 2026-11-28); quitar el último admin de un área activa no se bloquea. |
 | RF-05 | La auditoría se basa en lo registrado en el portal (no se concilia contra LDAP ni contra las plataformas). |
 | RF-06 | El rechazo de una solicitud exige motivo. **Configurable (FNC-216, decisión del dueño 2026-11-27):** `RECHAZO_MOTIVO` = `obligatorio` (por omisión) \| `opcional` \| `oculto`; el dueño pidió explícitamente poder rechazar sin motivo. Con `opcional`/`oculto` el rechazo sigue auditado. |
 

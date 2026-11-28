@@ -25,7 +25,9 @@ ESTADOS = ('Activo', 'Inactivo')
 # Valores por omisión del alta (los mismos que usaba `crud.py`).
 ICONO_POR_OMISION = 'box'
 COLOR_POR_OMISION = '#6366f1'
-ESTADO_POR_OMISION = 'Activo'
+ESTADO_ACTIVO = 'Activo'
+ESTADO_INACTIVO = 'Inactivo'
+ESTADO_POR_OMISION = ESTADO_ACTIVO
 
 
 def validar(datos, es_alta):

@@ -10,7 +10,7 @@ import pytest
 from ldap3.core.exceptions import LDAPSocketOpenError
 
 from app import db
-from app.authz import ROLE_ADMIN
+from app.authz import ROLE_ADMIN, ROLE_AREA_ADMIN
 from app.modules.audit.models import AuditLog
 from app.modules.core.models import Platform
 from app.modules.directory.configuracion import (ErrorConfiguracionDirectorio,
@@ -193,6 +193,7 @@ def test_area_inactiva_mueve_los_grupos_de_todas_sus_plataformas(
 def test_reactivar_el_area_respeta_la_plataforma_inactiva_por_si_misma(
         directorio, superadmin, despertados):
     area = fabricas.crear_area()
+    fabricas.crear_usuario(ROLE_AREA_ADMIN, areas_administradas=[area])  # FNC-220
     una = _plataforma(directorio, area, 'wiki')
     otra = _plataforma(directorio, area, 'crm', status='Inactivo')
     _cambiar(superadmin, f'/areas/{area.id}', status='Inactivo')
