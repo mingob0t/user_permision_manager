@@ -15,6 +15,7 @@
  * - DIS-156: mismo diseño que el detalle de un área en Plataformas: tarjeta de herramientas
  *   (Volver, buscador, selectores) y `DataTable` con filas de una línea. El buscador y los
  *   filtros los resuelve el backend (`q`, `area_id`, `platform_id`, `status=todas`; FNC-218).
+ * - DIS-157: el error de carga sale en un toast (no en un recuadro sobre la tabla).
  */
 
 import { useSearchParams } from 'next/navigation';
@@ -30,7 +31,7 @@ import { DataTable } from '../data-table';
 import { Button } from '../form';
 import { useSession } from '../session-provider';
 import { useToast } from '../toast';
-import { Card, ErrorNote, Skeleton } from '../ui';
+import { Card, Skeleton } from '../ui';
 import { NIVELES } from './access-status-badge';
 import { ApproveDialog } from './approve-dialog';
 import {
@@ -178,6 +179,18 @@ export function ApprovalsInbox({ volverHref }: { volverHref?: string } = {}) {
 
   const refrescar = lista.refresh;
 
+  // DIS-157: el fallo de carga se avisa con toast, una vez por racha (los reintentos automáticos
+  // de `usePolling` no repiten el aviso); una carga correcta rearma el aviso.
+  const errorAvisado = useRef(false);
+  useEffect(() => {
+    if (lista.error && !errorAvisado.current) {
+      errorAvisado.current = true;
+      avisar('error', lista.error, 'Solicitudes');
+    } else if (!lista.loading && !lista.error) {
+      errorAvisado.current = false;
+    }
+  }, [lista.error, lista.loading, avisar]);
+
   function decidida(request: AccessRequest) {
     setDecididas((prev) => ({ ...prev, [request.id]: request }));
     avisar('success', avisoDecision(request), 'Solicitud decidida');
@@ -244,10 +257,18 @@ export function ApprovalsInbox({ volverHref }: { volverHref?: string } = {}) {
           </Card>
         ) : null}
 
-        {lista.error ? (
-          <div className="space-y-3">
-            <ErrorNote message={lista.error} />
-            <Button variant="secondary" onClick={refrescar}>Reintentar</Button>
+        {/* DIS-157: el detalle va en el toast; sin datos queda un texto breve y Reintentar. */}
+        {lista.error && !data ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <p id="bandeja-sin-datos" className="text-sm text-label">No se pudo cargar la lista.</p>
+            <Button
+              variant="secondary"
+              onClick={refrescar}
+              aria-label="Reintentar la carga de solicitudes"
+              aria-describedby="bandeja-sin-datos"
+            >
+              Reintentar
+            </Button>
           </div>
         ) : null}
 

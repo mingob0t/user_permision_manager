@@ -30,10 +30,8 @@ export function ApprovalsView() {
   return (
     // DIS-156: como el detalle de Plataformas: Volver va en la barra de herramientas de la bandeja.
     <div className="flex h-full w-full min-h-0 flex-col gap-4">
-      <PageHeader
-        title="Historial de solicitudes"
-        description="Consulta con filtros las solicitudes de acceso de tus áreas y decide las pendientes."
-      />
+      {/* DIS-157: sin descripción (pedido del dueño). */}
+      <PageHeader title="Historial de solicitudes" />
       <ApprovalsInbox volverHref={RUTA_SOLICITUDES} />
     </div>
   );

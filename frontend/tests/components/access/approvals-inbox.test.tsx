@@ -142,10 +142,33 @@ describe('ApprovalsInbox: lista', () => {
     cleanup();
 
     vi.mocked(requestsApi.inbox).mockRejectedValueOnce(new ApiError(403, 'Forbidden'));
-    render(<ApprovalsInbox />);
-    expect(await screen.findByText('No tienes permiso para ver las solicitudes de tu bandeja.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    renderConToast(<ApprovalsInbox />);
+    // DIS-157: el mensaje sale en un toast; sin datos queda solo Reintentar.
+    const aviso = await screen.findByText('No tienes permiso para ver las solicitudes de tu bandeja.');
+    expect(aviso.closest('.nx-toast')).toBeTruthy();
+    expect(screen.getByText('No se pudo cargar la lista.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar la carga de solicitudes' }));
     expect(await filaAsync(FILA_ANA)).toBeTruthy();
+  });
+
+  it('DIS-157: con la tabla cargada, el fallo de carga sale en un solo toast y la tabla sigue', async () => {
+    vi.mocked(requestsApi.inbox).mockResolvedValueOnce(pagina([PENDIENTE]));
+    renderConToast(<ApprovalsInbox />);
+    expect(await filaAsync(FILA_ANA)).toBeTruthy();
+
+    vi.mocked(requestsApi.inbox).mockRejectedValue(new ApiError(403, 'Forbidden'));
+    const estado = screen.getByLabelText('Filtrar la bandeja por estado');
+    fireEvent.change(estado, { target: { value: 'rechazada' } });
+    const mensaje = 'No tienes permiso para ver las solicitudes de tu bandeja.';
+    const aviso = await screen.findByText(mensaje);
+    expect(aviso.closest('.nx-toast')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reintentar la carga de solicitudes' })).toBeNull();
+    expect(await filaAsync(FILA_ANA)).toBeTruthy();
+
+    // Otro fallo seguido no repite el aviso.
+    fireEvent.change(estado, { target: { value: 'aprobada' } });
+    await waitFor(() => expect(requestsApi.inbox).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(screen.getAllByText(mensaje)).toHaveLength(1));
   });
 
   it('paginación', async () => {
