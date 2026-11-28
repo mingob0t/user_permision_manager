@@ -24,3 +24,7 @@
 ## Verificación
 - `npm run typecheck` 0, `npm run lint` 0, `npx vitest run` 0 (3717 pruebas).
 - Visual en claro/oscuro, móvil y escritorio: no realizada (sin app levantada); contraste cubierto por los tokens ya medidos de `.nx-area-card__*`.
+
+## Ajuste del orquestador
+- La fila de administradores es opcional (`mostrarAdministradores`); solo la activa `platform-admin.tsx`. El catálogo lateral (DIS-115) y las vistas de diseño no la muestran (no se pidió y la ven usuarios normales).
+- auditor-accesibilidad: 0 fallas. Nota: «Solicitudes pendientes» puede truncarse en columnas angostas (verlo en pantalla).

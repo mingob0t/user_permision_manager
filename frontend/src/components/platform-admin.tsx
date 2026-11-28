@@ -963,6 +963,7 @@ function PlatformAdminContent({ initialAreaId }: { initialAreaId?: number | null
                       conteo={conteoPorArea[area.id] ?? 0}
                       plataformas={plataformasPorArea[area.id] ?? []}
                       pendientes={resumenSolicitudes.data ? (pendientesPorArea[area.id] ?? 0) : undefined}
+                      mostrarAdministradores
                       onSelect={handleSelectArea}
                       puedeEditar={isSuperadmin || managedAreaIds.has(area.id)}
                       actualizarEstado={(status) => api.updateArea(area.id, { status })}

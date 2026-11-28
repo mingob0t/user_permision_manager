@@ -55,13 +55,16 @@ describe('TarjetaArea', () => {
       { id: 1, name: 'Ana Pérez', email: 'ana@x.test' },
       { id: 2, name: 'Luis Gómez', email: 'luis@x.test' },
     ];
-    const { rerender } = render(<TarjetaArea area={{ ...AREA, admins }} conteo={4} plataformas={PLATAFORMAS} pendientes={0} onSelect={vi.fn()} />);
+    const { rerender } = render(<TarjetaArea area={{ ...AREA, admins }} conteo={4} plataformas={PLATAFORMAS} pendientes={0} mostrarAdministradores onSelect={vi.fn()} />);
     expect(screen.getByText('Administradores de área')).toBeTruthy();
     const nombres = screen.getByText('Ana Pérez, Luis Gómez');
     expect(nombres.getAttribute('title')).toBe('Ana Pérez, Luis Gómez');
     expect(nombres.closest('.nx-area-card__cifra')?.className).toContain('col-span-full');
-    rerender(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} pendientes={0} onSelect={vi.fn()} />);
+    rerender(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} pendientes={0} mostrarAdministradores onSelect={vi.fn()} />);
     expect(screen.getByText('Sin administrador')).toBeTruthy();
+    // Sin `mostrarAdministradores` (catálogo y otras vistas) no se muestra.
+    rerender(<TarjetaArea area={AREA} conteo={4} plataformas={PLATAFORMAS} pendientes={0} onSelect={vi.fn()} />);
+    expect(screen.queryByText('Administradores de área')).toBeNull();
   });
 
   it('encabezado con nombre y descripción, y cifras de personas y plataformas', () => {
@@ -168,7 +171,7 @@ describe('TarjetaArea: CSS y contraste (AA en ambos temas)', () => {
     for (const clase of ['__cifra', '__valor', '__pie', '__ir']) {
       expect(CSS, clase).toMatch(new RegExp(`\\.nx-area-card${clase}\\s*\\{[^}]*var\\(--nx-area`));
     }
-    const { container } = render(<TarjetaArea area={AREA} conteo={2} plataformas={PLATAFORMAS} pendientes={0} onSelect={vi.fn()} />);
+    const { container } = render(<TarjetaArea area={AREA} conteo={2} plataformas={PLATAFORMAS} pendientes={0} mostrarAdministradores onSelect={vi.fn()} />);
     // Personas, Plataformas, Solicitudes pendientes y Administradores de área (DIS-162).
     expect(container.querySelectorAll('.nx-area-card__cifra')).toHaveLength(4);
     expect(container.querySelectorAll('.nx-area-card__valor')).toHaveLength(3);

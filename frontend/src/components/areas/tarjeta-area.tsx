@@ -124,6 +124,7 @@ export function TarjetaArea({
   conteo,
   plataformas,
   pendientes,
+  mostrarAdministradores = false,
   onSelect,
   puedeEditar = false,
   actualizarEstado,
@@ -138,6 +139,8 @@ export function TarjetaArea({
   plataformas: Platform[];
   /** Solicitudes pendientes del área (DIS-162); sin dato (consulta fallida) no se muestra la cifra. Solo variante estándar. */
   pendientes?: number;
+  /** Fila de administradores del área (DIS-162): solo en Gestión > Plataformas > Áreas. */
+  mostrarAdministradores?: boolean;
   onSelect: (area: Area) => void;
   /** Quien puede editar el área (mismo permiso que «Editar»): su badge de estado conmuta (DIS-114). */
   puedeEditar?: boolean;
@@ -856,7 +859,7 @@ export function TarjetaArea({
               }}
             />
           )}
-          <AdministradoresArea area={area} compacta={alturaEstandar} />
+          {mostrarAdministradores ? <AdministradoresArea area={area} compacta={alturaEstandar} /> : null}
         </div>
       </div>
 
