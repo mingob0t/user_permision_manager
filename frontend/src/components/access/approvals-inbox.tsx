@@ -232,7 +232,7 @@ export function ApprovalsInbox({ volverHref }: { volverHref?: string } = {}) {
         }}
         areaId={areaId}
         areas={areas}
-        etiquetaTodasAreas={esSuperadmin ? 'Todas las áreas' : 'Todas mis áreas'}
+        etiquetaTodasAreas={esSuperadmin ? 'Todas' : 'Todas mis áreas'}
         onArea={(id) => {
           setAreaId(id);
           setPlataformaId(null);

@@ -43,6 +43,7 @@ vi.mock('@/components/session-provider', () => ({
 }));
 
 import { ApiError, api } from '@/lib/api';
+import { elegirEnSelector, opcionesSelector, valorSelector } from '../../utils/selector-toolbar';
 import { requestsApi } from '@/lib/access/requests';
 import { MOCK_REQUEST } from '@/lib/access/mocks';
 import { ApprovalsInbox, MENSAJE_PROPIA, mensajeVacio } from '@/components/access/approvals-inbox';
@@ -112,14 +113,12 @@ describe('ApprovalsInbox: lista', () => {
   it('filtra por estado y por área (admin: sus áreas) y vuelve a la página 1', async () => {
     render(<ApprovalsInbox />);
     await filaAsync(FILA_ANA);
-    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por estado'), { target: { value: 'rechazada' } });
+    elegirEnSelector('Filtrar la bandeja por estado', 'Rechazadas');
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
       { status: 'rechazada', area_id: undefined, page: 1, per_page: 8 }));
-    const area = screen.getByLabelText('Filtrar la bandeja por área');
-    expect(within(area).getAllByRole('option').map((o) => o.textContent))
-      .toEqual(['Todas mis áreas', 'Finanzas']);
+    expect(opcionesSelector('Filtrar la bandeja por área')).toEqual(['Todas mis áreas', 'Finanzas']);
     expect(api.areas).not.toHaveBeenCalled();
-    fireEvent.change(area, { target: { value: '3' } });
+    elegirEnSelector('Filtrar la bandeja por área', 'Finanzas');
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
       { status: 'rechazada', area_id: 3, page: 1, per_page: 8 }));
   });
@@ -127,9 +126,7 @@ describe('ApprovalsInbox: lista', () => {
   it('superadmin: el filtro de área lista todas las áreas', async () => {
     esSuperadmin = true;
     render(<ApprovalsInbox />);
-    const area = screen.getByLabelText('Filtrar la bandeja por área');
-    await waitFor(() => expect(within(area).getAllByRole('option').map((o) => o.textContent))
-      .toEqual(['Todas las áreas', 'Finanzas', 'Ventas']));
+    await waitFor(() => expect(opcionesSelector('Filtrar la bandeja por área')).toEqual(['Todas', 'Finanzas', 'Ventas']));
   });
 
   it('carga, vacío y error con reintento', async () => {
@@ -157,8 +154,7 @@ describe('ApprovalsInbox: lista', () => {
     expect(await filaAsync(FILA_ANA)).toBeTruthy();
 
     vi.mocked(requestsApi.inbox).mockRejectedValue(new ApiError(403, 'Forbidden'));
-    const estado = screen.getByLabelText('Filtrar la bandeja por estado');
-    fireEvent.change(estado, { target: { value: 'rechazada' } });
+    elegirEnSelector('Filtrar la bandeja por estado', 'Rechazadas');
     const mensaje = 'No tienes permiso para ver las solicitudes de tu bandeja.';
     const aviso = await screen.findByText(mensaje);
     expect(aviso.closest('.nx-toast')).toBeTruthy();
@@ -166,7 +162,7 @@ describe('ApprovalsInbox: lista', () => {
     expect(await filaAsync(FILA_ANA)).toBeTruthy();
 
     // Otro fallo seguido no repite el aviso.
-    fireEvent.change(estado, { target: { value: 'aprobada' } });
+    elegirEnSelector('Filtrar la bandeja por estado', 'Aprobadas');
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenCalledTimes(3));
     await waitFor(() => expect(screen.getAllByText(mensaje)).toHaveLength(1));
   });
@@ -188,10 +184,8 @@ describe('ApprovalsInbox: historial con filtros (DIS-156)', () => {
     expect(volver.getAttribute('href')).toBe('/approvals');
     expect(volver.className).toContain('nx-btn-toolbar');
     expect(screen.getByRole('searchbox').className).toContain('nx-buscador-toolbar');
-    const estado = screen.getByLabelText('Filtrar la bandeja por estado');
-    expect(within(estado).getAllByRole('option').map((o) => o.textContent))
-      .toEqual(['Todas', 'Pendientes', 'Aprobadas', 'Rechazadas']);
-    expect((estado as HTMLSelectElement).value).toBe('pendiente');
+    expect(opcionesSelector('Filtrar la bandeja por estado')).toEqual(['Todas', 'Pendientes', 'Aprobadas', 'Rechazadas']);
+    expect(valorSelector('Filtrar la bandeja por estado')).toBe('Pendientes');
     expect(screen.getByLabelText('Filtrar la bandeja por plataforma')).toBeTruthy();
   });
 
@@ -217,7 +211,7 @@ describe('ApprovalsInbox: historial con filtros (DIS-156)', () => {
     vi.mocked(requestsApi.inbox).mockResolvedValue(pagina([PENDIENTE, aprobada, rechazada]));
     render(<ApprovalsInbox />);
     await filaAsync(FILA_ANA);
-    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por estado'), { target: { value: 'todas' } });
+    elegirEnSelector('Filtrar la bandeja por estado', 'Todas');
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
       { status: 'todas', area_id: undefined, page: 1, per_page: 8 }));
     expect(within(fila('Ana Ruiz')).getByText('Pendiente')).toBeTruthy();
@@ -251,23 +245,22 @@ describe('ApprovalsInbox: historial con filtros (DIS-156)', () => {
     render(<ApprovalsInbox />);
     await filaAsync(FILA_ANA);
     expect(api.platforms).toHaveBeenLastCalledWith({});
-    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por área'), { target: { value: '3' } });
+    elegirEnSelector('Filtrar la bandeja por área', 'Finanzas');
     await waitFor(() => expect(api.platforms).toHaveBeenLastCalledWith({ areaId: 3 }));
-    const plataforma = screen.getByLabelText('Filtrar la bandeja por plataforma') as HTMLSelectElement;
-    await waitFor(() => expect(within(plataforma).getAllByRole('option')).toHaveLength(3));
-    fireEvent.change(plataforma, { target: { value: '14' } });
+    await waitFor(() => expect(opcionesSelector('Filtrar la bandeja por plataforma')).toHaveLength(3));
+    elegirEnSelector('Filtrar la bandeja por plataforma', 'Wiki');
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
       { status: 'pendiente', area_id: 3, platform_id: 14, page: 1, per_page: 8 }));
-    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por área'), { target: { value: '' } });
+    elegirEnSelector('Filtrar la bandeja por área', 'Todas mis áreas');
     await waitFor(() => expect(requestsApi.inbox).toHaveBeenLastCalledWith(
       { status: 'pendiente', area_id: undefined, page: 1, per_page: 8 }));
-    expect((screen.getByLabelText('Filtrar la bandeja por plataforma') as HTMLSelectElement).value).toBe('');
+    expect(valorSelector('Filtrar la bandeja por plataforma')).toBe('Todas');
   });
 
   it('los filtros quedan en la URL', async () => {
     render(<ApprovalsInbox />);
     await filaAsync(FILA_ANA);
-    fireEvent.change(screen.getByLabelText('Filtrar la bandeja por estado'), { target: { value: 'aprobada' } });
+    elegirEnSelector('Filtrar la bandeja por estado', 'Aprobadas');
     await waitFor(() => expect(window.location.search).toContain('status=aprobada'));
   });
 });
@@ -295,7 +288,7 @@ describe('ApprovalsInbox: aprobar', () => {
     const aviso = screen.getByText(/Solicitud aprobada: Ana Ruiz en Contabilidad/);
     expect(aviso.closest('.nx-toast')).toBeTruthy();
     expect(aviso.closest('[role="status"]')).toBeTruthy();
-    await waitFor(() => expect(document.activeElement?.tagName).toBe('SELECT'));
+    await waitFor(() => expect(document.activeElement?.id).toBe('bandeja-filtro-estado'));
   });
 
   it('cancelar no llama a la API y devuelve el foco al botón', async () => {
