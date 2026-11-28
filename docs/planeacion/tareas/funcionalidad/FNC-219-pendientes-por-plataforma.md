@@ -19,7 +19,7 @@
 ## Pruebas
 - Suite completa: 3739 passed, salida 0.
 - `tests/access_requests/test_resumen.py`: 3 nuevas (solo pendientes y orden, alcance del admin de área, superadmin todas) y la de vacío con la clave nueva; fallaban sin el cambio.
-- Nota: dos `GET inbox/stats` con distintos usuarios en una misma prueba devolvieron el resultado del primero; las pruebas usan una llamada por prueba (no investigado, fuera de alcance).
+- Nota: dos `GET inbox/stats` con distintos usuarios en una misma prueba devuelven el resultado del primero. Causa (orquestador, 2026-11-28): la fixture `app` deja un `app_context` abierto; Flask 3.0 lo reutiliza en cada petición y Flask-Login guarda el usuario en `g`. Solo pasa en pruebas: en producción cada petición abre su propio contexto. No es fuga entre usuarios.
 
 ## Impacto en elementos compartidos
 - `impacto.py` marca `resumen` (resumen.py); los «usos» son coincidencias por nombre con otras funciones `resumen`. Real: solo se agrega un campo a `inbox/stats` (consumidores: Solicitudes y, con DIS-161, Gestión).
