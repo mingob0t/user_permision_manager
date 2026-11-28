@@ -8,6 +8,8 @@
 ### Cambiado
 - Áreas: no se activa un área (ni se crea activa) sin al menos un admin de área: `409 area_sin_admin`; el admin de área que la crea sí pasa y las áreas de la importación masiva nacen `Inactivo`; quitar el último admin no se bloquea. Contrato `areas-y-roles` 3.5 (FNC-220, 2026-11-28).
 - Solicitudes: `GET /access-requests/inbox/stats` agrega `pending_by_platform` (pendientes por plataforma, mismo alcance que la bandeja); contrato `solicitudes` 1.6 (FNC-219, 2026-11-28).
+- Web: al crear un área, el superadmin la deja inactiva hasta asignarle un administrador; con administrador se activa sola, sin él avisa que quedó inactiva (DIS-165, 2026-11-28).
+- Web: el Historial de solicitudes ya no muestra la columna Nivel; la fecha va en su propia columna y Justificación solo aparece si `SOLICITUD_MOTIVO` no es `oculto` (DIS-160, 2026-11-28).
 - Web: las 10 variantes de la tarjeta de área muestran «Solicitudes pendientes» (enlace al Historial por área) y la fila de administradores (DIS-162 solo cubría la estándar); además «Persona/Personas» pasa a «Usuario/Usuarios» en la tarjeta (DIS-164, 2026-11-28).
 - Web: el Historial de solicitudes vive en `/approvals/historial` con la URL limpia; los filtros se conservan en la pestaña y los enlaces con filtros siguen funcionando (DIS-163, 2026-11-28).
 - Web: la tarjeta de área muestra el KPI «Solicitudes pendientes» junto a Plataformas (enlace al Historial filtrado por área; sustituye el badge «N por aprobar») y una fila de ancho completo con los administradores del área (DIS-162, 2026-11-28).

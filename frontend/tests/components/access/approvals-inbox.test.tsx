@@ -20,7 +20,7 @@ vi.mock('@/lib/access/requests', () => ({
 }));
 vi.mock('@/lib/api', async (original) => ({
   ...(await original<typeof import('@/lib/api')>()),
-  api: { areas: vi.fn(), platforms: vi.fn() },
+  api: { areas: vi.fn(), platforms: vi.fn(), authContext: vi.fn() },
 }));
 
 let esSuperadmin = false;
@@ -88,14 +88,24 @@ beforeEach(() => {
   vi.mocked(api.areas).mockResolvedValue([
     { id: 3, name: 'Finanzas' }, { id: 5, name: 'Ventas' },
   ] as Awaited<ReturnType<typeof api.areas>>);
+  // DIS-160: con `SOLICITUD_MOTIVO=opcional` la justificación se muestra.
+  vi.mocked(api.authContext).mockResolvedValue(contextoMotivos('opcional'));
 });
+
+function contextoMotivos(solicitud: 'oculto' | 'opcional' | 'obligatorio') {
+  return {
+    oidc_enabled: false, authenticated: true, emergency_available: false,
+    motivos: { solicitud, rechazo: 'obligatorio' as const },
+  };
+}
 
 afterEach(cleanup);
 
 describe('ApprovalsInbox: lista', () => {
-  it('pide pendientes por defecto y muestra solicitante, plataforma, nivel, estado y justificación escapada', async () => {
+  it('pide pendientes por defecto y muestra solicitante, plataforma, estado y justificación escapada', async () => {
     render(<ApprovalsInbox />);
     const ana = await filaAsync(FILA_ANA);
+    await within(ana).findByText('<b>Cierre</b> mensual');
     expect(requestsApi.inbox).toHaveBeenCalledWith({ status: 'pendiente', area_id: undefined, page: 1, per_page: 8 });
     expect(within(ana).getByText('Ana Ruiz')).toBeTruthy();
     expect(within(ana).getByText('ana@ejemplo.local')).toBeTruthy();
@@ -195,11 +205,52 @@ describe('ApprovalsInbox: historial con filtros (DIS-156)', () => {
   it('la tabla tiene las columnas compactas, justificación truncada con título y pie de registros', async () => {
     render(<ApprovalsInbox />);
     const ana = await filaAsync(FILA_ANA);
+    await screen.findByRole('columnheader', { name: 'Justificación' });
     const cabeceras = screen.getAllByRole('columnheader').map((c) => c.textContent);
-    expect(cabeceras).toEqual(['Solicitante', 'Plataforma', 'Nivel', 'Estado', 'Justificación', 'Acciones']);
+    // DIS-160: sin Nivel; Fecha en su propia columna.
+    expect(cabeceras).toEqual(['Solicitante', 'Plataforma', 'Estado', 'Fecha', 'Justificación', 'Acciones']);
     expect(within(ana).getByText('<b>Cierre</b> mensual').getAttribute('title')).toBe('<b>Cierre</b> mensual');
     expect(within(ana).getByRole('button', { name: /^Aprobar/ })).toBeTruthy();
     expect(screen.getByText('2 de 2 registros')).toBeTruthy();
+  });
+
+  it.each([
+    ['oculto', false],
+    ['opcional', true],
+    ['obligatorio', true],
+  ] as const)('DIS-160: SOLICITUD_MOTIVO=%s → columna Justificación visible: %s', async (valor, visible) => {
+    vi.mocked(api.authContext).mockResolvedValue(contextoMotivos(valor));
+    render(<ApprovalsInbox />);
+    await filaAsync(FILA_ANA);
+    await waitFor(() => expect(api.authContext).toHaveBeenCalled());
+    await waitFor(() => expect(Boolean(screen.queryByRole('columnheader', { name: 'Justificación' }))).toBe(visible));
+    expect(screen.queryByRole('columnheader', { name: 'Nivel' })).toBeNull();
+    expect(screen.getByRole('columnheader', { name: 'Fecha' })).toBeTruthy();
+  });
+
+  it('DIS-160: sin el contexto (error o sin `motivos`) la justificación no se muestra', async () => {
+    vi.mocked(api.authContext).mockRejectedValue(new ApiError(500, 'Error'));
+    render(<ApprovalsInbox />);
+    await filaAsync(FILA_ANA);
+    await waitFor(() => expect(api.authContext).toHaveBeenCalled());
+    expect(screen.queryByRole('columnheader', { name: 'Justificación' })).toBeNull();
+  });
+
+  it('DIS-160: la fecha va en su columna (enviada y, si aplica, decidida), no en Estado', async () => {
+    const aprobada: AccessRequest = {
+      ...PENDIENTE, id: 52, status: 'aprobada', requester: { id: 9, name: 'Eva Lara', email: 'eva@ejemplo.local' },
+      decided_at: '2026-10-13T12:30:00Z', decided_by: { id: 2, name: 'Luis Paz' },
+    };
+    vi.mocked(requestsApi.inbox).mockResolvedValue(pagina([aprobada]));
+    render(<ApprovalsInbox />);
+    const eva = await filaAsync('Eva Lara');
+    const celdas = within(eva).getAllByRole('cell');
+    const cabeceras = screen.getAllByRole('columnheader').map((c) => c.textContent);
+    const estado = celdas[cabeceras.indexOf('Estado')];
+    const fecha = celdas[cabeceras.indexOf('Fecha')];
+    expect(estado.textContent).not.toMatch(/Enviada|Decidida/);
+    expect(fecha.textContent).toMatch(/^Enviada: /);
+    expect(fecha.textContent).toMatch(/Decidida: .+ por Luis Paz/);
   });
 
   it('«Todas»: pide `status=todas`, muestra el estado de cada fila y acciones solo en pendientes', async () => {

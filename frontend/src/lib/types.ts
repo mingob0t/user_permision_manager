@@ -270,6 +270,11 @@ export interface AuthContext {
   app_title?: string;
   /** Dominio público configurado. */
   domain?: string;
+  /** Motivos configurables (FNC-216, `SOLICITUD_MOTIVO` / `RECHAZO_MOTIVO`). */
+  motivos?: {
+    solicitud: 'oculto' | 'opcional' | 'obligatorio';
+    rechazo: 'obligatorio' | 'opcional' | 'oculto';
+  };
 }
 
 export interface InactiveUser {

@@ -13,6 +13,8 @@ export const MENSAJES_AREAS: Record<string, string> = {
   area_con_otros_admins:
     'El área tiene otros administradores; solo el superadmin puede darla de baja.',
   rol_no_admin: 'El usuario no es administrador de área.',
+  // FNC-220: un área no se activa sin al menos un administrador.
+  area_sin_admin: 'Asigna al menos un administrador antes de activar el área.',
   validacion: 'Revisa los campos marcados.',
 };
 

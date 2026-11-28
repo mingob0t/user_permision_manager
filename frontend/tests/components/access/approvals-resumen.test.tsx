@@ -20,7 +20,7 @@ vi.mock('@/lib/access/requests', () => ({
 }));
 vi.mock('@/lib/api', async (original) => ({
   ...(await original<typeof import('@/lib/api')>()),
-  api: { areas: vi.fn().mockResolvedValue([]), platforms: vi.fn().mockResolvedValue([]), stats: vi.fn() },
+  api: { areas: vi.fn().mockResolvedValue([]), platforms: vi.fn().mockResolvedValue([]), stats: vi.fn(), authContext: vi.fn().mockResolvedValue({}) },
 }));
 vi.mock('@/components/session-provider', () => ({
   useSession: () => ({
