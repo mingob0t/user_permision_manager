@@ -49,6 +49,8 @@ import { ApiError, api } from '@/lib/api';
 import { usersApi } from '@/lib/access/users';
 import { AreasList } from '@/components/areas-list';
 import { FORBIDDEN_MESSAGE } from '@/components/require-role';
+import { ToastProvider } from '@/components/toast';
+import { mensajeDeError } from '@/components/areas/area-errors';
 
 /** El color no interviene en estas pruebas: va vacío. */
 function area(id: number, name: string): Area {
@@ -527,6 +529,46 @@ describe('Accesos del área (gestión de usuarios)', () => {
   });
 });
 
+describe('AreasList: alta según la regla «área activa requiere admin» (DIS-165, FNC-220)', () => {
+  async function crearOperaciones(marcarAdmin: boolean) {
+    vi.mocked(api.createArea).mockResolvedValue({ status: 'success', area: { ...area(15, 'Operaciones'), status: 'Inactivo' } });
+    vi.mocked(api.updateArea).mockResolvedValue({ status: 'success', area: area(15, 'Operaciones') });
+    render(<ToastProvider><AreasList /></ToastProvider>);
+    fireEvent.click(await screen.findByText('Nueva área'));
+    const modal = dialogo();
+    fireEvent.change(modal.getByLabelText('Nombre'), { target: { value: 'Operaciones' } });
+    fireEvent.click(modal.getByText('Siguiente'));
+    fireEvent.click(modal.getByText('Siguiente: Accesos'));
+    await modal.findByText('Asignación rápida de accesos y administradores');
+    fireEvent.click(modal.getByLabelText('Agregar Luis al área'));
+    if (marcarAdmin) fireEvent.click(modal.getByLabelText('Hacer admin de área a Luis'));
+    fireEvent.click(modal.getByText('Crear área'));
+    await waitFor(() => expect(api.createArea).toHaveBeenCalledTimes(1));
+  }
+
+  it('superadmin con administrador: crea Inactiva, asigna el admin y después la activa', async () => {
+    await crearOperaciones(true);
+    expect(vi.mocked(api.createArea).mock.calls[0][0]).toHaveProperty('status', 'Inactivo');
+    await waitFor(() => expect(api.updateArea).toHaveBeenCalledWith(15, { status: 'Activo' }));
+    const ordenAdmin = vi.mocked(usersApi.setManagedAreas).mock.invocationCallOrder[0];
+    const ordenActivar = vi.mocked(api.updateArea).mock.invocationCallOrder[0];
+    expect(ordenAdmin).toBeLessThan(ordenActivar);
+  });
+
+  it('superadmin sin administrador: queda Inactiva y lo avisa', async () => {
+    await crearOperaciones(false);
+    expect(await screen.findByText(/«Operaciones» se creó inactiva: asígnale un administrador/)).toBeTruthy();
+    // Un solo aviso: el de éxito no tapa al de acción pendiente.
+    expect(screen.queryByText(/creada correctamente/)).toBeNull();
+    expect(api.updateArea).not.toHaveBeenCalled();
+  });
+
+  it('409 `area_sin_admin` al activar: mensaje en español', () => {
+    const err = new ApiError(409, 'Conflict', { code: 'area_sin_admin' });
+    expect(mensajeDeError(err, 'respaldo')).toBe('Asigna al menos un administrador antes de activar el área.');
+  });
+});
+
 describe('AreasList: estado con badge (DIS-114)', () => {
   it('la tabla muestra el estado como botón para quien puede editar el área y guarda {status}', async () => {
     rolActual = 'administrador';
@@ -545,7 +587,7 @@ describe('AreasList: estado con badge (DIS-114)', () => {
     expect(screen.queryByRole('button', { name: 'Activa, desactivar área Sistemas' })).toBeNull();
   });
 
-  it('el formulario de área no tiene control de estado; crear no envía status', async () => {
+  it('el formulario de área no tiene control de estado; el superadmin crea Inactiva (DIS-165)', async () => {
     rolActual = 'administrador';
     render(<AreasList />);
     await screen.findByText('Finanzas');
@@ -558,7 +600,9 @@ describe('AreasList: estado con badge (DIS-114)', () => {
     fireEvent.click(dialogo().getByText('Siguiente: Accesos'));
     fireEvent.click(await dialogo().findByText('Crear área'));
     await waitFor(() => expect(api.createArea).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(api.createArea).mock.calls[0][0]).not.toHaveProperty('status');
+    // DIS-165 (FNC-220): sin administradores no se puede activar; se crea Inactiva y no se activa.
+    expect(vi.mocked(api.createArea).mock.calls[0][0]).toHaveProperty('status', 'Inactivo');
+    expect(api.updateArea).not.toHaveBeenCalled();
   });
 
   it('editar un área no envía status (no pisa el estado)', async () => {

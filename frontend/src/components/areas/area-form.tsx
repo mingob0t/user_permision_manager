@@ -85,8 +85,9 @@ export function AreaForm({
       : { name: '', description: '', icon: 'areas' },
   );
   // El estado ya no se edita aquí (DIS-114): se conmuta con el badge de la tarjeta o la tabla.
-  // Al crear, el servidor lo deja Activo; al editar no se envía, para no pisarlo.
-  const estadoVista = area?.status ?? 'Activo';
+  // Al editar no se envía, para no pisarlo. Al crear (DIS-165, regla FNC-220): el admin de área
+  // queda como administrador y el área nace Activa; el superadmin la crea Inactiva, asigna los
+  // administradores y solo entonces la activa (sin administradores queda Inactiva).
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
@@ -155,6 +156,8 @@ export function AreaForm({
     () => conAcceso.filter((u) => esAdmin(u)).length,
     [conAcceso, esAdmin],
   );
+  // Vista previa del estado: el actual al editar; al crear, el que tendrá (DIS-165).
+  const estadoVista = area?.status ?? (isSuperadmin && adminsCount === 0 ? 'Inactivo' : 'Activo');
 
   function darAcceso(user: ManagedUser) {
     enfocarTras('sin-acceso', sinAccesoVisibles, user.id);
@@ -246,8 +249,11 @@ export function AreaForm({
     setError(null);
     setFields({});
     try {
-      const result = area ? await api.updateArea(area.id, form) : await api.createArea(form);
-      const targetArea = result.area;
+      const result = area
+        ? await api.updateArea(area.id, form)
+        : await api.createArea(isSuperadmin ? { ...form, status: 'Inactivo' } : form);
+      let targetArea = result.area;
+      let sinAdmin = false;
 
       const userIdsConAcceso = todosLosUsuarios.filter((u) => tieneAcceso(u)).map((u) => u.id);
       const adminUsers = todosLosUsuarios.filter((u) => tieneAcceso(u) && esAdmin(u));
@@ -266,6 +272,12 @@ export function AreaForm({
             if (!existing.includes(targetArea.id)) {
               await usersApi.setManagedAreas(adminUser.id, [...existing, targetArea.id]);
             }
+          }
+          // DIS-165: con administradores ya asignados se activa; sin ellos queda Inactiva.
+          if (adminUsers.length > 0) {
+            targetArea = (await api.updateArea(targetArea.id, { status: 'Activo' })).area;
+          } else {
+            sinAdmin = true;
           }
         }
       } else {
@@ -296,13 +308,22 @@ export function AreaForm({
         }
       }
 
-      toast.avisar(
-        'success',
-        area
-          ? `Área «${targetArea.name}» actualizada correctamente.`
-          : `Área «${targetArea.name}» creada correctamente.`,
-        'Guardado',
-      );
+      // Un solo aviso: sin administrador, el de acción pendiente (no lo tapa el de éxito).
+      if (sinAdmin) {
+        toast.avisar(
+          'warning',
+          `«${targetArea.name}» se creó inactiva: asígnale un administrador para poder activarla.`,
+          'Área sin administrador',
+        );
+      } else {
+        toast.avisar(
+          'success',
+          area
+            ? `Área «${targetArea.name}» actualizada correctamente.`
+            : `Área «${targetArea.name}» creada correctamente.`,
+          'Guardado',
+        );
+      }
       onSaved(targetArea);
     } catch (err) {
       const msg = mensajeDeError(err, 'No se pudo guardar');
