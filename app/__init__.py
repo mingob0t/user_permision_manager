@@ -104,6 +104,10 @@ def _validar_configuracion():
     from app.modules.users.politica_contrasena import (
         validar_al_arrancar as validar_politica_contrasena)
     validar_politica_contrasena()
+    # SOLICITUD_MOTIVO / RECHAZO_MOTIVO inválidas detienen el arranque (FNC-216).
+    from app.modules.access_requests.motivos import (
+        validar_al_arrancar as validar_motivos)
+    validar_motivos()
 
 
 def _iniciar_extensiones(app):

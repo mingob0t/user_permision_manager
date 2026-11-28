@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1 (2026-11-18) |
+| Versión | 1.1 (2026-11-27) |
 | Proveedor | backend (FNC-141) |
 | Consumidores | web (FNC-142) |
 | Decisión | [ADR-009](../decisiones/ADR-009-inicio-de-sesion-oidc-con-authelia.md) (3B, 4B, 5A, 6A aprobadas el 2026-11-18) |
@@ -33,6 +33,7 @@ Convenciones comunes: [README.md](README.md). Prefijo `/api/v1/auth`. La sesión
 | `app_name` / `app_title` | string | `APP_NAME` / `APP_TITLE` (por omisión `aduana` / `Aduana`) |
 | `domain` | string | `DOMAIN`; vacío si no está |
 | `support_email` | string | `SUPPORT_EMAIL` (por omisión el buzón de soporte del portal) |
+| `motivos` | objeto | v1.1 (FNC-216): `{solicitud: oculto\|opcional\|obligatorio, rechazo: obligatorio\|opcional\|oculto}` desde `SOLICITUD_MOTIVO` / `RECHAZO_MOTIVO`; ver [solicitudes.md](solicitudes.md) |
 
 Se retiran `sso_enabled`, `sso_user` y `ldap_available`.
 

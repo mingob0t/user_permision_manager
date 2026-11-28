@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.4 (2026-11-26) |
+| Versión | 1.5 (2026-11-27) |
 | Proveedor | backend (FNC-056, FNC-057) |
 | Consumidores | web (FNC-069; pantallas DIS-013, DIS-014, DIS-015, DIS-131) |
 | Solicitudes | — |
@@ -55,7 +55,7 @@ Propia solicitud en approve/reject → 403 `solicitud_propia` (SEC-AUTHZ-08).
 |---|---|---|---|
 | `platform_id` | int | Sí | En el catálogo del actor |
 | `level` | `"usuario"` | No (por omisión `usuario`) | v1.3, FNC-199: `"admin"` → `422 validacion` |
-| `justification` | string \| null | No | ≤ 500 caracteres; recortada; vacía → null (decisión del dueño, 2026-10-20: no se pide) |
+| `justification` | string \| null | Según `motivos.solicitud` | v1.5: `oculto` (por omisión) la descarta y guarda null sin validarla; `opcional` ≤ 500, recortada, vacía → null; `obligatorio` no vacía y ≤ 500, si no `422 validacion` con `fields.justification` |
 
 Respuesta `201`: `{"status": "success", "request": AccessRequest}`. Auditoría `solicitud_creada`; correo `solicitud_nueva` a los admins del área (FNC-048).
 
@@ -109,9 +109,9 @@ Resumen para la pantalla Solicitudes (DIS-131). Mismo alcance que `inbox` (`appr
 ## `POST /access-requests/<id>/reject`
 | Campo | Tipo | Obligatorio | Regla |
 |---|---|---|---|
-| `reason` | string | Sí | 10–500 caracteres (RF-06) |
+| `reason` | string \| null | Según `motivos.rechazo` | v1.5: `obligatorio` (por omisión) 10–500 caracteres, recortado (RF-06); `opcional` vacío o ausente → null, si viene 10–500; `oculto` se descarta (null) |
 
-Respuesta: `{"status": "success", "request": AccessRequest}`. Auditoría `solicitud_rechazada`; correo `solicitud_rechazada` con el motivo.
+Respuesta: `{"status": "success", "request": AccessRequest}`. Auditoría `solicitud_rechazada`; correo `solicitud_rechazada` con el motivo (sin el párrafo «Motivo» si no hay; también sin motivo se audita).
 
 ## Errores
 | HTTP | `code` | Mensaje |
@@ -123,7 +123,13 @@ Respuesta: `{"status": "success", "request": AccessRequest}`. Auditoría `solici
 | 409 | `plataforma_no_disponible` | La plataforma o su área están inactivas. (Desde 1.2 ya no se responde por falta de grupos o conector: toda plataforma activa es solicitable en ambos niveles, FNC-196.) |
 | 409 | `solicitud_ya_decidida` | La solicitud ya fue decidida. |
 | 409 | `estado_invalido` | Subir de nivel con el acceso actual aún no `activo` (accesos.md) |
-| 422 | `validacion` | `fields.justification`: "Escribe como máximo 500 caracteres."; `fields.reason`: "Escribe entre 10 y 500 caracteres." |
+| 422 | `validacion` | `fields.justification`: "Escribe como máximo 500 caracteres." o, con `obligatorio` y vacía, "Escribe el motivo de tu solicitud."; `fields.reason`: "Escribe entre 10 y 500 caracteres." (cuando `reason` se exige o, si es opcional, cuando viene) |
+
+## Modos de motivo (v1.5, FNC-216)
+Decisión del dueño (2026-11-27): se controla desde `.env` (`SOLICITUD_MOTIVO`, `RECHAZO_MOTIVO`), no desde una pantalla. Modifica RF-06.
+- Se exponen en `GET /api/v1/auth/context` (público) como `"motivos": {"solicitud": "oculto|opcional|obligatorio", "rechazo": "obligatorio|opcional|oculto"}`. Cambiarlos exige reiniciar el backend.
+- **Web (FNC-217):** lee `motivos` y, por modo: `oculto` no muestra el campo; `opcional` lo muestra sin marca de requerido; `obligatorio` lo muestra requerido y bloquea el envío vacío. El backend valida siempre y es quien manda: un `422 validacion` con `fields.justification` o `fields.reason` se pinta en el campo. En el rechazo, con `opcional` el diálogo permite confirmar vacío y con `oculto` no se muestra el campo.
+- `rejection_reason` y `justification` de `AccessRequest` pueden ser `null` (ya lo eran `justification` y, para pendientes/aprobadas, `rejection_reason`; ahora también en rechazadas). La web debe mostrar el motivo solo si existe.
 
 ## Refresco
 | Pantalla | Polling |
@@ -151,3 +157,4 @@ Respuesta: `{"status": "success", "request": AccessRequest}`. Auditoría `solici
 | 1.2 | 2026-11-24 | FNC-196 (dueño): toda plataforma activa de un área activa es solicitable en ambos niveles; el acceso se da por el grupo `app-{plataforma}-{nivel}` y, si hay conector, además por su alta. `plataforma_no_disponible` solo por plataforma o área inactivas. Sin cambios de forma |
 | 1.3 | 2026-11-24 | FNC-199 (dueño): solo se solicita el nivel `usuario`; `level` opcional (por omisión `usuario`), `admin` → `422`. `requestable_levels` ⊆ `["usuario"]` |
 | 1.4 | 2026-11-26 | FNC-212: `inbox/stats` agrega `pending_by_area` (solo pendientes por área). Campo nuevo, sin cambios de forma en lo existente |
+| 1.5 | 2026-11-27 | FNC-216 (dueño): motivo de solicitud y de rechazo configurables por `.env`; `GET /auth/context` agrega `motivos`; `rejection_reason` puede ser null también en rechazadas. Campos existentes sin cambio de forma |
