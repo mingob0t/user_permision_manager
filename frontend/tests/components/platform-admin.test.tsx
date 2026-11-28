@@ -79,7 +79,7 @@ beforeEach(() => {
   });
 });
 
-describe('PlatformAdmin: por aprobar en la tarjeta de área (DIS-137)', () => {
+describe('PlatformAdmin: por aprobar en la tarjeta de área (DIS-137, DIS-162)', () => {
   it('muestra los pendientes del área (pending_by_area) con enlace a su bandeja', async () => {
     vi.mocked(requestsApi.inboxStats).mockResolvedValue({
       total: 2, by_status: { pendiente: 2, aprobada: 0, rechazada: 0 },
@@ -87,7 +87,7 @@ describe('PlatformAdmin: por aprobar en la tarjeta de área (DIS-137)', () => {
       pending_by_area: [{ area_id: 3, area: 'Finanzas', count: 2 }],
     });
     render(<PlatformAdmin />);
-    const enlace = await screen.findByRole('link', { name: /2 solicitudes por aprobar en Finanzas/ });
+    const enlace = await screen.findByRole('link', { name: /Solicitudes pendientes: 2, en Finanzas/ });
     expect(enlace.getAttribute('href')).toBe('/approvals?status=pendiente&area_id=3');
   });
 
@@ -95,7 +95,7 @@ describe('PlatformAdmin: por aprobar en la tarjeta de área (DIS-137)', () => {
     vi.mocked(requestsApi.inboxStats).mockRejectedValue(new Error('sin red'));
     render(<PlatformAdmin />);
     await screen.findByText('Finanzas');
-    expect(screen.queryByRole('link', { name: /por aprobar/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /solicitudes pendientes/ })).toBeNull();
   });
 });
 

@@ -962,7 +962,8 @@ function PlatformAdminContent({ initialAreaId }: { initialAreaId?: number | null
                       area={area}
                       conteo={conteoPorArea[area.id] ?? 0}
                       plataformas={plataformasPorArea[area.id] ?? []}
-                      pendientes={pendientesPorArea[area.id] ?? 0}
+                      pendientes={resumenSolicitudes.data ? (pendientesPorArea[area.id] ?? 0) : undefined}
+                      mostrarAdministradores
                       onSelect={handleSelectArea}
                       puedeEditar={isSuperadmin || managedAreaIds.has(area.id)}
                       actualizarEstado={(status) => api.updateArea(area.id, { status })}

@@ -360,6 +360,8 @@
 
   /* Interacción y Estados (DIS-056) */
   --foco-anillo: 29 78 216;
+  /* Anillo sobre imagen con capa oscura (arte-*, igual en los dos temas; DIS-164) */
+  --foco-anillo-sobre-arte: 96 165 250;
   --foco-ancho: 2px;
   --foco-separacion: 2px;
   --hover-capa: 0 0 0 / 0.05;
