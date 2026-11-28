@@ -52,8 +52,7 @@ export { MENSAJE_PROPIA } from './approvals-inbox-columns';
 const NOMBRE_LISTA = 'las solicitudes de tu bandeja';
 /** Filas por página: las que caben en la tabla (como Plataformas, 8 con filas fantasma). */
 export const BANDEJA_POR_PAGINA = 8;
-/** Columnas condicionables (FNC-217 las ocultará según la configuración). */
-const MOSTRAR_JUSTIFICACION = true;
+/** Columna del motivo de rechazo: solo si hay rechazadas con motivo en la página. */
 const MOSTRAR_MOTIVO = true;
 
 /** Foco tras decidir: el filtro de estado (la fila decidida ya no tiene botones). */
@@ -148,6 +147,13 @@ export function ApprovalsInbox({ volverHref }: { volverHref?: string } = {}) {
     [lista.data, decididas],
   );
 
+  // DIS-160: la justificación solo se muestra si `SOLICITUD_MOTIVO` (FNC-216) no es `oculto`.
+  // Mientras carga o si falla, no se muestra (el valor por omisión del backend es `oculto`).
+  const contexto = useAsync(() => api.authContext(), []);
+  const mostrarJustificacion = Boolean(
+    contexto.data?.motivos && contexto.data.motivos.solicitud !== 'oculto',
+  );
+
   const hayMotivos = items.some((item) => item.status === 'rechazada' && item.rejection_reason);
 
   const miId = session?.id;
@@ -158,10 +164,10 @@ export function ApprovalsInbox({ volverHref }: { volverHref?: string } = {}) {
         disparador.current = trigger;
         setDecision({ tipo, request });
       },
-      mostrarJustificacion: MOSTRAR_JUSTIFICACION,
+      mostrarJustificacion,
       mostrarMotivo: MOSTRAR_MOTIVO && hayMotivos,
     }),
-    [miId, hayMotivos],
+    [miId, hayMotivos, mostrarJustificacion],
   );
 
   // Estable: `Modal` reinstala su efecto (y el foco) si cambia `onClose`.

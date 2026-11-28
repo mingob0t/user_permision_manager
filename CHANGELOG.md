@@ -6,6 +6,7 @@
 ## [Sin publicar]
 
 ### Cambiado
+- Web: el Historial de solicitudes ya no muestra la columna Nivel; la fecha va en su propia columna y Justificación solo aparece si `SOLICITUD_MOTIVO` no es `oculto` (DIS-160, 2026-11-28).
 - Web: las 10 variantes de la tarjeta de área muestran «Solicitudes pendientes» (enlace al Historial por área) y la fila de administradores (DIS-162 solo cubría la estándar); además «Persona/Personas» pasa a «Usuario/Usuarios» en la tarjeta (DIS-164, 2026-11-28).
 - Web: el Historial de solicitudes vive en `/approvals/historial` con la URL limpia; los filtros se conservan en la pestaña y los enlaces con filtros siguen funcionando (DIS-163, 2026-11-28).
 - Web: la tarjeta de área muestra el KPI «Solicitudes pendientes» junto a Plataformas (enlace al Historial filtrado por área; sustituye el badge «N por aprobar») y una fila de ancho completo con los administradores del área (DIS-162, 2026-11-28).

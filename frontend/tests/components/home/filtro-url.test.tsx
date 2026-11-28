@@ -18,7 +18,7 @@ vi.mock('@/lib/access/grants', () => ({ grantsApi: { mine: vi.fn() } }));
 vi.mock('@/lib/access/inventory', () => ({ inventoryApi: { list: vi.fn() } }));
 vi.mock('@/lib/api', async (original) => ({
   ...(await original<typeof import('@/lib/api')>()),
-  api: { areas: vi.fn(), platforms: vi.fn() },
+  api: { areas: vi.fn(), platforms: vi.fn(), authContext: vi.fn().mockResolvedValue({}) },
 }));
 vi.mock('@/components/session-provider', () => ({
   useSession: () => ({

@@ -2,6 +2,7 @@
 
 /**
  * Columnas de la tabla de la bandeja de aprobaciones (DIS-156), para `DataTable`.
+ * DIS-160: sin columna Nivel; la fecha (enviada y decidida) va en su propia columna.
  * La justificación y el motivo de rechazo son columnas aparte y condicionables
  * (`mostrarJustificacion`, `mostrarMotivo`) para poder ocultarlas por configuración (FNC-217).
  */
@@ -10,7 +11,7 @@ import type { AccessRequest } from '@/lib/access/types';
 import { Button } from '../form';
 import { Icono } from '../icono';
 import type { DataColumn } from '../data-table';
-import { AccessStatusBadge, NIVELES } from './access-status-badge';
+import { AccessStatusBadge } from './access-status-badge';
 import { formatearFechaCorta24h } from './fecha';
 import { RequestStatusBadge } from './request-status-badge';
 
@@ -67,41 +68,29 @@ export function columnasBandeja({
       cell: (r) => <Dos principal={r.platform.name} secundario={r.area.name} />,
     },
     {
-      key: 'nivel',
-      header: 'Nivel',
-      headerClassName: ENCABEZADO,
-      cellClassName: CELDA,
-      cell: (r) => (
-        <Dos
-          principal={NIVELES[r.level]}
-          secundario={r.current_level ? `Tiene ${NIVELES[r.current_level]}` : null}
-        />
-      ),
-    },
-    {
       key: 'estado',
       header: 'Estado',
       headerClassName: ENCABEZADO,
       cellClassName: CELDA,
+      cell: (r) => (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <RequestStatusBadge status={r.status} />
+          {r.access ? <AccessStatusBadge status={r.access.status} /> : null}
+        </div>
+      ),
+    },
+    {
+      // DIS-160: la fecha sale de la celda de Estado a su propia columna.
+      key: 'fecha',
+      header: 'Fecha',
+      headerClassName: ENCABEZADO,
+      cellClassName: CELDA,
       cell: (r) => {
+        const enviada = `Enviada: ${formatearFechaCorta24h(r.created_at)}`;
         const decidida = r.decided_at
           ? `Decidida: ${formatearFechaCorta24h(r.decided_at)}${r.decided_by ? ` por ${r.decided_by.name}` : ''}`
           : null;
-        const fecha = `Enviada: ${formatearFechaCorta24h(r.created_at)}`;
-        return (
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <RequestStatusBadge status={r.status} />
-              {r.access ? <AccessStatusBadge status={r.access.status} /> : null}
-            </div>
-            <span
-              className="block truncate text-xs tabular-nums text-label"
-              title={decidida ? `${fecha}. ${decidida}` : fecha}
-            >
-              {decidida ?? fecha}
-            </span>
-          </div>
-        );
+        return <Dos principal={enviada} secundario={decidida} />;
       },
     },
   ];
